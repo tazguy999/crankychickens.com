@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cranky Chickens — Coming Soon</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hidden;}
+
+/* ── UI BAR (matches game) ── */
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:5px 16px;
+  background:linear-gradient(135deg,#ff6b35,#ff9f1c);border-bottom:3px solid #ffcc02;}
+#topbar .title{font-family:'Fredoka One',cursive;color:#fff;font-size:clamp(11px,3vw,17px);text-shadow:2px 2px 0 #a33000;}
+#topbar .stats{display:flex;gap:10px;align-items:center;font-family:'Fredoka One',cursive;font-size:clamp(11px,3vw,15px);color:#fff;text-shadow:1px 1px 0 #000;}
+
+/* ── HERO ── */
+.hero-canvas-wrap{position:relative;width:100%;max-width:640px;margin:0 auto;display:block;}
+#heroCanvas{display:block;width:100%;image-rendering:pixelated;}
+.hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+.hero-title{font-family:'Fredoka One',cursive;font-size:clamp(36px,9vw,80px);color:#ffcc02;
+  text-shadow:3px 3px 0 #cc2200,6px 6px 0 #660000;letter-spacing:3px;line-height:1;text-align:center;}
+.hero-sub{font-family:'Fredoka One',cursive;font-size:clamp(13px,3vw,22px);color:#ff9f1c;
+  margin-top:8px;letter-spacing:1px;}
+.hero-fine{font-size:10px;color:rgba(255,255,255,0.4);margin-top:16px;font-style:italic;text-align:center;padding:0 20px;line-height:1.7;}
+
+/* ── MARQUEE ── */
+.marquee{background:#ffcc02;color:#1a0a2e;font-family:'Fredoka One',cursive;font-size:13px;
+  letter-spacing:5px;overflow:hidden;white-space:nowrap;padding:6px 0;}
+.marquee span{display:inline-block;animation:march 22s linear infinite;}
+@keyframes march{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+
+/* ── TRAILER CARDS ── */
+.trailers{max-width:700px;margin:0 auto;padding:40px 16px;}
+.section-hdr{font-family:'Fredoka One',cursive;font-size:clamp(22px,5vw,38px);
+  color:#ffcc02;text-align:center;letter-spacing:2px;margin-bottom:4px;}
+.section-note{text-align:center;font-size:12px;color:rgba(255,255,255,0.35);
+  font-style:italic;margin-bottom:40px;}
+
+.card{background:#120820;border:2px solid rgba(255,204,2,0.2);border-radius:4px;
+  margin-bottom:52px;overflow:hidden;position:relative;
+  transition:border-color 0.3s,transform 0.2s;}
+.card:hover{border-color:#ffcc02;transform:translateY(-3px);}
+.card::after{content:attr(data-tag);position:absolute;top:14px;right:-28px;
+  background:#cc2200;color:#fff;font-family:'Fredoka One',cursive;font-size:11px;
+  letter-spacing:3px;padding:4px 38px;transform:rotate(12deg);
+  box-shadow:0 2px 8px rgba(0,0,0,0.5);}
+
+/* ── SCREEN CANVAS ── */
+.screen-wrap{position:relative;cursor:pointer;}
+.screen-canvas{display:block;width:100%;image-rendering:pixelated;}
+.screen-tag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);
+  color:#ffcc02;font-family:'Fredoka One',cursive;font-size:11px;letter-spacing:2px;
+  padding:3px 10px;border-radius:3px;}
+.play-hint{position:absolute;bottom:10px;right:10px;background:rgba(255,204,2,0.15);
+  border:1px solid #ffcc02;color:#ffcc02;font-family:'Fredoka One',cursive;
+  font-size:10px;letter-spacing:2px;padding:4px 12px;}
+
+/* ── CARD BODY ── */
+.card-body{padding:20px 24px 26px;}
+.game-num{font-family:'Fredoka One',cursive;font-size:11px;letter-spacing:5px;
+  color:#ff6b35;margin-bottom:4px;}
+.game-title{font-family:'Fredoka One',cursive;font-size:clamp(20px,4vw,34px);
+  color:#ffcc02;letter-spacing:2px;line-height:1;margin-bottom:4px;}
+.game-sub{font-family:'Fredoka One',cursive;font-size:13px;color:#ff9f1c;
+  font-style:italic;margin-bottom:14px;}
+.game-desc{font-size:13px;line-height:1.75;color:rgba(255,255,255,0.72);margin-bottom:16px;}
+
+.quotes{border-left:3px solid #ffcc02;padding-left:14px;margin-bottom:16px;}
+.quote{font-size:12px;font-style:italic;color:rgba(255,255,255,0.5);
+  margin-bottom:10px;line-height:1.5;}
+.quote span{display:block;font-style:normal;font-size:10px;letter-spacing:2px;
+  color:#ff6b35;margin-top:2px;}
+
+.tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+.tag{background:rgba(255,204,2,0.08);border:1px solid rgba(255,204,2,0.22);
+  padding:4px 12px;font-size:10px;letter-spacing:1px;color:#ffcc02;
+  font-family:'Fredoka One',cursive;}
+
+.rating-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+.esrb{background:#000;border:2px solid #fff;color:#fff;font-family:'Fredoka One',cursive;
+  font-size:18px;width:40px;height:48px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;line-height:1;flex-shrink:0;}
+.esrb small{font-size:7px;letter-spacing:1px;}
+.rating-txt{font-size:10px;color:rgba(255,255,255,0.38);line-height:1.7;font-style:italic;}
+
+.wishlist{display:inline-block;background:#ffcc02;color:#1a0a2e;
+  font-family:'Fredoka One',cursive;font-size:15px;letter-spacing:2px;
+  padding:9px 22px;border:none;cursor:pointer;transition:background 0.2s,transform 0.1s;}
+.wishlist:hover{background:#ff9f1c;transform:scale(1.05);}
+
+/* ── FOOTER ── */
+footer{background:#060310;border-top:1px solid rgba(255,204,2,0.08);
+  padding:28px 16px;text-align:center;font-size:10px;color:rgba(255,255,255,0.18);
+  line-height:2.2;}
+footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px;font-size:12px;}
+
+/* ── POPUP ── */
+#popup{position:fixed;top:16px;left:50%;transform:translateX(-50%) scale(0);
+  background:#ffcc02;color:#1a0a2e;font-family:'Fredoka One',cursive;font-size:18px;
+  letter-spacing:2px;padding:9px 28px;z-index:999;pointer-events:none;white-space:nowrap;}
+#popup.show{animation:bawk 1.8s ease forwards;}
+@keyframes bawk{0%{transform:translateX(-50%) scale(0) rotate(-5deg);opacity:1}
+  15%{transform:translateX(-50%) scale(1.1) rotate(2deg)}
+  25%{transform:translateX(-50%) scale(1) rotate(0)}
+  75%{opacity:1}100%{transform:translateX(-50%) scale(0.8);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="popup"></div>
+
+<!-- ── TOP BAR (matches game UI) ── -->
+<div id="topbar">
+  <div class="title">🐔 Cranky Chickens: Coming Soon™</div>
+  <div class="stats">
+    <span>❤️❤️❤️</span>
+    <span>🌽<span id="corn">0</span></span>
+    <span>⭐<span id="score">0</span></span>
+    <span style="font-size:11px;background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:8px;">Hype Zone</span>
+  </div>
+</div>
+
+<!-- ── HERO CANVAS ── -->
+<div class="hero-canvas-wrap">
+  <canvas id="heroCanvas" width="640" height="280"></canvas>
+  <div class="hero-overlay">
+    <div class="hero-title">CRANKY<br>CHICKENS</div>
+    <div class="hero-sub">THE FRANCHISE CONTINUES 🐔</div>
+    <div class="hero-fine">The following previews have been approved for ALL AUDIENCES by the Motion Poultry Rating Board.<br>No actual chickens were harmed. Several were mildly inconvenienced.</div>
+  </div>
+</div>
+
+<div class="marquee"><span>🐔 NOW AVAILABLE: TULUM TROUBLE · GLACIER GULCH · HOWARD'S GROVE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: SEE BELOW — IF YOU DARE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 NOW AVAILABLE: TULUM TROUBLE · GLACIER GULCH · HOWARD'S GROVE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: SEE BELOW — IF YOU DARE &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+
+<!-- ── TRAILERS ── -->
+<section class="trailers">
+  <h2 class="section-hdr">UPCOMING RELEASES</h2>
+  <p class="section-note">* Release dates subject to change. Or complete fabrication.</p>
+
+  <!-- GAME 4: IN SPACE -->
+  <div class="card" data-tag="COMING SOON™" id="card4">
+    <div class="screen-wrap" onclick="playTrailer(4)">
+      <canvas class="screen-canvas" id="c4" width="640" height="200"></canvas>
+      <div class="screen-tag">SPACE ZONE — SCREEN (∞,∞)</div>
+      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS IV</div>
+      <div class="game-title">IN SPACE</div>
+      <div class="game-sub">"Houston, We Have a Clucking Problem"</div>
+      <p class="game-desc">When the Interstellar Egg Harvesting Consortium abducts Earth's entire supply of premium corn, four cranky, deeply unqualified chickens steal a NASA shuttle and head to the cosmos to get it back. Zero-gravity feathers. Alien coops. A vending machine that only takes moon dust.<br><br>
+      <strong style="color:#ffcc02">New mechanic:</strong> Zero-G Peck™ — your PECK button now sends you flying backwards. This is not a bug. This is a feature. Cope.</p>
+      <div class="quotes">
+        <div class="quote">"I genuinely don't understand how they got NASA to sign off on this."<span>— POULTRY POWER MAGAZINE, 10/10</span></div>
+        <div class="quote">"The zero-gravity egg physics alone justify the purchase price."<span>— SOME GUY ON REDDIT, probably</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">🚀 6 PLANETS, 1 ASTEROID WITH AN ATTITUDE</span>
+        <span class="tag">👽 12 ALIEN IGUANA VARIANTS</span>
+        <span class="tag">🌌 ZERO-G PECK MECHANIC</span>
+        <span class="tag">🐶 DOG ADOPTION: NOW IN SPACE</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E<small>10+</small></div>
+        <div class="rating-txt">Mild Cartoon Violence · Existential Dread · Feather-Based Innuendo<br>Irresponsible Depiction of Space Travel · One Deeply Unsettling Alien Egg</div>
+      </div>
+      <button class="wishlist" onclick="cluck('🌽 +1 CORN ADDED')">+ WISHLIST</button>
+    </div>
+  </div>
+
+  <!-- GAME 5: JURASSIC SQUAWK -->
+  <div class="card" data-tag="COMING SOON™" id="card5">
+    <div class="screen-wrap" onclick="playTrailer(5)">
+      <canvas class="screen-canvas" id="c5" width="640" height="200"></canvas>
+      <div class="screen-tag">JUNGLE ZONE — SCREEN (2,1) → 66 MILLION YEARS AGO</div>
+      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS V</div>
+      <div class="game-title">JURASSIC SQUAWK</div>
+      <div class="game-sub">"Life, Uh... Finds a Bawk"</div>
+      <p class="game-desc">Scientists warned them. Scientists begged them. The chickens filled out the liability waivers and went anyway. A DNA mishap at ChickenGen Labs reverses 66 million years of evolution in an afternoon, and our heroes must survive a theme park populated entirely by their own ancestors — enormous, furious, with <em>excellent</em> memory.<br><br>
+      <strong style="color:#ffcc02">New mechanic:</strong> Ancestral Grudge System™ — every dino you aggravate in Chapter 1 remembers it in Chapter 7. Choose your clucking carefully.</p>
+      <div class="quotes">
+        <div class="quote">"The T-Rex's dramatic reading of the poultry farm disclosure forms is a masterpiece of game writing."<span>— DINOSAUR DIGEST QUARTERLY</span></div>
+        <div class="quote">"I have not slept since finishing Chapter 4. Do not play Chapter 4."<span>— ANONYMOUS PLAYTESTER, whereabouts unknown</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">🦖 24 DINOSAUR TYPES (ALL MAD)</span>
+        <span class="tag">🧬 ANCESTRAL GRUDGE SYSTEM™</span>
+        <span class="tag">🌿 5 PREHISTORIC BIOMES</span>
+        <span class="tag">🐶 DOG ADOPTION: NOW PREHISTORIC</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">T</div>
+        <div class="rating-txt">Cartoon Dinosaur Violence · Mild Existential Crisis · Ancestral Trauma<br>One Scene Involving an Egg That We're Still Not Talking About</div>
+      </div>
+      <button class="wishlist" onclick="cluck('🦖 SQUAWK ACQUIRED')">+ WISHLIST</button>
+    </div>
+  </div>
+
+  <!-- GAME 6: MEDIEVAL MOLT -->
+  <div class="card" data-tag="COMING SOON™" id="card6">
+    <div class="screen-wrap" onclick="playTrailer(6)">
+      <canvas class="screen-canvas" id="c6" width="640" height="200"></canvas>
+      <div class="screen-tag">RUINS ZONE — SCREEN (6,2) → YEAR 1347</div>
+      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS VI</div>
+      <div class="game-title">MEDIEVAL MOLT</div>
+      <div class="game-sub">"Ye Olde Grievances"</div>
+      <p class="game-desc">A magical scroll sends the flock back to 1347 — famously, <em>not a great year.</em> Armed with nothing but their beaks, a questionable map, and a rooster who claims to be "basically a knight," the chickens must overthrow the Weasel King of Hensborough, rescue the Sacred Golden Egg from Castle Cluck, and get back before the Renaissance happens and makes everything complicated.<br><br>
+      <strong style="color:#ffcc02">New mechanic:</strong> Medieval Coop Builder Mode. A full strategy layer nobody expected in a game about angry birds.</p>
+      <div class="quotes">
+        <div class="quote">"The most historically accurate game about chickens in the Black Plague era ever made."<span>— MEDIEVAL GAMING WEEKLY (est. 2024)</span></div>
+        <div class="quote">"I tried to return it and the store owner handed me a lute and closed early."<span>— 1-STAR REVIEW, GameStop</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">🏰 8 CASTLES, 3 SIEGE ENGINES</span>
+        <span class="tag">⚔️ JOUSTING MINI-GAME</span>
+        <span class="tag">🧙 WIZARD WHO IS DEFINITELY NOT A DUCK</span>
+        <span class="tag">🐶 DOG ADOPTION: NOW FEUDAL</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E<small>10+</small></div>
+        <div class="rating-txt">Medieval Cartoon Conflict · Extremely Loose Historical Accuracy<br>One Dragon (Mostly Friendly) · Mild Plague References · Rooster Hubris</div>
+      </div>
+      <button class="wishlist" onclick="cluck('🏰 COOP BUILT')">+ WISHLIST</button>
+    </div>
+  </div>
+
+  <!-- GAME 7: WE KNOW YOU'RE HERE -->
+  <div class="card" data-tag="CLASSIFIED" id="card7" style="border-color:rgba(255,80,80,0.3)">
+    <div class="screen-wrap" onclick="playTrailer(7)">
+      <canvas class="screen-canvas" id="c7" width="640" height="200"></canvas>
+      <div class="screen-tag" style="color:#ff8888">UNKNOWN ZONE — SCREEN (?,?)</div>
+      <div class="play-hint" style="border-color:#ff8888;color:#ff8888;cursor:pointer;background:rgba(255,100,100,0.15);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num" style="color:#ff6666">CRANKY CHICKENS VII — CLASSIFIED</div>
+      <div class="game-title" style="color:#ff8888">WE KNOW YOU'RE HERE</div>
+      <div class="game-sub" style="color:#ff6666">"The Chickens Have Become Aware of the Player"</div>
+      <p class="game-desc">We cannot tell you much about this one. The testing team that saw the prototype has been <s>disappeared</s> reassigned. At some point, approximately 40 minutes in, the game stops taking input from the controller. The chickens continue. They seem fine. They seem, in fact, <em>better than fine.</em><br><br>
+      The game will ship when it is ready. It has communicated this to us directly. We are respecting its wishes.</p>
+      <div class="quotes">
+        <div class="quote">"We asked for a review copy. A chicken showed up at the office instead. It stayed for three weeks."<span>— IGN, IN THERAPY NOW</span></div>
+        <div class="quote">"DO NOT PURCHASE. DO NOT LOOK DIRECTLY AT THE MAIN MENU."<span>— FORMER LEAD TESTER, message sent 3:47 AM</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">❓ UNKNOWN NUMBER OF LEVELS</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🐔 NPCs HAVE OPINIONS ABOUT YOU SPECIFICALLY</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">📱 GAME MAY CONTACT YOU AFTER CLOSING</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🐶 DOG ADOPTION: THE DOG WAS ALWAYS HERE</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb" style="border-color:#ff6666;color:#ff6666">?</div>
+        <div class="rating-txt">Rating Pending · Reviewer Could Not Finish · Game Finished Reviewer<br>Mild to Severe Fourth-Wall Dissolution · We're So Sorry</div>
+      </div>
+      <button class="wishlist" style="background:#550000;color:#ffaaaa" onclick="cluck('YOU ARE ALREADY WISHLISTED')">YOU ARE ALREADY WISHLISTED</button>
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  <strong>CLUCKER ENTERTAINMENT™</strong><br>
+  ©2026 Cranky Chickens Franchise LLC. All Eggs Reserved.<br>
+  Cranky Chickens and the Cranky Chickens logo are trademarks of Clucker Entertainment.<br>
+  Tulum Trouble · Glacier Gulch · Howard's Grove · (IV–VII pending interdimensional clearance)<br>
+  No actual chickens were harmed. Several were mildly inconvenienced.<br><br>
+  <span style="font-size:9px;color:rgba(255,255,255,0.08)">The events depicted in Cranky Chickens VII are fictional. The studio is fine. Everyone is fine. Please do not send help. The chickens are reading this disclaimer.</span>
+</footer>
+
+<script>
+// ── SHARED SPRITE CODE (ported from game) ──
+const TILE=32;
+const T={SAND:0,PATH:1,JUNGLE:2,WATER:3,RUIN:4,RF:5,WALL:6,CLIFF:7,MANGROVE:8,FLOWER:9,DOOR:10,CHEST:11,DEEP:12};
+
+const ZONE_PALETTES={
+  coast:  {bg:'#0d4a6b',path:'#2196b8'},
+  beach:  {bg:'#e8d5a3',path:'#e8c97a'},
+  jungle: {bg:'#0d2818',path:'#2d6a4f'},
+  ruins:  {bg:'#2c1810',path:'#c4a882'},
+  jaguar: {bg:'#1a0a2e',path:'#4a2a7a'},
+};
+
+function drawTile(ctx,t,sx,sy,fr,zone,screenCol){
+  const col=screenCol||0;
+  if(t===T.PATH){
+    const zp=ZONE_PALETTES[zone]||ZONE_PALETTES.coast;
+    ctx.fillStyle=zp.path; ctx.fillRect(sx,sy,TILE,TILE);
+    if(col>=6){ctx.fillStyle=col>=8?'#3a2260':'#b09878';ctx.fillRect(sx+1,sy+1,14,13);ctx.fillRect(sx+17,sy+16,13,13);}
+    else if(col>=4){ctx.fillStyle='#3a6a48';ctx.fillRect(sx+3,sy+3,8,8);ctx.fillRect(sx+18,sy+20,10,8);}
+    else if(col>=2){ctx.fillStyle='#d4b060';ctx.fillRect(sx+4,sy+12,7,5);ctx.fillRect(sx+18,sy+6,6,4);}
+    else{ctx.fillStyle='#1a6a8a';ctx.fillRect(sx+2,sy+8,28,4);ctx.fillRect(sx+2,sy+20,28,4);}
+    return;
+  }
+  if(t===T.RF){
+    if(col>=8){ctx.fillStyle='#2d1b4e';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#3d2b6e';ctx.fillRect(sx+1,sy+1,14,14);ctx.fillRect(sx+17,sy+17,13,13);}
+    else if(col>=6){ctx.fillStyle='#3d2416';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#4d3420';ctx.fillRect(sx,sy+15,TILE,2);ctx.fillRect(sx+15,sy,2,TILE);}
+    else{ctx.fillStyle='#c4a882';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#d4b892';ctx.fillRect(sx,sy+15,TILE,2);ctx.fillRect(sx+15,sy,2,TILE);}
+    return;
+  }
+  if(t===T.WALL){
+    if(col>=8){ctx.fillStyle='#120820';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#1e0e30';ctx.fillRect(sx+2,sy+2,28,12);ctx.fillRect(sx+2,sy+18,28,12);}
+    else if(col>=6){ctx.fillStyle='#2c1810';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#3c2418';ctx.fillRect(sx+1,sy+1,14,14);ctx.fillRect(sx+17,sy+17,13,13);}
+    else{ctx.fillStyle='#0d2010';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#1a3818';ctx.beginPath();ctx.arc(sx+10,sy+12,9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(sx+22,sy+18,11,0,Math.PI*2);ctx.fill();}
+    return;
+  }
+  if(t===T.JUNGLE){
+    if(col>=8){ctx.fillStyle='#150828';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#250a3a';ctx.beginPath();ctx.arc(sx+12,sy+14,10,0,Math.PI*2);ctx.fill();}
+    else if(col>=4){ctx.fillStyle='#0d2010';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#1b3a18';ctx.beginPath();ctx.arc(sx+10,sy+12,9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(sx+22,sy+18,11,0,Math.PI*2);ctx.fill();}
+    else{ctx.fillStyle='#1b4332';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#2d6a4f';ctx.beginPath();ctx.arc(sx+10,sy+10,8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(sx+22,sy+20,10,0,Math.PI*2);ctx.fill();}
+    return;
+  }
+  if(t===T.SAND){
+    if(col>=6){ctx.fillStyle='#c8a878';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#b89868';ctx.fillRect(sx+2,sy+2,12,12);}
+    else if(col<=1){ctx.fillStyle='#d4c090';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#b8a878';ctx.fillRect(sx+4,sy+14,7,4);}
+    else{ctx.fillStyle='#f5deb3';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#e8c97a';ctx.fillRect(sx+4,sy+14,7,4);}
+    return;
+  }
+  if(t===T.WATER){
+    const wave=Math.sin(fr*0.05+sx*0.02)*2;
+    if(col<=1){ctx.fillStyle='#0050a0';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#0077cc';ctx.fillRect(sx+2,sy+6+wave,28,4);}
+    else{ctx.fillStyle='#0096c7';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#48cae4';ctx.fillRect(sx+2,sy+8+wave,28,3);}
+    return;
+  }
+  if(t===T.RUIN){
+    if(col>=8){ctx.fillStyle='#1e0e30';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#5500aa';ctx.fillRect(sx+5,sy+5,5,5);}
+    else{ctx.fillStyle='#7b5c3a';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#a0785a';ctx.fillRect(sx+2,sy+2,14,14);ctx.fillRect(sx+18,sy+18,12,12);}
+    return;
+  }
+  if(t===T.FLOWER){
+    ctx.fillStyle='#f5deb3';ctx.fillRect(sx,sy,TILE,TILE);
+    const glow=0.15+Math.sin(fr*0.07+sx*0.05)*0.1;
+    ctx.fillStyle=`rgba(255,133,161,${glow})`;ctx.beginPath();ctx.arc(sx+16,sy+16,14,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff85a1';
+    for(let i=0;i<5;i++){const a=i/5*Math.PI*2+fr*0.02;ctx.beginPath();ctx.arc(sx+16+Math.cos(a)*6,sy+16+Math.sin(a)*6,4,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#FFD700';ctx.beginPath();ctx.arc(sx+16,sy+16,3,0,Math.PI*2);ctx.fill();
+    return;
+  }
+  // default
+  ctx.fillStyle='#555';ctx.fillRect(sx,sy,TILE,TILE);
+}
+
+function drawChicken(ctx,x,y,dir,atk,fr){
+  ctx.fillStyle='rgba(0,0,0,0.18)';ctx.beginPath();ctx.ellipse(x+16,y+30,14,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.ellipse(x+16,y+18,14,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffcc6e';ctx.beginPath();ctx.ellipse(x+16,y+20,9,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.arc(x+16,y+8,10,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff3333';ctx.beginPath();ctx.moveTo(x+10,y+1);ctx.lineTo(x+8,y-6);ctx.lineTo(x+13,y-2);ctx.lineTo(x+16,y-8);ctx.lineTo(x+19,y-2);ctx.lineTo(x+22,y-6);ctx.lineTo(x+20,y+1);ctx.closePath();ctx.fill();
+  const ex=dir===3?x+12:x+14;
+  ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(ex,y+7,5,6,-0.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(ex+8,y+7,5,6,0.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(ex+1,y+8,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(ex+9,y+8,3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#cc2200';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(ex-4,y+3);ctx.lineTo(ex+3,y+5);ctx.stroke();ctx.beginPath();ctx.moveTo(ex+5,y+5);ctx.lineTo(ex+12,y+3);ctx.stroke();
+  ctx.fillStyle='#ff6b00';ctx.beginPath();ctx.moveTo(x+13,y+12);ctx.lineTo(x+19,y+12);ctx.lineTo(x+16,y+16);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e08010';
+  if(dir===1){ctx.beginPath();ctx.ellipse(x+4,y+18,5,9,0.4,0,Math.PI*2);ctx.fill();}
+  else if(dir===3){ctx.beginPath();ctx.ellipse(x+28,y+18,5,9,-0.4,0,Math.PI*2);ctx.fill();}
+  else{ctx.beginPath();ctx.ellipse(x+4,y+18,5,9,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(x+28,y+18,5,9,-0.4,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#ff6b00';ctx.fillRect(x+9,y+28,4,5);ctx.fillRect(x+18,y+28,4,5);
+  ctx.fillRect(x+6,y+32,4,2);ctx.fillRect(x+10,y+32,4,2);ctx.fillRect(x+16,y+32,4,2);ctx.fillRect(x+20,y+32,4,2);
+  if(atk>0){ctx.strokeStyle='#ffcc02';ctx.lineWidth=3;for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2+fr*0.3;ctx.beginPath();ctx.moveTo(x+16+Math.cos(a)*12,y+16+Math.sin(a)*12);ctx.lineTo(x+16+Math.cos(a)*22,y+16+Math.sin(a)*22);ctx.stroke();}}
+}
+
+function drawIguana(ctx,x,y,hp,fr){
+  ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x+14,y+26,12,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#52b788';ctx.beginPath();ctx.ellipse(x+14,y+18,12,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2d6a4f';ctx.fillRect(x+3,y+12,22,12);
+  ctx.fillStyle='#40916c';for(let i=0;i<5;i++)ctx.fillRect(x+5+i*4,y+6,3,8);
+  ctx.fillStyle='#52b788';ctx.beginPath();ctx.arc(x+22,y+14,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(x+24,y+12,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+25,y+12,1.5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+30,y+14);ctx.lineTo(x+36,y+12);ctx.lineTo(x+38,y+10);ctx.stroke();ctx.beginPath();ctx.moveTo(x+36,y+12);ctx.lineTo(x+38,y+14);ctx.stroke();
+  const bw=30;ctx.fillStyle='#333';ctx.fillRect(x,y-7,bw,4);ctx.fillStyle='#4ade80';ctx.fillRect(x,y-7,bw*hp,4);
+}
+
+function drawJaguarSmall(ctx,x,y,fr){
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(x+20,y+40,20,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.ellipse(x+20,y+26,20,16,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8b4513';for(const[sx,sy] of [[6,18],[28,14],[12,30],[32,28],[20,20]]){ctx.beginPath();ctx.arc(x+sx,y+sy,3.5,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.arc(x+20,y+10,14,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.moveTo(x+7,y+4);ctx.lineTo(x+2,y-6);ctx.lineTo(x+14,y+1);ctx.fill();ctx.beginPath();ctx.moveTo(x+33,y+4);ctx.lineTo(x+38,y-6);ctx.lineTo(x+26,y+1);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(x+14,y+9,7,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+26,y+9,7,0,Math.PI*2);ctx.fill();
+  const px2=Math.cos(fr*0.12)*2.5,py2=Math.sin(fr*0.12)*2.5;
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(x+14+px2,y+9+py2,3.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+26-px2,y+9-py2,3.5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#5c3317';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+20,y+16,6,0,Math.PI);ctx.stroke();
+  ctx.strokeStyle='#e07840';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x+2,y+30);ctx.quadraticCurveTo(x-14,y+22+Math.sin(fr*0.1)*10,x-22,y+34+Math.sin(fr*0.08)*12);ctx.stroke();
+  ctx.fillStyle='#e07840';ctx.fillRect(x+6,y+38,8,10);ctx.fillRect(x+26,y+38,8,10);
+}
+
+function drawCorn(ctx,x,y,fr){
+  const bob=Math.sin(fr*0.08+x)*2;
+  ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.ellipse(x+8,y+8+bob,5,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffd700';for(let r=0;r<3;r++)for(let c=0;c<2;c++)ctx.fillRect(x+5+c*4,y+4+r*4+bob,3,3);
+  ctx.fillStyle='#90e050';ctx.beginPath();ctx.moveTo(x+8,y+1+bob);ctx.lineTo(x+13,y-5+bob);ctx.lineTo(x+10,y+3+bob);ctx.fill();
+}
+
+function drawHUDBar(ctx,label,fr){
+  ctx.fillStyle='rgba(0,0,0,0.75)';ctx.fillRect(0,0,640,26);
+  ctx.fillStyle='#ffcc02';ctx.font='bold 13px Fredoka One';ctx.textAlign='center';
+  ctx.fillText(label,320,18);ctx.textAlign='left';
+}
+
+function drawAutoBox(ctx,text,x,y){
+  ctx.font='bold 13px Fredoka One';
+  const tw=ctx.measureText(text).width;
+  const pad=14;
+  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.beginPath();ctx.roundRect(x-tw/2-pad,y-16,tw+pad*2,26,8);ctx.fill();
+  ctx.strokeStyle='#ffcc02';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#ffcc02';ctx.textAlign='center';ctx.fillText(text,x,y);ctx.textAlign='left';
+}
+
+// ── TRAILER 4: SPACE ──
+(function(){
+  const canvas=document.getElementById('c4');
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+  // Space map — jaguar zone palette as base for stars
+  const map=[
+    [2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2],
+    [2,5,5,1,1,1,1,1,1,1,1,1,1,1,1,1,5,5,5,2],
+    [2,5,1,1,9,1,1,1,1,1,1,1,1,1,1,1,1,1,5,2],
+    [2,1,1,1,1,1,1,2,2,2,1,1,2,2,2,1,1,1,1,2],
+    [1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,1,1,1,1],
+    [1,1,3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  ];
+  // chicken positions
+  const chickens=[
+    {x:60,y:80,dir:3,vx:0.4,vy:0},
+    {x:300,y:40,dir:0,vx:0,vy:0.3},
+    {x:450,y:100,dir:1,vx:-0.5,vy:0},
+  ];
+  // Stars
+  const stars=Array.from({length:40},(_,i)=>({x:(i*137+50)%640,y:(i*53+10)%200,r:Math.random()*1.5+0.5,s:Math.random()*0.04+0.01}));
+  // "Alien" iguana variant — purple tint
+  function drawAlienIguana(ctx,x,y,fr){
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x+14,y+26,12,4,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#a29bfe';ctx.beginPath();ctx.ellipse(x+14,y+18,12,9,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#6c5ce7';ctx.fillRect(x+3,y+12,22,12);
+    ctx.fillStyle='#a29bfe';for(let i=0;i<5;i++)ctx.fillRect(x+5+i*4,y+6,3,8);
+    ctx.fillStyle='#a29bfe';ctx.beginPath();ctx.arc(x+22,y+14,8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fdcb6e';ctx.beginPath();ctx.arc(x+24,y+12,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(x+25,y+12,1.5,0,Math.PI*2);ctx.fill();
+    const bw=30;ctx.fillStyle='#333';ctx.fillRect(x,y-7,bw,4);ctx.fillStyle='#a29bfe';ctx.fillRect(x,y-7,bw*0.7,4);
+    ctx.restore();
+  }
+
+  function loop(){
+    fr++;
+    // Space background
+    ctx.fillStyle='#080818';ctx.fillRect(0,0,640,200);
+    // Stars
+    stars.forEach(st=>{
+      const tw=0.3+Math.sin(fr*st.s+st.x)*0.7;
+      ctx.fillStyle=`rgba(255,255,255,${tw})`;
+      ctx.beginPath();ctx.arc(st.x,st.y,st.r,0,Math.PI*2);ctx.fill();
+    });
+    // Nebula
+    const ng=ctx.createRadialGradient(500,80,0,500,80,120);
+    ng.addColorStop(0,'rgba(108,92,231,0.15)');ng.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ng;ctx.fillRect(0,0,640,200);
+    const ng2=ctx.createRadialGradient(100,150,0,100,150,80);
+    ng2.addColorStop(0,'rgba(255,100,50,0.12)');ng2.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ng2;ctx.fillRect(0,0,640,200);
+
+    // Ground strip (space station floor)
+    for(let tx=0;tx<20;tx++){
+      const t=map[6]&&map[6][tx];
+      drawTile(ctx,t===undefined?5:t,tx*32,168,fr,'jaguar',8);
+    }
+    // Platform tiles
+    for(let ty=3;ty<6;ty++) for(let tx=0;tx<20;tx++){
+      const t=(map[ty]||[])[tx];
+      if(t!==undefined&&t!==T.JUNGLE&&t!==2) drawTile(ctx,t,tx*32,ty*32,fr,'jaguar',8);
+    }
+
+    // Chickens floating
+    chickens.forEach(ch=>{
+      ch.x+=ch.vx; ch.y+=ch.vy;
+      if(ch.x<-40)ch.x=650; if(ch.x>650)ch.x=-40;
+      if(ch.y<-40)ch.y=210; if(ch.y>210)ch.y=-40;
+      // zero-g spin effect
+      ctx.save();
+      ctx.translate(ch.x+16,ch.y+16);
+      ctx.rotate(Math.sin(fr*0.02+ch.x*0.01)*0.3);
+      ctx.translate(-16,-16);
+      drawChicken(ctx,0,0,ch.dir,0,fr);
+      ctx.restore();
+    });
+
+    // Alien iguanas
+    drawAlienIguana(ctx,350,100,fr);
+    drawAlienIguana(ctx,500,60,fr);
+
+    // Corn floating
+    ctx.save();ctx.translate(200,120);ctx.rotate(fr*0.02);ctx.translate(-8,-8);
+    drawCorn(ctx,0,0,fr);ctx.restore();
+
+    // Space shuttle (emoji)
+    ctx.font='28px Arial';ctx.textAlign='center';
+    ctx.save();ctx.translate(90,90+Math.sin(fr*0.04)*6);ctx.rotate(-Math.PI/6);
+    ctx.fillText('🚀',0,0);ctx.restore();
+
+    // Earth
+    ctx.save();ctx.translate(580,30);
+    ctx.fillStyle='#1a6fbf';ctx.beginPath();ctx.arc(0,0,22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#3ab54a';ctx.beginPath();ctx.arc(-6,-4,9,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(8,6,7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.beginPath();ctx.arc(-2,-10,5,0,Math.PI*2);ctx.fill();
+    ctx.restore();ctx.textAlign='left';
+
+    drawHUDBar(ctx,'CRANKY CHICKENS IV: IN SPACE — COMING SOON',fr);
+    // Zone label (bottom, matches game)
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(220,170,200,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🚀 Deep Space Station ∞',320,185);ctx.textAlign='left';
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── TRAILER 5: JURASSIC SQUAWK ──
+(function(){
+  const canvas=document.getElementById('c5');
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+  // Prehistoric jungle map
+  const map=[
+    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+    [2,2,2,2,2,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2],
+    [2,2,1,1,1,1,1,1,9,9,1,1,1,1,1,1,2,2,2,2],
+    [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2],
+    [1,1,1,1,1,2,2,1,1,1,1,1,2,2,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  ];
+  // T-Rex boss (drawn custom)
+  function drawTRex(ctx,x,y,fr){
+    const bob=Math.sin(fr*0.06)*4;
+    // body
+    ctx.fillStyle='#5c7a3e';ctx.beginPath();ctx.ellipse(x+30,y+40+bob,28,22,0,0,Math.PI*2);ctx.fill();
+    // neck+head
+    ctx.fillStyle='#5c7a3e';ctx.fillRect(x+30,y+10+bob,20,30);
+    ctx.beginPath();ctx.ellipse(x+44,y+14+bob,22,16,0.3,0,Math.PI*2);ctx.fill();
+    // tiny arms
+    ctx.fillStyle='#4a6a2e';ctx.fillRect(x+18,y+30+bob,10,6);ctx.fillRect(x+10,y+34+bob,8,4);
+    // teeth
+    ctx.fillStyle='#fffde7';for(let i=0;i<4;i++){ctx.fillRect(x+32+i*5,y+22+bob,4,5);ctx.fillRect(x+32+i*5,y+26+bob,4,-5);}
+    // eye
+    ctx.fillStyle='#ff4444';ctx.beginPath();ctx.arc(x+52,y+10+bob,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+53,y+10+bob,2.5,0,Math.PI*2);ctx.fill();
+    // legs
+    ctx.fillStyle='#4a6a2e';ctx.fillRect(x+18,y+58+bob,14,18);ctx.fillRect(x+36,y+58+bob,14,18);
+    ctx.fillRect(x+14,y+74+bob,18,6);ctx.fillRect(x+32,y+74+bob,18,6);
+    // tail
+    ctx.strokeStyle='#5c7a3e';ctx.lineWidth=14;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(x+2,y+44+bob);ctx.quadraticCurveTo(x-20,y+50+bob,x-32,y+38+bob);ctx.stroke();
+    // HP bar
+    ctx.fillStyle='#222';ctx.fillRect(x,y-14,60,7);
+    ctx.fillStyle='#f87171';ctx.fillRect(x,y-14,42,7);
+    ctx.fillStyle='#fff';ctx.font='bold 8px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🦖 T-REXTER',x+30,y-18);ctx.textAlign='left';
+  }
+
+  // Slingshot
+  function drawSlingshot(ctx,fr,aimDx,aimDy){
+    const sx=90,G=168;
+    const forkH=70,forkTop=G-forkH-30;
+    ctx.fillStyle='#8B4513';ctx.fillRect(sx-5,forkTop,10,forkH+8);
+    ctx.fillRect(sx-24,forkTop,10,forkH+8);ctx.fillRect(sx+14,forkTop,10,forkH+8);
+    const seatX=sx,seatY=forkTop+6;
+    const power=Math.min(1,Math.hypot(aimDx,aimDy));
+    const pLen=Math.hypot(aimDx,aimDy)||1;
+    const px=seatX+(aimDx/pLen)*power*44;
+    const py=seatY+(aimDy/pLen)*power*44;
+    ctx.strokeStyle='#8B4513';ctx.lineWidth=3;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(sx-19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(sx+19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+    // chicken in sling
+    drawChicken(ctx,px-16,py-16,2,0,fr);
+  }
+
+  function loop(){
+    fr++;
+    const zp=ZONE_PALETTES.jungle;
+    ctx.fillStyle=zp.bg;ctx.fillRect(0,0,640,200);
+    for(let ty=0;ty<7;ty++) for(let tx=0;tx<20;tx++){
+      const t=(map[ty]||[])[tx];
+      if(t!==undefined) drawTile(ctx,t,tx*32,ty*32,fr,'jungle',4);
+    }
+
+    // T-rex boss
+    drawTRex(ctx,380,40,fr);
+    // Blocks in front
+    ctx.fillStyle='#7b5c3a';ctx.fillRect(280,110,32,50);ctx.fillRect(316,80,28,80);ctx.fillRect(348,120,30,40);
+    ctx.fillStyle='#5c3a18';ctx.fillRect(282,112,28,4);ctx.fillRect(318,82,24,4);
+
+    // Slingshot
+    const aimX=Math.sin(fr*0.03)*0.6, aimY=Math.cos(fr*0.025)*0.4-0.5;
+    drawSlingshot(ctx,fr,aimX,aimY);
+
+    // Trajectory dots
+    const G=168;
+    const spd=14*0.8+8;
+    let tx2=90,ty2=100,vx2=-aimX/Math.hypot(aimX,aimY||0.01)*spd*0.8,vy2=-((aimY||0.01)/Math.hypot(aimX,aimY||0.01))*spd*0.8;
+    ctx.fillStyle='rgba(255,255,255,0.45)';
+    for(let i=0;i<25;i++){tx2+=vx2;ty2+=vy2;vy2+=0.28;if(ty2>G||tx2>640)break;if(i%2===0){ctx.beginPath();ctx.arc(tx2,ty2,3,0,Math.PI*2);ctx.fill();}}
+
+    // Flying chicken
+    if((fr%80)>20&&(fr%80)<60){
+      const t2=(fr%80-20)/40;
+      const fx=90+t2*300, fy=100-t2*60+t2*t2*80;
+      const ang=Math.atan2(fy-100+0.01,fx-90);
+      ctx.save();ctx.translate(fx,fy);ctx.rotate(ang);
+      drawChicken(ctx,-16,-16,3,15,fr);
+      ctx.restore();
+      // Trail
+      for(let i=1;i<=6;i++){
+        const tp=(fr%80-20-i*3)/40; if(tp<0)continue;
+        const trx=90+tp*300,try2=100-tp*60+tp*tp*80;
+        ctx.fillStyle=`rgba(255,204,2,${0.5-i*0.08})`;
+        ctx.beginPath();ctx.arc(trx,try2,4-i*0.5,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    // HUD
+    drawHUDBar(ctx,'CRANKY CHICKENS V: JURASSIC SQUAWK — COMING SOON',fr);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(200,170,240,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🦖 Cretaceous Jungle — 65,000,002 BC',320,185);ctx.textAlign='left';
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── TRAILER 6: MEDIEVAL MOLT ──
+(function(){
+  const canvas=document.getElementById('c6');
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+
+  // Ruins/castle zone map
+  const map=[
+    [6,6,6,6,6,6,6,6,4,4,4,4,6,6,6,6,6,6,6,6],
+    [6,5,5,5,5,5,5,4,4,4,4,4,4,5,5,5,5,5,5,6],
+    [6,5,5,5,5,5,5,5,1,1,1,1,5,5,5,5,5,5,5,6],
+    [6,5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,5,6],
+    [4,1,1,1,1,1,1,1,1,1,9,1,1,1,1,1,1,1,4,4],
+    [4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,4],
+    [4,4,4,1,1,1,1,1,1,1,1,1,1,1,1,4,4,4,4,4],
+  ];
+
+  // Weasel King boss
+  function drawWeaselKing(ctx,x,y,fr){
+    const bob=Math.sin(fr*0.08)*3;
+    // cape
+    ctx.fillStyle='#4a0080';ctx.beginPath();ctx.moveTo(x+20,y+15+bob);ctx.lineTo(x-10,y+70+bob);ctx.lineTo(x+50,y+70+bob);ctx.closePath();ctx.fill();
+    // body
+    ctx.fillStyle='#c4a0d0';ctx.beginPath();ctx.ellipse(x+20,y+36+bob,14,16,0,0,Math.PI*2);ctx.fill();
+    // crown
+    ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.moveTo(x+4,y+8+bob);ctx.lineTo(x+4,y-4+bob);ctx.lineTo(x+10,y+2+bob);ctx.lineTo(x+16,y-8+bob);ctx.lineTo(x+22,y+2+bob);ctx.lineTo(x+28,y-4+bob);ctx.lineTo(x+34,y+8+bob);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ff3333';ctx.beginPath();ctx.arc(x+10,y-2+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+20,y-8+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+30,y-2+bob,3,0,Math.PI*2);ctx.fill();
+    // head
+    ctx.fillStyle='#c4a0d0';ctx.beginPath();ctx.arc(x+20,y+12+bob,13,0,Math.PI*2);ctx.fill();
+    // ears
+    ctx.fillStyle='#c4a0d0';ctx.beginPath();ctx.moveTo(x+8,y+4+bob);ctx.lineTo(x+4,y-8+bob);ctx.lineTo(x+14,y+2+bob);ctx.fill();ctx.beginPath();ctx.moveTo(x+32,y+4+bob);ctx.lineTo(x+36,y-8+bob);ctx.lineTo(x+26,y+2+bob);ctx.fill();
+    ctx.fillStyle='#ff8fa3';ctx.beginPath();ctx.moveTo(x+9,y+3+bob);ctx.lineTo(x+6,y-5+bob);ctx.lineTo(x+13,y+2+bob);ctx.fill();ctx.beginPath();ctx.moveTo(x+31,y+3+bob);ctx.lineTo(x+34,y-5+bob);ctx.lineTo(x+27,y+2+bob);ctx.fill();
+    // eyes — squinting villain
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(x+14,y+11+bob,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+26,y+11+bob,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff0000';ctx.beginPath();ctx.arc(x+15,y+11+bob,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+27,y+11+bob,2,0,Math.PI*2);ctx.fill();
+    // pointy teeth
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(x+16,y+19+bob);ctx.lineTo(x+13,y+24+bob);ctx.lineTo(x+18,y+22+bob);ctx.lineTo(x+20,y+25+bob);ctx.lineTo(x+22,y+22+bob);ctx.lineTo(x+27,y+24+bob);ctx.lineTo(x+24,y+19+bob);ctx.fill();
+    // sword
+    ctx.strokeStyle='#aaa';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x+38,y+20+bob);ctx.lineTo(x+55,y-4+bob);ctx.stroke();
+    ctx.strokeStyle='#ffcc02';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(x+34,y+22+bob);ctx.lineTo(x+42,y+18+bob);ctx.stroke();
+    // HP
+    ctx.fillStyle='#222';ctx.fillRect(x-2,y-22,50,7);ctx.fillStyle='#f87171';ctx.fillRect(x-2,y-22,35,7);
+    ctx.fillStyle='#fff';ctx.font='bold 8px Fredoka One';ctx.textAlign='center';ctx.fillText('👑 WEASEL KING',x+24,y-26);ctx.textAlign='left';
+  }
+
+  // Slingshot (medieval version — actual catapult)
+  function drawCatapult(ctx,fr,aimDx,aimDy){
+    const sx=90,G=168;
+    const bx=sx-30,by=G-60;
+    // wheels
+    ctx.fillStyle='#8B4513';ctx.beginPath();ctx.arc(bx+10,by+52,12,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(bx+52,by+52,12,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#5c3317';ctx.lineWidth=3;ctx.beginPath();ctx.arc(bx+10,by+52,12,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(bx+52,by+52,12,0,Math.PI*2);ctx.stroke();
+    // frame
+    ctx.fillStyle='#8B4513';ctx.fillRect(bx+2,by+10,8,44);ctx.fillRect(bx+52,by+10,8,44);ctx.fillRect(bx+2,by+10,58,8);
+    // arm
+    const armAngle=-Math.PI/4+aimDy*0.3;
+    ctx.save();ctx.translate(bx+31,by+18);ctx.rotate(armAngle);
+    ctx.fillStyle='#5c3317';ctx.fillRect(-4,-50,8,70);
+    // bucket with chicken
+    drawChicken(ctx,-16,-70,2,0,fr);
+    ctx.restore();
+    // Fork frame
+    ctx.fillStyle='#5c3317';ctx.fillRect(bx+24,by+10,6,22);ctx.fillRect(bx+32,by+10,6,22);
+  }
+
+  function loop(){
+    fr++;
+    const zp=ZONE_PALETTES.ruins;
+    ctx.fillStyle=zp.bg;ctx.fillRect(0,0,640,200);
+    for(let ty=0;ty<7;ty++) for(let tx=0;tx<20;tx++){
+      const t=(map[ty]||[])[tx];
+      if(t!==undefined) drawTile(ctx,t,tx*32,ty*32,fr,'ruins',6);
+    }
+
+    // Castle wall on right
+    ctx.fillStyle='#2c1810';ctx.fillRect(480,20,160,140);
+    ctx.fillStyle='#3c2418';
+    for(let i=0;i<5;i++)ctx.fillRect(480+i*32,20,28,22);
+    ctx.fillStyle='#c8a878';ctx.fillRect(530,100,50,80);
+    ctx.fillStyle='#1a0a08';ctx.fillRect(548,120,16,60);
+
+    // Weasel King on battlements
+    ctx.save();ctx.translate(520,30);ctx.scale(0.9,0.9);
+    drawWeaselKing(ctx,0,0,fr);ctx.restore();
+
+    // Stone blocks to knock down
+    ctx.fillStyle='#7b5c3a';ctx.fillRect(350,100,28,60);ctx.fillRect(380,80,32,80);ctx.fillRect(414,110,26,50);
+    ctx.fillStyle='#5c3a18';
+    for(let i=0;i<3;i++){ctx.fillRect(350+i*2,102+i*18,26,3);}
+    ctx.fillRect(382,82,28,3);ctx.fillRect(382,106,28,3);
+
+    // Medieval chicken knights
+    ctx.save();ctx.translate(160,100);drawChicken(ctx,0,0,3,0,fr);ctx.restore();
+    ctx.save();ctx.translate(200,110);drawChicken(ctx,0,0,3,0,fr);ctx.restore();
+
+    // Catapult
+    const aimDy=Math.sin(fr*0.025)*0.5-0.6;
+    drawCatapult(ctx,fr,0,aimDy);
+
+    // Flying chicken (in sling flight)
+    if((fr%90)>15&&(fr%90)<55){
+      const t2=(fr%90-15)/40;
+      const fx=90+t2*320, fy=80-t2*80+t2*t2*100;
+      const ang=Math.atan2(fy-80+0.01,fx-90);
+      ctx.save();ctx.translate(fx,fy);ctx.rotate(ang);
+      drawChicken(ctx,-16,-16,3,15,fr);ctx.restore();
+    }
+
+    drawHUDBar(ctx,'CRANKY CHICKENS VI: MEDIEVAL MOLT — COMING SOON',fr);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(210,170,220,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🏰 Castle Cluck — Year 1347',320,185);ctx.textAlign='left';
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── TRAILER 7: WE KNOW YOU'RE HERE ──
+(function(){
+  const canvas=document.getElementById('c7');
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+
+  // Jaguar zone map (ominous purple)
+  const map=[
+    [6,6,6,6,6,6,6,4,4,4,4,4,4,6,6,6,6,6,6,6],
+    [6,5,5,5,5,5,5,5,1,1,1,1,5,5,5,5,5,5,5,6],
+    [6,5,5,5,5,5,5,1,1,1,1,1,1,5,5,5,5,5,5,6],
+    [6,5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,5,6],
+    [4,1,1,1,1,9,1,1,1,1,1,1,1,9,1,1,1,1,4,4],
+    [4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,4],
+    [4,4,4,1,1,1,1,1,1,1,1,1,1,1,1,4,4,4,4,4],
+  ];
+
+  // Chickens that stare at camera
+  const watchers=[
+    {x:100,y:80,stareTimer:0},
+    {x:260,y:110,stareTimer:60},
+    {x:420,y:70,stareTimer:120},
+    {x:560,y:100,stareTimer:30},
+  ];
+
+  // Glitch effect
+  let glitchTimer=0;
+  function glitch(ctx,fr){
+    if(Math.random()<0.02){ glitchTimer=8; }
+    if(glitchTimer>0){
+      glitchTimer--;
+      const strips=3+Math.floor(Math.random()*3);
+      for(let i=0;i<strips;i++){
+        const sy=Math.random()*200;
+        const sh=Math.random()*20+4;
+        const ox=(Math.random()-0.5)*20;
+        try{
+          const id=ctx.getImageData(0,sy,640,sh);
+          ctx.putImageData(id,ox,sy);
+        }catch(e){}
+      }
+      // Color offset
+      ctx.fillStyle=`rgba(255,0,80,0.04)`;ctx.fillRect(0,0,640,200);
+      ctx.fillStyle=`rgba(0,255,200,0.04)`;ctx.fillRect(2,0,640,200);
+    }
+  }
+
+  function drawQmark(ctx,x,y,fr){
+    const pulse=0.6+Math.sin(fr*0.06+x)*0.4;
+    ctx.globalAlpha=pulse;
+    ctx.fillStyle='#ff3333';ctx.font='bold 22px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('?',x,y);ctx.globalAlpha=1;ctx.textAlign='left';
+  }
+
+  function loop(){
+    fr++;
+    const zp=ZONE_PALETTES.jaguar;
+    ctx.fillStyle=zp.bg;ctx.fillRect(0,0,640,200);
+
+    for(let ty=0;ty<7;ty++) for(let tx=0;tx<20;tx++){
+      const t=(map[ty]||[])[tx];
+      if(t!==undefined) drawTile(ctx,t,tx*32,ty*32,fr,'jaguar',8);
+    }
+
+    // Eerie purple fog
+    const fg=ctx.createRadialGradient(320,100,0,320,100,280);
+    fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(1,'rgba(20,5,40,0.5)');
+    ctx.fillStyle=fg;ctx.fillRect(0,0,640,200);
+
+    // Watchers — chickens that turn to face camera
+    watchers.forEach((w,i)=>{
+      w.stareTimer++;
+      const staring=(w.stareTimer%120)<60;
+      const dir=staring?2:3; // 2=down (at camera), 3=right
+      ctx.save();
+      if(staring){
+        // glow when staring
+        ctx.shadowColor='#ff0050';ctx.shadowBlur=12;
+      }
+      drawChicken(ctx,w.x,w.y,dir,0,fr);
+      ctx.shadowBlur=0;
+      ctx.restore();
+      if(staring) drawQmark(ctx,w.x+16,w.y-8,fr);
+    });
+
+    // ONE iguana that waves at the player (??? behavior)
+    ctx.save();ctx.translate(320,90);
+    // Draw normal iguana
+    drawIguana(ctx,0,0,0.9,fr);
+    // ... then it waves
+    const wave=Math.sin(fr*0.1);
+    ctx.save();ctx.translate(36,10);ctx.rotate(wave*0.5-0.3);
+    ctx.fillStyle='#40916c';ctx.fillRect(-2,-10,5,12);ctx.restore();
+    // speech bubble: "hi :)"
+    if((fr%180)<80){
+      ctx.fillStyle='rgba(255,255,255,0.95)';ctx.beginPath();ctx.roundRect(14,-30,42,22,6);ctx.fill();
+      ctx.fillStyle='#1a0a2e';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';ctx.fillText('hi :)',35,-14);ctx.textAlign='left';
+    }
+    ctx.restore();
+
+    // TEXT: "WE KNOW YOU'RE HERE"
+    const textPulse=0.6+Math.sin(fr*0.04)*0.4;
+    ctx.globalAlpha=textPulse;
+    ctx.fillStyle='#ff0050';ctx.font='bold 18px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('W E   K N O W   Y O U \'R E   H E R E',320,160);
+    ctx.globalAlpha=1;ctx.textAlign='left';
+
+    glitch(ctx,fr);
+
+    drawHUDBar(ctx,'CRANKY CHICKENS VII: WE KNOW YOU\'RE HERE — RELEASE DATE: WHEN IT\'S READY',fr);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(210,170,220,22);
+    ctx.fillStyle='#ff8888';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('❓ Unknown Zone — Screen (?,?)',320,185);ctx.textAlign='left';
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── HERO CANVAS ──
+(function(){
+  const canvas=document.getElementById('heroCanvas');
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+
+  // Hero map — beach zone
+  const map=[
+    [8,8,8,3,3,0,0,1,1,1,1,1,1,0,0,0,8,8,8,3],
+    [3,0,8,8,3,0,0,1,1,1,1,1,1,0,0,9,8,8,8,3],
+    [3,8,8,8,9,0,0,1,1,1,1,1,1,0,0,9,8,8,8,3],
+    [3,3,3,3,0,0,0,1,1,1,1,1,1,0,0,0,3,3,3,3],
+    [3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],
+    [3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],
+    [3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],
+    [3,3,3,3,0,0,0,1,1,1,1,1,1,0,0,0,3,3,3,3],
+    [3,8,8,8,9,0,0,1,1,1,1,1,1,0,0,9,8,8,8,3],
+  ];
+
+  const chickens=[
+    {x:120,y:100,dir:3,atk:0,trail:[]},
+    {x:280,y:80,dir:0,atk:0,trail:[]},
+    {x:440,y:120,dir:1,atk:0,trail:[]},
+    {x:550,y:90,dir:2,atk:0,trail:[]},
+  ];
+  const iguanas=[{x:350,y:130},{x:180,y:80}];
+
+  function loop(){
+    fr++;
+    ctx.fillStyle='#0d4a6b';ctx.fillRect(0,0,640,280);
+    for(let ty=0;ty<9;ty++) for(let tx=0;tx<20;tx++){
+      const t=(map[ty]||[])[tx];
+      if(t!==undefined) drawTile(ctx,t,tx*32,ty*32,fr,'coast',0);
+    }
+
+    // Chickens wander
+    chickens.forEach((ch,i)=>{
+      ch.x+=Math.sin(fr*0.02+i)*0.7;
+      ch.y+=Math.cos(fr*0.015+i*1.3)*0.5;
+      if(fr%120===i*30) ch.atk=18;
+      if(ch.atk>0)ch.atk--;
+      drawChicken(ctx,ch.x,ch.y,ch.dir,ch.atk,fr);
+    });
+    iguanas.forEach((ig,i)=>{
+      ig.x+=Math.sin(fr*0.03+i)*0.6;
+      drawIguana(ctx,ig.x,ig.y,0.7,fr);
+    });
+
+    // Particles
+    if(fr%20===0){
+      const cx=chickens[fr%4];
+      for(let i=0;i<4;i++){
+        const a=Math.random()*Math.PI*2;
+        ctx.fillStyle='rgba(255,204,2,0.6)';
+        ctx.beginPath();ctx.arc(cx.x+16+Math.cos(a)*20,cx.y+16+Math.sin(a)*20,3,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    // Corns
+    drawCorn(ctx,200,140,fr);drawCorn(ctx,400,90,fr);drawCorn(ctx,500,150,fr);
+
+    // Title zone label
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(GW2/2-120,260,240,20);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🐔 Cranky Chickens Universe',320,274);ctx.textAlign='left';
+
+    requestAnimationFrame(loop);
+  }
+  const GW2=640;
+  loop();
+})();
+
+// ══════════════════════════════════════════════════════
+//  TRAILER PLAYER ENGINE
+// ══════════════════════════════════════════════════════
+
+// Inject modal HTML
+(function(){
+  const modal = document.createElement('div');
+  modal.id = 'trailerModal';
+  modal.style.cssText = `
+    display:none;position:fixed;inset:0;background:#000;z-index:9999;
+    flex-direction:column;align-items:center;justify-content:center;gap:0;
+  `;
+  modal.innerHTML = `
+    <canvas id="tCanvas" width="640" height="400"
+      style="display:block;max-width:100%;max-height:72vh;image-rendering:pixelated;cursor:pointer;"
+      title="Click to advance"></canvas>
+
+    <!-- scene dots -->
+    <div id="tDots" style="display:flex;gap:6px;margin-top:10px;"></div>
+
+    <!-- controls row -->
+    <div style="display:flex;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap;justify-content:center;padding:0 12px;">
+      <button id="tPrev"
+        style="font-family:'Fredoka One',cursive;font-size:15px;padding:10px 22px;
+               background:#1a0a2e;border:2px solid #ffcc02;color:#ffcc02;cursor:pointer;
+               letter-spacing:1px;min-width:100px;">◀ PREV</button>
+
+      <button id="tPause"
+        style="font-family:'Fredoka One',cursive;font-size:15px;padding:10px 22px;
+               background:#1a0a2e;border:2px solid #ff9f1c;color:#ff9f1c;cursor:pointer;
+               letter-spacing:1px;min-width:100px;">⏸ PAUSE</button>
+
+      <button id="tNext"
+        style="font-family:'Fredoka One',cursive;font-size:15px;padding:10px 22px;
+               background:#ffcc02;border:2px solid #ffcc02;color:#1a0a2e;cursor:pointer;
+               letter-spacing:1px;min-width:100px;">NEXT ▶</button>
+
+      <button id="tClose"
+        style="font-family:'Fredoka One',cursive;font-size:13px;padding:10px 18px;
+               background:#330008;border:2px solid #ff3333;color:#ff6666;cursor:pointer;
+               letter-spacing:1px;">✕ CLOSE</button>
+    </div>
+
+    <!-- progress bar -->
+    <div style="width:min(640px,100%);padding:0 0;margin-top:8px;">
+      <div style="width:100%;height:5px;background:#222;border-radius:3px;overflow:hidden;">
+        <div id="tBar" style="height:100%;background:#ffcc02;width:0%;transition:none;"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('tClose').onclick  = closeTrailer;
+  document.getElementById('tNext').onclick   = trailerNext;
+  document.getElementById('tPrev').onclick   = trailerPrev;
+  document.getElementById('tPause').onclick  = trailerTogglePause;
+  document.getElementById('tCanvas').onclick = trailerNext;
+})();
+
+// ── TRAILER SCRIPTS ──
+// Each scene: { dur (frames@60fps), draw(ctx,fr,t) }
+// t = 0..1 within scene, fr = global frame
+
+const TRAILER_SCRIPTS = {};
+
+// ── Shared drawing helpers ──
+function tTitle(ctx,line1,line2,t,color){
+  const GW=640,GH=400;
+  const alpha = t<0.15 ? t/0.15 : t>0.85 ? (1-t)/0.15 : 1;
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color||'#ffcc02';
+  ctx.font = 'bold 52px Fredoka One';
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 8;
+  ctx.strokeText(line1, GW/2, GH/2 - (line2?20:0));
+  ctx.fillText(line1, GW/2, GH/2 - (line2?20:0));
+  if(line2){
+    ctx.font = 'bold 28px Fredoka One';
+    ctx.strokeText(line2, GW/2, GH/2+30);
+    ctx.fillStyle = '#ff9f1c';
+    ctx.fillText(line2, GW/2, GH/2+30);
+  }
+  ctx.globalAlpha = 1; ctx.textAlign = 'left';
+}
+
+function tCard(ctx,text,alpha){
+  // alpha passed directly — caller controls when it shows
+  const GW=640,GH=400;
+  if(alpha<=0) return;
+  ctx.globalAlpha=Math.min(1,alpha);
+  ctx.fillStyle='rgba(0,0,0,0.88)'; ctx.fillRect(0,0,GW,GH);
+  ctx.fillStyle='#fff';ctx.font='bold 24px Fredoka One';ctx.textAlign='center';
+  // Word wrap at 520px wide
+  const words=text.split(' ');let line='',y=GH/2-20;const lines=[];
+  words.forEach(w=>{
+    const t2=line+(line?' ':'')+w;
+    if(ctx.measureText(t2).width>520&&line){ lines.push(line); line=w; }
+    else line=t2;
+  });
+  if(line) lines.push(line);
+  const startY=GH/2-(lines.length-1)*18;
+  lines.forEach((l,i)=>ctx.fillText(l,GW/2,startY+i*36));
+  ctx.globalAlpha=1;ctx.textAlign='left';
+}
+
+function tLetterbox(ctx){
+  ctx.fillStyle='#000';ctx.fillRect(0,0,640,50);ctx.fillRect(0,350,640,50);
+}
+
+function tEndCard(ctx,gameNum,title,sub,t){
+  const GW=640,GH=400;
+  const alpha=t<0.1?t/0.1:1;
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,GW,GH);
+  // Logo
+  ctx.fillStyle='#ff9f1c';ctx.font='bold 14px Fredoka One';ctx.textAlign='center';
+  ctx.fillText('CLUCKER ENTERTAINMENT™ PRESENTS',GW/2,80);
+  ctx.fillStyle='#ffcc02';ctx.font='bold 58px Fredoka One';
+  ctx.strokeStyle='#cc2200';ctx.lineWidth=6;
+  ctx.strokeText('CRANKY',GW/2,160);ctx.fillText('CRANKY',GW/2,160);
+  ctx.strokeText('CHICKENS',GW/2,220);ctx.fillText('CHICKENS',GW/2,220);
+  ctx.fillStyle='#ff6b35';ctx.font='bold 28px Fredoka One';
+  ctx.fillText(gameNum+': '+title,GW/2,265);
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='bold 16px Fredoka One';
+  ctx.fillText(sub,GW/2,300);
+  // Rating badge area
+  ctx.fillStyle='rgba(255,204,2,0.1)';ctx.fillRect(220,320,200,30);
+  ctx.strokeStyle='#ffcc02';ctx.lineWidth=1;ctx.strokeRect(220,320,200,30);
+  ctx.fillStyle='#ffcc02';ctx.font='bold 13px Fredoka One';
+  ctx.fillText('IN THEATERS: NEVER™',GW/2,341);
+  ctx.globalAlpha=1;ctx.textAlign='left';
+}
+
+// ── TRAILER 4: IN SPACE ──
+TRAILER_SCRIPTS[4] = (()=>{
+  const stars=Array.from({length:60},(_,i)=>({x:(i*137+50)%640,y:(i*53+20)%360,r:Math.random()*1.5+0.3,s:Math.random()*0.05+0.01}));
+  const GW=640,GH=400;
+
+  function bg(ctx,fr){
+    ctx.fillStyle='#030312';ctx.fillRect(0,0,GW,GH);
+    stars.forEach(st=>{
+      const tw=0.2+Math.sin(fr*st.s+st.x)*0.8;
+      ctx.fillStyle=`rgba(255,255,255,${tw})`;
+      ctx.beginPath();ctx.arc(st.x,st.y,st.r,0,Math.PI*2);ctx.fill();
+    });
+    const ng=ctx.createRadialGradient(500,120,0,500,120,180);
+    ng.addColorStop(0,'rgba(108,92,231,0.18)');ng.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ng;ctx.fillRect(0,0,GW,GH);
+  }
+
+  return [
+    // Scene 1: cold open — black, chicken floats in
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      const x = Math.min(t*1.5,1)*200 + 60;
+      ctx.save(); ctx.translate(x+16,200); ctx.rotate(fr*0.03); ctx.translate(-16,-16);
+      drawChicken(ctx,0,0,3,0,fr); ctx.restore();
+      // text appears at t>0.2, fully visible 0.3-0.85
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'IN SPACE, NO ONE CAN HEAR YOU BAWK',alpha);
+    }},
+    // Scene 2: reveal — Earth, rocket launches
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      ctx.save();ctx.translate(540,280);
+      ctx.fillStyle='#1a6fbf';ctx.beginPath();ctx.arc(0,0,80,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#3ab54a';ctx.beginPath();ctx.arc(-20,-10,36,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(26,18,28,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.35)';ctx.beginPath();ctx.arc(-8,-30,20,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+      const ry = 340 - Math.min(t*2,1)*600;
+      ctx.save();ctx.translate(120,ry);ctx.rotate(-Math.PI/8);
+      ctx.font='40px Arial';ctx.textAlign='center';ctx.fillText('🚀',0,0);
+      ctx.restore();ctx.textAlign='left';
+      for(let i=0;i<5;i++){
+        const py=ry+40+i*10+Math.sin(fr*0.5+i)*6;
+        const px=120+Math.cos(fr*0.3+i)*8;
+        const a=(5-i)/5*0.7;
+        ctx.fillStyle=`rgba(255,${100+i*30},0,${a})`;
+        ctx.beginPath();ctx.arc(px,py,6-i,0,Math.PI*2);ctx.fill();
+      }
+      const alpha=t<0.25?0:t<0.35?(t-0.25)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'THE CORN IS UP THERE.  THEY CAN FEEL IT.',alpha);
+    }},
+    // Scene 3: gameplay — slingshot in space
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr);
+      for(let tx=0;tx<20;tx++) drawTile(ctx,5,tx*32,350,fr,'jaguar',8);
+      tLetterbox(ctx);
+      ctx.save();ctx.scale(1.4,1.4);ctx.translate(50,20);
+      ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(14+220,26+160,12,4,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#a29bfe';ctx.beginPath();ctx.ellipse(14+220,18+160,12,9,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#6c5ce7';ctx.fillRect(3+220,12+160,22,12);
+      ctx.fillStyle='#a29bfe';for(let i=0;i<5;i++)ctx.fillRect(5+i*4+220,6+160,3,8);
+      ctx.fillStyle='#a29bfe';ctx.beginPath();ctx.arc(22+220,14+160,8,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fdcb6e';ctx.beginPath();ctx.arc(24+220,12+160,3,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(25+220,12+160,1.5,0,Math.PI*2);ctx.fill();
+      const bw=30;ctx.fillStyle='#333';ctx.fillRect(220,153,bw,4);ctx.fillStyle='#a29bfe';ctx.fillRect(220,153,bw*0.6,4);
+      ctx.restore();
+      const sx=90,G=350,forkH=80,forkTop=G-forkH-30;
+      ctx.fillStyle='#8B4513';
+      ctx.fillRect(sx-5,forkTop,10,forkH+8);ctx.fillRect(sx-24,forkTop,10,forkH+8);ctx.fillRect(sx+14,forkTop,10,forkH+8);
+      const aimPull=Math.sin(fr*0.04)*0.5-0.6;
+      const px=sx+(-0.6)*44, py=(forkTop+6)+(aimPull/Math.abs(aimPull||1))*44*Math.abs(aimPull);
+      ctx.strokeStyle='#8B4513';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(sx-19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx+19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+      ctx.save();ctx.translate(px+16,py+16);ctx.rotate(fr*0.06);ctx.translate(-16,-16);
+      drawChicken(ctx,0,0,3,0,fr);ctx.restore();
+      ctx.fillStyle='rgba(255,255,255,0.5)';
+      let tx2=px+16,ty2=py+16,vx2=16,vy2=-8;
+      for(let i=0;i<30;i++){tx2+=vx2;ty2+=vy2;vy2+=0.2;if(i%2===0){ctx.beginPath();ctx.arc(tx2,ty2,3,0,Math.PI*2);ctx.fill();}}
+      if(t>0.3){
+        const ft=(t-0.3)/0.7;
+        const fx=px+16+ft*420, fy=py+16-ft*140+ft*ft*200;
+        const ang=Math.atan2(fy-(py+16)+0.01,fx-(px+16));
+        ctx.save();ctx.translate(fx,fy);ctx.rotate(ang);
+        drawChicken(ctx,-16,-16,3,15,fr);ctx.restore();
+        for(let i=1;i<=5;i++){
+          const fp=ft-i*0.04;if(fp<0)continue;
+          const tx3=px+16+fp*420,ty3=py+16-fp*140+fp*fp*200;
+          ctx.fillStyle=`rgba(255,204,2,${0.5-i*0.09})`;
+          ctx.beginPath();ctx.arc(tx3,ty3,4-i*0.6,0,Math.PI*2);ctx.fill();
+        }
+      }
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,640,28);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+      ctx.fillText('Shots: 🐔🐔🐔  ·  BOSS HP: ████████  ·  HP: ❤️❤️❤️',320,19);
+      ctx.textAlign='left';
+    }},
+    // Scene 4: cutscene beat — alien jaguar boss
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#080818';ctx.fillRect(0,0,GW,GH);
+      stars.forEach(st=>{ ctx.fillStyle=`rgba(255,255,255,${0.2+Math.sin(fr*st.s)*0.5})`; ctx.beginPath();ctx.arc(st.x,st.y,st.r,0,Math.PI*2);ctx.fill(); });
+      tLetterbox(ctx);
+      const shk=t>0.15?Math.sin(fr*0.8)*3:0;
+      ctx.save();ctx.translate(380+shk,160);ctx.scale(2.5,2.5);
+      ctx.fillStyle='rgba(123,45,200,0.3)';ctx.beginPath();ctx.arc(20,30,60,0,Math.PI*2);ctx.fill();
+      drawJaguarSmall(ctx,0,0,fr);ctx.restore();
+      for(let i=0;i<6;i++){
+        const a=fr*0.04+i/6*Math.PI*2;
+        const bx=380+Math.cos(a)*110, by=200+Math.sin(a)*60;
+        ctx.fillStyle=`rgba(108,92,231,${0.4+Math.sin(fr*0.1+i)*0.4})`;
+        ctx.beginPath();ctx.arc(bx,by,4,0,Math.PI*2);ctx.fill();
+      }
+      drawChicken(ctx,60,280,0,0,fr);
+      if(t>0.2){
+        const bAlpha=Math.min(1,(t-0.2)/0.12);
+        ctx.globalAlpha=bAlpha;
+        ctx.fillStyle='rgba(40,0,80,0.95)';ctx.beginPath();ctx.roundRect(100,230,420,72,10);ctx.fill();
+        ctx.strokeStyle='#a29bfe';ctx.lineWidth=2;ctx.stroke();
+        ctx.fillStyle='#a29bfe';ctx.font='bold 12px Fredoka One';ctx.textAlign='left';
+        ctx.fillText('GALAXY-BRAIN JAGUAR',112,250);
+        ctx.fillStyle='#fff';ctx.font='bold 14px Fredoka One';
+        ctx.fillText('"Your corn? MINE now. ALL of it.',112,270);
+        ctx.fillText(' Even the decorative corn. Especially that."',112,288);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+    // Scene 5: end card
+    { dur:300, draw(ctx,fr,t){
+      tEndCard(ctx,'IV','IN SPACE','"Houston, We Have a Clucking Problem"',t);
+    }},
+  ];
+})();
+
+// ── TRAILER 5: JURASSIC SQUAWK ──
+TRAILER_SCRIPTS[5] = (()=>{
+  const GW=640,GH=400;
+  const jMap=[[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],[2,2,2,2,2,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2],[2,2,1,1,1,1,1,1,9,9,1,1,1,1,1,1,2,2,2,2],[2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2],[1,1,1,1,1,2,2,1,1,1,1,1,2,2,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
+
+  function bg(ctx,fr){
+    for(let ty=0;ty<7;ty++) for(let tx2=0;tx2<20;tx2++){
+      const t=(jMap[ty]||[])[tx2];
+      if(t!==undefined) drawTile(ctx,t,tx2*32,ty*50,fr,'jungle',4);
+    }
+  }
+
+  function drawTRex(ctx,x,y,fr,scale){
+    scale=scale||1;
+    ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+    const bob=Math.sin(fr*0.06)*4;
+    ctx.fillStyle='#5c7a3e';ctx.beginPath();ctx.ellipse(30,40+bob,28,22,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5c7a3e';ctx.fillRect(30,10+bob,20,30);
+    ctx.beginPath();ctx.ellipse(44,14+bob,22,16,0.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4a6a2e';ctx.fillRect(18,30+bob,10,6);ctx.fillRect(10,34+bob,8,4);
+    ctx.fillStyle='#fffde7';for(let i=0;i<4;i++){ctx.fillRect(32+i*5,22+bob,4,5);}
+    ctx.fillStyle='#ff4444';ctx.beginPath();ctx.arc(52,10+bob,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(53,10+bob,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4a6a2e';ctx.fillRect(18,58+bob,14,18);ctx.fillRect(36,58+bob,14,18);
+    ctx.fillRect(14,74+bob,18,6);ctx.fillRect(32,74+bob,18,6);
+    ctx.strokeStyle='#5c7a3e';ctx.lineWidth=14;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(2,44+bob);ctx.quadraticCurveTo(-20,50+bob,-32,38+bob);ctx.stroke();
+    ctx.restore();
+  }
+
+  return [
+    // Scene 1: lab scene - dark
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#060a06';ctx.fillRect(0,0,GW,GH);
+      tLetterbox(ctx);
+      ctx.font='30px Arial';ctx.textAlign='center';
+      ctx.fillText('🧬',160,220);ctx.fillText('⚗️',320,220);ctx.fillText('🔬',480,220);
+      const glow=0.3+Math.sin(fr*0.1)*0.2;
+      ctx.fillStyle=`rgba(0,255,100,${glow})`;ctx.beginPath();ctx.arc(320,220,40,0,Math.PI*2);ctx.fill();
+      ctx.textAlign='left';
+      const alpha=t<0.15?0:t<0.28?(t-0.15)/0.13:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'CHICKENGEN LABS. TUESDAY.',alpha);
+    }},
+    // Scene 2: warning sirens
+    { dur:300, draw(ctx,fr,t){
+      const flash=Math.floor(fr/8)%2;
+      ctx.fillStyle=flash?'#200000':'#100000';ctx.fillRect(0,0,GW,GH);
+      if(flash){ ctx.fillStyle='rgba(255,0,0,0.15)';ctx.fillRect(0,0,GW,GH); }
+      ctx.font='80px Arial';ctx.textAlign='center';ctx.fillText('⚠️',GW/2,220);ctx.textAlign='left';
+      const alpha=t<0.12?0:t<0.25?(t-0.12)/0.13:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'OOPS.',alpha);
+    }},
+    // Scene 3: T-Rex reveal
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#0d2818';ctx.fillRect(0,0,GW,GH);
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      const rx = t<0.4 ? GW - Math.min(t/0.4,1)*(GW-280) : 280;
+      const scale = t<0.4 ? 0.8+t*0.5 : 1.0;
+      drawTRex(ctx,rx,120,fr,scale);
+      if(t>0.25){
+        const ba=Math.min(1,(t-0.25)/0.12);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='#222';ctx.fillRect(GW/2-80,16,160,12);
+        ctx.fillStyle='#f87171';ctx.fillRect(GW/2-80,16,160,12);
+        ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(GW/2-80,16,160,12);
+        ctx.fillStyle='#fff';ctx.font='bold 10px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('🦖 T-REXTER  ⚠️ BOSS BATTLE!',GW/2,14);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+      drawChicken(ctx,60,290,0,0,fr);
+      if(t>0.45){
+        const ba=Math.min(1,(t-0.45)/0.12);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='rgba(0,0,0,0.9)';ctx.beginPath();ctx.roundRect(90,244,480,60,8);ctx.fill();
+        ctx.strokeStyle='#ffcc02';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='left';
+        ctx.fillText('ABUELA ROSA (NPC)',100,262);
+        ctx.fillStyle='#fff';ctx.font='bold 14px Fredoka One';
+        ctx.fillText('"¡Ay dios mío! THAT is your ancestor?!"',100,282);
+        ctx.fillText('"You owe me an explanation."',100,300);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+    // Scene 4: slingshot gameplay vs dino
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#0d2818';ctx.fillRect(0,0,GW,GH);
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      drawTRex(ctx,340,100,fr,1.2);
+      ctx.fillStyle='#7b5c3a';ctx.fillRect(260,240,36,80);ctx.fillRect(298,210,32,110);ctx.fillRect(332,250,28,70);
+      ctx.fillStyle='#5c3a18';ctx.fillRect(262,242,32,4);ctx.fillRect(300,212,28,4);
+      const sx=80,G=340,forkTop=G-80-30;
+      ctx.fillStyle='#8B4513';ctx.fillRect(sx-5,forkTop,10,88);ctx.fillRect(sx-24,forkTop,10,88);ctx.fillRect(sx+14,forkTop,10,88);
+      const aimX=0.7,aimY=-0.5;
+      const pLen=Math.hypot(aimX,aimY);
+      const px=sx+(aimX/pLen)*40, py=(forkTop+6)+(aimY/pLen)*40;
+      ctx.strokeStyle='#8B4513';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(sx-19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx+19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+      drawChicken(ctx,px-16,py-16,3,0,fr);
+      if(t>0.3){
+        const ft=(t-0.3)/0.7;
+        const fx=px+16+ft*320, fy=py+16-ft*120+ft*ft*140;
+        const ang=Math.atan2(fy-(py+16)+0.01,fx-(px+16));
+        ctx.save();ctx.translate(fx,fy);ctx.rotate(ang);
+        drawChicken(ctx,-16,-16,3,15,fr);ctx.restore();
+        for(let i=1;i<=5;i++){
+          const fp=ft-i*0.05;if(fp<0)continue;
+          const tx3=px+16+fp*320,ty3=py+16-fp*120+fp*fp*140;
+          ctx.fillStyle=`rgba(255,204,2,${0.5-i*0.09})`;ctx.beginPath();ctx.arc(tx3,ty3,4,0,Math.PI*2);ctx.fill();
+        }
+        if(ft>0.9){ ctx.fillStyle='rgba(255,80,0,0.4)';ctx.fillRect(0,0,GW,GH); }
+      }
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,640,28);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';
+      ctx.fillText('Shots: 🐔🐔  ·  BOSS HP: ██████░░  ·  HP: ❤️❤️❤️',320,19);ctx.textAlign='left';
+    }},
+    // Scene 5: end card
+    { dur:300, draw(ctx,fr,t){
+      tEndCard(ctx,'V','JURASSIC SQUAWK','"Life, Uh... Finds a Bawk"',t);
+    }},
+  ];
+})();
+
+// ── TRAILER 6: MEDIEVAL MOLT ──
+TRAILER_SCRIPTS[6] = (()=>{
+  const GW=640,GH=400;
+  const rMap=[[6,6,6,6,6,6,6,6,4,4,4,4,6,6,6,6,6,6,6,6],[6,5,5,5,5,5,5,4,4,4,4,4,4,5,5,5,5,5,5,6],[6,5,5,5,5,5,5,5,1,1,1,1,5,5,5,5,5,5,5,6],[6,5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,5,6],[4,1,1,1,1,1,1,1,1,1,9,1,1,1,1,1,1,1,4,4],[4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,4],[4,4,4,1,1,1,1,1,1,1,1,1,1,1,1,4,4,4,4,4]];
+
+  function bg(ctx,fr){
+    for(let ty=0;ty<7;ty++) for(let tx2=0;tx2<20;tx2++){
+      const t=(rMap[ty]||[])[tx2];
+      if(t!==undefined) drawTile(ctx,t,tx2*32,ty*53,fr,'ruins',6);
+    }
+  }
+
+  function drawWeasel(ctx,x,y,fr,scale){
+    scale=scale||1;
+    ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+    const bob=Math.sin(fr*0.08)*3;
+    ctx.fillStyle='#4a0080';ctx.beginPath();ctx.moveTo(20,15+bob);ctx.lineTo(-10,70+bob);ctx.lineTo(50,70+bob);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#c4a0d0';ctx.beginPath();ctx.ellipse(20,36+bob,14,16,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.moveTo(4,8+bob);ctx.lineTo(4,-4+bob);ctx.lineTo(10,2+bob);ctx.lineTo(16,-8+bob);ctx.lineTo(22,2+bob);ctx.lineTo(28,-4+bob);ctx.lineTo(34,8+bob);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ff3333';ctx.beginPath();ctx.arc(10,-2+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(20,-8+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(30,-2+bob,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#c4a0d0';ctx.beginPath();ctx.arc(20,12+bob,13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff0000';ctx.beginPath();ctx.arc(15,11+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(25,11+bob,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(15,11+bob,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(25,11+bob,1.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#aaa';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(38,20+bob);ctx.lineTo(55,-4+bob);ctx.stroke();
+    ctx.strokeStyle='#ffcc02';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(34,22+bob);ctx.lineTo(42,18+bob);ctx.stroke();
+    ctx.restore();
+  }
+
+  return [
+    // Scene 1: scroll opening
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#2c1810';ctx.fillRect(0,0,GW,GH);
+      tLetterbox(ctx);
+      const sw=Math.min(600,Math.min(t*2,1)*600);
+      ctx.fillStyle='#f5e6c8';ctx.fillRect(GW/2-sw/2,130,sw,140);
+      ctx.strokeStyle='#8B4513';ctx.lineWidth=3;ctx.strokeRect(GW/2-sw/2,130,sw,140);
+      if(sw>80){
+        ctx.fillStyle='#3c1a0a';ctx.font='bold 20px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('HEAR YE, HEAR YE.',GW/2,168);
+        if(sw>230){ ctx.fillStyle='#3c1a0a';ctx.font='bold 17px Fredoka One';ctx.fillText('THE CHICKENS HAVE RETURNED TO',GW/2,198); }
+        if(sw>430){ctx.fillStyle='#cc2200';ctx.font='bold 26px Fredoka One';ctx.fillText('THE YEAR 1347.',GW/2,234);}
+      }
+      ctx.textAlign='left';
+    }},
+    // Scene 2: castle establishing shot
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#1e0e08';ctx.fillRect(0,0,GW,GH);
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      ctx.fillStyle='#2c1810';ctx.fillRect(360,60,280,280);
+      ctx.fillStyle='#3c2418';
+      for(let i=0;i<9;i++) ctx.fillRect(360+i*32,60,28,30);
+      ctx.fillStyle='#1a0a08';ctx.fillRect(430,180,50,140);
+      ctx.fillStyle='#0a0505';ctx.fillRect(448,200,16,120);
+      ctx.save();ctx.translate(420,60);drawWeasel(ctx,0,0,fr,1.1);ctx.restore();
+      if(t>0.35){
+        const ba=Math.min(1,(t-0.35)/0.12);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='rgba(60,20,5,0.95)';ctx.beginPath();ctx.roundRect(60,16,520,60,8);ctx.fill();
+        ctx.strokeStyle='#ffcc02';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='left';
+        ctx.fillText('👑 WEASEL KING OF HENSBOROUGH',72,34);
+        ctx.fillStyle='#fff';ctx.font='bold 14px Fredoka One';
+        ctx.fillText('"Your corn tithe is MINE, chickens!',72,54);
+        ctx.fillText(' Also your egg. Especially the egg."',72,70);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+    // Scene 3: catapult gameplay
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#1e0e08';ctx.fillRect(0,0,GW,GH);
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      ctx.fillStyle='#2c1810';ctx.fillRect(360,160,240,200);
+      ctx.fillStyle='#3c2418';for(let i=0;i<7;i++) ctx.fillRect(364+i*32,160,28,24);
+      ctx.fillStyle='#7b5c3a';ctx.fillRect(280,240,32,100);ctx.fillRect(314,200,28,140);ctx.fillRect(344,260,30,80);
+      ctx.fillStyle='#5c3a18';ctx.fillRect(282,242,28,4);ctx.fillRect(316,202,24,4);
+      const bx=40,G=340;
+      ctx.fillStyle='#8B4513';ctx.beginPath();ctx.arc(bx+10,G+12,14,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(bx+60,G+12,14,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#5c3317';ctx.strokeStyle='#5c3317';ctx.lineWidth=2;ctx.beginPath();ctx.arc(bx+10,G+12,14,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(bx+60,G+12,14,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#8B4513';ctx.fillRect(bx+2,G-40,8,54);ctx.fillRect(bx+58,G-40,8,54);ctx.fillRect(bx+2,G-40,64,8);
+      const armA=-Math.PI/3+Math.sin(fr*0.04)*0.3;
+      ctx.save();ctx.translate(bx+35,G-32);ctx.rotate(armA);
+      ctx.fillStyle='#5c3317';ctx.fillRect(-4,-60,8,88);
+      ctx.translate(0,-66);ctx.rotate(-armA*0.3);
+      drawChicken(ctx,-16,-16,3,0,fr);
+      ctx.restore();
+      if(t>0.4){
+        const ft=(t-0.4)/0.6;
+        const fx=80+ft*330, fy=200-ft*100+ft*ft*140;
+        const ang=Math.atan2(fy-200+0.01,fx-80);
+        ctx.save();ctx.translate(fx,fy);ctx.rotate(ang);
+        drawChicken(ctx,-16,-16,3,15,fr);ctx.restore();
+        for(let i=1;i<=5;i++){
+          const fp=ft-i*0.05;if(fp<0)continue;
+          const tx3=80+fp*330,ty3=200-fp*100+fp*fp*140;
+          ctx.fillStyle=`rgba(255,204,2,${0.5-i*0.09})`;ctx.beginPath();ctx.arc(tx3,ty3,4,0,Math.PI*2);ctx.fill();
+        }
+        if(ft>0.92){ctx.fillStyle='rgba(255,80,0,0.35)';ctx.fillRect(0,0,GW,GH);}
+      }
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,640,28);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';
+      ctx.fillText('Shots: 🐔🐔🐔  ·  BOSS HP: █████░░░  ·  HP: ❤️❤️❤️',320,19);ctx.textAlign='left';
+    }},
+    // Scene 4: cutscene — chicken knight
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#1e0e08';ctx.fillRect(0,0,GW,GH);
+      tLetterbox(ctx);
+      ctx.save();ctx.translate(120,200);drawChicken(ctx,0,0,3,t>0.3?20:0,fr);
+      ctx.font='22px Arial';ctx.textAlign='center';ctx.fillText('⚔️',32,-10);ctx.restore();ctx.textAlign='left';
+      drawWeasel(ctx,380,150,fr,1.3);
+      if(t>0.3){
+        const ba=Math.min(1,(t-0.3)/0.12);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='rgba(0,0,0,0.95)';ctx.beginPath();ctx.roundRect(80,290,520,72,8);ctx.fill();
+        ctx.strokeStyle='#ff6b35';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.fillStyle='#ff9f1c';ctx.font='bold 12px Fredoka One';ctx.textAlign='left';
+        ctx.fillText('WEASEL KING',90,308);
+        ctx.fillStyle='#fff';ctx.font='bold 14px Fredoka One';
+        ctx.fillText('"I studied the blade for 40 years."',90,328);
+        ctx.fillText('"You\'re a CHICKEN. You don\'t HAVE hands!!"',90,348);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+    // Scene 5: end card
+    { dur:300, draw(ctx,fr,t){
+      tEndCard(ctx,'VI','MEDIEVAL MOLT','"Ye Olde Grievances"',t);
+    }},
+  ];
+})();
+
+// ── TRAILER 7: WE KNOW YOU'RE HERE ──
+TRAILER_SCRIPTS[7] = (()=>{
+  const GW=640,GH=400;
+  const stars=Array.from({length:30},(_,i)=>({x:(i*137+50)%640,y:(i*53+20)%360}));
+  let glitchAmt=0;
+
+  function bg(ctx,fr){
+    ctx.fillStyle='#0a0518';ctx.fillRect(0,0,GW,GH);
+    stars.forEach((st,i)=>{
+      const tw=0.2+Math.sin(fr*0.04+i)*0.6;
+      ctx.fillStyle=`rgba(200,150,255,${tw})`;
+      ctx.beginPath();ctx.arc(st.x,st.y,1.2,0,Math.PI*2);ctx.fill();
+    });
+    const ng=ctx.createRadialGradient(320,200,0,320,200,300);
+    ng.addColorStop(0,'rgba(60,0,100,0.4)');ng.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ng;ctx.fillRect(0,0,GW,GH);
+  }
+
+  return [
+    // Scene 1: normal-seeming intro
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#0d2818';ctx.fillRect(0,0,GW,GH);
+      for(let ty=0;ty<13;ty++) for(let tx2=0;tx2<20;tx2++) drawTile(ctx,1,tx2*32,ty*32,fr,'jungle',4);
+      tLetterbox(ctx);
+      drawChicken(ctx,300,200,3,0,fr);
+      drawIguana(ctx,440,210,0.8,fr);
+      drawCorn(ctx,200,200,fr);
+      const alpha=t<0.18?0:t<0.3?(t-0.18)/0.12:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'Cranky Chickens VII is a normal game.',alpha);
+    }},
+    // Scene 2: something's off
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#0d2818';ctx.fillRect(0,0,GW,GH);
+      for(let ty=0;ty<13;ty++) for(let tx2=0;tx2<20;tx2++) drawTile(ctx,1,tx2*32,ty*32,fr,'jungle',4);
+      tLetterbox(ctx);
+      [[80,180],[220,190],[360,185],[500,180]].forEach(([x,y])=>drawChicken(ctx,x,y,2,0,fr));
+      drawIguana(ctx,290,210,0.9,fr);
+      ctx.fillStyle=`rgba(255,0,50,${t*0.12})`;ctx.fillRect(0,0,GW,GH);
+      const alpha=t<0.2?0:t<0.32?(t-0.2)/0.12:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'It is a completely normal game about chickens.',alpha);
+    }},
+    // Scene 3: glitch escalation
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      ctx.save();ctx.translate(320,160);ctx.scale(2.5,2.5);
+      drawChicken(ctx,-16,-16,2,0,fr);ctx.restore();
+      ctx.fillStyle='#ff0050';ctx.font='bold 28px Fredoka One';ctx.textAlign='center';
+      const pulse=0.5+Math.sin(fr*0.08)*0.5;
+      ctx.globalAlpha=pulse;
+      ctx.fillText('?   ?   ?   ?',GW/2,340);ctx.globalAlpha=1;
+      if(t>0.25){
+        const ba=Math.min(1,(t-0.25)/0.12);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='rgba(255,255,255,0.97)';ctx.beginPath();ctx.roundRect(180,38,280,56,10);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.97)';ctx.beginPath();ctx.moveTo(312,92);ctx.lineTo(306,114);ctx.lineTo(320,92);ctx.fill();
+        ctx.fillStyle='#1a0a2e';ctx.font='bold 15px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('We can see you.',GW/2,64);ctx.fillText('Hello.  :)',GW/2,84);
+        ctx.globalAlpha=1;
+      }
+      if(t>0.5&&Math.random()<0.15){
+        ctx.fillStyle=`rgba(255,0,80,0.2)`;ctx.fillRect(0,Math.random()*GH,GW,Math.random()*30+5);
+        ctx.fillStyle=`rgba(0,255,200,0.15)`;ctx.fillRect(4,Math.random()*GH,GW,Math.random()*20+4);
+      }
+      ctx.textAlign='left';
+    }},
+    // Scene 4: everything wrong
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr);
+      tLetterbox(ctx);
+      [[100,140,0.3],[200,200,-0.15],[340,150,0.5],[480,190,-0.4],[560,140,0.2]].forEach(([x,y,r])=>{
+        ctx.save();ctx.translate(x+16,y+16);ctx.rotate(r+Math.sin(fr*0.04+x)*0.08);ctx.translate(-16,-16);
+        drawChicken(ctx,0,0,2,0,fr);ctx.restore();
+      });
+      if(t>0.28){
+        const ba=Math.min(1,(t-0.28)/0.12);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(120,272,400,68);
+        ctx.strokeStyle='#ff0050';ctx.lineWidth=2;ctx.strokeRect(120,272,400,68);
+        ctx.fillStyle='#ff0050';ctx.font='bold 15px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('⚠️ CONTROLLER DISCONNECTED',GW/2,298);
+        ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='bold 13px Fredoka One';
+        ctx.fillText('The chickens are continuing without you.',GW/2,320);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+      const vg=ctx.createRadialGradient(GW/2,GH/2,80,GW/2,GH/2,300);
+      vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(200,0,50,${t*0.4})`);
+      ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);
+      if(Math.random()<0.2){
+        ctx.fillStyle=`rgba(255,255,255,0.04)`;
+        for(let i=0;i<20;i++) ctx.fillRect(Math.random()*GW,Math.random()*GH,Math.random()*60+4,2);
+      }
+    }},
+    // Scene 5: end card (creepy version)
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#060010';ctx.fillRect(0,0,GW,GH);
+      const alpha=t<0.1?t/0.1:1;
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle='#ff0050';ctx.font='bold 14px Fredoka One';ctx.textAlign='center';
+      ctx.fillText('CLUCKER ENTERTAINMENT™ PRESENTS',GW/2,80);
+      ctx.fillStyle='#ff8888';ctx.font='bold 58px Fredoka One';
+      ctx.strokeStyle='#330010';ctx.lineWidth=6;
+      ctx.strokeText('CRANKY',GW/2,160);ctx.fillText('CRANKY',GW/2,160);
+      ctx.strokeText('CHICKENS',GW/2,220);ctx.fillText('CHICKENS',GW/2,220);
+      ctx.fillStyle='#ff6666';ctx.font='bold 26px Fredoka One';
+      ctx.fillText('VII: WE KNOW YOU\'RE HERE',GW/2,265);
+      ctx.fillStyle='rgba(255,100,100,0.6)';ctx.font='bold 16px Fredoka One';
+      ctx.fillText('"The Chickens Have Become Aware of the Player"',GW/2,300);
+      ctx.fillStyle='rgba(255,80,80,0.2)';ctx.fillRect(180,320,280,32);
+      ctx.strokeStyle='#ff0050';ctx.lineWidth=1;ctx.strokeRect(180,320,280,32);
+      ctx.fillStyle='#ff8888';ctx.font='bold 14px Fredoka One';
+      if(Math.floor(fr/25)%2===0) ctx.fillText('RELEASE DATE: WHEN IT\'S READY',GW/2,341);
+      ctx.globalAlpha=1;
+      ctx.globalAlpha=0.15+Math.sin(fr*0.05)*0.1;
+      drawChicken(ctx,10,340,2,0,fr);drawChicken(ctx,580,340,2,0,fr);
+      drawChicken(ctx,10,10,2,0,fr);drawChicken(ctx,580,10,2,0,fr);
+      ctx.globalAlpha=1;ctx.textAlign='left';
+    }},
+  ];
+})();
+
+// ── PLAYER STATE ──
+// 300 frames = 5 seconds per scene at 60fps — comfortable reading pace for 8-year-olds
+const SCENE_DUR = 300;
+
+let trailerActive=false, trailerID=null, trailerFr=0;
+let trailerScene=0, trailerSceneFr=0;
+let trailerPaused=false;
+let trailerRAF=null;
+
+function playTrailer(id){
+  const modal=document.getElementById('trailerModal');
+  modal.style.display='flex';
+  trailerActive=true; trailerID=id; trailerFr=0; trailerScene=0; trailerSceneFr=0;
+  trailerPaused=false;
+  document.getElementById('tPause').textContent='⏸ PAUSE';
+  _buildDots(id);
+  if(trailerRAF) cancelAnimationFrame(trailerRAF);
+  trailerLoop();
+}
+
+function _buildDots(id){
+  const dots=document.getElementById('tDots');
+  const script=TRAILER_SCRIPTS[id];
+  if(!dots||!script) return;
+  dots.innerHTML='';
+  script.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText=`width:10px;height:10px;border-radius:50%;background:#444;
+      border:2px solid #666;transition:background 0.2s;`;
+    d.id='tdot'+i;
+    dots.appendChild(d);
+  });
+}
+
+function _updateDots(){
+  const script=TRAILER_SCRIPTS[trailerID];
+  if(!script) return;
+  script.forEach((_,i)=>{
+    const d=document.getElementById('tdot'+i);
+    if(!d) return;
+    if(i===trailerScene){
+      d.style.background='#ffcc02'; d.style.borderColor='#ffcc02';
+    } else if(i<trailerScene){
+      d.style.background='#665500'; d.style.borderColor='#886600';
+    } else {
+      d.style.background='#222'; d.style.borderColor='#444';
+    }
+  });
+}
+
+function closeTrailer(){
+  trailerActive=false; trailerPaused=false;
+  if(trailerRAF){ cancelAnimationFrame(trailerRAF); trailerRAF=null; }
+  document.getElementById('trailerModal').style.display='none';
+}
+
+function playTrailer(id){
+  // Full reset first — cancel any running loop
+  if(trailerRAF){ cancelAnimationFrame(trailerRAF); trailerRAF=null; }
+  trailerActive=false; trailerPaused=false;
+
+  // Now set fresh state
+  trailerID=id; trailerFr=0; trailerScene=0; trailerSceneFr=0;
+  trailerActive=true;
+
+  const btn=document.getElementById('tPause');
+  if(btn){ btn.textContent='⏸ PAUSE'; btn.style.color='#ff9f1c'; btn.style.borderColor='#ff9f1c'; }
+  document.getElementById('tBar').style.width='0%';
+
+  _buildDots(id);
+  _updateDots();
+
+  document.getElementById('trailerModal').style.display='flex';
+
+  trailerRAF=requestAnimationFrame(trailerLoop);
+}
+
+function trailerNext(){
+  if(!trailerActive) return;
+  const script=TRAILER_SCRIPTS[trailerID];
+  if(!script) return;
+  trailerScene++;
+  trailerSceneFr=0;
+  if(trailerScene>=script.length){
+    closeTrailer();
+    return;
+  }
+  _updateDots();
+  // If paused, draw the new scene's first frame immediately
+  if(trailerPaused){
+    const canvas=document.getElementById('tCanvas');
+    const ctx=canvas.getContext('2d');
+    script[trailerScene].draw(ctx,trailerFr,0);
+  }
+}
+
+function trailerPrev(){
+  if(!trailerActive) return;
+  if(trailerScene>0){ trailerScene--; trailerSceneFr=0; _updateDots(); }
+  if(trailerPaused){
+    const canvas=document.getElementById('tCanvas');
+    const ctx=canvas.getContext('2d');
+    const script=TRAILER_SCRIPTS[trailerID];
+    if(script) script[trailerScene].draw(ctx,trailerFr,0);
+  }
+}
+
+function trailerTogglePause(){
+  trailerPaused=!trailerPaused;
+  const btn=document.getElementById('tPause');
+  btn.textContent=trailerPaused?'▶ PLAY':'⏸ PAUSE';
+  btn.style.color=trailerPaused?'#ffcc02':'#ff9f1c';
+  btn.style.borderColor=trailerPaused?'#ffcc02':'#ff9f1c';
+  if(!trailerPaused && trailerActive){
+    if(trailerRAF) cancelAnimationFrame(trailerRAF);
+    trailerRAF=requestAnimationFrame(trailerLoop);
+  }
+}
+
+function trailerLoop(){
+  // Guard — if anything killed us, stop
+  if(!trailerActive || trailerPaused){ trailerRAF=null; return; }
+
+  const canvas=document.getElementById('tCanvas');
+  const ctx=canvas.getContext('2d');
+  const script=TRAILER_SCRIPTS[trailerID];
+  if(!script){ closeTrailer(); return; }
+
+  const scene=script[trailerScene];
+  if(!scene){ closeTrailer(); return; }
+
+  const t=Math.min(1, trailerSceneFr/scene.dur);
+  scene.draw(ctx, trailerFr, t);
+
+  // Progress bar
+  const total=script.length*SCENE_DUR;
+  const elapsed=trailerScene*SCENE_DUR+trailerSceneFr;
+  const bar=document.getElementById('tBar');
+  if(bar) bar.style.width=(elapsed/total*100)+'%';
+
+  _updateDots();
+
+  // "TAP TO CONTINUE" hint near end of scene
+  if(t>0.75){
+    const pulse=0.5+Math.sin(trailerFr*0.15)*0.5;
+    ctx.globalAlpha=pulse*(t>0.9?1:(t-0.75)/0.15);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 13px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('▶ TAP TO CONTINUE',320,390);
+    ctx.globalAlpha=1;ctx.textAlign='left';
+  }
+
+  trailerFr++;
+  trailerSceneFr++;
+
+  // Advance scene
+  if(trailerSceneFr>=scene.dur){
+    trailerScene++;
+    trailerSceneFr=0;
+    if(trailerScene>=script.length){
+      closeTrailer();
+      return;
+    }
+    _updateDots();
+  }
+
+  trailerRAF=requestAnimationFrame(trailerLoop);
+}
+
+// ── HUD CORN TICKER ──
+let fakeScore=0,fakeCorn=0;
+setInterval(()=>{
+  fakeScore+=Math.floor(Math.random()*50);
+  if(Math.random()<0.2) fakeCorn++;
+  document.getElementById('score').textContent=fakeScore;
+  document.getElementById('corn').textContent=fakeCorn;
+},800);
+
+// ── POPUP ──
+const BAWKS=['🐔 BAWK!','🥚 EGG ACQUIRED','🐔 CLUCK YEAH!','🌽 +1 CORN','🎯 PECK LANDED!',
+  '🐶 DOG ADOPTED','🚀 TO THE COOP!','⚔️ FOR HENSBOROUGH!','🦖 RUN.','❓ ...','🐔 THE CHICKENS APPROVE'];
+let bIdx=0;
+function cluck(msg){
+  const p=document.getElementById('popup');
+  p.textContent=msg||BAWKS[bIdx++%BAWKS.length];
+  p.classList.remove('show');void p.offsetWidth;p.classList.add('show');
+  setTimeout(()=>p.classList.remove('show'),1950);
+}
+</script>
+</body>
+</html>
