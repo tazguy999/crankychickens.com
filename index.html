@@ -53,9 +53,20 @@ body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hi
 .screen-tag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);
   color:#ffcc02;font-family:'Fredoka One',cursive;font-size:11px;letter-spacing:2px;
   padding:3px 10px;border-radius:3px;pointer-events:none;z-index:2;}
-.play-hint{position:absolute;bottom:10px;right:10px;background:rgba(255,204,2,0.15);
-  border:1px solid #ffcc02;color:#ffcc02;font-family:'Fredoka One',cursive;
-  font-size:10px;letter-spacing:2px;padding:4px 12px;pointer-events:none;z-index:2;}
+.play-hint{
+  position:absolute;inset:0;
+  display:flex;align-items:flex-end;justify-content:flex-end;
+  padding:10px;
+  background:transparent;border:none;cursor:pointer;
+  z-index:3;
+}
+.play-hint span{
+  background:rgba(255,204,2,0.25);
+  border:1px solid #ffcc02;color:#ffcc02;
+  font-family:'Fredoka One',cursive;font-size:13px;
+  letter-spacing:2px;padding:8px 18px;
+  pointer-events:none;
+}
 
 /* ── CARD BODY ── */
 .card-body{padding:20px 24px 26px;}
@@ -144,10 +155,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 1: ORIGINAL -->
   <div class="card" data-tag="PLAY FREE" id="cardO">
-    <div class="screen-wrap" onclick="playTrailer('orig')">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="cO" width="640" height="200"></canvas>
       <div class="screen-tag">FARMYARD ZONE — THE ORIGINAL</div>
-      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <button class="play-hint" onclick="playTrailer('orig')"><span>▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num">CRANKY CHICKENS I</div>
@@ -170,10 +181,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 2: MYSTERY ISLAND -->
   <div class="card" data-tag="PLAY FREE" id="cardM">
-    <div class="screen-wrap" onclick="playTrailer('island')">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="cM" width="640" height="200"></canvas>
       <div class="screen-tag">MYSTERY ISLAND — JUNGLE ZONE</div>
-      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <button class="play-hint" onclick="playTrailer('island')"><span>▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num">CRANKY CHICKENS II</div>
@@ -196,10 +207,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 3: TULUM TROUBLE -->
   <div class="card" data-tag="⭐ LATEST" id="cardT">
-    <div class="screen-wrap" onclick="playTrailer('tulum')">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="cT" width="640" height="200"></canvas>
       <div class="screen-tag">BEACH ZONE — SCREEN (2,3)</div>
-      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <button class="play-hint" onclick="playTrailer('tulum')"><span>▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num">CRANKY CHICKENS III</div>
@@ -229,10 +240,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 4: IN SPACE -->
   <div class="card" data-tag="COMING SOON™" id="card4">
-    <div class="screen-wrap" onclick="playTrailer(4)">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="c4" width="640" height="200"></canvas>
       <div class="screen-tag">SPACE ZONE — SCREEN (∞,∞)</div>
-      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <button class="play-hint" onclick="playTrailer(4)"><span>▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num">CRANKY CHICKENS IV</div>
@@ -260,10 +271,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 5: JURASSIC SQUAWK -->
   <div class="card" data-tag="COMING SOON™" id="card5">
-    <div class="screen-wrap" onclick="playTrailer(5)">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="c5" width="640" height="200"></canvas>
       <div class="screen-tag">JUNGLE ZONE — SCREEN (2,1) → 66 MILLION YEARS AGO</div>
-      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <button class="play-hint" onclick="playTrailer(5)"><span>▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num">CRANKY CHICKENS V</div>
@@ -291,10 +302,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 6: MEDIEVAL MOLT -->
   <div class="card" data-tag="COMING SOON™" id="card6">
-    <div class="screen-wrap" onclick="playTrailer(6)">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="c6" width="640" height="200"></canvas>
       <div class="screen-tag">RUINS ZONE — SCREEN (6,2) → YEAR 1347</div>
-      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <button class="play-hint" onclick="playTrailer(6)"><span>▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num">CRANKY CHICKENS VI</div>
@@ -322,10 +333,10 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
   <!-- GAME 7: WE KNOW YOU'RE HERE -->
   <div class="card" data-tag="CLASSIFIED" id="card7" style="border-color:rgba(255,80,80,0.3)">
-    <div class="screen-wrap" onclick="playTrailer(7)">
+    <div class="screen-wrap">
       <canvas class="screen-canvas" id="c7" width="640" height="200"></canvas>
-      <div class="screen-tag" style="color:#ff8888">UNKNOWN ZONE — SCREEN (?,?)</div>
-      <div class="play-hint" style="border-color:#ff8888;color:#ff8888;cursor:pointer;background:rgba(255,100,100,0.15);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+      <div class="screen-tag">UNKNOWN ZONE — SCREEN (?,?)</div>
+      <button class="play-hint" onclick="playTrailer(7)" style=""><span style="border-color:#ff8888;color:#ff8888;background:rgba(255,100,100,0.15);">▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num" style="color:#ff6666">CRANKY CHICKENS VII — CLASSIFIED</div>
@@ -2319,17 +2330,6 @@ let trailerActive=false, trailerID=null, trailerFr=0;
 let trailerScene=0, trailerSceneFr=0;
 let trailerPaused=false;
 let trailerRAF=null;
-
-function playTrailer(id){
-  const modal=document.getElementById('trailerModal');
-  modal.style.display='flex';
-  trailerActive=true; trailerID=id; trailerFr=0; trailerScene=0; trailerSceneFr=0;
-  trailerPaused=false;
-  document.getElementById('tPause').textContent='⏸ PAUSE';
-  _buildDots(id);
-  if(trailerRAF) cancelAnimationFrame(trailerRAF);
-  trailerLoop();
-}
 
 function _buildDots(id){
   const dots=document.getElementById('tDots');
