@@ -137,7 +137,92 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
 <div class="marquee"><span>🐔 NOW AVAILABLE: TULUM TROUBLE · GLACIER GULCH · HOWARD'S GROVE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: SEE BELOW — IF YOU DARE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 NOW AVAILABLE: TULUM TROUBLE · GLACIER GULCH · HOWARD'S GROVE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: SEE BELOW — IF YOU DARE &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
 
-<!-- ── TRAILERS ── -->
+<!-- ── PLAYABLE GAMES ── -->
+<section class="trailers">
+  <h2 class="section-hdr">PLAY NOW 🎮</h2>
+  <p class="section-note">All three games free in your browser. No download required.</p>
+
+  <!-- GAME 1: ORIGINAL -->
+  <div class="card" data-tag="PLAY FREE" id="cardO">
+    <div class="screen-wrap" onclick="playTrailer('orig')">
+      <canvas class="screen-canvas" id="cO" width="640" height="200"></canvas>
+      <div class="screen-tag">FARMYARD ZONE — THE ORIGINAL</div>
+      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS I</div>
+      <div class="game-title">CRANKY CHICKEN!</div>
+      <div class="game-sub">"The One That Started It All"</div>
+      <p class="game-desc">A yellow chicken. A slingshot. A barn full of obstacles. Launch your cranky bird across five seasons — spring, summer, autumn, winter, and the dreaded storm night — in the original Angry Birds-style farmyard adventure that launched the franchise.</p>
+      <div class="tags">
+        <span class="tag">🌤️ 5 SEASONS</span>
+        <span class="tag">💣 5 CHICKEN TYPES</span>
+        <span class="tag">🏚️ BARN, HAY BALES, BARRELS</span>
+        <span class="tag">⛰️ MOUNTAIN LEVELS</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E</div>
+        <div class="rating-txt">Cartoon Farmyard Violence · Mild Feather Physics<br>One Very Angry Bird</div>
+      </div>
+      <a href="/games/original.html" class="wishlist" style="display:inline-block;text-decoration:none;">▶ PLAY NOW</a>
+    </div>
+  </div>
+
+  <!-- GAME 2: MYSTERY ISLAND -->
+  <div class="card" data-tag="PLAY FREE" id="cardM">
+    <div class="screen-wrap" onclick="playTrailer('island')">
+      <canvas class="screen-canvas" id="cM" width="640" height="200"></canvas>
+      <div class="screen-tag">MYSTERY ISLAND — JUNGLE ZONE</div>
+      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS II</div>
+      <div class="game-title">MYSTERY ISLAND TROUBLE</div>
+      <div class="game-sub">"Something Is Very Wrong On This Island"</div>
+      <p class="game-desc">The flock arrives on a mysterious island with four distinct zones — jungle, reef, storm, and volcano. New bird types, new obstacles, and a boss battle that nobody saw coming. Also the blocks fall from the sky now. That's new.</p>
+      <div class="tags">
+        <span class="tag">🏝️ 4 ISLAND ZONES</span>
+        <span class="tag">🐦 SPLIT · SPEED · BOMB · TYLER</span>
+        <span class="tag">🌋 VOLCANO BOSS BATTLE</span>
+        <span class="tag">🪵 LOG, PLANK, ROCK OBSTACLES</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E</div>
+        <div class="rating-txt">Cartoon Island Violence · Mild Existential Dread<br>One (1) Character Named Tyler</div>
+      </div>
+      <a href="/games/mystery-island.html" class="wishlist" style="display:inline-block;text-decoration:none;">▶ PLAY NOW</a>
+    </div>
+  </div>
+
+  <!-- GAME 3: TULUM TROUBLE -->
+  <div class="card" data-tag="⭐ LATEST" id="cardT">
+    <div class="screen-wrap" onclick="playTrailer('tulum')">
+      <canvas class="screen-canvas" id="cT" width="640" height="200"></canvas>
+      <div class="screen-tag">BEACH ZONE — SCREEN (2,3)</div>
+      <div class="play-hint" style="cursor:pointer;background:rgba(255,204,2,0.25);font-size:13px;padding:8px 18px;">▶ WATCH TRAILER</div>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS III</div>
+      <div class="game-title">TULUM TROUBLE</div>
+      <div class="game-sub">"El Jaguar Stole My Corn"</div>
+      <p class="game-desc">The biggest Cranky Chickens yet. A full Zelda-style top-down adventure across Tulum, Mexico. Explore the beach, jungle, ruins, and El Jaguar's lair. Four boss battles. Three towns. A fishing rod. Dog adoption. An egg that hatches into a sidekick. Wisconsin.</p>
+      <div class="tags">
+        <span class="tag">🗺️ 80-SCREEN OPEN WORLD</span>
+        <span class="tag">🦎 4 BOSS BATTLES</span>
+        <span class="tag">🐶 DOG ADOPTION SYSTEM</span>
+        <span class="tag">🏪 MIESFELD'S TRIANGLE MARKET</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E<small>10+</small></div>
+        <div class="rating-txt">Mild Cartoon Violence · Iguana Content · Corn Collection<br>One Very Cranky Jaguar · Wisconsin References</div>
+      </div>
+      <a href="/games/tulum-trouble.html" class="wishlist" style="display:inline-block;text-decoration:none;">▶ PLAY NOW</a>
+    </div>
+  </div>
+
+</section>
+
+<!-- ── COMING SOON ── -->
 <section class="trailers">
   <h2 class="section-hdr">UPCOMING RELEASES</h2>
   <p class="section-note">* Release dates subject to change. Or complete fabrication.</p>
@@ -951,6 +1036,635 @@ function drawAutoBox(ctx,text,x,y){
   }
   const GW2=640;
   loop();
+})();
+
+// ══════════════════════════════════════════════════════
+//  PLAYABLE GAME THUMBNAIL CANVASES
+// ══════════════════════════════════════════════════════
+
+// ── THUMBNAIL: ORIGINAL (Angry Birds farmyard style) ──
+(function(){
+  const canvas=document.getElementById('cO');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+  const W=640,H=200,GY=140;
+  const clouds=[{x:80,y:28},{x:260,y:18},{x:480,y:32}];
+
+  function drawBg(){
+    // Sky gradient — summer blue
+    const sg=ctx.createLinearGradient(0,0,0,GY);
+    sg.addColorStop(0,'#5BC8F5');sg.addColorStop(1,'#ffe8a0');
+    ctx.fillStyle=sg;ctx.fillRect(0,0,W,GY);
+    // Sun
+    ctx.save();ctx.shadowColor='#FFD700';ctx.shadowBlur=18;
+    ctx.fillStyle='#FFE033';ctx.beginPath();ctx.arc(W-60,36,22,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    // Clouds
+    clouds.forEach(c=>{
+      c.x=(c.x+0.15)%W;
+      ctx.fillStyle='rgba(255,255,255,0.88)';
+      ctx.save();ctx.translate(c.x,c.y);
+      [[0,0,18],[18,4,14],[-16,5,13],[8,-8,13]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});
+      ctx.restore();
+    });
+    // Ground
+    const gg=ctx.createLinearGradient(0,GY,0,H);
+    gg.addColorStop(0,'#5db82e');gg.addColorStop(0.4,'#3e8a18');gg.addColorStop(1,'#8a5a20');
+    ctx.fillStyle=gg;ctx.fillRect(0,GY,W,H-GY);
+    ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(0,GY,W,5);
+    // Barn
+    ctx.fillStyle='#c0392b';ctx.fillRect(460,GY-80,90,80);
+    ctx.fillStyle='#7b241c';ctx.beginPath();ctx.moveTo(452,GY-80);ctx.lineTo(505,GY-118);ctx.lineTo(558,GY-80);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#F9E784';ctx.fillRect(472,GY-60,16,14);ctx.fillRect(522,GY-60,16,14);
+    ctx.fillStyle='#5a3a1a';ctx.fillRect(490,GY-24,20,24);
+    // Hay bale
+    const hg=ctx.createLinearGradient(0,GY-40,0,GY);hg.addColorStop(0,'#f5c842');hg.addColorStop(1,'#c8960c');
+    ctx.fillStyle=hg;ctx.beginPath();ctx.roundRect(360,GY-40,44,40,6);ctx.fill();
+    ctx.strokeStyle='#a07800';ctx.lineWidth=1.5;ctx.stroke();
+  }
+
+  function drawOrigChicken(x,y,r,angle){
+    const c=r/22;
+    ctx.save();ctx.translate(x,y);if(angle)ctx.rotate(angle);
+    ctx.fillStyle='#F5E642';ctx.beginPath();ctx.ellipse(0,0,r,r*0.82,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#c8a800';ctx.lineWidth=2*c;ctx.stroke();
+    ctx.fillStyle='#F5E642';ctx.beginPath();ctx.ellipse(4*c,4*c,13*c,8*c,0.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#F5E642';ctx.beginPath();ctx.arc(18*c,-10*c,13*c,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#c8a800';ctx.lineWidth=2*c;ctx.stroke();
+    ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(21*c,-13*c,4*c,3*c,-0.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(22*c,-14*c,1.2*c,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff8c00';ctx.beginPath();ctx.moveTo(29*c,-9*c);ctx.lineTo(37*c,-7*c);ctx.lineTo(29*c,-5*c);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(28*c,-3*c,5*c,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
+  // Slingshot chicken and flying arc
+  let flyX=110,flyY=GY-50,flyVx=0,flyVy=0,flying=false;
+  let resetTimer=0;
+
+  function launch(){
+    flyX=110;flyY=GY-50;flyVx=5.5;flyVy=-7;flying=true;
+  }
+
+  function loop(){
+    fr++;
+    drawBg();
+    // Slingshot pole
+    ctx.strokeStyle='#7b4a1e';ctx.lineWidth=8;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(110,GY-20);ctx.lineTo(97,GY-68);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(110,GY-20);ctx.lineTo(123,GY-68);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(110,GY-20);ctx.lineTo(110,GY+14);ctx.stroke();
+
+    if(!flying){
+      // Rubber bands to chicken in sling
+      ctx.strokeStyle='#b5651d';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(97,GY-68);ctx.lineTo(flyX,flyY);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(123,GY-68);ctx.lineTo(flyX,flyY);ctx.stroke();
+      // Trajectory dots
+      let tx=flyX,ty=flyY,tvx=5.5,tvy=-7;
+      ctx.fillStyle='rgba(255,255,255,0.4)';
+      for(let i=0;i<30;i++){tvx*=0.999;tvy+=0.45;tx+=tvx;ty+=tvy;if(ty>GY)break;if(i%2===0){ctx.beginPath();ctx.arc(tx,ty,2.5,0,Math.PI*2);ctx.fill();}}
+      drawOrigChicken(flyX,flyY,22,0);
+      resetTimer++;
+      if(resetTimer>80){resetTimer=0;launch();}
+    } else {
+      flyVy+=0.45;flyX+=flyVx;flyY+=flyVy;
+      const ang=Math.atan2(flyVy,flyVx)+0.25;
+      // Trail
+      ctx.fillStyle='rgba(255,230,50,0.35)';
+      ctx.beginPath();ctx.arc(flyX-flyVx*2,flyY-flyVy*2,14,0,Math.PI*2);ctx.fill();
+      drawOrigChicken(flyX,flyY,22,ang);
+      if(flyX>W+40||flyY>GY+20){flying=false;resetTimer=0;}
+    }
+
+    // HUD strip
+    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,W,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🐔 CRANKY CHICKEN! — PLAY FREE',W/2,15);
+    ctx.textAlign='left';
+    // Zone label
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(W/2-90,H-24,180,20);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('☀️ Summer Farmyard — Level 1',W/2,H-9);ctx.textAlign='left';
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── THUMBNAIL: MYSTERY ISLAND ──
+(function(){
+  const canvas=document.getElementById('cM');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+  const W=640,H=200,GY=145;
+
+  function drawIslandBg(){
+    // Jungle sky
+    ctx.fillStyle='#1a3a1a';ctx.fillRect(0,0,W,GY);
+    // Moon
+    ctx.fillStyle='#fffde0';ctx.beginPath();ctx.arc(W-50,30,18,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1a3a1a';ctx.beginPath();ctx.arc(W-42,24,15,0,Math.PI*2);ctx.fill();
+    // Stars
+    [[60,20],[150,35],[280,12],[380,28],[500,18],[580,40]].forEach(([x,y])=>{
+      const tw=0.3+Math.sin(fr*0.04+x)*0.7;
+      ctx.fillStyle=`rgba(255,255,255,${tw})`;ctx.beginPath();ctx.arc(x,y,1.2,0,Math.PI*2);ctx.fill();
+    });
+    // Jungle trees silhouette
+    ctx.fillStyle='#0d2010';
+    [[40,GY],[120,GY-20],[200,GY-10],[320,GY-30],[420,GY-15],[520,GY-25],[600,GY]].forEach(([x,y],i,a)=>{
+      if(i===0)ctx.beginPath();
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.lineTo(W,GY);ctx.lineTo(W,GY+10);ctx.lineTo(0,GY+10);ctx.closePath();ctx.fill();
+    // Palm trees
+    [[150,GY],[400,GY-5]].forEach(([px,py])=>{
+      ctx.strokeStyle='#2d1a08';ctx.lineWidth=5;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(px+10,py-40,px+5,py-70);ctx.stroke();
+      ctx.fillStyle='#1b4332';
+      [[-20,-5],[-10,-18],[0,-22],[12,-18],[20,-8]].forEach(([lx,ly])=>{
+        ctx.beginPath();ctx.moveTo(px+5,py-70);ctx.quadraticCurveTo(px+5+lx/2,py-70+ly/2,px+5+lx,py-70+ly);ctx.lineWidth=4;ctx.strokeStyle='#1b4332';ctx.stroke();
+      });
+    });
+    // Ground
+    const gg=ctx.createLinearGradient(0,GY,0,H);gg.addColorStop(0,'#2d5a1b');gg.addColorStop(1,'#1e3d12');
+    ctx.fillStyle=gg;ctx.fillRect(0,GY,W,H-GY);
+    // Log obstacle
+    ctx.fillStyle='#8B5E3C';ctx.beginPath();ctx.roundRect(340,GY-55,36,55,4);ctx.fill();
+    ctx.strokeStyle='#5C3A1E';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;
+    [0.3,0.6].forEach(t=>{ctx.beginPath();ctx.moveTo(340,GY-55+55*t);ctx.lineTo(376,GY-55+55*t);ctx.stroke();});
+    // Rock
+    ctx.fillStyle='#8A8A8A';ctx.beginPath();ctx.roundRect(390,GY-44,40,44,5);ctx.fill();
+    ctx.strokeStyle='#555';ctx.lineWidth=1.5;ctx.stroke();
+  }
+
+  function drawIslandBird(x,y,r,type,angle){
+    const colors={split:'#f5c842',bomb:'#444',speed:'#e84040',tyler:'#f0f0f0'};
+    const strokes={split:'#c8a800',bomb:'#ff8800',speed:'#c03030',tyler:'#aaaaaa'};
+    ctx.save();ctx.translate(x,y);if(angle)ctx.rotate(angle);
+    ctx.fillStyle=colors[type]||'#f5c842';
+    ctx.beginPath();ctx.ellipse(0,0,r,r*0.85,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=strokes[type];ctx.lineWidth=2;ctx.stroke();
+    // Eye
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(r*0.5,r*-0.3,r*0.25,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(r*0.55,r*-0.3,r*0.13,0,Math.PI*2);ctx.fill();
+    // Beak
+    ctx.fillStyle='#ff8c00';ctx.beginPath();ctx.moveTo(r*0.85,0);ctx.lineTo(r*1.15,-r*0.12);ctx.lineTo(r*1.15,r*0.12);ctx.closePath();ctx.fill();
+    if(type==='bomb'){ctx.font=`${r*0.7}px serif`;ctx.textAlign='center';ctx.fillText('💣',0,r*0.3);}
+    if(type==='speed'){ctx.strokeStyle='#ff6600';ctx.lineWidth=2;for(let i=0;i<3;i++){const a=Math.PI/2+i*0.4-0.4;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.8,Math.sin(a)*r*0.8);ctx.lineTo(Math.cos(a)*r*1.3,Math.sin(a)*r*1.3);ctx.stroke();}}
+    ctx.restore();
+  }
+
+  let flyX=100,flyY=GY-55,flyVx=0,flyVy=0,flying=false,resetTimer=0;
+  const birdTypes=['split','speed','bomb'];
+  let birdIdx=0;
+
+  function launch(){flyX=100;flyY=GY-55;flyVx=5.8;flyVy=-6.5;flying=true;}
+
+  function loop(){
+    fr++;
+    drawIslandBg();
+    // Slingshot
+    ctx.strokeStyle='#5a3a1a';ctx.lineWidth=8;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(100,GY-15);ctx.lineTo(88,GY-58);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(100,GY-15);ctx.lineTo(112,GY-58);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(100,GY-15);ctx.lineTo(100,GY+12);ctx.stroke();
+
+    const btype=birdTypes[birdIdx%3];
+    if(!flying){
+      ctx.strokeStyle='#b5651d';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(88,GY-58);ctx.lineTo(flyX,flyY);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(112,GY-58);ctx.lineTo(flyX,flyY);ctx.stroke();
+      let tx=flyX,ty=flyY,tvx=5.8,tvy=-6.5;
+      ctx.fillStyle='rgba(255,255,255,0.35)';
+      for(let i=0;i<28;i++){tvy+=0.35;tx+=tvx;ty+=tvy;if(ty>GY)break;if(i%2===0){ctx.beginPath();ctx.arc(tx,ty,2,0,Math.PI*2);ctx.fill();}}
+      drawIslandBird(flyX,flyY,btype==='bomb'?22:btype==='speed'?17:20,btype,0);
+      resetTimer++;
+      if(resetTimer>90){resetTimer=0;birdIdx++;launch();}
+    } else {
+      flyVy+=0.35;flyX+=flyVx;flyY+=flyVy;
+      const ang=Math.atan2(flyVy,flyVx);
+      ctx.fillStyle='rgba(245,200,66,0.3)';ctx.beginPath();ctx.arc(flyX-flyVx*2,flyY-flyVy*2,14,0,Math.PI*2);ctx.fill();
+      drawIslandBird(flyX,flyY,btype==='bomb'?22:btype==='speed'?17:20,btype,ang);
+      if(flyX>W+40||flyY>GY+20){flying=false;resetTimer=0;}
+    }
+
+    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,W,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🏝️ MYSTERY ISLAND TROUBLE — PLAY FREE',W/2,15);ctx.textAlign='left';
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(W/2-90,H-24,180,20);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🌴 Jungle Zone — Night',W/2,H-9);ctx.textAlign='left';
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── THUMBNAIL: TULUM TROUBLE (reuses existing game sprites) ──
+(function(){
+  const canvas=document.getElementById('cT');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+  const W=640,H=200,TILE=32;
+  const T={SAND:0,PATH:1,JUNGLE:2,WATER:3,RUIN:4,RF:5,WALL:6,FLOWER:9};
+  const map=[
+    [8,8,3,3,0,0,1,1,1,1,1,1,1,1,0,0,3,8,8,3],
+    [3,0,8,8,9,0,1,1,1,1,1,1,1,1,0,9,8,8,3,3],
+    [3,8,8,9,0,0,1,1,1,1,1,1,1,1,0,0,9,8,8,3],
+    [3,3,3,0,0,0,1,1,1,1,1,1,1,1,0,0,0,3,3,3],
+    [3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],
+    [3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],
+  ];
+  const chickPos={x:200,y:100,dir:3,atk:0};
+  const igPos={x:380,y:110};
+
+  function loop(){
+    fr++;
+    ctx.fillStyle='#0d4a6b';ctx.fillRect(0,0,W,H);
+    for(let ty=0;ty<6;ty++) for(let tx=0;tx<20;tx++){
+      const t=(map[ty]||[])[tx];
+      if(t!==undefined) drawTile(ctx,t,tx*TILE,ty*TILE+(H-6*TILE)/2,fr,'coast',0);
+    }
+    // Chicken wanders
+    chickPos.x+=Math.sin(fr*0.02)*0.8;
+    chickPos.y+=Math.cos(fr*0.015)*0.5;
+    if(fr%120===0)chickPos.atk=18;
+    if(chickPos.atk>0)chickPos.atk--;
+    drawChicken(ctx,chickPos.x,chickPos.y,chickPos.dir,chickPos.atk,fr);
+    drawIguana(ctx,igPos.x+Math.sin(fr*0.03)*10,igPos.y,0.8,fr);
+    drawCorn(ctx,300,95,fr);drawCorn(ctx,460,105,fr);
+
+    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,W,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🌴 TULUM TROUBLE — PLAY FREE',W/2,15);ctx.textAlign='left';
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(W/2-90,H-24,180,20);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🏖️ Mangrove Shore — Screen (0,0)',W/2,H-9);ctx.textAlign='left';
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ══════════════════════════════════════════════════════
+//  PLAYABLE GAME TRAILER SCRIPTS
+// ══════════════════════════════════════════════════════
+
+TRAILER_SCRIPTS['orig'] = (()=>{
+  const W=640,H=400,GY=300;
+  const clouds=[{x:80,y:60},{x:260,y:40},{x:480,y:65},{x:160,y:90}];
+
+  function bg(ctx,fr,season){
+    const skies={spring:['#87CEEB','#d8f0ff'],summer:['#5BC8F5','#ffe8a0'],autumn:['#e8a87c','#f5c842'],winter:['#c8dff0','#e8f4ff']};
+    const grounds={spring:['#6abf3a','#52a82a'],summer:['#5db82e','#3e8a18'],autumn:['#c8842a','#a05c10'],winter:['#ddeeff','#aaccee']};
+    const sk=skies[season]||skies.summer;
+    const gr=grounds[season]||grounds.summer;
+    const sg=ctx.createLinearGradient(0,0,0,GY);sg.addColorStop(0,sk[0]);sg.addColorStop(1,sk[1]);
+    ctx.fillStyle=sg;ctx.fillRect(0,0,W,GY);
+    if(season==='winter'){ctx.fillStyle='rgba(220,235,255,0.6)';for(let i=0;i<8;i++){const x=(i*113+fr*0.3)%W,y=(i*71+fr*0.2)%GY;ctx.font='11px serif';ctx.fillText('❄️',x,y);}}
+    if(season==='autumn'){for(let i=0;i<6;i++){const x=(i*97+fr*0.4)%W,y=(i*53+fr*0.3)%GY;ctx.font='13px serif';ctx.fillText('🍂',x,y);}}
+    // Sun / moon
+    if(season!=='winter'){
+      ctx.save();ctx.shadowColor='#FFD700';ctx.shadowBlur=20;
+      ctx.fillStyle='#FFE033';ctx.beginPath();ctx.arc(W-80,55,28,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    // Clouds
+    clouds.forEach(c=>{c.x=(c.x+0.18)%W;ctx.fillStyle='rgba(255,255,255,0.85)';ctx.save();ctx.translate(c.x,c.y);[[0,0,22],[20,5,16],[-18,6,15],[10,-9,15]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});ctx.restore();});
+    // Ground
+    const gg=ctx.createLinearGradient(0,GY,0,H);gg.addColorStop(0,gr[0]);gg.addColorStop(0.4,gr[1]);gg.addColorStop(1,'#8a5a20');
+    ctx.fillStyle=gg;ctx.fillRect(0,GY,W,H-GY);
+    // Barn
+    ctx.fillStyle=season==='winter'?'#c0c0c0':'#c0392b';ctx.fillRect(460,GY-95,90,95);
+    ctx.fillStyle='#7b241c';ctx.beginPath();ctx.moveTo(452,GY-95);ctx.lineTo(505,GY-136);ctx.lineTo(558,GY-95);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#F9E784';ctx.fillRect(472,GY-72,16,14);ctx.fillRect(522,GY-72,16,14);
+    ctx.fillStyle='#5a3a1a';ctx.fillRect(490,GY-28,20,28);
+    // Hay bales
+    [200,260,320].forEach(hx=>{
+      const hg=ctx.createLinearGradient(0,GY-48,0,GY);hg.addColorStop(0,'#f5c842');hg.addColorStop(1,'#c8960c');
+      ctx.fillStyle=hg;ctx.beginPath();ctx.roundRect(hx,GY-48,44,48,6);ctx.fill();
+      ctx.strokeStyle='#a07800';ctx.lineWidth=1.5;ctx.stroke();
+    });
+  }
+
+  function drawBird(ctx,x,y,r,type,angle){
+    const colors={normal:'#F5E642',bomb:'#cc2200',boomerang:'#9955ff',freeze:'#88ddff',fire:'#ff6600'};
+    const strokes={normal:'#c8a800',bomb:'#880000',boomerang:'#6622cc',freeze:'#4499cc',fire:'#cc3300'};
+    const c=r/22;
+    ctx.save();ctx.translate(x,y);if(angle)ctx.rotate(angle);
+    ctx.fillStyle=colors[type]||'#F5E642';ctx.beginPath();ctx.ellipse(0,0,r,r*0.82,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=strokes[type];ctx.lineWidth=2*c;ctx.stroke();
+    ctx.fillStyle=colors[type];ctx.beginPath();ctx.ellipse(4*c,4*c,13*c,8*c,0.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(18*c,-10*c,13*c,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=strokes[type];ctx.lineWidth=2*c;ctx.stroke();
+    ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(21*c,-13*c,4*c,3*c,-0.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(22*c,-14*c,1.2*c,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff8c00';ctx.beginPath();ctx.moveTo(29*c,-9*c);ctx.lineTo(37*c,-7*c);ctx.lineTo(29*c,-5*c);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(28*c,-3*c,5*c,0,Math.PI*2);ctx.fill();
+    if(type!=='normal'){ctx.font=`${11*c}px serif`;ctx.textAlign='center';ctx.fillText({bomb:'💣',boomerang:'🌀',freeze:'❄️',fire:'🔥'}[type]||'',2*c,-4*c);ctx.textAlign='left';}
+    ctx.restore();
+  }
+
+  const seasons=['summer','autumn','winter','spring'];
+  const birdTypes=['normal','fire','bomb','boomerang','freeze'];
+
+  return [
+    // Scene 1: summer farmyard
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr,'summer');
+      ctx.strokeStyle='#7b4a1e';ctx.lineWidth=9;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(110,GY-20);ctx.lineTo(97,GY-75);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(110,GY-20);ctx.lineTo(123,GY-75);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(110,GY-20);ctx.lineTo(110,GY+18);ctx.stroke();
+      ctx.strokeStyle='#b5651d';ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(97,GY-75);ctx.lineTo(110,GY-55);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(123,GY-75);ctx.lineTo(110,GY-55);ctx.stroke();
+      drawBird(ctx,110,GY-55,22,'normal',0);
+      // Trajectory
+      let tx=110,ty=GY-55,tvx=6.5,tvy=-9;
+      ctx.fillStyle='rgba(255,255,255,0.4)';
+      for(let i=0;i<35;i++){tvy+=0.45;tx+=tvx;ty+=tvy;if(ty>GY)break;if(i%2===0){ctx.beginPath();ctx.arc(tx,ty,3,0,Math.PI*2);ctx.fill();}}
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'Five seasons. One slingshot. Infinite crankiness.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr,'autumn');
+      // Flying chicken arc
+      const ft=t;
+      const fx=110+ft*520, fy=GY-55-ft*160+ft*ft*200;
+      const ang=Math.atan2(fy-(GY-55)+0.01,fx-110);
+      ctx.save();ctx.shadowColor='#ff4400';ctx.shadowBlur=14;
+      drawBird(ctx,fx,fy,22,'fire',ang);ctx.restore();
+      // Trail
+      for(let i=1;i<=8;i++){const fp=ft-i*0.03;if(fp<0)continue;const tx=110+fp*520,ty=GY-55-fp*160+fp*fp*200;ctx.fillStyle=`rgba(255,${100+i*10},0,${0.5-i*0.06})`;ctx.beginPath();ctx.arc(tx,ty,6-i*0.5,0,Math.PI*2);ctx.fill();}
+      // Barrel hit flash at end
+      if(t>0.85){ctx.fillStyle=`rgba(255,150,0,${(t-0.85)/0.15*0.5})`;ctx.fillRect(0,0,W,H);}
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'🔥 Fire Chicken. Burns through EVERYTHING.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr,'winter');
+      // Freeze chicken
+      const ft=t;
+      const fx=110+ft*480, fy=GY-55-ft*140+ft*ft*180;
+      const ang=Math.atan2(fy-(GY-55)+0.01,fx-110);
+      ctx.save();ctx.shadowColor='#88ddff';ctx.shadowBlur=16;
+      drawBird(ctx,fx,fy,22,'freeze',ang);ctx.restore();
+      for(let i=1;i<=6;i++){const fp=ft-i*0.04;if(fp<0)continue;const tx=110+fp*480,ty=GY-55-fp*140+fp*fp*180;ctx.fillStyle=`rgba(136,221,255,${0.5-i*0.08})`;ctx.beginPath();ctx.arc(tx,ty,5,0,Math.PI*2);ctx.fill();}
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'❄️ Freeze Chicken. Turns obstacles to ice.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      bg(ctx,fr,'spring');
+      // All bird types on slingshot queue
+      const bqueue=['normal','fire','bomb','boomerang','freeze'];
+      bqueue.forEach((bt,i)=>{
+        if(i===0) drawBird(ctx,110,GY-55,22,bt,0);
+        else { ctx.globalAlpha=0.7-i*0.1; drawBird(ctx,60-i*22,GY-30,18*(1-i*0.08),bt,0); ctx.globalAlpha=1; }
+      });
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'5 chicken types. Which one are you?',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      tEndCard(ctx,'I','CRANKY CHICKEN!','"The One That Started It All"',t);
+      if(t>0.5){
+        const ba=Math.min(1,(t-0.5)/0.15);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='#ffcc02';ctx.font='bold 22px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('▶ PLAY FREE AT CRANKYCHICKENS.COM/GAMES/',W/2,360);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+  ];
+})();
+
+TRAILER_SCRIPTS['island'] = (()=>{
+  const W=640,H=400,GY=310;
+  const zones=['jungle','reef','storm','volcano'];
+  const zoneNames={jungle:'🌿 Jungle Zone',reef:'🪸 Reef Zone',storm:'⛈️ Storm Zone',volcano:'🌋 Volcano Zone'};
+  const bgs={
+    jungle:{sky:'#1a3a1a',g1:'#2d5a1b',g2:'#1e3d12'},
+    reef:  {sky:'#0a2a3a',g1:'#c8a85a',g2:'#a07840'},
+    storm: {sky:'#1a1a2a',g1:'#3a3a4a',g2:'#2a2a3a'},
+    volcano:{sky:'#2a0a0a',g1:'#5a2a1a',g2:'#3a1a0a'},
+  };
+
+  function drawZoneBg(ctx,zone,fr){
+    const b=bgs[zone];
+    ctx.fillStyle=b.sky;ctx.fillRect(0,0,W,GY);
+    if(zone==='volcano'){
+      // Lava glow
+      const lg=ctx.createRadialGradient(W/2,GY,0,W/2,GY,200);
+      lg.addColorStop(0,`rgba(255,80,0,${0.2+Math.sin(fr*0.05)*0.1})`);lg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=lg;ctx.fillRect(0,0,W,GY);
+      ctx.font='24px serif';ctx.textAlign='center';ctx.fillText('🌋',W-80,GY-30);ctx.textAlign='left';
+    }
+    if(zone==='storm'){
+      ctx.strokeStyle='rgba(150,180,220,0.3)';ctx.lineWidth=1;
+      for(let i=0;i<30;i++){const rx=(i*173+fr*0.8)%W,ry=(i*97+fr*1.2)%(GY+20);ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx-4,ry+14);ctx.stroke();}
+    }
+    if(zone==='reef'){
+      // Underwater shimmer
+      for(let i=0;i<8;i++){ctx.fillStyle=`rgba(100,240,255,${0.04+Math.sin(fr*0.06+i)*0.03})`;ctx.fillRect(0,i*40,W,20);}
+    }
+    const gg=ctx.createLinearGradient(0,GY,0,H);gg.addColorStop(0,b.g1);gg.addColorStop(1,b.g2);
+    ctx.fillStyle=gg;ctx.fillRect(0,GY,W,H-GY);
+  }
+
+  function drawIslandBird(ctx,x,y,r,type,angle){
+    const colors={split:'#f5c842',bomb:'#444',speed:'#e84040',tyler:'#f0f0f0'};
+    const strokes={split:'#c8a800',bomb:'#ff8800',speed:'#c03030',tyler:'#aaaaaa'};
+    ctx.save();ctx.translate(x,y);if(angle)ctx.rotate(angle);
+    ctx.fillStyle=colors[type];ctx.beginPath();ctx.ellipse(0,0,r,r*0.85,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=strokes[type];ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(r*0.5,r*-0.3,r*0.25,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(r*0.55,r*-0.3,r*0.13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff8c00';ctx.beginPath();ctx.moveTo(r*0.85,0);ctx.lineTo(r*1.15,-r*0.12);ctx.lineTo(r*1.15,r*0.12);ctx.closePath();ctx.fill();
+    if(type==='speed'){for(let i=0;i<3;i++){const a=Math.PI/2+i*0.4-0.4;ctx.strokeStyle='#ff6600';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.8,Math.sin(a)*r*0.8);ctx.lineTo(Math.cos(a)*r*1.3,Math.sin(a)*r*1.3);ctx.stroke();}}
+    ctx.restore();
+  }
+
+  return [
+    { dur:300, draw(ctx,fr,t){
+      drawZoneBg(ctx,'jungle',fr);
+      // Log + plank obstacles
+      ctx.fillStyle='#8B5E3C';ctx.beginPath();ctx.roundRect(280,GY-60,32,60,4);ctx.fill();ctx.strokeStyle='#5C3A1E';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#C4A35A';ctx.beginPath();ctx.roundRect(320,GY-80,120,20,3);ctx.fill();ctx.strokeStyle='#8B6914';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#8A8A8A';ctx.beginPath();ctx.roundRect(440,GY-55,36,55,5);ctx.fill();ctx.strokeStyle='#555';ctx.lineWidth=1.5;ctx.stroke();
+      // Slingshot
+      ctx.strokeStyle='#5a3a1a';ctx.lineWidth=9;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(110,GY-18);ctx.lineTo(97,GY-72);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(110,GY-18);ctx.lineTo(123,GY-72);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(110,GY-18);ctx.lineTo(110,GY+14);ctx.stroke();
+      drawIslandBird(ctx,110,GY-54,20,'split',0);
+      let tx=110,ty=GY-54,tvx=6.2,tvy=-8.5;
+      ctx.fillStyle='rgba(255,255,255,0.35)';
+      for(let i=0;i<32;i++){tvy+=0.35;tx+=tvx;ty+=tvy;if(ty>GY)break;if(i%2===0){ctx.beginPath();ctx.arc(tx,ty,2.5,0,Math.PI*2);ctx.fill();}}
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'A mysterious island. Four zones. One cranky crew.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      drawZoneBg(ctx,'storm',fr);
+      // Flying speed bird
+      const ft=t;
+      const fx=110+ft*500,fy=GY-54-ft*130+ft*ft*160;
+      const ang=Math.atan2(fy-(GY-54)+0.01,fx-110);
+      ctx.save();ctx.shadowColor='#ff6600';ctx.shadowBlur=12;
+      drawIslandBird(ctx,fx,fy,17,'speed',ang);ctx.restore();
+      for(let i=1;i<=5;i++){const fp=ft-i*0.04;if(fp<0)continue;const tx=110+fp*500,ty=GY-54-fp*130+fp*fp*160;ctx.fillStyle=`rgba(255,100,0,${0.5-i*0.09})`;ctx.beginPath();ctx.arc(tx,ty,4,0,Math.PI*2);ctx.fill();}
+      // Rocks splitting on hit
+      if(t>0.85){ctx.fillStyle=`rgba(80,80,80,${(t-0.85)/0.15*0.5})`;ctx.fillRect(0,0,W,H);ctx.font='32px serif';ctx.textAlign='center';ctx.fillText('💥',400,GY-40);ctx.textAlign='left';}
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'⚡ Speed Bird. Breaks through rock in one hit.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      drawZoneBg(ctx,'volcano',fr);
+      // Bomb bird explosion sequence
+      const ft=Math.min(t*1.5,1);
+      const fx=110+ft*380,fy=GY-54-ft*100+ft*ft*130;
+      const ang=Math.atan2(fy-(GY-54)+0.01,fx-110);
+      if(t<0.65){
+        drawIslandBird(ctx,fx,fy,22,'bomb',ang);
+      } else {
+        // Explosion
+        const ep=(t-0.65)/0.35;
+        for(let i=0;i<12;i++){const a=i/12*Math.PI*2;const er=ep*80;ctx.fillStyle=`rgba(255,${100+Math.random()*80},0,${1-ep})`;ctx.beginPath();ctx.arc(fx+Math.cos(a)*er,fy+Math.sin(a)*er,8*(1-ep*0.5),0,Math.PI*2);ctx.fill();}
+        ctx.fillStyle=`rgba(255,200,0,${(1-ep)*0.6})`;ctx.beginPath();ctx.arc(fx,fy,ep*60,0,Math.PI*2);ctx.fill();
+      }
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'💣 Bomb Bird. No further questions.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      drawZoneBg(ctx,'reef',fr);
+      // Tyler - big special bird
+      ctx.save();ctx.translate(320,GY-70);ctx.scale(1.8,1.8);
+      drawIslandBird(ctx,0,0,34,'tyler',0);ctx.restore();
+      // Crown
+      ctx.fillStyle='#ffcc02';ctx.font='28px serif';ctx.textAlign='center';ctx.fillText('👑',320,GY-130);ctx.textAlign='left';
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'🐦 Meet Tyler. He\'s... special.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      tEndCard(ctx,'II','MYSTERY ISLAND TROUBLE','"Something Is Very Wrong On This Island"',t);
+      if(t>0.5){
+        const ba=Math.min(1,(t-0.5)/0.15);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='#ffcc02';ctx.font='bold 22px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('▶ PLAY FREE AT CRANKYCHICKENS.COM/GAMES/',W/2,360);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+  ];
+})();
+
+TRAILER_SCRIPTS['tulum'] = (()=>{
+  const W=640,H=400,TILE=32;
+  const T2={SAND:0,PATH:1,JUNGLE:2,WATER:3,RUIN:4,RF:5,WALL:6,FLOWER:9};
+
+  return [
+    // Scene 1: beach exploration
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#e8d5a3';ctx.fillRect(0,0,W,H);
+      const bmap=[[8,8,3,3,0,1,1,1,1,1,1,1,1,0,3,3,8,8,3,3],[3,0,8,9,0,1,1,1,1,1,1,1,1,0,9,8,0,3,3,3],[3,8,9,0,0,1,1,9,1,1,1,1,9,1,0,0,9,8,3,3],[3,3,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,3,3,3],[3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],[3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],[3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3],[3,3,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,3,3,3],[3,8,9,0,0,1,1,1,1,1,1,1,1,1,0,0,9,8,3,3],[3,0,8,9,0,1,1,1,1,1,1,1,1,0,9,8,0,3,3,3],[3,8,8,3,3,0,1,1,1,1,1,1,1,0,3,3,8,8,3,3],[3,3,3,3,3,3,1,1,1,1,1,1,1,3,3,3,3,3,3,3],[3,3,3,3,3,3,1,1,1,1,1,1,1,3,3,3,3,3,3,3]];
+      for(let ty=0;ty<Math.min(bmap.length,Math.floor(H/TILE)+1);ty++) for(let tx=0;tx<20;tx++){
+        const t2=(bmap[ty]||[])[tx];
+        if(t2!==undefined) drawTile(ctx,t2,tx*TILE,ty*TILE,fr,'beach',2);
+      }
+      // Chicken wanders
+      const cx=200+Math.sin(fr*0.02)*30,cy=160+Math.cos(fr*0.015)*20;
+      drawChicken(ctx,cx,cy,3,fr%120<18?fr%18:0,fr);
+      // Iguanas patrol
+      drawIguana(ctx,380+Math.sin(fr*0.03)*15,170,0.8,fr);
+      drawIguana(ctx,500,200+Math.sin(fr*0.025)*12,0.7,fr);
+      drawCorn(ctx,300,140,fr);drawCorn(ctx,450,180,fr);drawCorn(ctx,160,200,fr);
+      ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(W/2-110,8,220,22);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 13px Fredoka One';ctx.textAlign='center';ctx.fillText('Mangrove Shore',W/2,23);ctx.textAlign='left';
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'An open world. 80 screens. Corn everywhere.',alpha);
+    }},
+    // Scene 2: boss battle
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#0d2818';ctx.fillRect(0,0,W,H);
+      for(let ty=0;ty<13;ty++) for(let tx=0;tx<20;tx++) drawTile(ctx,1,tx*TILE,ty*TILE,fr,'jungle',4);
+      // Big Lagarto boss
+      ctx.save();ctx.translate(360,140);ctx.scale(2.2,2.2);
+      ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(20,46,22,6,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#52b788';ctx.beginPath();ctx.ellipse(20,28,18,14,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#b7e4c7';ctx.beginPath();ctx.ellipse(20,30,11,9,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#52b788';ctx.beginPath();ctx.ellipse(20,12,14,11,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#40916c';ctx.fillRect(10,12,20,8);
+      ctx.fillStyle='#ffee00';ctx.beginPath();ctx.arc(12,8,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(28,8,6,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(12,8,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(28,8,3,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#2d6a4f';for(let i=0;i<5;i++)ctx.fillRect(8+i*6,2,4,8);
+      ctx.fillStyle='#222';ctx.fillRect(0,H/2.2-7,60,7);ctx.fillStyle='#4ade80';ctx.fillRect(0,H/2.2-7,60*(1-t*0.3),7);
+      ctx.restore();
+      // Slingshot
+      const sx=80,sG=330,forkTop=sG-80-28;
+      ctx.fillStyle='#8B4513';ctx.fillRect(sx-5,forkTop,10,88);ctx.fillRect(sx-24,forkTop,10,88);ctx.fillRect(sx+14,forkTop,10,88);
+      const aimX=0.75,aimY=-0.45,pLen=Math.hypot(aimX,aimY);
+      const px=sx+(aimX/pLen)*40,py=(forkTop+6)+(aimY/pLen)*40;
+      ctx.strokeStyle='#8B4513';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(sx-19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx+19,forkTop+4);ctx.lineTo(px,py);ctx.stroke();
+      drawChicken(ctx,px-16,py-16,3,0,fr);
+      if(t>0.3){const ft=(t-0.3)/0.7;const fx=px+16+ft*310,fy=py+16-ft*110+ft*ft*130;const ang=Math.atan2(fy-(py+16)+0.01,fx-(px+16));ctx.save();ctx.translate(fx,fy);ctx.rotate(ang);drawChicken(ctx,-16,-16,3,15,fr);ctx.restore();}
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,26);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';ctx.fillText('Shots: 🐔🐔🐔  ·  BOSS HP: ████░░  ·  HP: ❤️❤️❤️',W/2,18);ctx.textAlign='left';
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'Four bosses. Four seals. One furious jaguar.',alpha);
+    }},
+    // Scene 3: town life
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#f5deb3';ctx.fillRect(0,0,W,H);
+      for(let ty=0;ty<Math.floor(H/TILE);ty++) for(let tx=0;tx<20;tx++) drawTile(ctx,ty===0||ty>=Math.floor(H/TILE)-1||tx===0||tx===19?6:1,tx*TILE,ty*TILE,fr,'beach',2);
+      // Town NPCs
+      const npcs=[{x:160,y:140,c:'#e8a87c',e:'👵'},{x:300,y:160,c:'#7986cb',e:'👩‍🏫'},{x:460,y:150,c:'#ffb74d',e:'🧀'}];
+      npcs.forEach(n=>{
+        ctx.fillStyle=n.c;ctx.beginPath();ctx.arc(n.x+16,n.y+14,14,0,Math.PI*2);ctx.fill();
+        ctx.font='18px Arial';ctx.textAlign='center';ctx.fillText(n.e,n.x+16,n.y+20);ctx.textAlign='left';
+        // Speech bubble
+        if(fr%180<100){ctx.fillStyle='rgba(255,255,255,0.95)';ctx.beginPath();ctx.roundRect(n.x-10,n.y-30,52,22,6);ctx.fill();ctx.fillStyle='#1a0a2e';ctx.font='bold 9px Fredoka One';ctx.textAlign='center';ctx.fillText('💬 ...',n.x+16,n.y-13);ctx.textAlign='left';}
+      });
+      drawChicken(ctx,240+Math.sin(fr*0.02)*10,180,3,0,fr);
+      // Shop
+      ctx.fillStyle='#c4a882';ctx.fillRect(80,100,80,60);ctx.fillStyle='#8B4513';ctx.beginPath();ctx.moveTo(74,100);ctx.lineTo(120,70);ctx.lineTo(166,100);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#ffcc02';ctx.font='bold 9px Fredoka One';ctx.textAlign='center';ctx.fillText('🛒 SHOP',120,90);ctx.textAlign='left';
+      ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(W/2-110,8,220,22);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 13px Fredoka One';ctx.textAlign='center';ctx.fillText('Pueblo Tulum',W/2,23);ctx.textAlign='left';
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'Three towns. Real quests. Actual tamales.',alpha);
+    }},
+    // Scene 4: dog adoption
+    { dur:300, draw(ctx,fr,t){
+      ctx.fillStyle='#d7ccc8';ctx.fillRect(0,0,W,H);
+      for(let ty=0;ty<Math.floor(H/TILE);ty++) for(let tx=0;tx<20;tx++) drawTile(ctx,1,tx*TILE,ty*TILE,fr,'coast',0);
+      // Dog pack
+      const dogs=[{x:160,y:160,c:'#c8a06a',n:'Max'},{x:260,y:180,c:'#8B5E3C',n:'Biscuit'},{x:360,y:155,c:'#f5f5f5',n:'Snowy'},{x:470,y:170,c:'#ff8c42',n:'Chili'}];
+      dogs.forEach((d,i)=>{
+        const bob=Math.sin(fr*0.08+i)*3;
+        ctx.fillStyle=d.c;ctx.beginPath();ctx.arc(d.x+12,d.y+10+bob,12,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(d.x+12,d.y-2+bob,9,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='rgba(0,0,0,0.7)';ctx.beginPath();ctx.roundRect(d.x-4,d.y+26,32,12,4);ctx.fill();
+        ctx.fillStyle='#fff';ctx.font='bold 7px Fredoka One';ctx.textAlign='center';ctx.fillText(d.n,d.x+12,d.y+35);ctx.textAlign='left';
+        // Heart
+        if(Math.floor((fr+i*30)/20)%4===0){ctx.font='12px Arial';ctx.textAlign='center';ctx.fillText('❤️',d.x+12,d.y-10+bob);ctx.textAlign='left';}
+      });
+      drawChicken(ctx,310,200,2,0,fr);
+      const alpha=t<0.2?0:t<0.3?(t-0.2)/0.1:t>0.85?(1-(t-0.85)/0.15):1;
+      tCard(ctx,'🐶 Adopt a dog. Up to 5. No notes.',alpha);
+    }},
+    { dur:300, draw(ctx,fr,t){
+      tEndCard(ctx,'III','TULUM TROUBLE','"El Jaguar Stole My Corn"',t);
+      if(t>0.5){
+        const ba=Math.min(1,(t-0.5)/0.15);
+        ctx.globalAlpha=ba;
+        ctx.fillStyle='#ffcc02';ctx.font='bold 22px Fredoka One';ctx.textAlign='center';
+        ctx.fillText('▶ PLAY FREE AT CRANKYCHICKENS.COM/GAMES/',W/2,360);
+        ctx.globalAlpha=1;ctx.textAlign='left';
+      }
+    }},
+  ];
 })();
 
 // ══════════════════════════════════════════════════════
