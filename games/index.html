@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cranky Chickens — Play Now</title>
+<meta name="description" content="Play all Cranky Chickens games free in your browser. Tulum Trouble, Mystery Island, and the original!">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;min-height:100vh;}
+
+header{
+  background:linear-gradient(135deg,#ff6b35,#ff9f1c);
+  border-bottom:3px solid #ffcc02;
+  padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+header a{text-decoration:none;}
+.logo{font-family:'Fredoka One',cursive;font-size:clamp(16px,4vw,22px);
+  color:#fff;text-shadow:2px 2px 0 #a33000;}
+nav{display:flex;gap:16px;}
+nav a{font-family:'Fredoka One',cursive;font-size:14px;color:#fff;
+  text-decoration:none;opacity:0.85;letter-spacing:1px;}
+nav a:hover{opacity:1;}
+
+.hero{text-align:center;padding:50px 20px 30px;}
+.hero h1{font-family:'Fredoka One',cursive;font-size:clamp(32px,8vw,64px);
+  color:#ffcc02;text-shadow:3px 3px 0 #cc2200;letter-spacing:2px;}
+.hero p{font-size:15px;color:rgba(255,255,255,0.6);margin-top:10px;}
+
+.games{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:24px;
+  max-width:1000px;
+  margin:0 auto;
+  padding:20px 20px 60px;
+}
+
+.game-card{
+  background:linear-gradient(135deg,#1a0a2e,#120820);
+  border:2px solid rgba(255,204,2,0.2);
+  border-radius:8px;
+  overflow:hidden;
+  transition:border-color 0.2s,transform 0.2s;
+  text-decoration:none;
+  color:#fff;
+  display:block;
+}
+.game-card:hover{border-color:#ffcc02;transform:translateY(-4px);}
+
+.card-screen{
+  height:160px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:80px;
+  position:relative;
+  overflow:hidden;
+}
+.card-screen::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.5));
+}
+
+.s1{background:linear-gradient(135deg,#0d4a6b,#1a7a9a);}
+.s2{background:linear-gradient(135deg,#0d2818,#1b4332);}
+.s3{background:linear-gradient(135deg,#1a0a2e,#2d1b4e);}
+
+.card-body{padding:18px 20px 22px;}
+.game-num{font-family:'Fredoka One',cursive;font-size:11px;
+  letter-spacing:4px;color:#ff6b35;margin-bottom:4px;}
+.game-title{font-family:'Fredoka One',cursive;font-size:clamp(18px,3vw,26px);
+  color:#ffcc02;letter-spacing:1px;margin-bottom:6px;}
+.game-desc{font-size:13px;color:rgba(255,255,255,0.65);
+  line-height:1.6;margin-bottom:16px;}
+
+.play-btn{
+  display:inline-block;
+  background:#ffcc02;color:#1a0a2e;
+  font-family:'Fredoka One',cursive;font-size:16px;
+  letter-spacing:2px;padding:10px 24px;
+  border-radius:4px;
+  transition:background 0.2s,transform 0.1s;
+}
+.game-card:hover .play-btn{background:#ff9f1c;transform:scale(1.03);}
+
+.badge{
+  display:inline-block;
+  background:rgba(255,204,2,0.12);
+  border:1px solid rgba(255,204,2,0.3);
+  color:#ffcc02;font-family:'Fredoka One',cursive;
+  font-size:10px;letter-spacing:2px;
+  padding:3px 10px;margin-bottom:10px;
+}
+
+footer{
+  text-align:center;padding:30px 20px;
+  font-size:11px;color:rgba(255,255,255,0.2);
+  border-top:1px solid rgba(255,204,2,0.08);
+  font-family:'Fredoka One',cursive;letter-spacing:1px;
+}
+footer a{color:rgba(255,204,2,0.4);text-decoration:none;}
+footer a:hover{color:#ffcc02;}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">🐔 Cranky Chickens</a>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/games/">Play</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>PLAY NOW 🎮</h1>
+  <p>All games free in your browser. No download required.</p>
+</div>
+
+<div class="games">
+
+  <!-- Game 1: Original -->
+  <a class="game-card" href="/games/original.html">
+    <div class="card-screen s3">🐔</div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS I</div>
+      <div class="badge">THE ORIGINAL</div>
+      <div class="game-title">Cranky Chicken!</div>
+      <div class="game-desc">Where it all began. The original cranky chicken adventure that started the franchise.</div>
+      <div class="play-btn">▶ PLAY NOW</div>
+    </div>
+  </a>
+
+  <!-- Game 2: Mystery Island -->
+  <a class="game-card" href="/games/mystery-island.html">
+    <div class="card-screen s2">🏝️</div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS II</div>
+      <div class="badge">ADVENTURE</div>
+      <div class="game-title">Mystery Island Trouble</div>
+      <div class="game-desc">The flock heads to a mysterious island. Secrets, enemies, and corn await.</div>
+      <div class="play-btn">▶ PLAY NOW</div>
+    </div>
+  </a>
+
+  <!-- Game 3: Tulum Trouble -->
+  <a class="game-card" href="/games/tulum-trouble.html">
+    <div class="card-screen s1">🌴</div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS III</div>
+      <div class="badge">⭐ LATEST RELEASE</div>
+      <div class="game-title">Tulum Trouble</div>
+      <div class="game-desc">The biggest Cranky Chickens yet. Tulum, Mexico. El Jaguar. Four boss battles. Dog adoption.</div>
+      <div class="play-btn">▶ PLAY NOW</div>
+    </div>
+  </a>
+
+</div>
+
+<footer>
+  <a href="/">← Back to crankychickens.com</a><br><br>
+  🐔 CLUCKER ENTERTAINMENT™ · ALL EGGS RESERVED · 2026
+</footer>
+
+</body>
+</html>

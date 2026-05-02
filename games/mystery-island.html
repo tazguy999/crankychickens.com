@@ -1,0 +1,2683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cranky Chickens: Mystery Island Trouble</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a1a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    cursor: crosshair;
+    image-rendering: pixelated;
+  }
+  #ui {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const C = document.getElementById('c');
+const ctx = C.getContext('2d');
+
+// ─── RESPONSIVE SIZING ────────────────────────────────────────────────────────
+const GAME_SCALE = 0.72; // zoom out — draw world at 72% then scale up to fill screen
+
+function resize() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  C.width = W; C.height = H;
+  C.style.width = W + 'px';
+  C.style.height = H + 'px';
+  // Virtual canvas size (game logic runs at this resolution)
+  G.W = Math.round(W / GAME_SCALE);
+  G.H = Math.round(H / GAME_SCALE);
+  G.ground = G.H - 100;
+  G.sling.x = Math.round(G.W * 0.13);
+  if (!G.activeBird || !G.activeBird.launched) {
+    G.sling.pullX = G.sling.x;
+  }
+}
+
+// ─── GAME STATE ───────────────────────────────────────────────────────────────
+const G = {
+  state: 'TITLE', // TITLE | WORLDMAP | LEVEL | RESULT | GAMEOVER
+  W: 900, H: 550, ground: 470,
+  score: 0, totalScore: 0,
+  world: 0, level: 0,
+  stars: new Array(12).fill(0),
+  birds: [],
+  blocks: [],
+  jaguars: [],
+  eggs: [],
+  particles: [],
+  activeBird: null,
+  birdQueue: [],
+  sling: { x: 120, y: 0, pullX: 0, pullY: 0, dragging: false, launched: false },
+  camera: { x: 0 },
+  justLaunched: false,
+  fallenMasks: [],
+  msgTimer: 0,
+  msg: '',
+  resultTimer: 0,
+  levelStars: 0,
+  phase: 1, // boss phase
+  bossHP: 0, bossMaxHP: 0,
+  currentBg: 'jungle',
+  isBoss: false,
+  ticks: 0,
+
+  swingAnchor: null,
+};
+
+// ─── LEVELS ───────────────────────────────────────────────────────────────────
+// Layout positions use fractions of G.W so they scale to any viewport.
+// lx(f) = left anchor fraction, e.g. lx(0.55) = 55% across screen
+function lx(f) { return Math.round(G.W * f); }
+
+// Each level: { birds: [], layout: [], bossHP, isBoss }
+function makeLevels() { return [
+  // ══ WORLD 1: JUNGLE ══ Very easy. Planks + logs only. Grunts only. Lots of birds.
+  // 1-1: ONE grunt behind TWO planks. Four birds. Basically impossible to fail.
+  {
+    birds: ['split','split','split','split'],
+    bg: 'jungle',
+    layout: [
+      {type:'block',x:lx(.60),y:0,w:55,h:18,mat:'plank'},
+      {type:'block',x:lx(.60),y:-18,w:55,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.60)+18,y:-52,jtype:'grunt'},
+    ]
+  },
+  // 1-2: Two small towers. Two grunts. Four birds.
+  {
+    birds: ['split','split','bomb','split'],
+    bg: 'jungle',
+    layout: [
+      {type:'block',x:lx(.53),y:0,w:22,h:55,mat:'log'},
+      {type:'block',x:lx(.53)+22,y:0,w:22,h:55,mat:'log'},
+      {type:'block',x:lx(.53),y:-28,w:44,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.53)+10,y:-60,jtype:'grunt'},
+      {type:'block',x:lx(.72),y:0,w:50,h:18,mat:'plank'},
+      {type:'block',x:lx(.72),y:-18,w:50,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.72)+12,y:-52,jtype:'grunt'},
+      {type:'egg',x:lx(.67),y:-10},
+    ]
+  },
+  // 1-3: Three easy targets. First helmet. Four birds.
+  {
+    birds: ['split','split','bomb','split'],
+    bg: 'jungle',
+    layout: [
+      {type:'block',x:lx(.50),y:0,w:44,h:18,mat:'plank'},
+      {type:'block',x:lx(.50),y:-18,w:44,h:18,mat:'plank'},
+      {type:'block',x:lx(.50),y:-36,w:44,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.50)+10,y:-68,jtype:'grunt'},
+      {type:'block',x:lx(.64),y:0,w:22,h:70,mat:'log'},
+      {type:'block',x:lx(.64)+22,y:0,w:22,h:70,mat:'log'},
+      {type:'jaguar',x:lx(.64)+10,y:-85,jtype:'helmet'},
+      {type:'block',x:lx(.78),y:0,w:44,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.78)+10,y:-36,jtype:'grunt'},
+      {type:'egg',x:lx(.73),y:-10},
+    ]
+  },
+
+  // ══ WORLD 2: REEF ══ Easy-medium. Logs+rock. Helmets. One shaman at very end.
+  // 2-1: Cage + single rock post. Two grunts + one helmet. Four birds.
+  {
+    birds: ['split','bomb','split','bomb'],
+    bg: 'reef',
+    layout: [
+      {type:'block',x:lx(.53),y:0,w:55,h:18,mat:'plank'},
+      {type:'block',x:lx(.53)+8,y:-18,w:38,h:50,mat:'log'},
+      {type:'block',x:lx(.53),y:-68,w:55,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.53)+6,y:-100,jtype:'grunt'},
+      {type:'jaguar',x:lx(.53)+34,y:-100,jtype:'grunt'},
+      {type:'block',x:lx(.74),y:0,w:20,h:85,mat:'rock'},
+      {type:'jaguar',x:lx(.74)+4,y:-100,jtype:'helmet'},
+      {type:'egg',x:lx(.69),y:-10},
+    ]
+  },
+  // 2-2: Two structures. Two helmets. Four birds.
+  {
+    birds: ['bomb','split','bomb','split'],
+    bg: 'reef',
+    layout: [
+      {type:'block',x:lx(.51),y:0,w:66,h:18,mat:'plank'},
+      {type:'block',x:lx(.51)+8,y:-18,w:24,h:55,mat:'log'},
+      {type:'block',x:lx(.51)+34,y:-18,w:24,h:55,mat:'log'},
+      {type:'block',x:lx(.51),y:-73,w:66,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.51)+8,y:-107,jtype:'grunt'},
+      {type:'jaguar',x:lx(.51)+42,y:-107,jtype:'helmet'},
+      {type:'block',x:lx(.74),y:0,w:18,h:95,mat:'rock'},
+      {type:'block',x:lx(.74)+18,y:0,w:18,h:95,mat:'rock'},
+      {type:'jaguar',x:lx(.74)+8,y:-110,jtype:'helmet'},
+      {type:'egg',x:lx(.69),y:-10},
+    ]
+  },
+  // 2-3: Three structures. ONE shaman introduced. Five birds.
+  {
+    birds: ['speed','bomb','split','bomb','split'],
+    bg: 'reef',
+    layout: [
+      {type:'block',x:lx(.48),y:0,w:20,h:85,mat:'rock'},
+      {type:'block',x:lx(.48)+20,y:0,w:20,h:85,mat:'rock'},
+      {type:'block',x:lx(.48),y:-52,w:40,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.48)+8,y:-85,jtype:'helmet'},
+      {type:'jaguar',x:lx(.48)+26,y:-85,jtype:'grunt'},
+      {type:'block',x:lx(.63),y:0,w:18,h:70,mat:'log'},
+      {type:'block',x:lx(.63)+18,y:0,w:18,h:70,mat:'log'},
+      {type:'block',x:lx(.63)+36,y:0,w:18,h:70,mat:'log'},
+      {type:'block',x:lx(.63),y:-42,w:54,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.63)+16,y:-75,jtype:'shaman'},
+      {type:'block',x:lx(.79),y:0,w:40,h:18,mat:'plank'},
+      {type:'block',x:lx(.79),y:-18,w:40,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.79)+10,y:-50,jtype:'grunt'},
+      {type:'egg',x:lx(.75),y:-10},
+    ]
+  },
+
+  // ══ WORLD 3: STORM ══ Medium. Rock walls. Shamans appear. Five birds each.
+  // 3-1: Two rock towers. Two helmets. Gentle intro to rock. Five birds.
+  {
+    birds: ['speed','bomb','split','bomb','split'],
+    bg: 'storm',
+    layout: [
+      {type:'block',x:lx(.49),y:0,w:22,h:105,mat:'rock'},
+      {type:'block',x:lx(.49)+22,y:0,w:22,h:105,mat:'rock'},
+      {type:'block',x:lx(.49)+44,y:0,w:22,h:105,mat:'rock'},
+      {type:'block',x:lx(.49),y:-68,w:66,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.49)+8,y:-100,jtype:'helmet'},
+      {type:'jaguar',x:lx(.49)+42,y:-100,jtype:'helmet'},
+      {type:'block',x:lx(.73),y:0,w:18,h:80,mat:'log'},
+      {type:'block',x:lx(.73)+18,y:0,w:18,h:80,mat:'log'},
+      {type:'block',x:lx(.73),y:-48,w:36,h:18,mat:'rock'},
+      {type:'jaguar',x:lx(.73)+8,y:-80,jtype:'grunt'},
+      {type:'egg',x:lx(.83),y:-10},
+    ]
+  },
+  // 3-2: Shamans + helmets. Two shamans total. Five birds.
+  {
+    birds: ['speed','bomb','split','speed','bomb'],
+    bg: 'storm',
+    layout: [
+      {type:'block',x:lx(.48),y:0,w:18,h:90,mat:'log'},
+      {type:'block',x:lx(.48)+18,y:0,w:18,h:90,mat:'log'},
+      {type:'block',x:lx(.48)+36,y:0,w:18,h:90,mat:'log'},
+      {type:'block',x:lx(.48),y:-58,w:54,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.48)+6,y:-90,jtype:'shaman'},
+      {type:'jaguar',x:lx(.48)+34,y:-90,jtype:'grunt'},
+      {type:'block',x:lx(.65),y:0,w:20,h:95,mat:'rock'},
+      {type:'block',x:lx(.65)+20,y:0,w:20,h:95,mat:'rock'},
+      {type:'block',x:lx(.65),y:-62,w:40,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.65)+8,y:-95,jtype:'helmet'},
+      {type:'jaguar',x:lx(.65)+26,y:-95,jtype:'shaman'},
+      {type:'egg',x:lx(.79),y:-10},
+    ]
+  },
+  // 3-3: Denser wall + side tower. Five birds. Two shamans + helmets.
+  {
+    birds: ['bomb','speed','split','bomb','speed'],
+    bg: 'storm',
+    layout: [
+      {type:'block',x:lx(.46),y:0,w:16,h:120,mat:'rock'},
+      {type:'block',x:lx(.46)+16,y:0,w:16,h:120,mat:'rock'},
+      {type:'block',x:lx(.46)+32,y:0,w:16,h:120,mat:'rock'},
+      {type:'block',x:lx(.46)+48,y:0,w:16,h:120,mat:'rock'},
+      {type:'block',x:lx(.46),y:-85,w:64,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.46)+6,y:-118,jtype:'helmet'},
+      {type:'jaguar',x:lx(.46)+40,y:-118,jtype:'shaman'},
+      {type:'block',x:lx(.46)+16,y:-42,w:32,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.46)+24,y:-74,jtype:'grunt'},
+      {type:'block',x:lx(.71),y:0,w:18,h:95,mat:'rock'},
+      {type:'block',x:lx(.71)+18,y:0,w:18,h:95,mat:'rock'},
+      {type:'block',x:lx(.71),y:-60,w:36,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.71)+8,y:-93,jtype:'helmet'},
+      {type:'egg',x:lx(.81),y:-10},
+      {type:'egg',x:lx(.86),y:-10},
+    ]
+  },
+
+  // ══ WORLD 4: VOLCANO ══ Hard. All materials. Shamans standard. Five birds.
+  // 4-1: Two lava pillars. Shamans. Five birds.
+  {
+    birds: ['bomb','speed','split','bomb','speed'],
+    bg: 'volcano',
+    layout: [
+      {type:'block',x:lx(.49),y:0,w:20,h:115,mat:'rock'},
+      {type:'block',x:lx(.49)+20,y:0,w:20,h:72,mat:'rock'},
+      {type:'block',x:lx(.49)+40,y:0,w:20,h:115,mat:'rock'},
+      {type:'block',x:lx(.49)+20,y:-42,w:20,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.49)+26,y:-74,jtype:'shaman'},
+      {type:'jaguar',x:lx(.49)+2,y:-130,jtype:'helmet'},
+      {type:'block',x:lx(.70),y:0,w:18,h:100,mat:'rock'},
+      {type:'block',x:lx(.70)+18,y:0,w:18,h:100,mat:'rock'},
+      {type:'block',x:lx(.70),y:-65,w:36,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.70)+8,y:-96,jtype:'shaman'},
+      {type:'jaguar',x:lx(.70)+22,y:-130,jtype:'helmet'},
+      {type:'egg',x:lx(.84),y:-10},
+    ]
+  },
+  // 4-2: Three towers + small pile. Shamans everywhere. Five birds.
+  {
+    birds: ['bomb','speed','bomb','split','speed'],
+    bg: 'volcano',
+    layout: [
+      {type:'block',x:lx(.46),y:0,w:16,h:130,mat:'rock'},
+      {type:'block',x:lx(.46)+16,y:0,w:16,h:88,mat:'rock'},
+      {type:'block',x:lx(.46)+32,y:0,w:16,h:52,mat:'rock'},
+      {type:'block',x:lx(.46),y:-95,w:48,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.46)+4,y:-128,jtype:'shaman'},
+      {type:'jaguar',x:lx(.46)+32,y:-84,jtype:'helmet'},
+      {type:'block',x:lx(.62),y:0,w:16,h:52,mat:'log'},
+      {type:'block',x:lx(.62)+16,y:0,w:16,h:88,mat:'log'},
+      {type:'block',x:lx(.62)+32,y:0,w:16,h:130,mat:'log'},
+      {type:'block',x:lx(.62),y:-95,w:48,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.62)+32,y:-128,jtype:'shaman'},
+      {type:'block',x:lx(.78),y:0,w:36,h:18,mat:'plank'},
+      {type:'block',x:lx(.78),y:-18,w:36,h:18,mat:'plank'},
+      {type:'block',x:lx(.78),y:-36,w:36,h:18,mat:'rock'},
+      {type:'jaguar',x:lx(.78)+8,y:-68,jtype:'helmet'},
+      {type:'jaguar',x:lx(.78)+24,y:-68,jtype:'grunt'},
+      {type:'egg',x:lx(.75),y:-10},
+      {type:'egg',x:lx(.86),y:-10},
+    ]
+  },
+
+  // ══ BOSS: THE DARK HEART ══
+  {
+    birds: ['split','bomb','speed','split','bomb','speed','bomb'],
+    bg: 'volcano',
+    isBoss: true,
+    bossHP: 10,
+    layout: [
+      {type:'block',x:lx(.44),y:0,w:32,h:200,mat:'rock'},
+      {type:'block',x:lx(.44)+32,y:0,w:32,h:200,mat:'rock'},
+      {type:'block',x:lx(.44)+64,y:0,w:32,h:200,mat:'rock'},
+      {type:'block',x:lx(.44),y:-140,w:96,h:18,mat:'plank'},
+      {type:'block',x:lx(.60),y:0,w:32,h:200,mat:'rock'},
+      {type:'block',x:lx(.60)+32,y:0,w:32,h:200,mat:'rock'},
+      {type:'block',x:lx(.60)+64,y:0,w:32,h:200,mat:'rock'},
+      {type:'block',x:lx(.60),y:-140,w:96,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.46),y:-180,jtype:'shaman'},
+      {type:'jaguar',x:lx(.62),y:-180,jtype:'shaman'},
+    ]
+  }
+];}
+// LEVELS built fresh on each loadLevel call so lx() uses correct G.W
+let LEVELS = [];
+const TOTAL_LEVELS = 12; // 3 worlds × 3 levels + boss
+const BOSS_LEVEL = 11;
+
+// ─── COLOURS ──────────────────────────────────────────────────────────────────
+const PAL = {
+  sky:     { jungle:'#1a3a1a', reef:'#0a2a3a', storm:'#1a1a2a', volcano:'#2a0a0a' },
+  ground:  { jungle:'#2d5a1b', reef:'#c8a85a', storm:'#3a3a4a', volcano:'#5a2a1a' },
+  ground2: { jungle:'#1e3d12', reef:'#a07840', storm:'#2a2a3a', volcano:'#3a1a0a' },
+  fog:     { jungle:'#2aff6a22', reef:'#6af0ff22', storm:'#aaaaff22', volcano:'#ff4a2222' },
+  mat: {
+    log:   { fill:'#8B5E3C', stroke:'#5C3A1E' },
+    plank: { fill:'#C4A35A', stroke:'#8B6914' },
+    rock:  { fill:'#8A8A8A', stroke:'#555' },
+  }
+};
+
+// ─── PHYSICS CONSTANTS ────────────────────────────────────────────────────────
+const GRAVITY = 0.35;
+const SLING_POWER = 0.22;
+const MAX_PULL = 110;
+
+// Tetris drop config per level: [startTick, startInterval, minInterval]
+const DROP_CONFIG = [
+  null,             // 0: 1-1  no drops
+  [600, 350, 280],  // 1: 1-2
+  [500, 300, 230],  // 2: 1-3
+  [480, 280, 210],  // 3: 2-1
+  [450, 250, 185],  // 4: 2-2
+  [420, 220, 155],  // 5: 2-3
+  [400, 200, 130],  // 6: 3-1
+  [360, 175, 100],  // 7: 3-2
+  [320, 150,  75],  // 8: 3-3
+  [280, 130,  65],  // 9: 4-1
+  [240, 110,  50],  // 10: 4-2
+  [180,  90,  35],  // 11: Boss
+];
+
+// ─── ENTITY CLASSES ───────────────────────────────────────────────────────────
+
+class Bird {
+  constructor(type, x, y) {
+    this.type = type; // split | speed | bomb | tyler
+    this.x = x; this.y = y;
+    this.vx = 0; this.vy = 0;
+    this.r = type === 'bomb' ? 22 : type === 'speed' ? 17 : type === 'tyler' ? 34 : 20;
+    this.alive = true;
+    this.launched = false;
+    this.abilityUsed = false;
+    this.trail = [];
+    this.splitDone = false;
+    this.explodeTimer = 0;
+    this.exploding = false;
+    this.speedBoostTimer = 0;
+    this.rotation = 0;
+    this.squish = 1;
+    this.launchX = 0;
+    this.launchY = 0;
+    this.launchTick = 0;
+    // Mask physics — cheap plastic on an elastic band
+    this.maskAngle = 0;
+    this.maskAngVel = 0;
+    this.maskOffY = 0;
+    this.maskDetached = false;
+    // Tyler state
+    this.tylerSitting = false;
+    this.tylerSitTick = 0;
+  }
+  get color() {
+    return { split:'#f5c842', bomb:'#444', speed:'#e84040', tyler:'#f0f0f0' }[this.type] || '#f5c842';
+  }
+  get faceColor() {
+    return { split:'#e8b030', bomb:'#ff8800', speed:'#c03030', tyler:'#cccccc' }[this.type] || '#e8b030';
+  }
+  get armed() {
+    // Bomb only arms after traveling 100px from launch point
+    if (this.type !== 'bomb') return true;
+    return dist(this.x, this.y, this.launchX, this.launchY) > 100;
+  }
+  whackMask(impactSpeed) {
+    if (this.maskDetached) return;
+    // Big angular kick from impact
+    this.maskAngVel += (Math.random() - 0.5) * impactSpeed * 0.08;
+    this.maskOffY += impactSpeed * 0.4;
+    // Detach if hit hard enough
+    if (impactSpeed > 7 && Math.random() < 0.65) {
+      this.maskDetached = true;
+      // Spawn as a tumbling fallen mask
+      G.fallenMasks.push({
+        wx: this.x + (Math.random()-0.5)*this.r,
+        wy: this.y - this.r * 0.4,
+        vx: this.vx * 0.3 + (Math.random()-0.5)*5,
+        vy: this.vy * 0.2 - 3 - Math.random()*3,
+        rot: this.maskAngle,
+        rotV: this.maskAngVel * 0.5 + (Math.random()-0.5)*0.4,
+        r: this.r,
+        jtype: this.type === 'split' ? 'grunt' : this.type === 'speed' ? 'helmet' : 'grunt',
+        maskType: this.type, // so we can draw the right mask shape
+        life: 1,
+      });
+    }
+  }
+  activate() {
+    if (this.abilityUsed) return;
+    if (!this.armed) return;
+    if (this.type === 'tyler') {
+      // Don't sit for first 20 frames — prevents sling-release tap from triggering
+      if (G.ticks - (this.launchTick || 0) < 20) return;
+    }
+    this.abilityUsed = true;
+    if (this.type === 'tyler') {
+      this.tylerSitting = true;
+      this.tylerSitTick = 0;
+      this.vx = 0; this.vy = 0;
+      showMsg("...");
+      return;
+    }
+    if (this.type === 'bomb') {
+      this.explodeTimer = 18;
+      this.exploding = true;
+      spawnParticles(this.x, this.y, '#ff8800', 18, 6);
+    } else if (this.type === 'speed') {
+      this.vx *= 2.2; this.vy *= 0.4;
+      this.speedBoostTimer = 8;
+      spawnParticles(this.x, this.y, '#ff4444', 10, 3);
+    } else if (this.type === 'split') {
+      // Triple shot — spawn two extra chickens fanning up and down
+      const spread = 0.32; // radians spread from current angle
+      const angle = Math.atan2(this.vy, this.vx);
+      const spd = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+      for (const da of [-spread, spread]) {
+        const b = new Bird('split', this.x, this.y);
+        b.vx = Math.cos(angle + da) * spd * 0.9;
+        b.vy = Math.sin(angle + da) * spd * 0.9;
+        b.launched = true;
+        b.abilityUsed = true; // children can't split again
+        b.splitDone = true;
+        b.launchTick = G.ticks;
+        G.splitChildren = G.splitChildren || [];
+        G.splitChildren.push(b);
+      }
+      spawnParticles(this.x, this.y, '#f5c842', 12, 4);
+    }
+  }
+  update() {
+    if (!this.launched) return;
+    this.trail.push({x: this.x, y: this.y});
+    if (this.trail.length > 20) this.trail.shift();
+
+    if (this.exploding) {
+      this.explodeTimer--;
+      if (this.explodeTimer <= 0) {
+        // Big explosion
+        spawnParticles(this.x, this.y, '#ff6600', 30, 9);
+        spawnParticles(this.x, this.y, '#ffcc00', 20, 6);
+        explodeBombs(this.x, this.y, 80);
+        this.alive = false;
+      }
+      return;
+    }
+
+    // Normal flight physics
+    this.vx += 0;
+    this.vy += GRAVITY;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.rotation = Math.atan2(this.vy, this.vx);
+
+    if (this.speedBoostTimer > 0) this.speedBoostTimer--;
+
+    // ── TYLER SIT MECHANIC — runs instead of normal physics ──────────
+    if (this.tylerSitting) {
+      this.tylerSitTick++;
+      this.vy = Math.min(this.vy + 0.5, 8);
+      this.y += this.vy;
+      if (this.y + this.r >= G.ground) {
+        this.y = G.ground - this.r;
+        this.vy = 0;
+      }
+      const crushRadius = this.r * 1.4;
+      const weight = Math.min(this.tylerSitTick / 40, 1);
+      for (const b of G.blocks) {
+        if (!b.alive) continue;
+        const bCx = b.wx + b.w/2;
+        if (Math.abs(bCx - this.x) < crushRadius + b.w/2 &&
+            b.wy + b.h > this.y - this.r && b.wy < this.y + this.r) {
+          b.vy += weight * 0.8;
+          if (this.tylerSitTick % 30 === 0 && weight > 0.3) b.hit(1);
+        }
+      }
+      for (const j of G.jaguars) {
+        if (!j.alive) continue;
+        if (dist(this.x, this.y, j.wx, j.wy) < crushRadius + j.r) {
+          j.vx = 0; j.vy = 0; j.shakeTick = 2;
+          if (this.tylerSitTick % 60 === 0 && weight > 0.5) j.hit(1);
+        }
+      }
+      if (this.tylerSitTick > 180) {
+        showMsg("tyler has made his point.");
+        this.alive = false;
+      }
+      return; // skip all normal physics, ground check, off-screen check
+    }
+
+    // Normal flight physics (non-sitting birds only)
+
+    // ── MASK PHYSICS ─────────────────────────────────────────────
+    if (!this.maskDetached && this.type !== 'tyler') {
+      // Air resistance rotates mask back opposite to flight direction
+      const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+      const airTorque = -this.vx * 0.004 + this.vy * 0.002;
+      this.maskAngVel += airTorque;
+      // Elastic spring — pulls mask back toward 0
+      this.maskAngVel -= this.maskAngle * 0.12;
+      this.maskAngVel *= 0.82; // damping
+      this.maskAngle += this.maskAngVel;
+      // Elastic droop — mask slides up when going fast, sags when slowing
+      const targetDroop = Math.min(speed * 0.15, this.r * 0.5);
+      this.maskOffY += (targetDroop - this.maskOffY) * 0.18;
+      // Clamp to not go totally insane
+      this.maskAngle = Math.max(-1.2, Math.min(1.2, this.maskAngle));
+    }
+
+    // Hit ground
+    if (this.y + this.r >= G.ground) {
+      this.y = G.ground - this.r;
+      if (this.type === 'tyler' && !this.tylerSitting) {
+        this.activate();
+        return;
+      }
+      if (this.type === 'bomb' && !this.exploding && this.armed) {
+        this.exploding = true; this.explodeTimer = 5;
+      } else {
+        spawnParticles(this.x, this.y, this.color, 8, 3);
+        this.alive = false;
+      }
+    }
+    // Off screen (any edge)
+    if (this.x > G.W + 200 || this.x < -200 || this.y < -400) this.alive = false;
+  }
+  draw(cx) {
+    if (!this.launched) return;
+
+    // ── TYPE-SPECIFIC TRAIL & ABILITY FX ─────────────────────────────
+    if (this.type === 'speed') {
+      // Speed: blazing orange/yellow streak — long, bright, obvious
+      for (let i = 0; i < this.trail.length; i++) {
+        const t = i / this.trail.length;
+        const a = t * (this.speedBoostTimer > 0 ? 0.9 : 0.5);
+        const r2 = this.r * t * (this.speedBoostTimer > 0 ? 1.4 : 0.8);
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.fillStyle = t > 0.7 ? '#fff' : t > 0.4 ? '#ffee00' : '#ff8800';
+        ctx.beginPath();
+        ctx.arc(this.trail[i].x - cx, this.trail[i].y, r2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+      // After boost: white shock rings
+      if (this.speedBoostTimer > 0) {
+        const age = 8 - this.speedBoostTimer;
+        ctx.save();
+        ctx.globalAlpha = this.speedBoostTimer / 8;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(this.x - cx, this.y, this.r + 6 + age * 4, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = '#ffee00';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(this.x - cx, this.y, this.r + 2 + age * 2, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+      }
+    } else if (this.type === 'bomb') {
+      // Bomb: dark smoky trail, fuse sparks flying off
+      for (let i = 0; i < this.trail.length; i++) {
+        const t = i / this.trail.length;
+        ctx.save();
+        ctx.globalAlpha = t * 0.35;
+        ctx.fillStyle = '#331133';
+        ctx.beginPath();
+        ctx.arc(this.trail[i].x - cx, this.trail[i].y, this.r * t * 0.9, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+      // Active fuse sparks — scattered bright orange dots
+      if (!this.exploding && this.armed) {
+        for (let s = 0; s < 3; s++) {
+          const seed = (G.ticks * 7 + s * 31) % 100;
+          const sx = (this.x - cx) + (seed - 50) * 0.18;
+          const sy = this.y - this.r * 1.3 - (seed % 8);
+          ctx.save();
+          ctx.globalAlpha = 0.7 + Math.sin(G.ticks * 0.4 + s) * 0.3;
+          ctx.fillStyle = s === 0 ? '#fff' : s === 1 ? '#ffcc00' : '#ff6600';
+          ctx.beginPath(); ctx.arc(sx, sy, 2 + s * 0.5, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+      }
+    } else if (this.type === 'split') {
+      // Vine: dotted green trail
+      for (let i = 0; i < this.trail.length; i++) {
+        const t = i / this.trail.length;
+        ctx.save();
+        ctx.globalAlpha = t * 0.35;
+        ctx.fillStyle = '#4cff6a';
+        ctx.beginPath();
+        ctx.arc(this.trail[i].x - cx, this.trail[i].y, this.r * t * 0.5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+    } else if (this.type === 'tyler') {
+      // Tyler: big fluffy white paw-print trail
+      for (let i = 0; i < this.trail.length; i += 3) {
+        const t = i / this.trail.length;
+        ctx.save();
+        ctx.globalAlpha = t * 0.25;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(this.trail[i].x - cx, this.trail[i].y, this.r * t * 0.7, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+    } else {
+      // Fallback
+      for (let i = 0; i < this.trail.length; i++) {
+        const t = i / this.trail.length;
+        ctx.save(); ctx.globalAlpha = t * 0.4;
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.trail[i].x - cx, this.trail[i].y, this.r * t * 0.6, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // ── SPLIT FAN LINES — brief visual showing the spread ────────────
+    if (this.type === 'split' && this.abilityUsed && !this.splitDone) {
+      // already split — children handle themselves
+    }
+
+    // ── ABILITY USED LABEL ────────────────────────────────────────────
+    if (this.abilityUsed && !this.tylerSitting) {
+      const age = this.type === 'speed' ? 8 - this.speedBoostTimer :
+                  this.type === 'bomb'  ? (this.exploding ? this.explodeTimer : 0) :
+                  this.type === 'split' ? 0 : 0;
+      if (age < 12) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - age / 12);
+        ctx.font = 'bold 14px "Courier New"';
+        ctx.fillStyle = this.type === 'speed' ? '#ffee00' :
+                        this.type === 'bomb'  ? '#ff8800' : '#f5c842';
+        ctx.textAlign = 'center';
+        const label = this.type === 'speed' ? '⚡ BOOST!' :
+                      this.type === 'bomb'  ? '💥 BOOM!' : '🐔🐔🐔';
+        ctx.fillText(label, this.x - cx, this.y - this.r - 18);
+        ctx.textAlign = 'left';
+        ctx.restore();
+      }
+    }
+
+    this.drawBody(this.x - cx, this.y);
+  }
+  drawBody(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (!this.tylerSitting) ctx.rotate(this.rotation);
+    ctx.scale(1 / this.squish, this.squish);
+
+    const r = this.r;
+
+    // ── TAIL FEATHER FAN (drawn first so body overlaps at front) ──
+    const drawTail = (color, accent, spread=1.0) => {
+      const defs = [{a:0.0,len:1.6,w:0.26},{a:0.32,len:1.75,w:0.24},{a:0.60,len:1.65,w:0.22},{a:0.85,len:1.45,w:0.18},{a:-0.28,len:1.5,w:0.22}];
+      for (const f of defs) {
+        ctx.save();
+        ctx.translate(r*0.25, r*0.15);
+        ctx.rotate(f.a * spread);
+        ctx.fillStyle = color;
+        ctx.strokeStyle = accent; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(0, -r*f.len*0.5, r*f.w, r*f.len*0.5, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = accent; ctx.lineWidth = 0.7;
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r*f.len*0.48); ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    if (this.type === 'split') {
+      // ── SPLIT CHICKEN — bright yellow, "×3" identity ─────────────
+      drawTail('#e8b030', '#a07018');
+      // Bright yellow body
+      ctx.fillStyle = '#f5c842';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#c89a20'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Three feather tufts on top — visual cue for "triple"
+      ctx.fillStyle = '#f5c842';
+      for (const [fx, fy, fr2] of [[-r*.38,-r*.82,r*.2],[0,-r*.95,r*.22],[r*.38,-r*.82,r*.2]]) {
+        ctx.beginPath(); ctx.arc(fx, fy, fr2, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#c89a20'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // Wing nubs
+      ctx.fillStyle = '#e8b030';
+      ctx.beginPath(); ctx.ellipse(-r*.75, r*.1, r*.2, r*.32, -0.4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.75, r*.1, r*.2, r*.32, 0.4, 0, Math.PI*2); ctx.fill();
+      // Eyes — wide and excited
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.28, -r*.1, r*.22, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.28, -r*.1, r*.22, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(-r*.24, -r*.12, r*.1, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.24, -r*.12, r*.1, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.19, -r*.18, r*.04, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.29, -r*.18, r*.04, 0, Math.PI*2); ctx.fill();
+      // Beak
+      ctx.fillStyle = '#ff9900';
+      ctx.beginPath(); ctx.moveTo(-r*.14, r*.18); ctx.lineTo(r*.14, r*.18); ctx.lineTo(0, r*.38); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#cc6600'; ctx.lineWidth = 1; ctx.stroke();
+      // Red comb
+      ctx.fillStyle = '#ff3333';
+      ctx.beginPath(); ctx.ellipse(-r*.05, -r*1.0, r*.12, r*.2, -0.2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.2, -r*.95, r*.1, r*.17, 0.2, 0, Math.PI*2); ctx.fill();
+      // "×3" on chest — clear power indicator
+      ctx.font = `bold ${Math.round(r*0.38)}px "Courier New"`;
+      ctx.fillStyle = '#cc7700';
+      ctx.textAlign = 'center';
+      ctx.fillText('×3', 0, r*.22);
+      ctx.textAlign = 'left';
+      // After splitting — three fan lines radiating forward
+      if (this.abilityUsed) {
+        const spread = 0.32;
+        const angle = Math.atan2(this.vy, this.vx);
+        ctx.save();
+        for (const da of [-spread, 0, spread]) {
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = '#ffe94a';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4,4]);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(angle + da - this.rotation) * r * 2.5,
+                     Math.sin(angle + da - this.rotation) * r * 2.5);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+      // Cheap plastic mask — yellow star/burst shape (power mask)
+      if (!this.maskDetached) {
+        ctx.save();
+        ctx.translate(r*.04 + this.maskAngVel*r*0.1, -r*.35 + this.maskOffY*0.5);
+        ctx.rotate(-0.06 + this.maskAngle);
+        // Star-burst cheap plastic mask in orange
+        ctx.fillStyle = '#ff9900'; ctx.strokeStyle = '#cc5500'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 - Math.PI/2;
+          const rr = i % 2 === 0 ? r*.62 : r*.38;
+          if (i === 0) ctx.moveTo(Math.cos(a)*rr, Math.sin(a)*rr);
+          else ctx.lineTo(Math.cos(a)*rr, Math.sin(a)*rr);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        // Eye holes
+        ctx.fillStyle = '#f5c842';
+        ctx.beginPath(); ctx.ellipse(-r*.22, -r*.05, r*.16, r*.12, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(r*.22, -r*.05, r*.16, r*.12, 0, 0, Math.PI*2); ctx.fill();
+        // Elastic
+        ctx.strokeStyle = '#886600'; ctx.lineWidth = 1; ctx.setLineDash([2,2]);
+        ctx.beginPath(); ctx.moveTo(-r*.62, 0); ctx.lineTo(-r*.95, r*.1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(r*.62, 0); ctx.lineTo(r*.95, r*.1); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+    } else if (this.type === 'speed') {
+      // ── SPEED CHICKEN ─────────────────────────────────────────
+      drawTail('#8a1010', '#601010', 1.3);
+      ctx.fillStyle = '#e03030';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#a01818'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#c82020';
+      ctx.beginPath(); ctx.ellipse(r*.2,-r*.9,r*.18,r*.3,0.5,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.45,-r*.8,r*.14,r*.25,0.7,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.65,-r*.65,r*.12,r*.2,0.9,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#b81818';
+      ctx.beginPath(); ctx.ellipse(-r*.7,r*.05,r*.18,r*.3,0.3,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.7,r*.15,r*.18,r*.28,-0.4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.28,-r*.08,r*.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.28,-r*.08,r*.2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(-r*.22,-r*.1,r*.09,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.3,-r*.1,r*.09,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.17,-r*.16,r*.035,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.35,-r*.16,r*.035,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff9900';
+      ctx.beginPath(); ctx.moveTo(-r*.12,r*.15); ctx.lineTo(r*.18,r*.1); ctx.lineTo(r*.05,r*.32); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#cc6600'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#ff1111';
+      ctx.beginPath(); ctx.ellipse(r*.3,-r*.92,r*.1,r*.2,0.6,0,Math.PI*2); ctx.fill();
+      if (!this.maskDetached) {
+        ctx.save();
+        ctx.translate(-r*.05 + this.maskAngVel*r*0.08, -r*.35 + this.maskOffY*0.5);
+        ctx.rotate(0.1 + this.maskAngle);
+        ctx.fillStyle = '#dd1111'; ctx.strokeStyle = '#880000'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r*.7,r*.08); ctx.lineTo(-r*.7,-r*.18); ctx.lineTo(-r*.48,-r*.32); ctx.lineTo(0,-r*.26); ctx.lineTo(r*.48,-r*.32); ctx.lineTo(r*.7,-r*.18); ctx.lineTo(r*.7,r*.08); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#e03030';
+        ctx.beginPath(); ctx.ellipse(-r*.27,-r*.09,r*.2,r*.14,0.08,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(r*.25,-r*.11,r*.19,r*.13,-0.1,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#bb0000'; ctx.fillRect(-r*.06,-r*.2,r*.12,r*.14);
+        ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r*.7,-r*.05); ctx.lineTo(-r*1.15,r*.12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(r*.7,-r*.05); ctx.lineTo(r*1.15,r*.12); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath(); ctx.ellipse(-r*.12,-r*.2,r*.22,r*.07,-0.2,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#cc0000'; ctx.strokeStyle = '#880000'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-r*.22,r*.72); ctx.lineTo(r*.22,r*.72); ctx.lineTo(r*.35,r*.42); ctx.lineTo(-r*.35,r*.42); ctx.closePath(); ctx.fill(); ctx.stroke();
+      if (this.speedBoostTimer > 0) {
+        ctx.save(); ctx.globalAlpha = this.speedBoostTimer/8;
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0,0,r+5,0,Math.PI*2); ctx.stroke();
+        ctx.restore();
+      }
+
+    } else if (this.type === 'tyler') {
+      // ── TYLER (Great Pyrenees) ────────────────────────────────
+      drawTail('#e8e8e8', '#cccccc', 1.5);
+      ctx.fillStyle = '#f5f5f5';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#ececec';
+      ctx.beginPath(); ctx.arc(-r*.15,-r*.1,r*.85,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f8f8f8';
+      ctx.beginPath(); ctx.arc(r*.1,r*.05,r*.75,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath(); ctx.arc(0,0,r*.72,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#e5e5e5';
+      for (let a = 0; a < Math.PI*2; a += Math.PI/5) {
+        ctx.beginPath(); ctx.ellipse(Math.cos(a)*r*.8,Math.sin(a)*r*.8,r*.2,r*.32,a,0,Math.PI*2); ctx.fill();
+      }
+      ctx.fillStyle = '#3a2010';
+      ctx.beginPath(); ctx.arc(-r*.28,-r*.12,r*.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.28,-r*.12,r*.2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.22,-r*.18,r*.07,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.34,-r*.18,r*.07,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1a0a00';
+      ctx.beginPath(); ctx.arc(-r*.26,-r*.13,r*.1,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.26,-r*.13,r*.1,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath(); ctx.ellipse(0,r*.12,r*.22,r*.16,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#333';
+      ctx.beginPath(); ctx.ellipse(0,r*.1,r*.16,r*.1,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff8899';
+      ctx.beginPath(); ctx.ellipse(r*.05,r*.38,r*.14,r*.2,0.1,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff6688';
+      ctx.beginPath(); ctx.moveTo(-r*.08,r*.35); ctx.lineTo(r*.18,r*.35); ctx.lineTo(r*.14,r*.55); ctx.lineTo(r*.0,r*.58); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#e8e8e8';
+      ctx.beginPath(); ctx.ellipse(-r*.72,-r*.52,r*.28,r*.42,-0.4,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.72,-r*.52,r*.28,r*.42,0.4,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(-r*.72,-r*.52,r*.28,r*.42,-0.4,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(r*.72,-r*.52,r*.28,r*.42,0.4,0,Math.PI*2); ctx.stroke();
+      ctx.fillStyle = '#e0e0e0';
+      ctx.beginPath(); ctx.ellipse(-r*.82,r*.2,r*.2,r*.3,-0.3,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.82,r*.2,r*.2,r*.3,0.3,0,Math.PI*2); ctx.fill();
+      if (this.tylerSitting) {
+        const progress = Math.min(this.tylerSitTick/180, 1);
+        ctx.save(); ctx.globalAlpha = 0.3 + Math.sin(G.ticks*0.15)*0.2;
+        ctx.strokeStyle = '#ffcc44'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0,0,r*(1.15+progress*0.3),0,Math.PI*2); ctx.stroke();
+        ctx.restore();
+        const blink = Math.floor(G.ticks/20)%3;
+        ctx.font = `bold ${Math.round(r*0.28)}px "Courier New"`;
+        ctx.fillStyle = '#ffcc44'; ctx.textAlign = 'center';
+        ctx.fillText('.'.repeat(blink+1), 0, -r*1.35);
+        ctx.textAlign = 'left';
+      }
+      if (!this.maskDetached) {
+        ctx.save();
+        ctx.translate(r*.08 + this.maskAngVel*r*0.06, -r*.22 + this.maskOffY*0.3);
+        ctx.rotate(-0.05 + this.maskAngle*0.5);
+        ctx.scale(0.55, 0.55);
+        ctx.fillStyle = '#c8e878'; ctx.strokeStyle = '#8ab830'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r*.65,r*.05); ctx.lineTo(-r*.65,-r*.22); ctx.lineTo(-r*.42,-r*.32); ctx.lineTo(0,-r*.26); ctx.lineTo(r*.42,-r*.32); ctx.lineTo(r*.65,-r*.22); ctx.lineTo(r*.65,r*.05); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#f0f0f0';
+        ctx.beginPath(); ctx.ellipse(-r*.25,-r*.08,r*.16,r*.11,0,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(r*.25,-r*.08,r*.16,r*.11,0,0,Math.PI*2); ctx.fill();
+        ctx.font = `bold ${Math.round(r*0.16)}px "Courier New"`;
+        ctx.fillStyle = '#5a8820'; ctx.textAlign = 'center';
+        ctx.fillText('DOG', 0, r*.08); ctx.textAlign = 'left';
+        ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r*.65,-r*.08); ctx.lineTo(-r*1.3,r*.05); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(r*.65,-r*.08); ctx.lineTo(r*1.3,r*.05); ctx.stroke();
+        ctx.restore();
+      }
+
+    } else {
+      // ── BOMB CHICKEN ──────────────────────────────────────────
+      drawTail('#2a1a4a', '#ff8800', 0.85);
+      ctx.fillStyle = '#3d2060';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#2a1a4a';
+      for (const [fx,fy,frot] of [[-r*.4,-r*.85,-0.3],[0,-r*.95,0],[r*.4,-r*.85,0.3],[-r*.7,-r*.5,-0.6],[r*.7,-r*.5,0.6]]) {
+        ctx.save(); ctx.translate(fx,fy); ctx.rotate(frot);
+        ctx.beginPath(); ctx.ellipse(0,0,r*.16,r*.28,0,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#6a3aaa'; ctx.lineWidth=0.8; ctx.stroke();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#2a1a4a';
+      ctx.beginPath(); ctx.ellipse(-r*.8,r*.1,r*.18,r*.32,-0.5,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.8,r*.1,r*.18,r*.32,0.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.27,-r*.12,r*.22,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.27,-r*.12,r*.22,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff6600';
+      ctx.beginPath(); ctx.arc(-r*.24,-r*.12,r*.12,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.24,-r*.12,r*.12,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(-r*.22,-r*.13,r*.06,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.22,-r*.13,r*.06,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-r*.18,-r*.18,r*.03,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*.27,-r*.18,r*.03,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#1a0a2a'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(-r*.48,-r*.32); ctx.lineTo(-r*.1,-r*.24); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*.1,-r*.24); ctx.lineTo(r*.48,-r*.32); ctx.stroke();
+      ctx.fillStyle = '#ff9900';
+      ctx.beginPath(); ctx.moveTo(-r*.1,r*.2); ctx.lineTo(r*.1,r*.2); ctx.lineTo(0,r*.34); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#cc6600'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#6a2aaa';
+      ctx.beginPath(); ctx.ellipse(-r*.05,-r*1.0,r*.1,r*.18,-0.15,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r*.15,-r*.94,r*.08,r*.14,0.15,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#9a4aee'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = '#cccccc'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(r*.08,-r*1.0); ctx.lineTo(r*.35,-r*1.4);
+      ctx.quadraticCurveTo(r*.5,-r*1.55,r*.4,-r*1.45); ctx.stroke();
+      if (this.explodeTimer > 0 && this.explodeTimer < 18) {
+        ctx.fillStyle = '#ff6600';
+        ctx.beginPath(); ctx.arc(r*.4,-r*1.45,4,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath(); ctx.arc(r*.4,-r*1.45,2,0,Math.PI*2); ctx.fill();
+      }
+      if (!this.maskDetached) {
+        ctx.save();
+        ctx.translate(r*.06 + this.maskAngVel*r*0.09, -r*.36 + this.maskOffY*0.5);
+        ctx.rotate(-0.12 + this.maskAngle);
+        ctx.fillStyle = '#111'; ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r*.68,r*.12); ctx.lineTo(-r*.68,-r*.22); ctx.lineTo(-r*.5,-r*.34); ctx.lineTo(0,-r*.28); ctx.lineTo(r*.5,-r*.34); ctx.lineTo(r*.68,-r*.22); ctx.lineTo(r*.68,r*.12); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#3d2060';
+        ctx.beginPath(); ctx.ellipse(-r*.27,-r*.07,r*.2,r*.14,0.05,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(r*.27,-r*.1,r*.19,r*.13,-0.08,0,Math.PI*2); ctx.fill();
+        ctx.font = `bold ${Math.round(r*0.28)}px sans-serif`;
+        ctx.fillStyle = '#ff8800'; ctx.textAlign = 'center';
+        ctx.fillText('\u{1F480}', 0, r*.06); ctx.textAlign = 'left';
+        ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(-r*.68,0); ctx.lineTo(r*.68,0); ctx.stroke();
+        ctx.strokeStyle = '#666'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r*.68,-r*.08); ctx.lineTo(-r*1.12,r*.1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(r*.68,-r*.08); ctx.lineTo(r*1.12,r*.1); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.beginPath(); ctx.ellipse(-r*.1,-r*.2,r*.24,r*.07,-0.15,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+}
+
+class Block {
+  constructor(cfg, groundY) {
+    this.mat = cfg.mat;
+    this.wx = cfg.x;
+    this.wy = groundY + cfg.y - cfg.h;
+    this.w = cfg.w; this.h = cfg.h;
+    this.hp = { log:2, plank:1, rock:3 }[this.mat];
+    this.maxHP = this.hp;
+    this.alive = true;
+    this.vx = 0; this.vy = 0;
+    this.rot = 0; this.rotV = 0;
+    this.shakeTick = 0;
+    this.onGround = false;
+  }
+  get sx() { return this.wx - G.camera.x; }
+  get bottom() { return this.wy + this.h; }
+  get right()  { return this.wx + this.w; }
+  hit(dmg) {
+    this.hp -= dmg;
+    this.shakeTick = 6;
+    spawnParticles(this.wx + this.w/2, this.wy + this.h/2, PAL.mat[this.mat].fill, 5, 2);
+    if (this.hp <= 0) {
+      this.alive = false;
+      G.score += { log:100, plank:80, rock:150 }[this.mat];
+      spawnParticles(this.wx + this.w/2, this.wy + this.h/2, PAL.mat[this.mat].fill, 12, 4);
+    }
+  }
+  update() {
+    if (!this.alive) return;
+    if (this.shakeTick > 0) this.shakeTick--;
+    this.vy += GRAVITY * 0.55;
+    this.wx += this.vx;
+    this.wy += this.vy;
+    this.rot += this.rotV;
+    this.rotV *= 0.92;
+    this.vx *= 0.88;
+    this.onGround = false;
+    if (this.bottom >= G.ground) {
+      this.wy = G.ground - this.h;
+      if (Math.abs(this.vy) > 1) spawnParticles(this.wx + this.w/2, G.ground, PAL.mat[this.mat].fill, 3, 1);
+      this.vy *= -0.18;
+      this.vx *= 0.6;
+      this.rotV *= 0.4;
+      if (Math.abs(this.vy) < 0.5) this.vy = 0;
+      this.onGround = true;
+    }
+    if (this.onGround && Math.abs(this.vy) < 0.5) {
+      this.rot *= 0.85;
+      if (Math.abs(this.rot) < 0.01) this.rot = 0;
+    }
+    if (this.wy > G.ground + 200) this.alive = false;
+  }
+  draw() {
+    if (!this.alive) return;
+    ctx.save();
+    const cx = this.sx + this.w/2 + (this.shakeTick > 0 ? (Math.random()-0.5)*3 : 0);
+    const cy = this.wy + this.h/2;
+    ctx.translate(cx, cy);
+    ctx.rotate(this.rot);
+    const pal = PAL.mat[this.mat];
+    const ratio = this.hp / this.maxHP;
+    ctx.fillStyle = ratio < 0.5 ? shadeColor(pal.fill, -30) : pal.fill;
+    ctx.strokeStyle = pal.stroke;
+    ctx.lineWidth = 2;
+    ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+    ctx.strokeRect(-this.w/2, -this.h/2, this.w, this.h);
+    if (ratio < 0.7) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-this.w*0.2, -this.h*0.3);
+      ctx.lineTo(this.w*0.1, this.h*0.2);
+      ctx.lineTo(-this.w*0.05, this.h*0.4);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+class Jaguar {
+  constructor(cfg, groundY) {
+    this.jtype = cfg.jtype; // grunt | helmet | shaman | king
+    this.wx = cfg.x;
+    this.wy = groundY + cfg.y;
+    this.r = { grunt:16, helmet:18, shaman:18, king:36 }[this.jtype];
+    this.hp = { grunt:1, helmet:2, shaman:2, king:8 }[this.jtype];
+    this.maxHP = this.hp;
+    this.alive = true;
+    this.vx = 0; this.vy = 0;
+    this.falling = false;
+    this.shakeTick = 0;
+    this.rebuildCooldown = 0;
+    this.deadTimer = 0;
+    this.eyeX = 0;
+    this.phase = 1;
+    this.maskAngle = 0;
+    this.maskOffX = 0;
+    this.maskOffY = 0;
+    this.maskPopped = false;
+    this.rot = 0;
+    this.rotV = 0;
+  }
+  get sx() { return this.wx - G.camera.x; }
+  hit(dmg) {
+    this.hp -= dmg;
+    this.shakeTick = 8;
+    // Mask gets knocked askew on damage
+    const ratio = this.hp / this.maxHP;
+    if (ratio <= 0.5 && ratio > 0) {
+      // Half health — mask hanging off
+      this.maskAngle = (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.5);
+      this.maskOffX = (Math.random() - 0.5) * this.r * 0.6;
+      this.maskOffY = this.r * 0.2 + Math.random() * this.r * 0.3;
+    } else if (ratio > 0.5) {
+      // Minor tilt
+      this.maskAngle = (Math.random() - 0.5) * 0.25;
+      this.maskOffX = (Math.random() - 0.5) * this.r * 0.2;
+      this.maskOffY = Math.random() * this.r * 0.1;
+    }
+    if (this.jtype === 'king') {
+      G.score += 500;
+      spawnParticles(this.sx, this.wy, '#ffcc00', 10, 5);
+    }
+    if (this.hp <= 0) {
+      this.alive = false;
+      this.deadTimer = 60;
+      G.score += { grunt:200, helmet:350, shaman:450, king:2000 }[this.jtype];
+      spawnParticles(this.sx, this.wy, '#ffcc44', 15, 6);
+      showMsg(DEFEAT_LINES[this.jtype][Math.floor(Math.random()*DEFEAT_LINES[this.jtype].length)]);
+    }
+  }
+  update() {
+    if (this.shakeTick > 0) this.shakeTick--;
+    if (!this.alive) { this.deadTimer--; return; }
+
+    // Always apply gravity
+    this.vy += GRAVITY * 0.5;
+    this.wx += this.vx;
+    this.wy += this.vy;
+    this.rot = (this.rot || 0) + (this.rotV || 0);
+    this.rotV = (this.rotV || 0) * 0.88;
+    this.vx *= 0.85;
+
+    // Ground collision
+    if (this.wy + this.r >= G.ground) {
+      const impactSpeed = Math.abs(this.vy);
+      this.wy = G.ground - this.r;
+      if (impactSpeed > 1.5) spawnParticles(this.wx, G.ground, '#c8843a', 3, 1);
+      this.vy *= -0.25;
+      this.vx *= 0.6;
+      this.rotV *= 0.3;
+      if (Math.abs(this.vy) < 0.5) this.vy = 0;
+
+      // Hard landing pops the mask off
+      if (impactSpeed > 4 && !this.maskPopped && this.alive) {
+        this.maskPopped = true;
+        this.maskAngle = 0; this.maskOffX = 0; this.maskOffY = 0;
+        // Spawn a tumbling mask object
+        G.fallenMasks.push({
+          wx: this.wx + (Math.random()-0.5)*this.r,
+          wy: this.wy - this.r,
+          vx: this.vx * 0.5 + (Math.random()-0.5) * 5,
+          vy: -(3 + Math.random() * 4),
+          rot: this.rot,
+          rotV: (Math.random()-0.5) * 0.4,
+          r: this.r,
+          jtype: this.jtype,
+          life: 1,
+        });
+        showMsg("...the mask. it came off. we don't talk about this.");
+      }
+    }
+
+    // Block collision — jaguars bounce off blocks
+    for (const b of G.blocks) {
+      if (!b.alive) continue;
+      const overlapX = this.wx + this.r > b.wx && this.wx - this.r < b.wx + b.w;
+      const overlapY = this.wy + this.r > b.wy && this.wy - this.r < b.wy + b.h;
+      if (overlapX && overlapY) {
+        // Push jaguar out of block
+        const fromTop = (b.wy + b.h) - (this.wy - this.r);
+        const fromBottom = (this.wy + this.r) - b.wy;
+        const fromLeft = (b.wx + b.w) - (this.wx - this.r);
+        const fromRight = (this.wx + this.r) - b.wx;
+        const minPen = Math.min(fromTop, fromBottom, fromLeft, fromRight);
+        if (minPen === fromBottom) {
+          this.wy = b.wy - this.r;
+          this.vy *= -0.2; this.vx *= 0.5;
+        } else if (minPen === fromTop) {
+          this.wy = b.wy + b.h + this.r;
+          this.vy *= -0.2;
+        } else if (minPen === fromLeft) {
+          this.wx = b.wx + b.w + this.r;
+          this.vx = Math.abs(this.vx) * 0.4;
+          this.rotV += 0.1;
+        } else {
+          this.wx = b.wx - this.r;
+          this.vx = -Math.abs(this.vx) * 0.4;
+          this.rotV -= 0.1;
+        }
+      }
+    }
+
+    // Despawn if fallen off world
+    if (this.wy > G.ground + 300) { this.alive = false; this.deadTimer = 0; }
+
+    if (this.jtype === 'shaman') this.rebuildCooldown--;
+  }
+  draw() {
+    if (!this.alive && this.deadTimer <= 0) return;
+    const ox = this.shakeTick > 0 ? (Math.random()-0.5)*5 : 0;
+    const x = this.sx + ox;
+    const y = this.wy;
+    const r = this.r;
+    const dead = !this.alive;
+    const alpha = dead ? Math.max(0, this.deadTimer / 60) : 1;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.rotate(this.rot || 0);
+    ctx.translate(-x, -y);
+
+    // ── JAGUAR BODY ──────────────────────────────────────────
+    if (this.jtype === 'king') {
+      drawKing(x, y, r, dead, this.maskAngle, this.maskOffX, this.maskOffY, this.maskPopped);
+    } else {
+      drawJaguar(x, y, r, this.jtype, dead, this.maskAngle, this.maskOffX, this.maskOffY, this.maskPopped);
+    }
+    // HP bar for helmet/shaman
+    if (!dead && (this.jtype === 'helmet' || this.jtype === 'shaman') && this.hp < this.maxHP) {
+      ctx.fillStyle = '#333';
+      ctx.fillRect(x - r, y - r - 10, r*2, 5);
+      ctx.fillStyle = '#4cff6a';
+      ctx.fillRect(x - r, y - r - 10, r*2 * (this.hp/this.maxHP), 5);
+    }
+    ctx.restore();
+  }
+}
+
+function drawJaguar(x, y, r, jtype, dead, maskAngle=0, maskOffX=0, maskOffY=0, maskPopped=false) {
+  // Jaguar body — tawny with spots
+  ctx.fillStyle = '#c8843a';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  // Spots
+  ctx.fillStyle = '#7a4a18';
+  for (const [dx, dy] of [[-r*0.4, -r*0.2],[r*0.35, -r*0.3],[0, r*0.3],[-r*0.2, r*0.1]]) {
+    ctx.beginPath(); ctx.arc(x+dx, y+dy, r*0.15, 0, Math.PI*2); ctx.fill();
+  }
+
+  // ── PIG MASK (obviously fake, possibly hanging off or popped off) ───────
+  if (!maskPopped) {
+    const maskCX = x + maskOffX;
+    const maskCY = y - r*0.1 + maskOffY;
+    ctx.save();
+    ctx.translate(maskCX, maskCY);
+    ctx.rotate(maskAngle);
+    ctx.fillStyle = '#f08080';
+    ctx.strokeStyle = '#c05050';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(-r*0.75, -r*0.6, r*1.5, r*0.9);
+    ctx.strokeRect(-r*0.75, -r*0.6, r*1.5, r*0.9);
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-r*0.75, 0); ctx.lineTo(-r*1.2, -r*0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(r*0.75, 0); ctx.lineTo(r*1.2, -r*0.1); ctx.stroke();
+    ctx.fillStyle = '#d06060';
+    ctx.beginPath(); ctx.arc(-r*0.22, r*0.1, r*0.14, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.22, r*0.1, r*0.14, 0, Math.PI*2); ctx.fill();
+    if (Math.abs(maskAngle) > 0.3) {
+      ctx.font = `${Math.round(r*0.22)}px monospace`;
+      ctx.fillStyle = '#c05050';
+      ctx.textAlign = 'center';
+      ctx.fillText('PIG', 0, r*0.05);
+      ctx.textAlign = 'left';
+    }
+    ctx.restore();
+  }
+
+  // Eyes above mask (always on body, not mask)
+  if (!dead) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x - r*0.3, y - r*0.55, r*0.2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r*0.3, y - r*0.55, r*0.2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(x - r*0.28, y - r*0.55, r*0.1, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r*0.28, y - r*0.55, r*0.1, 0, Math.PI*2); ctx.fill();
+  } else {
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+    for (const [ex, ey] of [[x - r*0.3, y - r*0.55],[x + r*0.3, y - r*0.55]]) {
+      ctx.beginPath(); ctx.moveTo(ex-4,ey-4); ctx.lineTo(ex+4,ey+4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex+4,ey-4); ctx.lineTo(ex-4,ey+4); ctx.stroke();
+    }
+  }
+  // Helmet
+  if (jtype === 'helmet') {
+    ctx.fillStyle = '#8B6914';
+    ctx.beginPath();
+    ctx.ellipse(x, y - r*0.7, r*0.9, r*0.5, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = '#5C3A1E'; ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  // Shaman headdress
+  if (jtype === 'shaman') {
+    ctx.fillStyle = '#4a2a8a';
+    ctx.beginPath();
+    ctx.moveTo(x - r*0.5, y - r*0.8);
+    ctx.lineTo(x, y - r*1.8);
+    ctx.lineTo(x + r*0.5, y - r*0.8);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffcc00';
+    ctx.beginPath(); ctx.arc(x, y - r*1.8, r*0.15, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawKing(x, y, r, dead, maskAngle=0, maskOffX=0, maskOffY=0, maskPopped=false) {
+  // King body — big jaguar
+  ctx.fillStyle = '#c8843a';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#7a4a18'; ctx.lineWidth = 2; ctx.stroke();
+  // Big spots
+  ctx.fillStyle = '#7a4a18';
+  for (const [dx, dy] of [[-r*0.45, -r*0.2],[r*0.4, -r*0.25],[r*0.1, r*0.4],[-r*0.25, r*0.3],[r*0.5,r*0.1],[-r*0.5,r*0.05]]) {
+    ctx.beginPath(); ctx.arc(x+dx, y+dy, r*0.13, 0, Math.PI*2); ctx.fill();
+  }
+
+  // ENORMOUS PIG MASK — takes up most of face, tilts on damage
+  if (!maskPopped) {
+    ctx.save();
+    ctx.translate(x + maskOffX, y + maskOffY);
+    ctx.rotate(maskAngle);
+    ctx.fillStyle = '#ff9090';
+    ctx.strokeStyle = '#c05050'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-r*0.9, -r*0.8, r*1.8, r*1.1, 8);
+    ctx.fill(); ctx.stroke();
+    for (const nx of [-r*0.45, 0, r*0.45]) {
+      ctx.fillStyle = '#c06060';
+      ctx.beginPath(); ctx.arc(nx, r*0.1, r*0.15, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff8';
+      for (let a = 0; a < Math.PI*2; a += Math.PI/3) {
+        ctx.beginPath(); ctx.arc(nx + Math.cos(a)*r*0.22, r*0.1 + Math.sin(a)*r*0.22, 2, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-r*0.9, -r*0.3); ctx.lineTo(-r*1.5, -r*0.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-r*0.9, -r*0.1); ctx.lineTo(-r*1.5, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(r*0.9, -r*0.3); ctx.lineTo(r*1.5, -r*0.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(r*0.9, -r*0.1); ctx.lineTo(r*1.5, 0); ctx.stroke();
+    ctx.fillStyle = '#ffd700'; ctx.strokeStyle = '#b8960c'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-r*0.7, -r*0.8); ctx.lineTo(-r*0.7, -r*1.25);
+    ctx.lineTo(-r*0.35, -r*1.0); ctx.lineTo(0, -r*1.4);
+    ctx.lineTo(r*0.35, -r*1.0); ctx.lineTo(r*0.7, -r*1.25);
+    ctx.lineTo(r*0.7, -r*0.8); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(0, -r*1.35, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#3333ff';
+    ctx.beginPath(); ctx.arc(-r*0.5, -r*1.15, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.5, -r*1.15, 3, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Eyes on body (above where mask sits)
+  if (!dead) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x - r*0.35, y - r*0.9, r*0.22, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r*0.35, y - r*0.9, r*0.22, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(x - r*0.32, y - r*0.9, r*0.12, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r*0.32, y - r*0.9, r*0.12, 0, Math.PI*2); ctx.fill();
+  } else {
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+    for (const [ex, ey] of [[x-r*0.35, y-r*0.9],[x+r*0.35, y-r*0.9]]) {
+      ctx.beginPath(); ctx.moveTo(ex-6,ey-6); ctx.lineTo(ex+6,ey+6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex+6,ey-6); ctx.lineTo(ex-6,ey+6); ctx.stroke();
+    }
+  }
+}
+
+// ─── DEFEAT LINES (deadpan) ───────────────────────────────────────────────────
+const DEFEAT_LINES = {
+  grunt:  ["oink...", "normal pig noises.", "as a pig, this hurts.", "i am pig. ow."],
+  helmet: ["my pig helmet failed me.", "pigs can get back up. i choose not to.", "oink oink... oink."],
+  shaman: ["the pig spirits... did not protect me.", "i painted over the spots. i did.", "OINK-AAAH"],
+  king:   ["a pig... does not... feel pain...", "i am king pig. always have been.", "the mask... stays on..."]
+};
+
+
+// ─── PARTICLES ────────────────────────────────────────────────────────────────
+function spawnParticles(x, y, color, count, speed) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const v = (Math.random() * 0.7 + 0.3) * speed;
+    G.particles.push({
+      x, y, vx: Math.cos(a)*v, vy: Math.sin(a)*v - speed*0.3,
+      life: 1, decay: 0.04 + Math.random()*0.04,
+      color, r: 2 + Math.random()*3
+    });
+  }
+}
+
+function updateFallenMasks() {
+  G.fallenMasks = G.fallenMasks.filter(m => m.life > 0);
+  for (const m of G.fallenMasks) {
+    m.vy += GRAVITY * 0.5;
+    m.wx += m.vx;
+    m.wy += m.vy;
+    m.rot += m.rotV;
+    m.vx *= 0.9;
+    if (m.wy + m.r > G.ground) {
+      m.wy = G.ground - m.r * 0.3;
+      m.vy *= -0.2;
+      m.rotV *= 0.4;
+      m.vx *= 0.5;
+    }
+    m.life -= 0.008; // slow fade
+  }
+}
+
+function drawFallenMasks() {
+  for (const m of G.fallenMasks) {
+    const x = m.wx - G.camera.x;
+    const y = m.wy;
+    const r = m.r;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, m.life);
+    ctx.translate(x, y);
+    ctx.rotate(m.rot);
+
+    if (m.maskType === 'split') {
+      // Fallen orange starburst mask
+      ctx.fillStyle = '#ff9900'; ctx.strokeStyle = '#cc5500'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 - Math.PI/2;
+        const rr = i % 2 === 0 ? r*.62 : r*.38;
+        if (i === 0) ctx.moveTo(Math.cos(a)*rr, Math.sin(a)*rr);
+        else ctx.lineTo(Math.cos(a)*rr, Math.sin(a)*rr);
+      }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#886600'; ctx.lineWidth = 1; ctx.setLineDash([2,2]);
+      ctx.beginPath(); ctx.moveTo(-r*.62, 0); ctx.lineTo(-r*.9, r*.3); ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (m.maskType === 'speed') {
+      // Fallen red hero mask
+      ctx.fillStyle = '#dd1111'; ctx.strokeStyle = '#880000'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-r*.7, r*.08); ctx.lineTo(-r*.7, -r*.18);
+      ctx.lineTo(-r*.48, -r*.32); ctx.lineTo(0, -r*.26);
+      ctx.lineTo(r*.48, -r*.32); ctx.lineTo(r*.7, -r*.18);
+      ctx.lineTo(r*.7, r*.08); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath(); ctx.ellipse(-r*.12, -r*.2, r*.22, r*.07, -0.2, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-r*.7, -r*.05); ctx.lineTo(-r*1.05, r*.25); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*.7, -r*.05); ctx.lineTo(r*1.05, r*.25); ctx.stroke();
+    } else if (m.maskType === 'bomb') {
+      // Fallen black villain mask
+      ctx.fillStyle = '#111'; ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-r*.68, r*.12); ctx.lineTo(-r*.68, -r*.22);
+      ctx.lineTo(-r*.5, -r*.34); ctx.lineTo(0, -r*.28);
+      ctx.lineTo(r*.5, -r*.34); ctx.lineTo(r*.68, -r*.22);
+      ctx.lineTo(r*.68, r*.12); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.font = `bold ${Math.round(r*0.28)}px sans-serif`;
+      ctx.fillStyle = '#ff8800'; ctx.textAlign = 'center';
+      ctx.fillText('💀', 0, r*.06); ctx.textAlign = 'left';
+      ctx.strokeStyle = '#666'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-r*.68, -r*.08); ctx.lineTo(-r*1.05, r*.25); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*.68, -r*.08); ctx.lineTo(r*1.05, r*.25); ctx.stroke();
+    } else if (m.jtype === 'king') {
+      // King's enormous mask (jaguar fall)
+      ctx.fillStyle = '#ff9090'; ctx.strokeStyle = '#c05050'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(-r*0.9, -r*0.5, r*1.8, r*1.1, 6); ctx.fill(); ctx.stroke();
+      for (const nx of [-r*0.45, 0, r*0.45]) {
+        ctx.fillStyle = '#c06060';
+        ctx.beginPath(); ctx.arc(nx, r*0.1, r*0.15, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.fillStyle = '#ffd700'; ctx.strokeStyle = '#b8960c'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-r*0.6, -r*0.5); ctx.lineTo(-r*0.6, -r*0.9);
+      ctx.lineTo(-r*0.3, -r*0.7); ctx.lineTo(0, -r*1.1);
+      ctx.lineTo(r*0.3, -r*0.7); ctx.lineTo(r*0.6, -r*0.9);
+      ctx.lineTo(r*0.6, -r*0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-r*.9, r*.1); ctx.lineTo(-r*1.3, r*.35); ctx.stroke();
+    } else {
+      // Regular jaguar pig mask
+      ctx.fillStyle = '#f08080'; ctx.strokeStyle = '#c05050'; ctx.lineWidth = 1.5;
+      ctx.fillRect(-r*0.75, -r*0.45, r*1.5, r*0.9);
+      ctx.strokeRect(-r*0.75, -r*0.45, r*1.5, r*0.9);
+      ctx.fillStyle = '#d06060';
+      ctx.beginPath(); ctx.arc(-r*0.22, r*0.05, r*0.14, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.22, r*0.05, r*0.14, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-r*0.75, 0); ctx.lineTo(-r*1.1, r*0.3); ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function updateParticles() {
+  G.particles = G.particles.filter(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15;
+    p.life -= p.decay;
+    return p.life > 0;
+  });
+}
+
+function drawParticles() {
+  for (const p of G.particles) {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ─── EXPLOSION ────────────────────────────────────────────────────────────────
+function explodeBombs(bx, by, radius) {
+  for (const b of G.blocks) {
+    if (!b.alive) continue;
+    const cx = b.wx - G.camera.x + b.w/2, cy = b.wy + b.h/2;
+    if (dist(bx, by, cx, cy) < radius) {
+      b.hit(3);
+      const angle = Math.atan2(cy - by, cx - bx);
+      b.vx += Math.cos(angle) * 5;
+      b.vy += Math.sin(angle) * 5 - 3;
+      b.rotV += (Math.random()-0.5) * 0.3;
+    }
+  }
+  for (const j of G.jaguars) {
+    if (!j.alive) continue;
+    if (dist(bx, by, j.sx, j.wy) < radius + j.r) {
+      j.hit(2);
+      const angle = Math.atan2(j.wy - by, j.wx - bx);
+      j.vx += Math.cos(angle) * 6;
+      j.vy += Math.sin(angle) * 6 - 4;
+      j.rotV = (j.rotV || 0) + (Math.random()-0.5) * 0.3;
+    }
+  }
+}
+
+// ─── COLLISION ────────────────────────────────────────────────────────────────
+function checkCollisions(bird) {
+  // Bird vs blocks
+  for (const b of G.blocks) {
+    if (!b.alive) continue;
+    const bx = b.wx;  // camera.x is always 0
+    const hit = bird.x + bird.r > bx && bird.x - bird.r < bx + b.w &&
+                bird.y + bird.r > b.wy && bird.y - bird.r < b.wy + b.h;
+    if (hit) {
+      const spd = Math.sqrt(bird.vx**2 + bird.vy**2);
+      const dmg = Math.max(1, Math.floor(spd / 4));
+      b.hit(dmg);
+      b.vx += bird.vx * 0.4;
+      b.vy += bird.vy * 0.3;
+      b.rotV += (Math.random()-0.5) * 0.15;
+      bird.whackMask(spd);
+      // Tyler sits on first contact
+      if (bird.type === 'tyler' && !bird.tylerSitting) {
+        bird.activate();
+        return true;
+      }
+      if (bird.type === 'bomb' && bird.armed && !bird.exploding) {
+        bird.exploding = true; bird.explodeTimer = 8;
+      } else if (bird.type !== 'bomb') {
+        bird.vx *= 0.4; bird.vy *= -0.3;
+      }
+      if (bird.swinging) bird.swinging = false;
+      return true;
+    }
+  }
+  for (const j of G.jaguars) {
+    if (!j.alive) continue;
+    const jx = j.wx;
+    const d = dist(bird.x, bird.y, jx, j.wy);
+    if (d < bird.r + j.r) {
+      const spd = Math.sqrt(bird.vx**2 + bird.vy**2);
+      j.hit(Math.max(1, Math.floor(spd / 5)));
+      j.vx += bird.vx * 0.6;
+      j.vy += bird.vy * 0.5 - 2;
+      j.rotV = (Math.random()-0.5) * 0.25;
+      bird.whackMask(spd);
+      // Tyler sits on contact
+      if (bird.type === 'tyler' && !bird.tylerSitting) {
+        bird.activate();
+        return false;
+      }
+      if (bird.type === 'bomb' && bird.armed && !bird.exploding) {
+        bird.exploding = true; bird.explodeTimer = 8;
+      } else if (bird.type !== 'bomb') {
+        bird.vx *= 0.3; bird.vy *= -0.4;
+      }
+      if (bird.swinging) bird.swinging = false;
+      return false;
+    }
+  }
+  return false;
+}
+
+// ─── LEVEL SETUP ─────────────────────────────────────────────────────────────
+function loadLevel(idx) {
+  // Rebuild layout with current viewport dimensions
+  const freshLevels = makeLevels();
+  const lvl = freshLevels[idx];
+  G.blocks = [];
+  G.jaguars = [];
+  G.eggs = [];
+  G.particles = [];
+  G.camera.x = 0;
+  G.score = 0;
+  G.ticks = 0;
+  G.vineGrabActive = false;
+  G.phase = 1;
+  G.bossHP = lvl.bossHP || 0;
+  G.bossMaxHP = lvl.bossHP || 0;
+  G.currentBg = lvl.bg;
+  G.isBoss = !!lvl.isBoss;
+  G.resultTimer = 9999;
+  G.endTimer = 0;
+  G.justLaunched = false;
+  G.fallenMasks = [];
+  G.splitChildren = [];
+  G.nextDropTick = null;
+  G.dropWarningX = null;
+  G.dropWarningMat = null;
+  if (!G.tylerSeeds) G.tylerSeeds = {};
+
+  // Set sling position BEFORE spawning birds
+  G.sling.x = Math.round(G.W * 0.13);
+  G.sling.y = G.ground - 40;
+  G.sling.pullX = G.sling.x;
+  G.sling.pullY = G.sling.y;
+  G.sling.dragging = false;
+  G.sling.launched = false;
+
+  const groundY = G.ground;
+
+  for (const cfg of lvl.layout) {
+    if (cfg.type === 'block') G.blocks.push(new Block(cfg, groundY));
+    else if (cfg.type === 'jaguar') G.jaguars.push(new Jaguar(cfg, groundY - (cfg.h||0)));
+    else if (cfg.type === 'egg') G.eggs.push({wx:cfg.x, wy:groundY - 15, r:10, collected:false});
+  }
+
+  G.birdQueue = lvl.birds.map(t => t);
+
+  // Inject Tyler once per world — randomly into one level of each world
+  // World boundaries: W1=0-2, W2=3-5, W3=6-8, W4=9-10, Boss=11
+  const worldBoundaries = [[0,2],[3,5],[6,8],[9,10],[11,11]];
+  for (const [wStart, wEnd] of worldBoundaries) {
+    if (idx >= wStart && idx <= wEnd) {
+      // Pick a random level in this world to be Tyler's level
+      // Use a seeded random so it's consistent per session but varies
+      const worldSeed = wStart + (G.tylerSeeds ? G.tylerSeeds[wStart] : Math.floor(Math.random()*(wEnd-wStart+1)));
+      if (!G.tylerSeeds) G.tylerSeeds = {};
+      if (G.tylerSeeds[wStart] === undefined) {
+        G.tylerSeeds[wStart] = Math.floor(Math.random()*(wEnd-wStart+1));
+      }
+      const tylerLevel = wStart + G.tylerSeeds[wStart];
+      if (idx === tylerLevel && G.birdQueue.length > 0) {
+        // Insert Tyler at a random position in the queue (not first)
+        const insertAt = 1 + Math.floor(Math.random() * (G.birdQueue.length - 1));
+        G.birdQueue.splice(insertAt, 0, 'tyler');
+      }
+      break;
+    }
+  }
+
+  G.levelBirdList = [...G.birdQueue];
+  G.totalBirdsInLevel = G.birdQueue.length;
+  setupNextBird();
+}
+
+function setupNextBird() {
+  if (G.birdQueue.length === 0) { G.activeBird = null; return; }
+  const type = G.birdQueue.shift();
+  const sy = G.ground - 40; // always compute fresh
+  G.sling.y = sy;
+  G.activeBird = new Bird(type, G.sling.x, sy);
+  G.activeBird.launched = false;
+  G.sling.dragging = false;
+  G.sling.pullX = G.sling.x;
+  G.sling.pullY = sy;
+}
+
+// ─── SLINGSHOT ────────────────────────────────────────────────────────────────
+function drawSling() {
+  const sx = G.sling.x, sy = G.sling.y;
+  // Posts
+  ctx.strokeStyle = '#8B5E3C'; ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(sx - 18, sy + 60); ctx.lineTo(sx - 12, sy - 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sx + 18, sy + 60); ctx.lineTo(sx + 12, sy - 10); ctx.stroke();
+
+  if (G.activeBird && !G.activeBird.launched) {
+    const px = G.sling.pullX, py = G.sling.pullY;
+    ctx.strokeStyle = '#c8a85a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sx - 12, sy - 10); ctx.lineTo(px, py); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx + 12, sy - 10); ctx.lineTo(px, py); ctx.stroke();
+    // Trajectory dots
+    drawTrajectoryDots(px, py);
+    // Power tooltip — shows above bird on sling
+    const type = G.activeBird.type;
+    const tipText = type === 'split' ? '🐔 TAP IN FLIGHT TO TRIPLE SPLIT' :
+                    type === 'speed' ? '⚡ TAP IN FLIGHT FOR BOOST' :
+                    type === 'bomb'  ? '💥 TAP IN FLIGHT TO EXPLODE' :
+                    type === 'tyler' ? '🐾 TYLER SITS ON FIRST HIT' : '';
+    if (tipText) {
+      const pulse = 0.75 + Math.sin(G.ticks * 0.1) * 0.25;
+      ctx.save();
+      ctx.globalAlpha = pulse;
+      ctx.font = 'bold 11px "Courier New"';
+      ctx.textAlign = 'center';
+      // Background pill
+      const tw = ctx.measureText(tipText).width + 16;
+      const tx = sx, ty2 = sy - 80;
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.beginPath(); ctx.roundRect(tx - tw/2, ty2 - 16, tw, 24, 6); ctx.fill();
+      ctx.fillStyle = type === 'split' ? '#f5c842' :
+                      type === 'speed' ? '#ffee00' :
+                      type === 'bomb'  ? '#ff8800' : '#ffffff';
+      ctx.fillText(tipText, tx, ty2);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+  } else {
+    ctx.strokeStyle = '#c8a85a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sx - 12, sy - 10); ctx.lineTo(sx, sy - 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx + 12, sy - 10); ctx.lineTo(sx, sy - 5); ctx.stroke();
+  }
+}
+
+function drawTrajectoryDots(px, py) {
+  if (!G.activeBird) return;
+  const dx = G.sling.x - px, dy = G.sling.y - py;
+  const mag = Math.sqrt(dx*dx + dy*dy);
+  if (mag < 5) return;
+  const factor = Math.min(mag / MAX_PULL, 1) * SLING_POWER * MAX_PULL;
+  let vx = (dx / mag) * factor * 0.85;
+  let vy = (dy / mag) * factor * 0.85;
+  let tx = px, ty = py;
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  for (let i = 0; i < 35; i++) {
+    vy += GRAVITY;
+    tx += vx; ty += vy;
+    if (ty > G.ground) break;
+    ctx.fillStyle = G.activeBird.color;
+    ctx.beginPath();
+    ctx.arc(tx, ty, 3 - i*0.06, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha *= 0.94;
+  }
+  ctx.restore();
+}
+
+// ─── BACKGROUND RENDERER ──────────────────────────────────────────────────────
+function drawBG(bg) {
+  const W = G.W, H = G.H;
+  const sky = PAL.sky[bg];
+  // Sky gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, G.ground);
+  grad.addColorStop(0, sky);
+  grad.addColorStop(1, shadeColor(sky, 20));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Parallax jungle trees / elements
+  if (bg === 'jungle') drawJungleBG();
+  if (bg === 'reef') drawReefBG();
+  if (bg === 'storm') drawStormBG();
+  if (bg === 'volcano') drawVolcanoBG();
+
+  // Ground
+  const g1 = PAL.ground[bg], g2 = PAL.ground2[bg];
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, G.ground, W, H - G.ground);
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, G.ground + 20, W, H - G.ground - 20);
+  // Ground line
+  ctx.strokeStyle = shadeColor(g1, 30); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, G.ground); ctx.lineTo(W, G.ground); ctx.stroke();
+}
+
+function drawJungleBG() {
+  const W = G.W, cx = G.camera.x;
+  // Distant trees (parallax 0.3)
+  for (let i = 0; i < 12; i++) {
+    const tx = ((i * 120 + 40) - cx * 0.3) % (W + 100) - 50;
+    const th = 80 + (i%3)*30;
+    ctx.fillStyle = '#1a4a1a';
+    ctx.fillRect(tx - 8, G.ground - th, 16, th);
+    ctx.fillStyle = '#1e5a1e';
+    ctx.beginPath(); ctx.arc(tx, G.ground - th, 30 + (i%3)*10, 0, Math.PI*2); ctx.fill();
+  }
+  // Mid trees (parallax 0.6)
+  for (let i = 0; i < 8; i++) {
+    const tx = ((i * 160 + 60) - cx * 0.6) % (W + 120) - 60;
+    const th = 120 + (i%4)*20;
+    ctx.fillStyle = '#2a6a2a';
+    ctx.fillRect(tx - 12, G.ground - th, 24, th);
+    ctx.fillStyle = '#2d7a2d';
+    ctx.beginPath(); ctx.arc(tx, G.ground - th + 10, 40 + (i%3)*12, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawReefBG() {
+  const W = G.W, cx = G.camera.x;
+  // Ocean waves in background
+  for (let i = 0; i < 5; i++) {
+    const wx = ((i * 200 - cx * 0.2 + G.ticks * 0.3) % (W + 200)) - 100;
+    ctx.strokeStyle = '#2a6a8a44'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(wx, G.ground - 40);
+    ctx.quadraticCurveTo(wx+50, G.ground - 60, wx+100, G.ground - 40);
+    ctx.stroke();
+  }
+  // Palm silhouettes
+  for (let i = 0; i < 6; i++) {
+    const tx = ((i * 180 + 50) - cx * 0.5) % (W + 100) - 50;
+    ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(tx, G.ground); ctx.quadraticCurveTo(tx+20, G.ground-80, tx+10, G.ground-150); ctx.stroke();
+    // Fronds
+    for (let f = 0; f < 5; f++) {
+      const fa = (f / 5) * Math.PI * 1.5 - Math.PI * 0.7;
+      ctx.strokeStyle = '#2d7a2d'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(tx+10, G.ground-150);
+      ctx.lineTo(tx+10+Math.cos(fa)*50, G.ground-150+Math.sin(fa)*30); ctx.stroke();
+    }
+  }
+}
+
+function drawStormBG() {
+  const W = G.W, cx = G.camera.x;
+  // Lightning flicker
+  if (G.ticks % 120 < 3) {
+    ctx.fillStyle = 'rgba(200,200,255,0.15)';
+    ctx.fillRect(0, 0, W, G.ground);
+    const lx = W * Math.random();
+    ctx.strokeStyle = 'rgba(200,200,255,0.8)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(lx, 0);
+    let ly = 0;
+    while (ly < G.ground - 50) { ly += 30; ctx.lineTo(lx + (Math.random()-0.5)*40, ly); }
+    ctx.stroke();
+  }
+  // Rain streaks
+  for (let i = 0; i < 40; i++) {
+    const rx = (i * 23 + G.ticks * 3) % W;
+    const ry = (i * 37 + G.ticks * 5) % G.ground;
+    ctx.strokeStyle = 'rgba(150,150,255,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 4, ry + 12); ctx.stroke();
+  }
+}
+
+function drawVolcanoBG() {
+  const W = G.W, cx = G.camera.x;
+  // Volcano silhouette
+  ctx.fillStyle = '#3a1a0a';
+  ctx.beginPath(); ctx.moveTo(W/2 - cx*0.1, G.ground);
+  ctx.lineTo(W/2 - 150 - cx*0.1, G.ground);
+  ctx.lineTo(W/2 - cx*0.1, G.ground - 250);
+  ctx.lineTo(W/2 + 150 - cx*0.1, G.ground);
+  ctx.closePath(); ctx.fill();
+  // Lava glow top
+  const lavGrad = ctx.createRadialGradient(W/2-cx*0.1, G.ground-250, 5, W/2-cx*0.1, G.ground-250, 80);
+  lavGrad.addColorStop(0, 'rgba(255,100,0,0.5)');
+  lavGrad.addColorStop(1, 'rgba(255,100,0,0)');
+  ctx.fillStyle = lavGrad;
+  ctx.beginPath(); ctx.arc(W/2-cx*0.1, G.ground-250, 80, 0, Math.PI*2); ctx.fill();
+  // Lava drips
+  for (let i = 0; i < 3; i++) {
+    const progress = ((G.ticks * 0.5 + i * 40) % 100) / 100;
+    const lx = W/2 - 15 + i*15 - cx*0.1;
+    const ly = (G.ground - 250) + progress * 100;
+    ctx.fillStyle = `rgba(255,${80 + i*20},0,0.7)`;
+    ctx.beginPath(); ctx.ellipse(lx, ly, 4, 8, 0, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+// ─── HUD ──────────────────────────────────────────────────────────────────────
+function drawHUD() {
+  // Top bar
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, 0, G.W, 44);
+
+  ctx.font = 'bold 13px "Courier New"';
+  ctx.fillStyle = '#4cff6a';
+  ctx.fillText(`SCORE: ${G.score.toLocaleString()}`, 12, 28);
+
+  // Bird queue icons
+  // levelBirdList = full list e.g. ['split','split','bomb']
+  // activeBird = currently on sling or in flight
+  // birdQueue = still waiting
+  const total = G.levelBirdList ? G.levelBirdList.length : 0;
+  // How many have been fully consumed (not active, not queued)
+  const remaining = G.birdQueue.length + (G.activeBird ? 1 : 0);
+  const used = total - remaining;
+
+  for (let i = 0; i < total; i++) {
+    const type = G.levelBirdList[i];
+    const isUsed = i < used;
+    const isActive = i === used; // the one currently on sling or flying
+    const slotX = G.W/2 - total * 18 + i * 36;
+    const slotY = 22;
+    const scale = isActive ? 1.25 : 0.85;
+
+    ctx.save();
+    ctx.globalAlpha = isUsed ? 0.22 : 1;
+    ctx.translate(slotX, slotY);
+    ctx.scale(scale, scale);
+    const fb = new Bird(type, 0, 0);
+    fb.launched = true;
+    fb.drawBody(0, 0);
+    ctx.restore();
+  }
+
+  // Ability hint
+  if (G.activeBird && !G.activeBird.launched) {
+    const hints = { vine:'[CLICK MID-FLIGHT: VINE GRAB]', bomb:'[CLICK MID-FLIGHT: DETONATE]', speed:'[CLICK MID-FLIGHT: SPEED BOOST]' };
+    ctx.font = '11px "Courier New"';
+    ctx.fillStyle = '#88ff88';
+    ctx.fillText(hints[G.activeBird.type] || '', G.W - 300, 28);
+  }
+
+  // Boss HP bar
+  if (G.isBoss && G.bossHP > 0) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(G.W/2 - 120, G.H - 55, 240, 30);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(G.W/2 - 110, G.H - 48, 220, 14);
+    ctx.fillStyle = '#ff4444';
+    ctx.fillRect(G.W/2 - 110, G.H - 48, 220 * (G.bossHP / G.bossMaxHP), 14);
+    ctx.strokeStyle = '#ff6666'; ctx.lineWidth = 1;
+    ctx.strokeRect(G.W/2 - 110, G.H - 48, 220, 14);
+    ctx.font = 'bold 11px "Courier New"';
+    ctx.fillStyle = '#ffcccc';
+    ctx.textAlign = 'center';
+    ctx.fillText(`👑 KING MUDSWORTH  HP: ${G.bossHP}/${G.bossMaxHP}`, G.W/2, G.H - 58);
+    ctx.textAlign = 'left';
+  }
+
+  // Floating message
+  if (G.msgTimer > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(G.msgTimer / 30, 1);
+    ctx.font = 'italic bold 16px "Courier New"';
+    ctx.fillStyle = '#ffe94a';
+    ctx.textAlign = 'center';
+    ctx.fillText(`"${G.msg}"`, G.W/2, G.H/2 - 60);
+    ctx.textAlign = 'left';
+    ctx.restore();
+    G.msgTimer--;
+  }
+
+  // Eggs collected
+  const eggsCollected = G.eggs.filter(e => e.collected).length;
+  const totalEggs = G.eggs.length;
+  if (totalEggs > 0) {
+
+  // Drop pressure warning bar
+  const dropCfg = DROP_CONFIG[Math.min(G.level, DROP_CONFIG.length - 1)];
+  if (dropCfg && G.ticks > dropCfg[0] - 120) {
+    const barW = 80;
+    const bx = G.W - barW - 10;
+    const by = G.H - 18;
+    if (G.nextDropTick && G.ticks >= dropCfg[0]) {
+      const dropAge2 = G.ticks - dropCfg[0];
+      const t2 = Math.min(dropAge2 / 3600, 1);
+      const curInterval = Math.round(dropCfg[1] + (dropCfg[2] - dropCfg[1]) * t2);
+      const timeToNext = G.nextDropTick - G.ticks;
+      const pct = Math.max(0, timeToNext / curInterval);
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(bx - 2, by - 2, barW + 4, 10);
+      const barColor = pct < 0.25 ? '#ff2222' : pct < 0.6 ? '#ff8800' : '#ffcc00';
+      ctx.fillStyle = barColor;
+      ctx.fillRect(bx, by, barW * pct, 6);
+      if (pct < 0.2 && Math.floor(G.ticks / 8) % 2 === 0) {
+        ctx.font = 'bold 9px "Courier New"';
+        ctx.fillStyle = '#ff2222';
+        ctx.textAlign = 'right';
+        ctx.fillText('⚠ INCOMING', G.W - 10, by - 4);
+        ctx.textAlign = 'left';
+      }
+    } else if (G.ticks < dropCfg[0]) {
+      const warmup = (G.ticks - (dropCfg[0] - 120)) / 120;
+      ctx.font = '9px "Courier New"';
+      ctx.fillStyle = `rgba(255,200,0,${warmup * 0.7})`;
+      ctx.textAlign = 'right';
+      ctx.fillText('things are falling soon...', G.W - 10, by);
+      ctx.textAlign = 'left';
+    }
+  }
+    ctx.font = '13px "Courier New"';
+    ctx.fillStyle = '#ffe94a';
+    ctx.fillText(`🥚 ${eggsCollected}/${totalEggs}`, 12, G.H - 12);
+  }
+}
+
+function showMsg(txt) { G.msg = txt; G.msgTimer = 90; }
+
+// ─── EGGS ─────────────────────────────────────────────────────────────────────
+function drawEggs() {
+  for (const e of G.eggs) {
+    if (e.collected) continue;
+    const ex = e.wx - G.camera.x;
+    ctx.fillStyle = '#fffbe8';
+    ctx.strokeStyle = '#c8a85a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(ex, e.wy, e.r*0.7, e.r, 0, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    // Speckles
+    ctx.fillStyle = '#c8a85a66';
+    ctx.beginPath(); ctx.arc(ex-3, e.wy-3, 2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex+2, e.wy+2, 2, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function checkEggs(bird) {
+  for (const e of G.eggs) {
+    if (e.collected) continue;
+    if (dist(bird.x, bird.y, e.wx - G.camera.x, e.wy) < bird.r + e.r) {
+      e.collected = true;
+      G.score += 500;
+      spawnParticles(e.wx - G.camera.x, e.wy, '#ffe94a', 12, 4);
+      showMsg("rescued an egg!");
+    }
+  }
+}
+
+// ─── TITLE SCREEN ─────────────────────────────────────────────────────────────
+function drawTitle() {
+  const W = G.W, H = G.H;
+  // Background
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0a1a0a'); grad.addColorStop(1,'#1a3a1a');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+
+  // Stars
+  for (let i = 0; i < 60; i++) {
+    const sx = (i*137)%W, sy = (i*93)%H*0.6;
+    ctx.fillStyle = `rgba(255,255,255,${0.3+Math.sin(G.ticks*0.05+i)*0.3})`;
+    ctx.beginPath(); ctx.arc(sx,sy,0.8,0,Math.PI*2); ctx.fill();
+  }
+
+  // Island silhouette
+  ctx.fillStyle = '#1e3d12';
+  ctx.beginPath(); ctx.moveTo(0, H*0.75); ctx.quadraticCurveTo(W*0.3, H*0.55, W*0.5, H*0.7);
+  ctx.quadraticCurveTo(W*0.7, H*0.55, W, H*0.72); ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+
+  // Trees
+  for (let i = 0; i < 8; i++) {
+    const tx = W*0.1 + i*(W*0.11), ty = H*0.58 - (i%3)*20;
+    ctx.fillStyle = '#2d7a2d';
+    ctx.fillRect(tx-5, ty, 10, 40);
+    ctx.beginPath(); ctx.arc(tx, ty, 22, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Ocean
+  ctx.fillStyle = '#0a2a3a';
+  ctx.fillRect(0, H*0.82, W, H*0.18);
+  for (let i = 0; i < 4; i++) {
+    const wx = ((i*250 + G.ticks*1.5) % (W+200)) - 100;
+    ctx.strokeStyle = 'rgba(100,200,255,0.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(wx, H*0.82+10);
+    ctx.quadraticCurveTo(wx+60, H*0.82-5, wx+120, H*0.82+10); ctx.stroke();
+  }
+
+  // TITLE TEXT
+  ctx.textAlign = 'center';
+  // Shadow
+  ctx.font = 'bold 44px "Courier New"';
+  ctx.fillStyle = '#0a2a0a';
+  ctx.fillText('CRANKY CHICKENS', W/2+2, H*0.22+2);
+  // Main
+  const tg = ctx.createLinearGradient(0, H*0.15, 0, H*0.28);
+  tg.addColorStop(0,'#b8ff3a'); tg.addColorStop(1,'#ffe94a');
+  ctx.fillStyle = tg;
+  ctx.fillText('CRANKY CHICKENS', W/2, H*0.22);
+
+  ctx.font = 'bold 22px "Courier New"';
+  ctx.fillStyle = '#ff8c2a';
+  ctx.fillText('MYSTERY ISLAND TROUBLE', W/2, H*0.33);
+
+  // Chicken
+  const cb = new Bird('split', W/2 - 60, H*0.52);
+  cb.launched = true; cb.rotation = 0.2;
+  cb.drawBody(W/2 - 60, H*0.52);
+  const cb2 = new Bird('bomb', W/2 + 60, H*0.52);
+  cb2.launched = true; cb2.rotation = -0.2;
+  cb2.drawBody(W/2 + 60, H*0.52);
+
+  // Jaguar tease
+  drawJaguar(W/2, H*0.52, 20, 'grunt', false);
+
+  // Blink prompt
+  if (Math.floor(G.ticks / 30) % 2 === 0) {
+    ctx.font = '14px "Courier New"';
+    ctx.fillStyle = '#4cff6a';
+    ctx.fillText('CLICK TO START', W/2, H*0.72);
+  }
+  ctx.font = '11px "Courier New"';
+  ctx.fillStyle = '#4a7a4a';
+  ctx.fillText('drag slingshot to launch · click mid-flight to activate ability', W/2, H*0.78);
+  ctx.textAlign = 'left';
+}
+
+// ─── WORLD MAP ────────────────────────────────────────────────────────────────
+const WORLD_NODES = [
+  // World 1: Jungle
+  { name:'1-1: JUNGLE',    x:0.18, y:0.72, world:1 },
+  { name:'1-2: JUNGLE',    x:0.28, y:0.62, world:1 },
+  { name:'1-3: JUNGLE',    x:0.35, y:0.52, world:1 },
+  // World 2: Reef
+  { name:'2-1: REEF',      x:0.44, y:0.44, world:2 },
+  { name:'2-2: REEF',      x:0.53, y:0.36, world:2 },
+  { name:'2-3: REEF',      x:0.60, y:0.44, world:2 },
+  // World 3: Storm
+  { name:'3-1: STORM',     x:0.67, y:0.36, world:3 },
+  { name:'3-2: STORM',     x:0.75, y:0.28, world:3 },
+  { name:'3-3: STORM',     x:0.82, y:0.36, world:3 },
+  // World 4: Volcano
+  { name:'4-1: VOLCANO',   x:0.72, y:0.52, world:4 },
+  { name:'4-2: VOLCANO',   x:0.62, y:0.60, world:4 },
+  // Boss
+  { name:'⚠ DARK HEART',   x:0.50, y:0.22, world:5 },
+];
+
+function drawWorldMap() {
+  const W = G.W, H = G.H;
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0a2a1a'); grad.addColorStop(1,'#1a4a2a');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 18px "Courier New"';
+  ctx.fillStyle = '#b8ff3a';
+  ctx.fillText('🗺  MYSTERY ISLAND', W/2, 36);
+
+  // Island blob
+  ctx.fillStyle = '#2a5a2a';
+  ctx.beginPath();
+  ctx.ellipse(W/2, H*0.5, W*0.42, H*0.38, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#4cff6a44'; ctx.lineWidth = 2; ctx.stroke();
+
+  // World color palette
+  const worldColors = { 1:'#4cff6a', 2:'#6af0ff', 3:'#aaaaff', 4:'#ff8844', 5:'#ff4444' };
+  const worldBg    = { 1:'#1a3a1a', 2:'#0a2a3a', 3:'#1a1a3a', 4:'#3a1a0a', 5:'#3a0a0a' };
+
+  // Paths
+  for (let i = 0; i < WORLD_NODES.length - 1; i++) {
+    const a = WORLD_NODES[i], b = WORLD_NODES[i+1];
+    ctx.setLineDash([5,5]);
+    ctx.strokeStyle = i < G.level ? worldColors[a.world] : '#2a5a2a';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(a.x*W, a.y*H); ctx.lineTo(b.x*W, b.y*H); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Nodes
+  for (let i = 0; i < WORLD_NODES.length; i++) {
+    const n = WORLD_NODES[i];
+    const nx = n.x * W, ny = n.y * H;
+    const unlocked = i <= G.level;
+    const isBoss = i === BOSS_LEVEL;
+    const col = worldColors[n.world] || '#4cff6a';
+    const bg  = worldBg[n.world] || '#1a3a1a';
+
+    ctx.fillStyle = unlocked ? bg : '#111';
+    ctx.strokeStyle = unlocked ? col : '#2a5a2a';
+    ctx.lineWidth = unlocked ? 3 : 1;
+    ctx.beginPath(); ctx.arc(nx, ny, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+
+    ctx.font = isBoss ? '16px serif' : 'bold 11px "Courier New"';
+    ctx.fillStyle = unlocked ? col : '#333';
+    ctx.fillText(isBoss ? '💀' : `${i+1}`, nx, ny + (isBoss ? 6 : 4));
+
+    // Stars
+    const s = G.stars[i] || 0;
+    ctx.font = '9px serif';
+    for (let st = 0; st < 3; st++) {
+      ctx.fillStyle = st < s ? '#ffe94a' : '#333';
+      ctx.fillText('★', nx - 8 + st*8, ny + 32);
+    }
+
+    // Pulse on current level
+    if (i === G.level && unlocked) {
+      const pulse = Math.sin(G.ticks * 0.09) * 5;
+      ctx.strokeStyle = col + '88'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(nx, ny, 26 + pulse, 0, Math.PI*2); ctx.stroke();
+    }
+
+    ctx.font = '9px "Courier New"';
+    ctx.fillStyle = unlocked ? '#c8ffc8' : '#2a5a2a';
+    ctx.fillText(n.name, nx, ny + 44);
+  }
+
+  // World labels
+  ctx.font = 'bold 10px "Courier New"';
+  const worldLabels = [[0.28,0.82,'W1: JUNGLE','#4cff6a'],[0.52,0.82,'W2: REEF','#6af0ff'],[0.73,0.82,'W3: STORM','#aaaaff'],[0.67,0.70,'W4: VOLCANO','#ff8844']];
+  for (const [wx,wy,wname,wcol] of worldLabels) {
+    ctx.fillStyle = wcol + '88';
+    ctx.fillText(wname, wx*W, wy*H);
+  }
+
+  ctx.font = '11px "Courier New"';
+  ctx.fillStyle = '#4cff6a';
+  ctx.fillText('TAP A LEVEL TO PLAY', W/2, H - 16);
+  ctx.textAlign = 'left';
+}
+
+// ─── RESULT SCREEN ────────────────────────────────────────────────────────────
+function drawResult() {
+  const W = G.W, H = G.H;
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(0,0,W,H);
+
+  const allDead = G.jaguars.every(j => !j.alive);
+  const win = allDead;
+
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 28px "Courier New"';
+  ctx.fillStyle = win ? '#b8ff3a' : '#ff4444';
+  ctx.fillText(win ? '🏆  LEVEL COMPLETE!' : '💀  SQUAWKED OUT', W/2, H*0.28);
+
+  if (win) {
+    // Stars
+    const s = G.levelStars;
+    ctx.font = '40px serif';
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = i < s ? '#ffe94a' : '#333';
+      ctx.fillText('★', W/2 - 40 + i*40, H*0.42);
+    }
+    ctx.font = '14px "Courier New"';
+    ctx.fillStyle = '#c8ffc8';
+    ctx.fillText(`SCORE: ${G.score.toLocaleString()}`, W/2, H*0.52);
+
+    const eggs = G.eggs.filter(e=>e.collected).length;
+    if (eggs > 0) ctx.fillText(`🥚 EGGS RESCUED: ${eggs}`, W/2, H*0.59);
+    ctx.fillText(`BIRDS REMAINING: ${G.birdQueue.length + (G.activeBird && !G.activeBird.launched ? 1 : 0)}`, W/2, H*0.66);
+
+    // "The jaguar stares at you. You say nothing. It appreciates this."
+    ctx.font = 'italic 11px "Courier New"';
+    ctx.fillStyle = '#4a8a4a';
+    const isBoss = G.level === BOSS_LEVEL;
+    ctx.fillText(isBoss
+      ? '"the mask... stays on..." — King Mudsworth, defeated pig king'
+      : '"that\'s a perfectly normal pig." — you, probably',
+      W/2, H*0.75);
+
+    // Buttons
+    drawButton(W/2 - 100, H*0.82, 90, 32, 'RETRY', '#4cff6a', '#0a2a0a');
+    if (G.level < TOTAL_LEVELS - 1) drawButton(W/2 + 10, H*0.82, 110, 32, 'NEXT LEVEL', '#ffe94a', '#2a1a00');
+    drawButton(W/2 + 130, H*0.82, 60, 32, 'MAP', '#ff8c2a', '#2a0a00');
+  } else {
+    ctx.font = '13px "Courier New"';
+    ctx.fillStyle = '#ff8888';
+    ctx.fillText('no birds remaining...', W/2, H*0.48);
+    drawButton(W/2 - 55, H*0.62, 90, 32, 'RETRY', '#4cff6a', '#0a2a0a');
+    drawButton(W/2 + 45, H*0.62, 60, 32, 'MAP', '#ff8c2a', '#2a0a00');
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawButton(x, y, w, h, label, color, bg) {
+  ctx.fillStyle = bg;
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.font = 'bold 13px "Courier New"';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x + w/2, y + h/2 + 5);
+}
+
+// ─── INPUT ────────────────────────────────────────────────────────────────────
+let mouseX = 0, mouseY = 0;
+
+function toVirtual(cx, cy, rect) {
+  return [(cx - rect.left) / GAME_SCALE, (cy - rect.top) / GAME_SCALE];
+}
+
+C.addEventListener('mousedown', e => {
+  const r = C.getBoundingClientRect();
+  [mouseX, mouseY] = toVirtual(e.clientX, e.clientY, r);
+  handleDown();
+});
+C.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const r = C.getBoundingClientRect();
+  [mouseX, mouseY] = toVirtual(e.touches[0].clientX, e.touches[0].clientY, r);
+  handleDown();
+}, { passive: false });
+
+C.addEventListener('mousemove', e => {
+  const r = C.getBoundingClientRect();
+  [mouseX, mouseY] = toVirtual(e.clientX, e.clientY, r);
+  handleMove();
+});
+C.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const r = C.getBoundingClientRect();
+  [mouseX, mouseY] = toVirtual(e.touches[0].clientX, e.touches[0].clientY, r);
+  handleMove();
+}, { passive: false });
+
+C.addEventListener('mouseup', handleUp);
+C.addEventListener('touchend', handleUp);
+
+function handleDown() {
+  if (G.state === 'TITLE') { G.state = 'WORLDMAP'; return; }
+  if (G.state === 'WORLDMAP') {
+    const W = G.W, H = G.H;
+    for (let i = 0; i < WORLD_NODES.length; i++) {
+      if (i > G.level) continue;
+      const n = WORLD_NODES[i];
+      if (dist(mouseX, mouseY, n.x*W, n.y*H) < 50) {
+        G.level = i; loadLevel(i); G.state = 'LEVEL'; return;
+      }
+    }
+    return;
+  }
+  if (G.state === 'RESULT') { handleResultClick(); return; }
+  if (G.state === 'LEVEL') {
+    // Only handle sling drag on down — ability fires on UP
+    if (G.activeBird && !G.activeBird.launched) {
+      G.sling.dragging = true;
+      const dx = mouseX - G.sling.x, dy = mouseY - G.sling.y;
+      const mag = Math.sqrt(dx*dx + dy*dy) || 1;
+      const clamp = Math.min(mag, MAX_PULL);
+      G.sling.pullX = G.sling.x + (dx/mag)*clamp;
+      G.sling.pullY = G.sling.y + (dy/mag)*clamp;
+      G.activeBird.x = G.sling.pullX;
+      G.activeBird.y = G.sling.pullY;
+    }
+  }
+}
+
+function handleMove() {
+  if (G.state !== 'LEVEL') return;
+  if (G.sling.dragging && G.activeBird && !G.activeBird.launched) {
+    const dx = mouseX - G.sling.x, dy = mouseY - G.sling.y;
+    const mag = Math.sqrt(dx*dx + dy*dy);
+    const clamp = Math.min(mag, MAX_PULL);
+    G.sling.pullX = G.sling.x + (dx/mag)*clamp;
+    G.sling.pullY = G.sling.y + (dy/mag)*clamp;
+    G.activeBird.x = G.sling.pullX;
+    G.activeBird.y = G.sling.pullY;
+  }
+}
+
+function handleUp() {
+  if (G.state !== 'LEVEL') return;
+
+  // If this up event released the sling, launch the bird — don't also trigger ability
+  if (G.sling.dragging && G.activeBird && !G.activeBird.launched) {
+    G.sling.dragging = false;
+    const dx = G.sling.x - G.sling.pullX;
+    const dy = G.sling.y - G.sling.pullY;
+    const mag = Math.sqrt(dx*dx+dy*dy);
+    if (mag > 10) {
+      const power = Math.min(mag / MAX_PULL, 1) * SLING_POWER * MAX_PULL;
+      G.activeBird.vx = (dx / mag) * power * 0.85;
+      G.activeBird.vy = (dy / mag) * power * 0.85;
+      G.activeBird.launched = true;
+      G.activeBird.launchTick = G.ticks;
+      G.activeBird.launchX = G.activeBird.x;
+      G.activeBird.launchY = G.activeBird.y;
+      G.activeBird.x = G.sling.pullX;
+      G.activeBird.y = G.sling.pullY;
+      G.sling.launched = true;
+      G.justLaunched = true; // block ability on any follow-up synthetic event
+    } else {
+      G.sling.pullX = G.sling.x;
+      G.sling.pullY = G.sling.y;
+      if (G.activeBird) { G.activeBird.x = G.sling.x; G.activeBird.y = G.sling.y; }
+    }
+    return; // never fall through to ability
+  }
+
+  // Ability tap — only if bird is in flight AND this wasn't a launch gesture
+  if (G.activeBird && G.activeBird.launched) {
+    if (G.justLaunched) {
+      G.justLaunched = false; // eat the synthetic event
+      return;
+    }
+    if (G.activeBird.swinging) {
+      G.activeBird.swinging = false;
+    } else {
+      G.activeBird.activate();
+    }
+  }
+}
+
+function handleResultClick() {
+  const W = G.W, H = G.H;
+  const allDead = G.jaguars.every(j => !j.alive);
+  if (allDead) {
+    // RETRY
+    if (inBtn(W/2-100, H*0.82, 90, 32)) { loadLevel(G.level); G.state = 'LEVEL'; return; }
+    // NEXT
+    if (G.level < TOTAL_LEVELS - 1 && inBtn(W/2+10, H*0.82, 110, 32)) {
+      G.level++;
+      loadLevel(G.level);
+      G.state = 'LEVEL'; return;
+    }
+    // MAP
+    if (inBtn(W/2+130, H*0.82, 60, 32)) { G.state = 'WORLDMAP'; return; }
+  } else {
+    if (inBtn(W/2-55, H*0.62, 90, 32)) { loadLevel(G.level); G.state = 'LEVEL'; return; }
+    if (inBtn(W/2+45, H*0.62, 60, 32)) { G.state = 'WORLDMAP'; return; }
+  }
+}
+
+function inBtn(x, y, w, h) {
+  return mouseX >= x && mouseX <= x+w && mouseY >= y && mouseY <= y+h;
+}
+
+// ─── LEVEL LOGIC ──────────────────────────────────────────────────────────────
+function updateLevel() {
+  G.ticks++;
+  G.sling.y = G.ground - 40;
+
+  // NO camera panning — world is fully visible. camera.x stays 0.
+  // Bird flies in screen space directly.
+
+  // Update bird
+  if (G.activeBird && G.activeBird.launched) {
+    checkEggs(G.activeBird);
+    checkCollisions(G.activeBird);
+    G.activeBird.update();
+    if (!G.activeBird.alive && G.resultTimer === 9999) {
+      G.resultTimer = 180;
+    }
+  }
+
+  // Update split children
+  G.splitChildren = (G.splitChildren || []).filter(b => b.alive);
+  for (const b of G.splitChildren) {
+    checkEggs(b);
+    checkCollisions(b);
+    b.update();
+  }
+
+  // Count down and spawn next bird
+  if (G.activeBird && !G.activeBird.alive && G.resultTimer < 9999) {
+    G.resultTimer--;
+    if (G.resultTimer <= 0) {
+      G.resultTimer = 9999;
+      setupNextBird();
+    }
+  }
+
+  // Update blocks & jaguars
+  for (const b of G.blocks) b.update();
+
+  // Block-on-block stacking — resolve vertical overlaps (multiple passes for stability)
+  const liveBlocks = G.blocks.filter(b => b.alive);
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 0; i < liveBlocks.length; i++) {
+      const a = liveBlocks[i];
+      for (let j = i + 1; j < liveBlocks.length; j++) {
+        const b = liveBlocks[j];
+        // AABB overlap check
+        const overlapX = a.wx < b.wx + b.w && a.wx + a.w > b.wx;
+        const overlapY = a.wy < b.wy + b.h && a.wy + a.h > b.wy;
+        if (!overlapX || !overlapY) continue;
+        // Push apart vertically only (keep horizontal momentum for tumbling)
+        const penY = Math.min(a.wy + a.h - b.wy, b.wy + b.h - a.wy);
+        // Determine which is on top
+        const aCenterY = a.wy + a.h / 2;
+        const bCenterY = b.wy + b.h / 2;
+        if (aCenterY < bCenterY) {
+          // a is on top of b
+          a.wy -= penY * 0.5;
+          b.wy += penY * 0.5;
+          if (a.vy > 0) a.vy *= -0.1;
+          if (b.vy < 0) b.vy *= -0.1;
+        } else {
+          // b is on top of a
+          b.wy -= penY * 0.5;
+          a.wy += penY * 0.5;
+          if (b.vy > 0) b.vy *= -0.1;
+          if (a.vy < 0) a.vy *= -0.1;
+        }
+      }
+    }
+  }
+
+  for (const j of G.jaguars) j.update();
+  updateParticles();
+  updateFallenMasks();
+
+  // Shaman rebuild
+  for (const j of G.jaguars) {
+    if (j.jtype === 'shaman' && j.alive && j.rebuildCooldown <= 0) {
+      const deadBlocks = G.blocks.filter(b => !b.alive);
+      if (deadBlocks.length > 0) {
+        const rb = deadBlocks[Math.floor(Math.random()*deadBlocks.length)];
+        rb.alive = true; rb.hp = rb.maxHP;
+        rb.falling = false; rb.rot = 0;
+        j.rebuildCooldown = 300;
+        spawnParticles(rb.wx - G.camera.x + rb.w/2, rb.wy + rb.h/2, '#cc88ff', 10, 3);
+        showMsg("the pig spirits... restored the block. definitely pig spirits.");
+      }
+    }
+  }
+
+  // Boss: king jaguar spawns when walls down
+  if (G.isBoss) {
+    const wallsAlive = G.blocks.filter(b => b.alive).length;
+    const king = G.jaguars.find(j => j.jtype === 'king');
+    if (!king && wallsAlive < 3 && G.phase === 1) {
+      G.phase = 2;
+      G.jaguars.push(new Jaguar({jtype:'king', x:Math.round(G.W*0.57), y:-80}, G.ground));
+      G.bossHP = G.bossMaxHP = 8;
+      showMsg("I AM KING PIG. ALWAYS HAVE BEEN.");
+    }
+    if (king && !king.alive) G.bossHP = 0;
+    else if (king) G.bossHP = king.hp;
+  }
+
+  // ── TETRIS DROP SYSTEM ───────────────────────────────────────
+  // Per-level tuning: [startTick, startInterval, minInterval]
+  // startTick  = how many ticks before first drop (no drops before this)
+  // startInterval = initial gap between drops (frames)
+  // minInterval   = fastest the drops ever get (frames)
+  // Level 0 (1-1) has no drops — tutorial grace
+  const cfg = DROP_CONFIG[Math.min(G.level, DROP_CONFIG.length - 1)];
+  const allJaguarsDead = G.jaguars.length > 0 && G.jaguars.every(j => !j.alive);
+
+  if (cfg && G.ticks >= cfg[0] && !allJaguarsDead) {
+    const dropAge = G.ticks - cfg[0];
+    const [, startInterval, minInterval] = cfg;
+    // Ramp over 3600 ticks (60s) from startInterval down to minInterval
+    const rampFrames = 3600;
+    const t = Math.min(dropAge / rampFrames, 1);
+    const dropInterval = Math.round(startInterval + (minInterval - startInterval) * t);
+
+    if (!G.nextDropTick) G.nextDropTick = G.ticks + dropInterval;
+
+    // Warning shadow 60 frames before drop
+    if (G.ticks === G.nextDropTick - 60) {
+      G.dropWarningX = lx(0.45 + Math.random() * 0.42);
+      const jagChance = 0.05 + (G.level / BOSS_LEVEL) * 0.12; // more jaguars on later levels
+      G.dropWarningMat = Math.random() < jagChance ? 'jaguar' : (['log','plank','rock'][Math.floor(Math.random()*3)]);
+    }
+
+    // Execute drop
+    if (G.ticks >= G.nextDropTick) {
+      const wx = G.dropWarningX || lx(0.45 + Math.random() * 0.42);
+      const mat = G.dropWarningMat || 'log';
+      if (mat === 'jaguar') {
+        const jtypes = G.level >= 8 ? ['grunt','helmet','shaman'] : ['grunt','grunt','helmet'];
+        const jtype = jtypes[Math.floor(Math.random()*jtypes.length)];
+        const j = new Jaguar({jtype, x: wx, y: 0}, 0);
+        j.wy = -j.r * 2;
+        j.vy = 1.5;
+        G.jaguars.push(j);
+        showMsg(["reinforcements.", "they just keep coming.", "oh no not more of them.", "the island is not finished with you."][Math.floor(Math.random()*4)]);
+      } else {
+        const w = mat === 'log' ? 22 : mat === 'plank' ? 65 : 30;
+        const h = mat === 'log' ? 55 : mat === 'plank' ? 18 : 32;
+        const b = new Block({mat, x: wx, y: 0, w, h}, 0);
+        b.wy = -h - 10;
+        b.vy = 1.2 + Math.random() * 0.6;
+        b.vx = (Math.random() - 0.5) * 1.2;
+        b.rotV = (Math.random() - 0.5) * 0.04;
+        G.blocks.push(b);
+      }
+      G.dropWarningX = null;
+      G.nextDropTick = G.ticks + dropInterval;
+      spawnParticles(wx, 10, '#ff4444', 5, 2);
+    }
+  }
+
+  // Check end condition
+  const allDead = G.jaguars.length > 0 && G.jaguars.every(j => !j.alive);
+  const lastBirdLanded = !G.activeBird || (!G.activeBird.alive && G.birdQueue.length === 0);
+  const noBirds = lastBirdLanded && G.birdQueue.length === 0 && (!G.activeBird || !G.activeBird.launched);
+
+  if (allDead) {
+    G.endTimer = (G.endTimer || 0) + 1;
+    if (G.endTimer > 90) {
+      const birdsLeft = G.birdQueue.length + (G.activeBird && G.activeBird.alive ? 1 : 0);
+      G.levelStars = birdsLeft >= 2 ? 3 : birdsLeft === 1 ? 2 : 1;
+      G.stars[G.level] = Math.max(G.stars[G.level] || 0, G.levelStars);
+      G.level = Math.min(G.level + 1, TOTAL_LEVELS - 1);
+      G.endTimer = 0;
+      G.state = 'RESULT';
+    }
+  } else if (noBirds && !allDead && G.jaguars.length > 0) {
+    G.endTimer = (G.endTimer || 0) + 1;
+    if (G.endTimer > 120) {
+      G.levelStars = 0;
+      G.endTimer = 0;
+      G.state = 'RESULT';
+    }
+  } else {
+    G.endTimer = 0;
+  }
+}
+
+function drawLevel() {
+  G.sling.y = G.ground - 40;
+  drawBG(G.currentBg);
+  drawEggs();
+  for (const b of G.blocks) b.draw();
+  for (const j of G.jaguars) j.draw();
+  drawFallenMasks();
+  drawParticles();
+  drawSling();
+  if (G.activeBird && !G.activeBird.launched) {
+    // Draw bird sitting in sling (or pulled back)
+    G.activeBird.drawBody(G.sling.pullX, G.sling.pullY);
+  }
+  if (G.activeBird) G.activeBird.draw(0);
+  for (const b of (G.splitChildren || [])) b.draw(0);
+  const queueStart = G.sling.x - 30;
+  for (let i = 0; i < Math.min(G.birdQueue.length, 5); i++) {
+    const qb = new Bird(G.birdQueue[i], 0, 0);
+    qb.launched = true;
+    qb.drawBody(queueStart - i * 28, G.ground - 12);
+  }
+  drawHUD();
+
+  // ── DROP WARNING INDICATOR ────────────────────────────────────
+  if (G.dropWarningX && G.ticks > 600) {
+    const wx = G.dropWarningX;
+    const isMat = G.dropWarningMat !== 'jaguar';
+    const pulse = 0.4 + Math.abs(Math.sin(G.ticks * 0.15)) * 0.6;
+    ctx.save();
+    ctx.globalAlpha = pulse * 0.7;
+    // Danger chevron at top
+    ctx.fillStyle = '#ff4444';
+    ctx.beginPath();
+    ctx.moveTo(wx - 12, 0);
+    ctx.lineTo(wx + 12, 0);
+    ctx.lineTo(wx, 18);
+    ctx.closePath(); ctx.fill();
+    // Dashed drop line
+    ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(wx, 20); ctx.lineTo(wx, G.ground - 10); ctx.stroke();
+    ctx.setLineDash([]);
+    // Shadow silhouette at ground
+    ctx.fillStyle = '#ff444444';
+    if (isMat) {
+      const w = G.dropWarningMat === 'plank' ? 70 : G.dropWarningMat === 'log' ? 20 : 28;
+      ctx.fillRect(wx - w/2, G.ground - 8, w, 6);
+    } else {
+      ctx.beginPath(); ctx.arc(wx, G.ground - 12, 16, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function dist(ax, ay, bx, by) { return Math.sqrt((ax-bx)**2+(ay-by)**2); }
+function shadeColor(hex, pct) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, Math.max(0, (n>>16) + pct));
+  const g = Math.min(255, Math.max(0, ((n>>8)&0xff) + pct));
+  const b = Math.min(255, Math.max(0, (n&0xff) + pct));
+  return `rgb(${r},${g},${b})`;
+}
+
+// ─── MAIN LOOP ────────────────────────────────────────────────────────────────
+function loop() {
+  G.ticks++;
+  // Clear actual pixel canvas
+  ctx.clearRect(0, 0, C.width, C.height);
+  // Scale everything down so the virtual world fits on screen
+  ctx.save();
+  ctx.scale(GAME_SCALE, GAME_SCALE);
+
+  if (G.state === 'TITLE') drawTitle();
+  else if (G.state === 'WORLDMAP') { drawWorldMap(); }
+  else if (G.state === 'LEVEL') { updateLevel(); drawLevel(); }
+  else if (G.state === 'RESULT') { drawLevel(); drawResult(); }
+
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => { resize(); });
+resize();
+G.sling.y = G.ground - 40;
+G.sling.pullX = G.sling.x;
+G.sling.pullY = G.sling.y;
+G.level = 0;
+loop();
+</script>
+</body>
+</html>
