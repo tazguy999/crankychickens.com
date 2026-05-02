@@ -1323,6 +1323,8 @@ function drawAutoBox(ctx,text,x,y){
 //  PLAYABLE GAME TRAILER SCRIPTS
 // ══════════════════════════════════════════════════════
 
+const TRAILER_SCRIPTS = {};
+
 TRAILER_SCRIPTS['orig'] = (()=>{
   const W=640,H=400,GY=300;
   const clouds=[{x:80,y:60},{x:260,y:40},{x:480,y:65},{x:160,y:90}];
@@ -1739,8 +1741,6 @@ TRAILER_SCRIPTS['tulum'] = (()=>{
 // ── TRAILER SCRIPTS ──
 // Each scene: { dur (frames@60fps), draw(ctx,fr,t) }
 // t = 0..1 within scene, fr = global frame
-
-const TRAILER_SCRIPTS = {};
 
 // ── Shared drawing helpers ──
 function tTitle(ctx,line1,line2,t,color){
