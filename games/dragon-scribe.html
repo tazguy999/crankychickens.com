@@ -722,9 +722,9 @@ Respond with JSON only (no markdown):
 }`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+      body:JSON.stringify({action:'claude_complete',
         model:'claude-sonnet-4-20250514',max_tokens:600,
         messages:[{role:'user',content:prompt}]
       })
@@ -779,9 +779,9 @@ She's working on: ${currentSubmission?`interpreting her brother's idea: "${curre
 
 Be mystical but clear. Use occasional fantasy/sci-fi language but stay readable for an 11-year-old. Keep responses to 3-5 sentences max. Encourage her creative instincts. Reference Warriors/Wings of Fire/HP when helpful.`;
 
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+      body:JSON.stringify({action:'claude_complete',
         model:'claude-sonnet-4-20250514',max_tokens:300,
         system:systemPrompt,
         messages:chatHistory
@@ -893,9 +893,9 @@ Respond with JSON only:
 }`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({action:'claude_complete',model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
     });
     const data=await res.json();
     const text=data.content.find(b=>b.type==='text')?.text||'{}';

@@ -50,6 +50,35 @@ exports.handler = async (event) => {
 
   const { action } = body;
 
+  // ── CLAUDE COMPLETE ──
+  if (action === 'claude_complete') {
+    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+    if (!ANTHROPIC_KEY) return err(CORS, 'Server misconfigured — missing ANTHROPIC_API_KEY env var');
+    const { system, messages, max_tokens = 1000 } = body;
+    if (!messages) return err(CORS, 'Missing messages');
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens,
+          ...(system ? { system } : {}),
+          messages,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return err(CORS, data.error?.message || 'Claude API error');
+      return ok(CORS, data);
+    } catch (e) {
+      return err(CORS, e.message);
+    }
+  }
+
   // ── GET ANY FILE ──
   if (action === 'get_file') {
     const { path: filePath, branch: fileBranch = BRANCH } = body;

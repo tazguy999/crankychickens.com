@@ -743,6 +743,8 @@ body::before {
 </div>
 
 <script>
+const PROXY='/.netlify/functions/github-proxy';
+
 // ═══════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════
@@ -888,11 +890,11 @@ Respond with a JSON object (no markdown, no backticks) with these fields:
       messages[0].content.push({type:'text',text:content});
     }
 
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/.netlify/functions/github-proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        action:'claude_complete',
         max_tokens:1000,
         system:systemPrompt,
         messages

@@ -448,11 +448,16 @@ For lore text only:
 Respond with ONLY the JSON object, nothing else. Choose colors that match the lore description. Make it feel real and exciting.`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({
+        action:'claude_complete',
+        max_tokens:200,
+        messages:[{role:'user',content:prompt}]
+      })
     });
     const data=await res.json();
+    if(data.error) throw new Error(data.error);
     const text=data.content.find(b=>b.type==='text')?.text||'{}';
     return JSON.parse(text.replace(/```json|```/g,'').trim());
   }catch(e){
