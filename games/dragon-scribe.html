@@ -845,19 +845,21 @@ Be mystical but clear. Use occasional fantasy/sci-fi language but stay readable 
     const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'claude_complete',
-        model:'claude-sonnet-4-20250514',max_tokens:300,
+        max_tokens:300,
         system:systemPrompt,
         messages:chatHistory
       })
     });
     const data=await res.json();
-    const reply=data.content.find(b=>b.type==='text')?.text||'The runes are unclear. Try asking again.';
+    if(data.error) throw new Error(data.error);
+    const reply=data.content?.find(b=>b.type==='text')?.text||'The runes are unclear. Try asking again.';
     chatHistory.push({role:'assistant',content:reply});
 
     document.getElementById(thinkId).querySelector('.msg-bubble').textContent=reply;
     document.getElementById(thinkId).querySelector('.msg-bubble').style.opacity='1';
   }catch(e){
-    document.getElementById(thinkId).querySelector('.msg-bubble').textContent='The ancient magic flickers... try again in a moment.';
+    console.error('Ancient AI error:',e);
+    document.getElementById(thinkId).querySelector('.msg-bubble').textContent='The ancient magic flickers... ('+e.message+')';
   }
   chatWrap.scrollTop=chatWrap.scrollHeight;
 }
