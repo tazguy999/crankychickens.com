@@ -3545,25 +3545,28 @@ setInterval(()=>{
 },800);
 
 // ══════════════════════════════════════════════════════
-//  CLUCK ANTHEM VOL. 1 — CHIPTUNE ENGINE
-//  Vibe: 8-bit Heavy Metal meets Confident Chicken Energy
+//  BAWK (Wet And Pecking) — Original Chiptune Composition
+//  Cranky Chickens Official Soundtrack Vol. 1
+//  All notes, rhythms and arrangements are original.
 // ══════════════════════════════════════════════════════
 
 let audioCtx = null;
 let musicPlaying = false;
 let musicNodes = [];
 let sequencerTimeout = null;
-let currentBeat = 0;
 let currentSection = 0;
 
-// ── NOTE FREQUENCIES ──
-const NOTE = {
-  C2:65.41, D2:73.42, E2:82.41, F2:87.31, G2:98.00, A2:110.00, B2:123.47,
-  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, Bb3:233.08, B3:246.94,
-  C4:261.63, D4:293.66, Eb4:311.13, E4:329.63, F4:349.23, G4:392.00, Ab4:415.30, A4:440.00, Bb4:466.16, B4:493.88,
-  C5:523.25, D5:587.33, Eb5:622.25, E5:659.25, F5:698.46, G5:783.99, A5:880.00, Bb5:932.33,
-  C6:1046.5, D6:1174.7, E6:1318.5,
-  R:0 // rest
+const BPM = 90; // WAP is ~90 BPM
+const BEAT = 60 / BPM;
+const BAR = BEAT * 4;
+
+// ── FREQUENCIES ──
+const N = {
+  C2:65.41,  D2:73.42,  Eb2:77.78, F2:87.31,  G2:98.00,  Ab2:103.83, Bb2:116.54,
+  C3:130.81, D3:146.83, Eb3:155.56, F3:174.61, G3:196.00, Ab3:207.65, Bb3:233.08, B3:246.94,
+  C4:261.63, D4:293.66, Eb4:311.13, E4:329.63, F4:349.23, Gb4:369.99, G4:392.00, Ab4:415.30, Bb4:466.16, B4:493.88,
+  C5:523.25, D5:587.33, Eb5:622.25, F5:698.46, Gb5:739.99, G5:783.99, Ab5:830.61, Bb5:932.33,
+  C6:1046.5, R:0
 };
 
 function initAudio() {
@@ -3571,328 +3574,323 @@ function initAudio() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
 
-// ── MASTER GAIN ──
 function getMaster() {
   if (!audioCtx._master) {
+    const comp = audioCtx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.knee.value = 6;
+    comp.ratio.value = 4;
+    comp.connect(audioCtx.destination);
     audioCtx._master = audioCtx.createGain();
-    audioCtx._master.gain.value = 0.18;
-    audioCtx._master.connect(audioCtx.destination);
+    audioCtx._master.gain.value = 0.22;
+    audioCtx._master.connect(comp);
   }
   return audioCtx._master;
 }
 
-// ── OSCILLATOR FACTORY ──
-function playNote(freq, startTime, duration, type, gainVal, detune=0, filterFreq=null) {
+// ── VOICE GENERATORS ──
+
+function note(freq, t, dur, type, vol, detune=0, lpf=0) {
   if (!freq || !audioCtx) return;
-  const g = audioCtx.createGain();
   const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
   osc.type = type;
   osc.frequency.value = freq;
   if (detune) osc.detune.value = detune;
-
-  // Chiptune envelope: snappy attack, held, quick release
-  g.gain.setValueAtTime(0, startTime);
-  g.gain.linearRampToValueAtTime(gainVal, startTime + 0.01);
-  g.gain.setValueAtTime(gainVal, startTime + duration * 0.7);
-  g.gain.linearRampToValueAtTime(0, startTime + duration * 0.95);
-
-  if (filterFreq) {
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = filterFreq;
-    osc.connect(filter);
-    filter.connect(g);
-  } else {
-    osc.connect(g);
-  }
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.008);
+  g.gain.setValueAtTime(vol, t + dur * 0.72);
+  g.gain.linearRampToValueAtTime(0, t + dur * 0.98);
+  if (lpf) {
+    const f = audioCtx.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = lpf;
+    osc.connect(f); f.connect(g);
+  } else { osc.connect(g); }
   g.connect(getMaster());
-  osc.start(startTime);
-  osc.stop(startTime + duration);
+  osc.start(t); osc.stop(t + dur);
   musicNodes.push(osc);
 }
 
-// ── DISTORTION (for metal riff) ──
-function playDistorted(freq, startTime, duration, gainVal) {
+// Sub bass — that low thump
+function sub(freq, t, dur) {
   if (!freq || !audioCtx) return;
   const osc = audioCtx.createOscillator();
-  const osc2 = audioCtx.createOscillator();
-  const waveShaper = audioCtx.createWaveShaper();
   const g = audioCtx.createGain();
-
-  // Waveshaper curve = heavy distortion
-  const curve = new Float32Array(256);
-  for (let i = 0; i < 256; i++) {
-    const x = (i * 2) / 256 - 1;
-    curve[i] = (Math.PI + 400) * x / (Math.PI + 400 * Math.abs(x));
-  }
-  waveShaper.curve = curve;
-
-  osc.type = 'sawtooth';
-  osc.frequency.value = freq;
-  osc2.type = 'sawtooth';
-  osc2.frequency.value = freq * 1.005; // slight chorus
-
-  g.gain.setValueAtTime(0, startTime);
-  g.gain.linearRampToValueAtTime(gainVal, startTime + 0.008);
-  g.gain.setValueAtTime(gainVal, startTime + duration * 0.75);
-  g.gain.linearRampToValueAtTime(0, startTime + duration);
-
-  osc.connect(waveShaper);
-  osc2.connect(waveShaper);
-  waveShaper.connect(g);
-  g.connect(getMaster());
-
-  osc.start(startTime); osc.stop(startTime + duration);
-  osc2.start(startTime); osc2.stop(startTime + duration);
-  musicNodes.push(osc, osc2);
-}
-
-// ── DRUM MACHINE ──
-function kick(t) {
-  if (!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
+  const lpf = audioCtx.createBiquadFilter();
+  lpf.type = 'lowpass'; lpf.frequency.value = 200;
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(150, t);
-  osc.frequency.exponentialRampToValueAtTime(40, t + 0.12);
-  g.gain.setValueAtTime(1.2, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-  osc.connect(g); g.connect(getMaster());
-  osc.start(t); osc.stop(t + 0.3);
+  osc.frequency.setValueAtTime(freq * 1.5, t);
+  osc.frequency.exponentialRampToValueAtTime(freq, t + 0.04);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.9, t + 0.01);
+  g.gain.setValueAtTime(0.9, t + dur * 0.6);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  osc.connect(lpf); lpf.connect(g); g.connect(getMaster());
+  osc.start(t); osc.stop(t + dur + 0.05);
   musicNodes.push(osc);
 }
 
-function snare(t) {
+// 808 slide
+function slide808(f1, f2, t, dur) {
   if (!audioCtx) return;
-  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.15, audioCtx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  const lpf = audioCtx.createBiquadFilter();
+  lpf.type = 'lowpass'; lpf.frequency.value = 180;
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(f1, t);
+  osc.frequency.exponentialRampToValueAtTime(f2, t + dur * 0.5);
+  g.gain.setValueAtTime(0.85, t);
+  g.gain.setValueAtTime(0.85, t + dur * 0.7);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  osc.connect(lpf); lpf.connect(g); g.connect(getMaster());
+  osc.start(t); osc.stop(t + dur + 0.05);
+  musicNodes.push(osc);
+}
+
+// Hi-hat
+function hat(t, vol=0.12, open=false) {
+  if (!audioCtx) return;
+  const dur = open ? 0.18 : 0.03;
+  const buf = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * dur), audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 1.5);
   const src = audioCtx.createBufferSource();
   const g = audioCtx.createGain();
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = 'highpass'; filter.frequency.value = 1200;
+  const hpf = audioCtx.createBiquadFilter();
+  hpf.type = 'highpass'; hpf.frequency.value = 8000;
+  src.buffer = buf; g.gain.value = vol;
+  src.connect(hpf); hpf.connect(g); g.connect(getMaster());
+  src.start(t); musicNodes.push(src);
+}
+
+// Snare
+function snare(t, vol=0.4) {
+  if (!audioCtx) return;
+  const buf = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * 0.18), audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 1.2);
+  const src = audioCtx.createBufferSource();
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  const bpf = audioCtx.createBiquadFilter();
+  bpf.type = 'bandpass'; bpf.frequency.value = 800; bpf.Q.value = 0.8;
+  osc.type = 'triangle'; osc.frequency.value = 180;
   src.buffer = buf;
-  g.gain.setValueAtTime(0.5, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-  src.connect(filter); filter.connect(g); g.connect(getMaster());
-  src.start(t);
-  musicNodes.push(src);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+  src.connect(bpf); osc.connect(bpf); bpf.connect(g); g.connect(getMaster());
+  src.start(t); osc.start(t); osc.stop(t + 0.18);
+  musicNodes.push(src, osc);
 }
 
-function hihat(t, open=false) {
+// Kick
+function kick(t, vol=1.0) {
   if (!audioCtx) return;
-  const dur = open ? 0.12 : 0.04;
-  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-  const src = audioCtx.createBufferSource();
+  const osc = audioCtx.createOscillator();
   const g = audioCtx.createGain();
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = 'highpass'; filter.frequency.value = 7000;
-  src.buffer = buf; g.gain.value = 0.18;
-  src.connect(filter); filter.connect(g); g.connect(getMaster());
-  src.start(t);
-  musicNodes.push(src);
+  const lpf = audioCtx.createBiquadFilter();
+  lpf.type = 'lowpass'; lpf.frequency.value = 150;
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(180, t);
+  osc.frequency.exponentialRampToValueAtTime(38, t + 0.15);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol * 1.1, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+  osc.connect(lpf); lpf.connect(g); g.connect(getMaster());
+  osc.start(t); osc.stop(t + 0.35);
+  musicNodes.push(osc);
 }
 
-// ── THE SONG ──
-// 3 sections that rotate:
-// A: METAL INTRO — heavy distorted power chords
-// B: CLUCK STRUT — bouncy confident melody (Cardi B energy)
-// C: BREAKDOWN — dramatic build + release
+// Clap
+function clap(t) {
+  if (!audioCtx) return;
+  [0, 0.008, 0.016].forEach(offset => {
+    const buf = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * 0.12), audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 2);
+    const src = audioCtx.createBufferSource();
+    const g = audioCtx.createGain();
+    const bpf = audioCtx.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = 1200;
+    src.buffer = buf; g.gain.value = 0.35;
+    src.connect(bpf); bpf.connect(g); g.connect(getMaster());
+    src.start(t + offset); musicNodes.push(src);
+  });
+}
 
-const BPM = 148;
-const BEAT = 60 / BPM;
-const BAR = BEAT * 4;
+// ── THE BAWK BEAT ──
+// WAP-style trap beat: heavy 808, rolling hats, sparse kick, clap on 2&4
 
-// Section A: METAL RIFF — drop-D power chord carnage
-function sectionMetal(startTime) {
-  const riff = [
-    // [freq, beat_offset, duration_in_beats]
-    [NOTE.D2, 0,   0.45], [NOTE.D2, 0.5, 0.45], [NOTE.F2, 1, 0.45],
-    [NOTE.D2, 1.5, 0.22], [NOTE.D2, 1.75,0.22], [NOTE.Bb3*0.5, 2, 0.9],
-    [NOTE.D2, 3,   0.45], [NOTE.D2, 3.5, 0.45], [NOTE.G2, 4, 0.45],
-    [NOTE.D2, 4.5, 0.22], [NOTE.D2, 4.75,0.22], [NOTE.A2, 5, 0.9],
-    [NOTE.D2, 6,   0.45], [NOTE.D2, 6.5, 0.45], [NOTE.Bb3*0.5, 7, 0.9],
-    [NOTE.C3, 8,   0.45], [NOTE.D2, 8.5, 0.9],
-  ];
-
-  // Drums: driving double-kick metal pattern over 2 bars
-  for (let bar = 0; bar < 2; bar++) {
+function drumBeat(startTime, bars=2) {
+  for (let bar = 0; bar < bars; bar++) {
     const b = startTime + bar * BAR;
-    kick(b);          kick(b + BEAT*0.5);
-    kick(b + BEAT);   kick(b + BEAT*1.5);
-    snare(b + BEAT);  snare(b + BEAT*3);
-    kick(b + BEAT*2); kick(b + BEAT*2.5);
-    kick(b + BEAT*3); kick(b + BEAT*3.5);
-    for (let i = 0; i < 8; i++) hihat(b + i * BEAT * 0.5);
+
+    // Kick pattern — sparse, hits on 1 and occasionally 3
+    kick(b);
+    kick(b + BEAT * 2 + BEAT * 0.5);
+
+    // Clap on 2 and 4
+    clap(b + BEAT);
+    clap(b + BEAT * 3);
+
+    // Rolling 16th hi-hats with accents — the WAP roll
+    for (let i = 0; i < 16; i++) {
+      const t = b + i * BEAT * 0.25;
+      const isAccent = i % 4 === 0;
+      const isOpen = i % 8 === 3 || i % 8 === 7;
+      hat(t, isAccent ? 0.18 : 0.09, isOpen);
+    }
+
+    // Hat triplet fill on beat 4.5 — that signature trap roll
+    if (bar % 2 === 1) {
+      [0, 0.083, 0.166, 0.25, 0.333, 0.416].forEach(off => {
+        hat(b + BEAT * 3.5 + off * BEAT, 0.14, false);
+      });
+    }
   }
-
-  // Power chords (distorted)
-  riff.forEach(([freq, beatOff, dur]) => {
-    const t = startTime + beatOff * BEAT;
-    playDistorted(freq, t, dur * BEAT, 0.35);
-    playDistorted(freq * 1.5, t, dur * BEAT, 0.2); // fifth
-  });
-
-  // Lead screech on top (square wave)
-  const screech = [
-    [NOTE.D5, 0, 0.5], [NOTE.F5, 0.5, 0.5], [NOTE.G5, 1, 1],
-    [NOTE.F5, 2, 0.5], [NOTE.E5, 2.5, 0.5], [NOTE.D5, 3, 1],
-    [NOTE.G5, 4, 0.5], [NOTE.A5, 4.5, 0.5], [NOTE.Bb5, 5, 1],
-    [NOTE.A5, 6, 0.33],[NOTE.G5, 6.33, 0.33],[NOTE.F5, 6.67, 0.33],
-    [NOTE.E5, 7, 0.5], [NOTE.D5, 7.5, 0.5],
-  ];
-  screech.forEach(([freq, beatOff, dur]) => {
-    playNote(freq, startTime + beatOff * BEAT, dur * BEAT, 'square', 0.18, 0, 3000);
-  });
 }
 
-// Section B: CLUCK STRUT — the confident bop
-// Original melody in Eb major, strutting 8-bit bounce
-function sectionStrut(startTime) {
-  // Main melody — original composition, bouncy/confident energy
-  const melody = [
-    [NOTE.Eb4, 0, 0.4], [NOTE.Bb4, 0.5, 0.4], [NOTE.G4, 1, 0.4],
-    [NOTE.Eb4, 1.5, 0.2],[NOTE.F4, 1.75, 0.2],[NOTE.G4, 2, 0.8],
-    [NOTE.Ab4, 3, 0.4],  [NOTE.Bb4, 3.5, 0.2],[NOTE.Bb4, 3.75, 0.2],
-    [NOTE.C5, 4, 0.4],   [NOTE.Bb4, 4.5, 0.2],[NOTE.Ab4, 4.75, 0.2],
-    [NOTE.G4, 5, 0.4],   [NOTE.Eb4, 5.5, 0.4],[NOTE.F4, 6, 0.4],
-    [NOTE.Eb4, 6.5, 0.2],[NOTE.F4, 6.75, 0.2],[NOTE.Eb4, 7, 1.0],
-    // Bar 3
-    [NOTE.Bb4, 8, 0.4],  [NOTE.C5, 8.5, 0.4], [NOTE.Bb4, 9, 0.4],
-    [NOTE.Ab4, 9.5, 0.2],[NOTE.G4, 9.75, 0.2],[NOTE.Ab4, 10, 0.8],
-    [NOTE.G4, 11, 0.4],  [NOTE.F4, 11.5, 0.4],
-    [NOTE.Eb4, 12, 0.4], [NOTE.F4, 12.5, 0.4],[NOTE.G4, 13, 0.4],
-    [NOTE.Ab4, 13.5, 0.4],[NOTE.Bb4, 14, 1.0],
-    [NOTE.Eb5, 15.5, 0.25],[NOTE.D5, 15.75, 0.25],
+// ── 808 BASSLINE ──
+// Original progression: Ab → Eb → F → Bb  (not from WAP, original composition)
+function bassline(startTime, bars=2) {
+  const pattern = [
+    // [note, beat, dur_beats]
+    [N.Ab2, 0,    0.9],
+    [N.Ab2, 1,    0.45],
+    [N.Ab2, 1.5,  0.45],
+    [N.Eb2, 2,    0.9],
+    [N.Eb2, 3,    0.45],
+    [N.F2,  3.5,  0.9],
+    [N.Ab2, 4,    0.9],
+    [N.Ab2, 5,    0.45],
+    [N.Bb2, 5.5,  0.45],
+    [N.Bb2, 6,    1.8],
+    [N.F2,  7.5,  0.9],
   ];
-
-  // Bassline — low square, punchy
-  const bass = [
-    [NOTE.Eb3, 0, 0.35], [NOTE.Eb3, 1, 0.35], [NOTE.Bb2, 2, 0.35], [NOTE.Bb2, 3, 0.35],
-    [NOTE.Ab2, 4, 0.35], [NOTE.Ab2, 5, 0.35], [NOTE.F3, 6, 0.35],  [NOTE.G3, 7, 0.35],
-    [NOTE.Eb3, 8, 0.35], [NOTE.Eb3, 9, 0.35], [NOTE.Bb2, 10, 0.35],[NOTE.Bb2, 11, 0.35],
-    [NOTE.C3, 12, 0.35], [NOTE.C3, 13, 0.35], [NOTE.Bb2, 14, 0.35],[NOTE.Eb3, 15, 0.35],
-  ];
-
-  // Drums: 4-on-the-floor with heavy snare — bop energy
-  for (let bar = 0; bar < 4; bar++) {
-    const b = startTime + bar * BAR;
-    kick(b); kick(b + BEAT * 2);
-    snare(b + BEAT); snare(b + BEAT * 3);
-    for (let i = 0; i < 16; i++) hihat(b + i * BEAT * 0.25, i % 4 === 2);
-    // Extra accent kicks on off-beats (the strut)
-    kick(b + BEAT * 0.75);
-    kick(b + BEAT * 2.75);
+  pattern.forEach(([freq, beat, dur]) => {
+    const t = startTime + beat * BEAT;
+    sub(freq, t, dur * BEAT * 0.95);
+  });
+  // 808 slide into bar 2
+  if (bars > 1) {
+    slide808(N.Bb2, N.Ab2, startTime + 7.75 * BEAT, BEAT * 0.5);
   }
-
-  melody.forEach(([freq, beatOff, dur]) => {
-    playNote(freq, startTime + beatOff * BEAT, dur * BEAT, 'square', 0.22, 0, 4000);
-    // Harmony a third below
-    playNote(freq * 0.794, startTime + beatOff * BEAT, dur * BEAT, 'triangle', 0.08, 0, 3000);
-  });
-
-  bass.forEach(([freq, beatOff, dur]) => {
-    playNote(freq, startTime + beatOff * BEAT, dur * BEAT, 'square', 0.3, 0, 800);
-  });
-
-  // Chicken cluck percussion (triangle wave blips)
-  [0.25, 1.25, 2.25, 3.25, 4.25, 5.25, 6.25, 7.25,
-   8.25, 9.25, 10.25, 11.25, 12.25, 13.25, 14.25, 15.25].forEach(beat => {
-    playNote(NOTE.A5, startTime + beat * BEAT, 0.05 * BEAT, 'triangle', 0.12);
-  });
 }
 
-// Section C: BREAKDOWN + BUILDUP — cinematic 8-bit drama
-function sectionBreakdown(startTime) {
-  // Sparse beginning — just bass hits
-  const sparseBass = [
-    [NOTE.D3, 0, 0.9], [NOTE.R, 1, 0], [NOTE.D3, 2, 0.9],
-    [NOTE.R, 3, 0],    [NOTE.F3, 4, 0.9],[NOTE.R, 5, 0],
-    [NOTE.G3, 6, 1.8],
+// ── MAIN MELODY / HOOK ──
+// Original melody in Ab major — confident, strutting, original
+function melody(startTime) {
+  const m = [
+    // Hook — the "BAWK" phrase (original melody)
+    [N.Eb5, 0,    0.3], [N.Ab4, 0.5,  0.3], [N.Bb4, 1,    0.3],
+    [N.C5,  1.5,  0.2], [N.Bb4, 1.75, 0.2], [N.Ab4, 2,    0.6],
+    [N.Gb4, 2.75, 0.2], [N.Ab4, 3,    0.3], [N.Bb4, 3.5,  0.6],
+
+    [N.Eb5, 4,    0.3], [N.Ab4, 4.5,  0.3], [N.Bb4, 5,    0.3],
+    [N.C5,  5.5,  0.5], [N.Bb4, 6,    0.3], [N.Ab4, 6.5,  0.3],
+    [N.Gb4, 7,    0.3], [N.Ab4, 7.5,  0.55],
   ];
-  sparseBass.forEach(([freq, beatOff, dur]) => {
-    if (!freq) return;
-    playDistorted(freq, startTime + beatOff * BEAT, dur * BEAT, 0.3);
+  m.forEach(([freq, beat, dur]) => {
+    note(freq, startTime + beat * BEAT, dur * BEAT, 'square', 0.16, 0, 3500);
+    // Subtle harmony a minor third below
+    note(freq * 0.841, startTime + beat * BEAT, dur * BEAT, 'triangle', 0.05, 0, 2000);
   });
+}
 
-  // Sparse kick
-  [0, 2, 4, 6].forEach(b => kick(startTime + b * BEAT));
-  [1, 3, 5, 7].forEach(b => snare(startTime + b * BEAT));
-
-  // Bar 3: BUILD — arpeggiated chord climbing
-  const arp = [
-    NOTE.D4, NOTE.F4, NOTE.A4, NOTE.C5,
-    NOTE.D5, NOTE.F5, NOTE.A5, NOTE.D6,
+// ── AD-LIB LAYER ──
+// High staccato "cluck" blips — the ad-lib energy
+function adlib(startTime) {
+  // Sporadic high notes — like vocal ad-libs
+  const hits = [
+    [N.Ab5, 0.75], [N.Bb5, 1.75], [N.Ab5, 2.25],
+    [N.C6,  3.25], [N.Bb5, 4.75], [N.Ab5, 5.25],
+    [N.C6,  6.25], [N.Ab5, 6.75], [N.Bb5, 7.25],
   ];
-  arp.forEach((freq, i) => {
-    playNote(freq, startTime + (8 + i * 0.5) * BEAT, 0.4 * BEAT, 'square', 0.15 + i * 0.02, 0, 5000 + i * 500);
-  });
-
-  // Bar 4: FULL EXPLOSION back in
-  for (let i = 0; i < 8; i++) {
-    kick(startTime + (12 + i * 0.5) * BEAT);
-    hihat(startTime + (12 + i * 0.5) * BEAT);
-  }
-  snare(startTime + 13 * BEAT);
-  snare(startTime + 14 * BEAT);
-  snare(startTime + 14.5 * BEAT);
-  snare(startTime + 15 * BEAT);
-  snare(startTime + 15.25 * BEAT);
-  snare(startTime + 15.5 * BEAT);
-  snare(startTime + 15.75 * BEAT);
-
-  // Big sustained chord at end
-  [NOTE.D4, NOTE.F4, NOTE.A4, NOTE.D5].forEach((freq, i) => {
-    playDistorted(freq, startTime + 15 * BEAT, BEAT * 1.2, 0.25);
+  hits.forEach(([freq, beat]) => {
+    note(freq, startTime + beat * BEAT, 0.08 * BEAT, 'square', 0.1, 0, 5000);
   });
 }
 
-// ── SECTION LENGTHS IN BEATS ──
-const SECTION_BEATS = [16, 32, 16]; // metal=2bars, strut=4bars, breakdown=2bars+2bars
-
-function getSectionDuration(s) {
-  return SECTION_BEATS[s % 3] * BEAT;
+// ── VERSE LAYER (bars 3-4) — slightly different melody ──
+function verseMelody(startTime) {
+  const v = [
+    [N.Ab4, 0,    0.25], [N.Bb4, 0.25, 0.25], [N.C5,  0.5,  0.4],
+    [N.Bb4, 1,    0.25], [N.Ab4, 1.25, 0.25], [N.Gb4, 1.5,  0.4],
+    [N.Ab4, 2,    0.55], [N.Bb4, 2.75, 0.25],
+    [N.C5,  3,    0.25], [N.Bb4, 3.25, 0.25], [N.Ab4, 3.5,  0.25], [N.Gb4, 3.75, 0.35],
+    [N.Ab4, 4,    0.25], [N.Bb4, 4.5,  0.4],
+    [N.Eb5, 5,    0.3],  [N.C5,  5.5,  0.3],  [N.Bb4, 6,    0.55],
+    [N.Ab4, 6.75, 0.25], [N.Gb4, 7,    0.25], [N.Ab4, 7.5,  0.6],
+  ];
+  v.forEach(([freq, beat, dur]) => {
+    note(freq, startTime + beat * BEAT, dur * BEAT, 'square', 0.14, 0, 3000);
+  });
 }
 
-// ── SEQUENCER ──
-const SECTIONS = [sectionMetal, sectionStrut, sectionBreakdown];
-const SECTION_NAMES = ['🤘 CLUCK METAL', '🐔 STRUT MODE', '💥 BREAKDOWN'];
+// ── BREAKDOWN / BRIDGE ──
+function breakdown(startTime) {
+  // Sparse — just 808 and minimal hat
+  bassline(startTime, 1);
+  for (let i = 0; i < 8; i++) hat(startTime + i * BEAT * 0.5, 0.07);
+  kick(startTime); kick(startTime + BEAT * 2);
+  clap(startTime + BEAT); clap(startTime + BEAT * 3);
 
-function scheduleSection(sectionIdx, startTime) {
+  // Rising arpeggio build in bar 2
+  [N.Ab3, N.C4, N.Eb4, N.Ab4, N.C5, N.Eb5, N.Ab5, N.C6].forEach((freq, i) => {
+    note(freq, startTime + BAR + i * BEAT * 0.5, BEAT * 0.45, 'square', 0.1 + i * 0.015, 0, 4000 + i * 300);
+  });
+  // Drums build in bar 2
+  for (let i = 0; i < 16; i++) hat(startTime + BAR + i * BEAT * 0.25, 0.06 + i * 0.008);
+  kick(startTime + BAR + BEAT * 3.5);
+  clap(startTime + BAR + BEAT * 3.75);
+}
+
+// ── SECTION SCHEDULER ──
+// Song structure: Intro → Hook → Verse → Hook → Breakdown → Hook → repeat
+const SECTIONS = [
+  { name: '🐔 BAWK',      dur: 2, fn: (t) => { drumBeat(t,2); bassline(t,2); melody(t); adlib(t); } },
+  { name: '🐔 BAWK BAWK', dur: 2, fn: (t) => { drumBeat(t,2); bassline(t,2); verseMelody(t); adlib(t); } },
+  { name: '💅 THE STRUT', dur: 2, fn: (t) => { breakdown(t); } },
+];
+
+function getSectionDur(s) {
+  return SECTIONS[s % SECTIONS.length].dur * BAR * 1000;
+}
+
+function scheduleSection(idx, startTime) {
   if (!musicPlaying) return;
-  const fn = SECTIONS[sectionIdx % 3];
-  fn(startTime);
-  const dur = getSectionDuration(sectionIdx) * 1000;
-  const nextIdx = (sectionIdx + 1) % 3;
+  const section = SECTIONS[idx % SECTIONS.length];
+  section.fn(startTime);
+  const dur = section.dur * BAR * 1000;
   sequencerTimeout = setTimeout(() => {
-    currentSection = nextIdx;
-    scheduleSection(nextIdx, audioCtx.currentTime + 0.05);
+    if (!musicPlaying) return;
+    currentSection = (idx + 1) % SECTIONS.length;
+    scheduleSection(currentSection, audioCtx.currentTime + 0.05);
     updateMusicBtn();
-  }, dur - 200);
+  }, dur - 150);
 }
 
 function updateMusicBtn() {
   const btn = document.getElementById('musicBtn');
   if (!btn) return;
+  const section = SECTIONS[currentSection % SECTIONS.length];
   if (musicPlaying) {
-    btn.textContent = '🔊 ' + SECTION_NAMES[currentSection % 3];
+    btn.textContent = '🔊 ' + section.name;
     btn.style.color = '#ffcc02';
-    btn.style.borderColor = 'rgba(255,204,2,0.8)';
-    btn.style.background = 'rgba(0,0,0,0.6)';
+    btn.style.borderColor = 'rgba(255,204,2,0.9)';
+    btn.style.background = 'rgba(0,0,0,0.7)';
   } else {
     btn.textContent = '🔇 MUSIC';
-    btn.style.color = 'rgba(255,204,2,0.6)';
-    btn.style.borderColor = 'rgba(255,204,2,0.3)';
+    btn.style.color = 'rgba(255,204,2,0.7)';
+    btn.style.borderColor = 'rgba(255,204,2,0.4)';
     btn.style.background = 'rgba(0,0,0,0.4)';
   }
 }
 
 function toggleMusic() {
   initAudio();
-
-  // Mobile browsers need a silent buffer played first to unlock AudioContext
   if (audioCtx.state === 'suspended') {
     audioCtx.resume().then(() => _startOrStop());
   } else {
@@ -3907,49 +3905,42 @@ function _startOrStop() {
     musicNodes.forEach(n => { try { n.stop(); } catch(e) {} });
     musicNodes = [];
     getMaster().gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-    setTimeout(() => { if (!musicPlaying) getMaster().gain.value = 0.18; }, 400);
+    setTimeout(() => { if (!musicPlaying) getMaster().gain.value = 0.22; }, 400);
   } else {
-    // Play a silent buffer first to unlock on iOS
-    const silentBuf = audioCtx.createBuffer(1, 1, 22050);
-    const silentSrc = audioCtx.createBufferSource();
-    silentSrc.buffer = silentBuf;
-    silentSrc.connect(audioCtx.destination);
-    silentSrc.start(0);
+    // iOS silent buffer unlock
+    const buf = audioCtx.createBuffer(1, 1, 22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
 
     musicPlaying = true;
-    getMaster().gain.value = 0;
-    getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
     currentSection = 0;
-    currentBeat = 0;
-    scheduleSection(0, audioCtx.currentTime + 0.2);
+    getMaster().gain.value = 0;
+    getMaster().gain.linearRampToValueAtTime(0.22, audioCtx.currentTime + 0.3);
+    scheduleSection(0, audioCtx.currentTime + 0.15);
   }
   updateMusicBtn();
 }
 
-// Duck music when trailer opens/closes — patch onto the modal buttons
-document.addEventListener('DOMContentLoaded', () => {});
-// We patch after modal is created (it's created inline above)
+// Duck during trailers
 setTimeout(() => {
   const tClose = document.getElementById('tClose');
   if (tClose) {
-    const origClose = tClose.onclick;
+    const orig = tClose.onclick;
     tClose.onclick = () => {
-      if (origClose) origClose();
-      if (musicPlaying && audioCtx) getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
+      if (orig) orig();
+      if (musicPlaying && audioCtx) getMaster().gain.linearRampToValueAtTime(0.22, audioCtx.currentTime + 0.5);
     };
   }
-}, 100);
+}, 200);
 
-// Patch play buttons to duck music
 document.querySelectorAll('.play-hint').forEach(btn => {
   const orig = btn.onclick;
   btn.onclick = (e) => {
-    if (musicPlaying && audioCtx) getMaster().gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.3);
+    if (musicPlaying && audioCtx) getMaster().gain.linearRampToValueAtTime(0.07, audioCtx.currentTime + 0.3);
     if (orig) orig.call(btn, e);
   };
 });
 
-const BAWKS=['🐔 BAWK!','🥚 EGG ACQUIRED','🐔 CLUCK YEAH!','🌽 +1 CORN','🎯 PECK LANDED!',
   '🐶 DOG ADOPTED','🚀 TO THE COOP!','⚔️ FOR HENSBOROUGH!','🦖 RUN.','❓ ...','🐔 THE CHICKENS APPROVE'];
 let bIdx=0;
 function cluck(msg){
