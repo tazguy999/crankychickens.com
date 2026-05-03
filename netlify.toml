@@ -10,10 +10,18 @@
   NODE_VERSION = "18"
 
 # ── FUNCTION ROUTING ──
+# Explicitly pass through function calls before catch-all
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
