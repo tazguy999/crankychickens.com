@@ -224,7 +224,7 @@ function resize(){
   canvas.style.height = (GH*scale)+'px';
 }
 if(isMobile){
-  tc.style.display='flex';
+  tc.style.display='none'; // hidden until game starts — don't block title taps
   hint.style.display='none';
 }
 resize();
@@ -1213,6 +1213,7 @@ function startGame(){
   updateHUD();
   hudZone=currentScreen().name;
   titleBtn=false;
+  if(isMobile) tc.style.display='flex';
   updateZeroGUI();
 }
 
