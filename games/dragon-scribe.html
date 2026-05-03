@@ -857,8 +857,22 @@ Be mystical but clear. Use occasional fantasy/sci-fi language but stay readable 
     const reply=data.content?.find(b=>b.type==='text')?.text||'The runes are unclear. Try asking again.';
     chatHistory.push({role:'assistant',content:reply});
 
-    document.getElementById(thinkId).querySelector('.msg-bubble').textContent=reply;
-    document.getElementById(thinkId).querySelector('.msg-bubble').style.opacity='1';
+    const bubble=document.getElementById(thinkId).querySelector('.msg-bubble');
+    bubble.textContent=reply;
+    bubble.style.opacity='1';
+
+    // Add "use this" button after AI response
+    const useBtn=document.createElement('button');
+    useBtn.style.cssText='margin-top:6px;background:rgba(123,47,255,0.2);border:1px solid rgba(123,47,255,0.4);border-radius:20px;padding:6px 14px;font-family:Cinzel,serif;font-size:11px;color:#aa66ff;cursor:pointer;letter-spacing:1px;';
+    useBtn.textContent='✨ USE THIS IN MY DESCRIPTION';
+    useBtn.onclick=()=>{
+      document.getElementById('loreDesc').value=reply;
+      useBtn.textContent='✅ ADDED!';
+      useBtn.style.borderColor='rgba(0,200,100,0.4)';
+      useBtn.style.color='#00cc66';
+      document.getElementById('loreDesc').scrollIntoView({behavior:'smooth',block:'center'});
+    };
+    document.getElementById(thinkId).appendChild(useBtn);
   }catch(e){
     console.error('Ancient AI error:',e);
     document.getElementById(thinkId).querySelector('.msg-bubble').textContent='The ancient magic flickers... ('+e.message+')';
