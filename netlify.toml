@@ -1,19 +1,6 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  edge_functions = "netlify/edge-functions"
 
 [build.environment]
   NODE_VERSION = "18"
-
-[[edge_functions]]
-  function = "auth-gate"
-  path = "/mission-control.html"
-
-[[edge_functions]]
-  function = "auth-gate"
-  path = "/games/dragon-scribe.html"
-
-[[edge_functions]]
-  function = "auth-gate"
-  path = "/games/cannon-master.html"
