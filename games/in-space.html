@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cranky Chickens: In Space</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  background:#000008;
+  width:100%;height:100%;overflow:hidden;
+  touch-action:none;
+  font-family:'Nunito',sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+/* ── TOP BAR ── */
+#ui{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;max-width:640px;
+  padding:5px 10px;
+  background:linear-gradient(135deg,#0d0d2e,#1a0a4e);
+  border-bottom:3px solid #4040ff;
+  flex-shrink:0;
+}
+#ui .title{
+  font-family:'Fredoka One',cursive;color:#7af;
+  font-size:clamp(10px,3vw,16px);
+  text-shadow:0 0 10px #48f;
+}
+#ui .stats{
+  display:flex;gap:8px;align-items:center;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(10px,3vw,15px);color:#fff;
+}
+#hearts{display:flex;gap:1px;}
+.heart{font-size:clamp(10px,3vw,16px);}
+#zone{
+  font-size:clamp(9px,2.5vw,13px);color:#adf;
+  background:rgba(0,20,80,0.6);
+  padding:1px 6px;border-radius:8px;
+  border:1px solid rgba(100,150,255,0.3);
+}
+
+/* ── CANVAS WRAP ── */
+#canvasWrap{position:relative;flex-shrink:0;}
+canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
+#message{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:rgba(0,0,30,0.95);
+  color:#ffcc02;font-family:'Fredoka One',cursive;
+  font-size:clamp(12px,3.5vw,20px);
+  padding:14px 22px;border-radius:14px;
+  border:3px solid #4444ff;
+  text-align:center;display:none;
+  max-width:92%;line-height:1.5;z-index:10;
+}
+
+/* ── LANDSCAPE PROMPT ── */
+#rotatePrompt{
+  display:none;
+  position:fixed;inset:0;
+  background:#000010;
+  color:#7af;
+  font-family:'Fredoka One',cursive;
+  font-size:22px;
+  flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;z-index:999;
+  text-align:center;padding:20px;
+}
+#rotatePrompt .icon{font-size:52px;animation:rotate90 1.5s ease-in-out infinite alternate;}
+@keyframes rotate90{from{transform:rotate(0deg)}to{transform:rotate(90deg)}}
+
+/* ── MOBILE CONTROLS ── */
+#touchControls{
+  display:none;
+  width:100%;max-width:640px;
+  flex-shrink:0;
+  background:#03030f;
+  border-top:2px solid #1a1a4a;
+  position:relative;
+  flex-direction:column;
+}
+#ctrlTop{
+  display:flex;justify-content:flex-end;align-items:center;
+  gap:6px;padding:5px 10px 2px 10px;
+}
+#ctrlMain{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 12px 6px 12px;gap:8px;
+}
+
+/* Joystick */
+#joystickZone{width:116px;height:116px;flex-shrink:0;position:relative;}
+#joystickBase{
+  position:absolute;inset:0;border-radius:50%;
+  background:rgba(100,150,255,0.06);
+  border:3px solid rgba(100,150,255,0.3);
+}
+#joystickThumb{
+  position:absolute;width:46px;height:46px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#5599ff,#2244cc);
+  border:3px solid #aacfff;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  box-shadow:0 3px 10px rgba(0,0,80,0.8),0 0 16px rgba(80,120,255,0.4);
+}
+
+/* PECK button */
+#attackBtn{
+  width:100px;height:100px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ff6b35,#cc2200);
+  border:4px solid #ffcc02;
+  color:#fff;font-family:'Fredoka One',cursive;font-size:13px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.7),0 0 20px rgba(255,100,50,0.3);
+  cursor:pointer;user-select:none;-webkit-user-select:none;flex-shrink:0;
+  transition:transform 0.05s,filter 0.05s;
+}
+#attackBtn span{font-size:28px;line-height:1;}
+#attackBtn.pressed{transform:scale(0.91);filter:brightness(1.4);}
+
+/* Zero-G indicator on peck button */
+#attackBtn.zerog{
+  background:radial-gradient(circle at 35% 30%,#5599ff,#1133aa);
+  border-color:#aacfff;
+  box-shadow:0 4px 14px rgba(0,0,80,0.7),0 0 20px rgba(80,150,255,0.5);
+}
+
+/* Small action buttons */
+.ctrl-sm{
+  font-family:'Fredoka One',cursive;font-size:11px;
+  padding:0;border-radius:12px;
+  border:2px solid rgba(100,150,255,0.2);
+  background:rgba(100,150,255,0.06);
+  color:#adf;cursor:pointer;
+  user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  transition:transform 0.07s,filter 0.07s;
+  -webkit-tap-highlight-color:transparent;flex-shrink:0;
+}
+.ctrl-sm:active,.ctrl-sm.pressed{transform:scale(0.88);filter:brightness(1.5);}
+.ctrl-sm .icon{font-size:18px;line-height:1.1;}
+.ctrl-sm .lbl{font-size:9px;opacity:0.8;letter-spacing:0.3px;}
+
+/* Start/restart overlay */
+#startTouchBtn,#restartTouchBtn{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  font-family:'Fredoka One',cursive;font-size:18px;
+  padding:10px 32px;border-radius:30px;border:none;
+  cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.6);
+  display:none;z-index:20;
+}
+#startTouchBtn{background:#4455ff;color:#fff;border:2px solid #aacfff;}
+#restartTouchBtn{background:#ff6b35;color:#fff;}
+
+#hint{color:#334;font-size:9px;padding:1px 0;text-align:center;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div id="rotatePrompt">
+  <div class="icon">📱</div>
+  <div>Rotate your device<br>for the best experience!</div>
+</div>
+
+<div id="ui">
+  <div class="title">🚀 Cranky Chickens: In Space</div>
+  <div class="stats">
+    <div id="hearts"></div>
+    <div>🌽<span id="cornCount">0</span></div>
+    <div>⭐<span id="score">0</span></div>
+    <div id="zone">Star Map</div>
+  </div>
+</div>
+
+<div id="canvasWrap">
+  <canvas id="game" width="640" height="480"></canvas>
+  <div id="message"></div>
+</div>
+
+<div id="touchControls">
+  <div id="ctrlTop">
+    <button class="ctrl-sm" id="mapBtn" style="width:52px;height:44px;">
+      <span class="icon">🗺️</span><span class="lbl">MAP</span>
+    </button>
+    <button class="ctrl-sm" id="unstuckBtn" style="width:52px;height:44px;">
+      <span class="icon">📍</span><span class="lbl">UNSTUCK</span>
+    </button>
+  </div>
+  <div id="ctrlMain">
+    <div id="joystickZone">
+      <div id="joystickBase"></div>
+      <div id="joystickThumb"></div>
+    </div>
+    <div id="attackBtn"><span>💥</span>PECK!</div>
+  </div>
+  <button id="startTouchBtn">🚀 TAP TO LAUNCH!</button>
+  <button id="restartTouchBtn">🔄 TRY AGAIN!</button>
+</div>
+<div id="hint">⌨️ WASD/Arrows — move &nbsp;|&nbsp; SPACE — peck</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════
+//  SETUP & SCALING
+// ═══════════════════════════════════════════════
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const msg = document.getElementById('message');
+const GW=640, GH=480, TILE=32;
+
+let isMobile = ('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const tc = document.getElementById('touchControls');
+const hint = document.getElementById('hint');
+
+function checkOrientation(){
+  const prompt = document.getElementById('rotatePrompt');
+  if(isMobile && window.innerHeight > window.innerWidth){
+    prompt.style.display='flex';
+  } else {
+    prompt.style.display='none';
+  }
+}
+checkOrientation();
+window.addEventListener('resize', ()=>{ checkOrientation(); resize(); });
+window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ checkOrientation(); resize(); },200); });
+
+function resize(){
+  const uiH = document.getElementById('ui').offsetHeight;
+  const tcH = isMobile ? (tc.offsetHeight||158) : 0;
+  const hH  = isMobile ? 0 : hint.offsetHeight;
+  const scale = Math.min(window.innerWidth/GW, (window.innerHeight-uiH-tcH-hH-4)/GH, 1);
+  canvas.style.width  = (GW*scale)+'px';
+  canvas.style.height = (GH*scale)+'px';
+  document.getElementById('canvasWrap').style.width = (GW*scale)+'px';
+}
+if(isMobile){ tc.style.display='flex'; tc.style.flexDirection='column'; hint.style.display='none'; }
+resize();
+
+// ═══════════════════════════════════════════════
+//  JOYSTICK
+// ═══════════════════════════════════════════════
+const jZone  = document.getElementById('joystickZone');
+const jThumb = document.getElementById('joystickThumb');
+const atkBtn = document.getElementById('attackBtn');
+const startBtn   = document.getElementById('startTouchBtn');
+const restartBtn = document.getElementById('restartTouchBtn');
+
+let joyActive=false, joyId=null, joyDx=0, joyDy=0;
+const JR=34;
+
+jZone.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.changedTouches[0];
+  joyId=t.identifier; joyActive=true; moveJoy(t);
+},{passive:false});
+document.addEventListener('touchmove',e=>{
+  if(!joyActive)return; e.preventDefault();
+  for(const t of e.changedTouches) if(t.identifier===joyId) moveJoy(t);
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===joyId){
+      joyActive=false; joyDx=0; joyDy=0;
+      jThumb.style.transform='translate(-50%,-50%)';
+    }
+  }
+});
+function moveJoy(touch){
+  const r=jZone.getBoundingClientRect();
+  let dx=touch.clientX-(r.left+r.width/2), dy=touch.clientY-(r.top+r.height/2);
+  const d=Math.hypot(dx,dy);
+  if(d>JR){dx=dx/d*JR; dy=dy/d*JR;}
+  joyDx=dx/JR; joyDy=dy/JR;
+  jThumb.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+}
+
+let touchAtk=false;
+atkBtn.addEventListener('touchstart',e=>{
+  e.preventDefault(); touchAtk=true; atkBtn.classList.add('pressed');
+},{passive:false});
+atkBtn.addEventListener('touchend',e=>{
+  e.preventDefault(); atkBtn.classList.remove('pressed');
+},{passive:false});
+
+startBtn.addEventListener('touchstart',e=>{ e.preventDefault(); startGame(); },{passive:false});
+startBtn.addEventListener('click',()=>startGame());
+restartBtn.addEventListener('touchstart',e=>{ e.preventDefault(); restartGame(); },{passive:false});
+restartBtn.addEventListener('click',()=>restartGame());
+
+// ═══════════════════════════════════════════════
+//  KEYBOARD INPUT
+// ═══════════════════════════════════════════════
+const keys={};
+document.addEventListener('keydown',e=>{ keys[e.key]=true; });
+document.addEventListener('keyup',  e=>{ keys[e.key]=false; });
+
+// ═══════════════════════════════════════════════
+//  TILE CONSTANTS — SPACE EDITION
+// ═══════════════════════════════════════════════
+const T={
+  VOID:0,     // impassable dark space
+  FLOOR:1,    // walkable floor (station/moon surface)
+  WALL:2,     // wall block
+  CRATER:3,   // lunar crater (impassable decoration)
+  DUST:4,     // moon dust (walkable, slippery in zero-G)
+  CRYSTAL:5,  // alien crystal (impassable, glows)
+  DOOR:6,     // airlock door
+  CHEST:7,    // supply crate
+  GRAVITY:8,  // gravity generator tile (normal physics zone)
+  VENT:9,     // decorative vent
+};
+
+// ═══════════════════════════════════════════════
+//  ZONE / PLANET PALETTES
+// ═══════════════════════════════════════════════
+const ZONE_PALETTES={
+  space:    { bg:'#000008', floor:'#1a1a3a', wall:'#0a0a28', accent:'#3344ff' },
+  cornmoon: { bg:'#0d0820', floor:'#3d2a1a', wall:'#1a0e08', accent:'#ffcc02' },
+  station:  { bg:'#080820', floor:'#1a2a3a', wall:'#0a0f1a', accent:'#00ffcc' },
+  asteroid: { bg:'#080808', floor:'#2a1a0a', wall:'#140e06', accent:'#ff8800' },
+};
+
+let currentZone = 'cornmoon';
+function getZPal(){ return ZONE_PALETTES[currentZone]||ZONE_PALETTES.space; }
+
+// ═══════════════════════════════════════════════
+//  WORLD: CORN MOON — 4 SCREENS (2x2)
+// ═══════════════════════════════════════════════
+// Screen layout: (col,row)
+//   (0,0) Landing Zone  — player starts here, tutorial
+//   (1,0) Crater Fields — alien iguanas patrol
+//   (0,1) Moon Base     — airlock to interior
+//   (1,1) Boss Arena    — Harvester Drone boss
+const WORLD_COLS=2, WORLD_ROWS=2;
+const SCREENS=[];
+
+(function buildScreens(){
+  // ── (0,0) LANDING ZONE ──
+  SCREENS.push({
+    name:'Landing Zone',
+    gravity:true,   // normal physics on this screen
+    map:[
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,2,2,1,1,1,1,1,1,1,1,1,1,2,2,1,1,2],
+      [2,1,1,2,2,1,1,1,1,1,1,1,1,1,1,2,2,1,1,2],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,2,2,1,1,1,3,3,1,1,3,3,1,1,2,2,1,2],
+      [2,1,1,2,2,1,1,1,3,3,1,1,3,3,1,1,2,2,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+    ],
+    corn:[{x:5,y:3},{x:14,y:3},{x:5,y:11},{x:14,y:11}],
+    enemies:[
+      {tx:9,ty:5,spd:0.5,pat:'h'},
+      {tx:9,ty:9,spd:0.45,pat:'h'},
+    ],
+  });
+
+  // ── (1,0) CRATER FIELDS ──
+  SCREENS.push({
+    name:'Crater Fields',
+    gravity:false,  // zero-G! peck mechanic active
+    map:[
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,3,3,1,1,1,1,1,1,1,1,1,1,3,3,1,1,2],
+      [2,1,1,3,3,1,1,1,1,1,1,1,1,1,1,3,3,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,5,5,1,1,1,1,5,5,1,1,1,1,1,1],
+      [1,1,1,1,1,1,5,5,1,1,1,1,5,5,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,3,3,1,1,1,1,1,1,1,1,1,1,3,3,1,1,2],
+      [2,1,1,3,3,1,1,1,1,1,1,1,1,1,1,3,3,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+    ],
+    corn:[{x:4,y:2},{x:15,y:2},{x:9,y:7},{x:4,y:12},{x:15,y:12}],
+    enemies:[
+      {tx:9,ty:4,spd:0.6,pat:'h'},
+      {tx:4,ty:8,spd:0.5,pat:'v'},
+      {tx:15,ty:8,spd:0.5,pat:'v'},
+    ],
+  });
+
+  // ── (0,1) MOON BASE ──
+  SCREENS.push({
+    name:'Moon Base',
+    gravity:true,
+    map:[
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,2,2,2,2,1,1,1,1,1,1,2,2,2,2,1,1,2],
+      [2,1,1,2,1,1,2,1,1,1,1,1,1,2,1,1,2,1,1,2],
+      [2,1,1,2,1,7,2,1,1,1,1,1,1,2,7,1,2,1,1,2],
+      [1,1,1,2,2,2,2,1,1,1,1,1,1,2,2,2,2,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,1,9,9,1,1,1,1,1,1,1,1,9,9,1,1,1,2],
+      [2,1,1,1,9,9,1,1,1,1,1,1,1,1,9,9,1,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+    ],
+    corn:[{x:9,y:3},{x:5,y:7},{x:14,y:7},{x:9,y:12}],
+    enemies:[
+      {tx:9,ty:6,spd:0.55,pat:'h'},
+      {tx:5,ty:11,spd:0.4,pat:'v'},
+      {tx:14,ty:11,spd:0.4,pat:'v'},
+    ],
+  });
+
+  // ── (1,1) BOSS ARENA ──
+  SCREENS.push({
+    name:'Harvester Core',
+    gravity:false, // zero-G boss fight
+    map:[
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,5,5,1,1,1,1,1,1,1,1,1,1,5,5,1,1,2],
+      [2,1,1,5,5,1,1,1,1,1,1,1,1,1,1,5,5,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,5,5,1,1,1,1,1,1,1,1,1,1,5,5,1,1,2],
+      [2,1,1,5,5,1,1,1,1,1,1,1,1,1,1,5,5,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+      [2,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2],
+    ],
+    corn:[{x:5,y:2},{x:14,y:2},{x:5,y:12},{x:14,y:12},{x:9,y:7}],
+    enemies:[], // boss room — no regular enemies
+    isBossRoom:true,
+  });
+})();
+
+function screenIndex(col,row){
+  if(col<0||col>=WORLD_COLS||row<0||row>=WORLD_ROWS)return -1;
+  return row*WORLD_COLS+col;
+}
+
+// ═══════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════
+let screenCol=0, screenRow=0;
+function currentScreen(){ return SCREENS[screenIndex(screenCol,screenRow)]; }
+
+const player={
+  x:288, y:240,
+  speed:2.0,
+  hp:5, maxHp:5,
+  dir:2,    // 0=up 1=left 2=right 3=down
+  atk:0,    // peck animation frames remaining
+  inv:0,    // invincibility frames
+  // Zero-G velocity (used when gravity===false on current screen)
+  vx:0, vy:0,
+  sliding:false,  // true when drifting in zero-G
+};
+
+let score=0, cornCount=0, frame=0, gameState='title';
+
+// Per-screen persistent state
+const screenState={};
+function getScreenState(col,row){
+  const k=`${col},${row}`;
+  if(!screenState[k]){
+    const sc=SCREENS[screenIndex(col,row)];
+    screenState[k]={
+      gotCorns:new Set(),
+      enemyHps:sc.enemies.map(()=>1),
+    };
+  }
+  return screenState[k];
+}
+
+// Screen scroll
+let isScrolling=false;
+let scrollT=0;
+let scrollDirX=0, scrollDirY=0;
+let scrollOffX=0, scrollOffY=0;
+let nextScreenCol=0, nextScreenRow=0;
+const SCROLL_DUR=20;
+
+// Particles
+const parts=[];
+function spawnP(x,y,col,n=8){
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2;
+    parts.push({x,y,vx:Math.cos(a)*2.5,vy:Math.sin(a)*2.5,life:30,ml:30,col});
+  }
+}
+function tickP(){
+  for(let i=parts.length-1;i>=0;i--){
+    const p=parts[i];
+    p.x+=p.vx; p.y+=p.vy; p.vx*=0.92; p.vy*=0.92; p.life--;
+    if(p.life<=0){parts.splice(i,1);continue;}
+    const a=p.life/p.ml;
+    ctx.globalAlpha=a;
+    ctx.fillStyle=p.col;
+    ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// Screen-shake
+let screenShake=0;
+
+// Popup
+let popup={text:'',timer:0};
+
+// ═══════════════════════════════════════════════
+//  TILE WALKABILITY
+// ═══════════════════════════════════════════════
+function tileAt(map,px,py){
+  const tx=Math.floor(px/TILE), ty=Math.floor(py/TILE);
+  if(ty<0||ty>=map.length||tx<0||tx>=map[0].length)return T.VOID;
+  return map[ty][tx];
+}
+const SOLID_TILES=new Set([T.VOID,T.WALL,T.CRATER,T.CRYSTAL]);
+function walkable(map,px,py){ return !SOLID_TILES.has(tileAt(map,px,py)); }
+function boxWalkable(map,px,py){
+  const pad=4;
+  return walkable(map,px+pad,py+pad) && walkable(map,px+TILE-pad,py+pad) &&
+         walkable(map,px+pad,py+TILE-pad) && walkable(map,px+TILE-pad,py+TILE-pad);
+}
+
+// ═══════════════════════════════════════════════
+//  PLAYER UPDATE
+// ═══════════════════════════════════════════════
+function isZeroG(){ return !currentScreen().gravity; }
+
+function updatePlayer(){
+  if(isScrolling||gameState!=='play')return;
+
+  // Input
+  let dx=0, dy=0;
+  if(keys['ArrowLeft']||keys['a']||keys['A']) dx-=1;
+  if(keys['ArrowRight']||keys['d']||keys['D']) dx+=1;
+  if(keys['ArrowUp']||keys['w']||keys['W']) dy-=1;
+  if(keys['ArrowDown']||keys['s']||keys['S']) dy+=1;
+  if(Math.abs(joyDx)>0.15) dx+=joyDx;
+  if(Math.abs(joyDy)>0.15) dy+=joyDy;
+  const len=Math.hypot(dx,dy);
+  if(len>1){dx/=len;dy/=len;}
+
+  // Direction facing
+  if(Math.abs(dx)>Math.abs(dy)){
+    player.dir=dx>0?2:1;
+  } else if(dy!==0){
+    player.dir=dy>0?3:0;
+  }
+
+  const map=currentScreen().map;
+  const spd=player.speed;
+
+  if(isZeroG()){
+    // ── ZERO-G PHYSICS ──
+    // Joystick/keys apply thrust, not direct movement
+    const THRUST=0.12;
+    const FRICTION=0.985; // minimal friction — space!
+    const MAX_SPD=3.5;
+
+    player.vx+=dx*THRUST;
+    player.vy+=dy*THRUST;
+    // Clamp speed
+    const v=Math.hypot(player.vx,player.vy);
+    if(v>MAX_SPD){ player.vx=player.vx/v*MAX_SPD; player.vy=player.vy/v*MAX_SPD; }
+    // Apply friction
+    player.vx*=FRICTION; player.vy*=FRICTION;
+    player.sliding=(Math.hypot(player.vx,player.vy)>0.3);
+
+    // Move with collision
+    const nx=player.x+player.vx;
+    const ny=player.y+player.vy;
+    if(boxWalkable(map,nx,player.y)) player.x=nx; else player.vx*=-0.4;
+    if(boxWalkable(map,player.x,ny)) player.y=ny; else player.vy*=-0.4;
+  } else {
+    // ── NORMAL PHYSICS ──
+    player.vx=0; player.vy=0; player.sliding=false;
+    const nx=player.x+dx*spd;
+    const ny=player.y+dy*spd;
+    if(boxWalkable(map,nx,player.y)) player.x=nx;
+    if(boxWalkable(map,player.x,ny)) player.y=ny;
+  }
+
+  // ── PECK ──
+  if(player.atk>0) player.atk--;
+  const wantAtk = keys[' ']||keys['z']||keys['Z']||touchAtk;
+  touchAtk=false;
+  if(wantAtk && player.atk===0){
+    player.atk=18;
+
+    // Zero-G Peck — recoil!
+    if(isZeroG()){
+      const dirX=[0,-1,1,0][player.dir];
+      const dirY=[-1,0,0,1][player.dir];
+      const RECOIL=4.0;
+      player.vx-=dirX*RECOIL;
+      player.vy-=dirY*RECOIL;
+      // Clamp after recoil
+      const v=Math.hypot(player.vx,player.vy);
+      if(v>5){ player.vx=player.vx/v*5; player.vy=player.vy/v*5; }
+      popup={text:'🚀 ZERO-G PECK!',timer:60};
+      spawnP(player.x+16,player.y+16,'#5599ff',10);
+    }
+  }
+
+  // ── INVINCIBILITY ──
+  if(player.inv>0) player.inv--;
+
+  // ── SCREEN TRANSITION ──
+  if(!isScrolling){
+    let ncol=screenCol, nrow=screenRow;
+    let npx=player.x, npy=player.y;
+
+    // Top edge — go north
+    if(player.y<-4 && screenRow>0){
+      ncol=screenCol; nrow=screenRow-1;
+      npx=player.x; npy=GH-TILE*2;
+    }
+    // Bottom edge — go south
+    if(player.y>GH-TILE+4 && screenRow<WORLD_ROWS-1){
+      ncol=screenCol; nrow=screenRow+1;
+      npx=player.x; npy=TILE;
+    }
+    // Left edge — go west
+    if(player.x<-4 && screenCol>0){
+      ncol=screenCol-1; nrow=screenRow;
+      npx=GW-TILE*2; npy=player.y;
+    }
+    // Right edge — go east
+    if(player.x>GW-TILE+4 && screenCol<WORLD_COLS-1){
+      ncol=screenCol+1; nrow=screenRow;
+      npx=TILE; npy=player.y;
+    }
+
+    if(ncol!==screenCol||nrow!==screenRow){
+      // Reset zero-G velocity on transition
+      player.vx*=0.5; player.vy*=0.5;
+      startScroll(ncol,nrow,npx,npy);
+    }
+  }
+}
+
+function startScroll(ncol,nrow,npx,npy){
+  isScrolling=true; scrollT=0;
+  scrollDirX=ncol-screenCol; scrollDirY=nrow-screenRow;
+  scrollOffX=0; scrollOffY=0;
+  nextScreenCol=ncol; nextScreenRow=nrow;
+  player.x=npx; player.y=npy;
+
+  // Update zone name
+  const ns=SCREENS[screenIndex(ncol,nrow)];
+  if(ns) document.getElementById('zone').textContent=ns.name;
+}
+
+function updateScroll(){
+  if(!isScrolling)return;
+  scrollT++;
+  const t=scrollT/SCROLL_DUR;
+  scrollOffX=-scrollDirX*GW*t;
+  scrollOffY=-scrollDirY*GH*t;
+  if(scrollT>=SCROLL_DUR){
+    isScrolling=false;
+    screenCol=nextScreenCol; screenRow=nextScreenRow;
+    currentZone=currentScreen().gravity?'cornmoon':'space';
+    scrollOffX=0; scrollOffY=0;
+    updateZeroGUI();
+  }
+}
+
+function updateZeroGUI(){
+  const btn=document.getElementById('attackBtn');
+  if(isZeroG()){
+    btn.classList.add('zerog');
+    btn.childNodes[btn.childNodes.length-1].textContent='PECK!';
+    btn.querySelector('span').textContent='🚀';
+  } else {
+    btn.classList.remove('zerog');
+    btn.childNodes[btn.childNodes.length-1].textContent='PECK!';
+    btn.querySelector('span').textContent='💥';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  ENEMY UPDATE
+// ═══════════════════════════════════════════════
+function updateEnemies(){
+  if(isScrolling)return;
+  const sc=currentScreen();
+  const ss=getScreenState(screenCol,screenRow);
+  const map=sc.map;
+
+  sc.enemies.forEach((e,i)=>{
+    if(ss.enemyHps[i]<=0)return;
+    // Init position
+    if(e._x===undefined){ e._x=e.tx*TILE; e._y=e.ty*TILE; e._dir=1; e._t=0; }
+    e._t++;
+
+    // Patrol
+    const spd=e.spd;
+    if(e.pat==='h'){
+      const nx=e._x+e._dir*spd;
+      if(boxWalkable(map,nx,e._y)) e._x=nx; else e._dir*=-1;
+      if(Math.abs(e._x-e.tx*TILE)>TILE*3) e._dir*=-1;
+    } else {
+      const ny=e._y+e._dir*spd;
+      if(boxWalkable(map,e._x,ny)) e._y=ny; else e._dir*=-1;
+      if(Math.abs(e._y-e.ty*TILE)>TILE*3) e._dir*=-1;
+    }
+
+    // Peck hit
+    if(player.atk>10){
+      const dist=Math.hypot(player.x+16-(e._x+14),player.y+16-(e._y+14));
+      if(dist<44){
+        ss.enemyHps[i]=0;
+        spawnP(e._x+14,e._y+14,'#52b788',12);
+        score+=50;
+        updateHUD();
+      }
+    }
+
+    // Contact damage
+    if(player.inv<=0){
+      const dist=Math.hypot(player.x+16-(e._x+14),player.y+16-(e._y+14));
+      if(dist<30){
+        player.hp--;
+        player.inv=80;
+        screenShake=6;
+        spawnP(player.x+16,player.y+16,'#ff3333',10);
+        updateHUD();
+        if(player.hp<=0){ gameState='lose'; showMsg('💀 Game Over!\n\nPress R to try again.'); }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  CORN COLLECTION
+// ═══════════════════════════════════════════════
+function updateCorn(){
+  if(isScrolling)return;
+  const sc=currentScreen();
+  const ss=getScreenState(screenCol,screenRow);
+  sc.corn.forEach((c,i)=>{
+    if(ss.gotCorns.has(i))return;
+    const cx=c.x*TILE+8, cy=c.y*TILE+8;
+    const dist=Math.hypot(player.x+16-cx,player.y+16-cy);
+    if(dist<24){
+      ss.gotCorns.add(i);
+      cornCount++;
+      score+=10;
+      spawnP(cx,cy,'#ffcc02',8);
+      popup={text:'🌽 CORN! +1',timer:50};
+      updateHUD();
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  STARFIELD BACKGROUND
+// ═══════════════════════════════════════════════
+const STARS=[];
+(function initStars(){
+  for(let i=0;i<120;i++){
+    STARS.push({
+      x:Math.random()*GW, y:Math.random()*GH,
+      r:Math.random()*1.5+0.3,
+      bright:Math.random(),
+      speed:Math.random()*0.3+0.05,
+      twinkleOffset:Math.random()*Math.PI*2,
+    });
+  }
+})();
+
+function drawStarfield(parallaxX=0, parallaxY=0){
+  ctx.fillStyle='#000008';
+  ctx.fillRect(0,0,GW,GH);
+
+  STARS.forEach(s=>{
+    const twinkle=0.4+Math.sin(frame*0.04+s.twinkleOffset)*0.6;
+    const sx=((s.x+parallaxX*s.speed*0.5)%GW+GW)%GW;
+    const sy=((s.y+parallaxY*s.speed*0.5)%GH+GH)%GH;
+    ctx.globalAlpha=twinkle*0.9;
+    ctx.fillStyle=s.bright>0.8?'#aaccff':s.bright>0.5?'#ffffff':'#7799cc';
+    ctx.beginPath();ctx.arc(sx,sy,s.r,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════
+//  TILE DRAWING — SPACE EDITION
+// ═══════════════════════════════════════════════
+function drawTile(t,sx,sy){
+  const pal=getZPal();
+  switch(t){
+    case T.FLOOR:{
+      ctx.fillStyle=pal.floor;ctx.fillRect(sx,sy,TILE,TILE);
+      // Grid lines for station feel
+      ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+      ctx.strokeRect(sx,sy,TILE,TILE);
+      // Occasional dust speck
+      if((sx+sy)%96===0){ctx.fillStyle='rgba(255,220,100,0.1)';ctx.fillRect(sx+12,sy+12,4,4);}
+      break;
+    }
+    case T.VOID:{
+      // Deep space — draw nothing (starfield shows through)
+      break;
+    }
+    case T.WALL:{
+      ctx.fillStyle=pal.wall;ctx.fillRect(sx,sy,TILE,TILE);
+      // Edge glow
+      ctx.strokeStyle=pal.accent+'44';ctx.lineWidth=1;
+      ctx.strokeRect(sx+1,sy+1,TILE-2,TILE-2);
+      // Corner lights
+      ctx.fillStyle=pal.accent+'33';
+      ctx.fillRect(sx,sy,4,4);
+      ctx.fillRect(sx+TILE-4,sy,4,4);
+      ctx.fillRect(sx,sy+TILE-4,4,4);
+      ctx.fillRect(sx+TILE-4,sy+TILE-4,4,4);
+      break;
+    }
+    case T.CRATER:{
+      ctx.fillStyle=pal.floor;ctx.fillRect(sx,sy,TILE,TILE);
+      // Dark crater bowl
+      ctx.fillStyle='rgba(0,0,0,0.6)';
+      ctx.beginPath();ctx.ellipse(sx+16,sy+16,12,10,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#443322';ctx.lineWidth=2;
+      ctx.beginPath();ctx.ellipse(sx+16,sy+16,12,10,0,0,Math.PI*2);ctx.stroke();
+      // Rim highlight
+      ctx.strokeStyle='rgba(200,180,140,0.3)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.ellipse(sx+15,sy+14,11,9,0,0,Math.PI*2);ctx.stroke();
+      break;
+    }
+    case T.CRYSTAL:{
+      ctx.fillStyle=pal.floor;ctx.fillRect(sx,sy,TILE,TILE);
+      // Crystal formation
+      const glow=0.5+Math.sin(frame*0.06+sx*0.1)*0.5;
+      ctx.fillStyle=`rgba(150,80,255,${glow*0.4})`;
+      ctx.beginPath();ctx.arc(sx+16,sy+16,12,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#cc88ff';
+      ctx.beginPath();
+      ctx.moveTo(sx+16,sy+4);ctx.lineTo(sx+22,sy+20);ctx.lineTo(sx+10,sy+20);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#eeccff';
+      ctx.beginPath();
+      ctx.moveTo(sx+16,sy+6);ctx.lineTo(sx+19,sy+16);ctx.lineTo(sx+13,sy+16);ctx.closePath();ctx.fill();
+      // Glow halo
+      ctx.globalAlpha=glow*0.3;
+      ctx.fillStyle='#aa66ff';
+      ctx.beginPath();ctx.arc(sx+16,sy+14,14,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+      break;
+    }
+    case T.DOOR:{
+      ctx.fillStyle=pal.floor;ctx.fillRect(sx,sy,TILE,TILE);
+      // Airlock door
+      ctx.fillStyle='#334466';ctx.fillRect(sx+4,sy+4,24,24);
+      ctx.fillStyle='#445577';ctx.fillRect(sx+6,sy+6,10,20);
+      ctx.fillStyle='#445577';ctx.fillRect(sx+18,sy+6,8,20);
+      // Warning stripe
+      ctx.fillStyle='#ffcc02';
+      ctx.fillRect(sx+4,sy+4,24,3);
+      ctx.fillRect(sx+4,sy+25,24,3);
+      // Handle
+      ctx.fillStyle='#aaccff';
+      ctx.beginPath();ctx.arc(sx+16,sy+16,2,0,Math.PI*2);ctx.fill();
+      break;
+    }
+    case T.CHEST:{
+      ctx.fillStyle=pal.floor;ctx.fillRect(sx,sy,TILE,TILE);
+      // Supply crate
+      ctx.fillStyle='#334455';ctx.fillRect(sx+4,sy+10,24,16);
+      ctx.fillStyle='#445566';ctx.fillRect(sx+4,sy+8,24,4);
+      ctx.fillStyle='#ffcc02';ctx.fillRect(sx+4,sy+17,24,2);
+      ctx.fillStyle='#88bbff';
+      ctx.beginPath();ctx.arc(sx+16,sy+17,3,0,Math.PI*2);ctx.fill();
+      break;
+    }
+    case T.VENT:{
+      ctx.fillStyle=pal.floor;ctx.fillRect(sx,sy,TILE,TILE);
+      // Vent grate
+      ctx.fillStyle='#223344';ctx.fillRect(sx+4,sy+4,24,24);
+      ctx.strokeStyle='#445566';ctx.lineWidth=2;
+      for(let v=0;v<4;v++){
+        ctx.beginPath();ctx.moveTo(sx+4,sy+8+v*6);ctx.lineTo(sx+28,sy+8+v*6);ctx.stroke();
+      }
+      // Animated steam particle
+      if(frame%40<20){
+        const alpha=(20-frame%40)/20;
+        ctx.globalAlpha=alpha*0.3;
+        ctx.fillStyle='#aaddff';
+        ctx.beginPath();ctx.arc(sx+16,sy-4+frame%20,3,0,Math.PI*2);ctx.fill();
+        ctx.globalAlpha=1;
+      }
+      break;
+    }
+    case T.DUST:{
+      // Moon dust — slightly textured walkable
+      ctx.fillStyle='#2a1e12';ctx.fillRect(sx,sy,TILE,TILE);
+      ctx.fillStyle='rgba(255,220,150,0.12)';
+      ctx.fillRect(sx+3,sy+20,8,4);
+      ctx.fillRect(sx+18,sy+10,6,3);
+      break;
+    }
+    default:
+      ctx.fillStyle='#111';ctx.fillRect(sx,sy,TILE,TILE);
+  }
+}
+
+function drawScreen(sc){
+  // Deep space starfield as bg for void tiles
+  drawStarfield(screenCol*50, screenRow*50);
+
+  for(let ty=0;ty<15;ty++){
+    for(let tx=0;tx<20;tx++){
+      const t=(sc.map[ty]||[])[tx];
+      if(t!==undefined && t!==T.VOID) drawTile(t,tx*TILE,ty*TILE);
+    }
+  }
+
+  // Screen name
+  ctx.fillStyle='rgba(0,0,20,0.7)';ctx.fillRect(GW/2-100,4,200,20);
+  ctx.fillStyle=getZPal().accent;
+  ctx.font='bold 13px Fredoka One';ctx.textAlign='center';
+  ctx.fillText(sc.name,GW/2,18);ctx.textAlign='left';
+
+  // Zero-G indicator
+  if(!sc.gravity){
+    const pulse=0.6+Math.sin(frame*0.1)*0.4;
+    ctx.globalAlpha=pulse;
+    ctx.fillStyle='rgba(0,20,80,0.7)';ctx.fillRect(4,4,110,20);
+    ctx.fillStyle='#5599ff';
+    ctx.font='bold 11px Fredoka One';ctx.textAlign='left';
+    ctx.fillText('🌌 ZERO-G ZONE',8,18);
+    ctx.globalAlpha=1;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  SPRITE DRAWING
+// ═══════════════════════════════════════════════
+function drawChicken(x,y,dir,atk,fr){
+  // Shadow (smaller in zero-G)
+  const shadowA = isZeroG()?0.08:0.18;
+  ctx.fillStyle=`rgba(0,0,0,${shadowA})`;
+  ctx.beginPath();ctx.ellipse(x+16,y+30,14,5,0,0,Math.PI*2);ctx.fill();
+
+  // Space suit tint — slightly blue/white
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.ellipse(x+16,y+18,14,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffcc6e';ctx.beginPath();ctx.ellipse(x+16,y+20,9,8,0,0,Math.PI*2);ctx.fill();
+
+  // Head
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.arc(x+16,y+8,10,0,Math.PI*2);ctx.fill();
+
+  // Space helmet ring (subtle)
+  ctx.strokeStyle='rgba(200,230,255,0.4)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(x+16,y+8,11,0,Math.PI*2);ctx.stroke();
+
+  // Comb
+  ctx.fillStyle='#ff3333';
+  ctx.beginPath();ctx.moveTo(x+10,y+1);ctx.lineTo(x+8,y-6);ctx.lineTo(x+13,y-2);ctx.lineTo(x+16,y-8);ctx.lineTo(x+19,y-2);ctx.lineTo(x+22,y-6);ctx.lineTo(x+20,y+1);ctx.closePath();ctx.fill();
+
+  // Eyes
+  const ex=dir===3?x+12:x+14;
+  ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(ex,y+7,5,6,-0.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(ex+8,y+7,5,6,0.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(ex+1,y+8,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(ex+9,y+8,3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#cc2200';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(ex-4,y+3);ctx.lineTo(ex+3,y+5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ex+5,y+5);ctx.lineTo(ex+12,y+3);ctx.stroke();
+
+  // Beak
+  ctx.fillStyle='#ff6b00';
+  ctx.beginPath();ctx.moveTo(x+13,y+12);ctx.lineTo(x+19,y+12);ctx.lineTo(x+16,y+16);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#cc4400';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(x+16,y+16,3,0.2,Math.PI-0.2);ctx.stroke();
+
+  // Wings
+  ctx.fillStyle='#e08010';
+  if(dir===1){ctx.beginPath();ctx.ellipse(x+4,y+18,5,9,0.4,0,Math.PI*2);ctx.fill();}
+  else if(dir===3){ctx.beginPath();ctx.ellipse(x+28,y+18,5,9,-0.4,0,Math.PI*2);ctx.fill();}
+  else{
+    ctx.beginPath();ctx.ellipse(x+4,y+18,5,9,0.4,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(x+28,y+18,5,9,-0.4,0,Math.PI*2);ctx.fill();
+  }
+
+  // Feet (float slightly in zero-G)
+  const footY = isZeroG() ? y+26 : y+28;
+  ctx.fillStyle='#ff6b00';
+  ctx.fillRect(x+9,footY,4,5);ctx.fillRect(x+18,footY,4,5);
+  ctx.fillRect(x+6,footY+4,4,2);ctx.fillRect(x+10,footY+4,4,2);
+  ctx.fillRect(x+16,footY+4,4,2);ctx.fillRect(x+20,footY+4,4,2);
+
+  // Peck animation
+  if(atk>0){
+    const peckCol = isZeroG() ? '#5599ff' : '#ffcc02';
+    ctx.strokeStyle=peckCol;ctx.lineWidth=3;
+    for(let i=0;i<5;i++){
+      const a=(i/5)*Math.PI*2+fr*0.3;
+      ctx.beginPath();
+      ctx.moveTo(x+16+Math.cos(a)*12,y+16+Math.sin(a)*12);
+      ctx.lineTo(x+16+Math.cos(a)*22,y+16+Math.sin(a)*22);
+      ctx.stroke();
+    }
+  }
+
+  // Zero-G drift trail
+  if(isZeroG() && player.sliding){
+    const v=Math.hypot(player.vx,player.vy);
+    if(v>1.0){
+      ctx.globalAlpha=0.3;
+      ctx.fillStyle='#3366ff';
+      ctx.beginPath();ctx.arc(x+16-player.vx*3,y+16-player.vy*3,10,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(x+16-player.vx*5,y+16-player.vy*5,6,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+    }
+  }
+}
+
+function drawAlienIguana(x,y,hp,fr){
+  // Same structure as Tulum iguana but purple/alien
+  ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x+14,y+26,12,4,0,0,Math.PI*2);ctx.fill();
+  // Body - alien purple
+  ctx.fillStyle='#8855cc';ctx.beginPath();ctx.ellipse(x+14,y+18,12,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#6633aa';ctx.fillRect(x+3,y+12,22,12);
+  // Spines
+  ctx.fillStyle='#aa66ff';for(let i=0;i<5;i++)ctx.fillRect(x+5+i*4,y+6,3,8);
+  // Head
+  ctx.fillStyle='#8855cc';ctx.beginPath();ctx.arc(x+22,y+14,8,0,Math.PI*2);ctx.fill();
+  // Eye — alien green glow
+  ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(x+24,y+12,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+25,y+12,1.5,0,Math.PI*2);ctx.fill();
+  // Glowing eye halo
+  const eg=0.3+Math.sin(fr*0.1)*0.2;
+  ctx.globalAlpha=eg;ctx.fillStyle='#00ff88';
+  ctx.beginPath();ctx.arc(x+24,y+12,6,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+  // Forked tongue
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x+30,y+14);ctx.lineTo(x+36,y+12);ctx.lineTo(x+38,y+10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+36,y+12);ctx.lineTo(x+38,y+14);ctx.stroke();
+  // HP bar
+  const bw=30;
+  ctx.fillStyle='#222';ctx.fillRect(x,y-7,bw,4);
+  ctx.fillStyle='#aa44ff';ctx.fillRect(x,y-7,bw*hp,4);
+}
+
+function drawCorn(x,y,fr){
+  const bob=Math.sin(fr*0.08+x)*2;
+  // Sparkle in zero-G
+  if(isZeroG()){
+    const gs=0.3+Math.sin(fr*0.1)*0.2;
+    ctx.globalAlpha=gs;ctx.fillStyle='#ffee44';
+    ctx.beginPath();ctx.arc(x+8,y+8+bob,10,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.ellipse(x+8,y+8+bob,5,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffd700';
+  for(let r=0;r<3;r++)for(let c=0;c<2;c++)ctx.fillRect(x+5+c*4,y+4+r*4+bob,3,3);
+  ctx.fillStyle='#90e050';
+  ctx.beginPath();ctx.moveTo(x+8,y+1+bob);ctx.lineTo(x+13,y-5+bob);ctx.lineTo(x+10,y+3+bob);ctx.fill();
+}
+
+// ═══════════════════════════════════════════════
+//  HUD
+// ═══════════════════════════════════════════════
+function updateHUD(){
+  const hearts=document.getElementById('hearts');
+  hearts.innerHTML='';
+  for(let i=0;i<player.maxHp;i++){
+    const h=document.createElement('span');
+    h.className='heart';
+    h.textContent=i<player.hp?'❤️':'🖤';
+    hearts.appendChild(h);
+  }
+  document.getElementById('cornCount').textContent=cornCount;
+  document.getElementById('score').textContent=score;
+}
+
+function showMsg(txt){
+  msg.style.display='block';
+  msg.style.whiteSpace='pre-line';
+  msg.textContent=txt;
+}
+function hideMsg(){ msg.style.display='none'; }
+
+// ═══════════════════════════════════════════════
+//  TITLE SCREEN
+// ═══════════════════════════════════════════════
+function drawTitle(){
+  drawStarfield(frame*0.3,0);
+
+  // Slowly rotating planet in background
+  const px=GW/2, py=GH/2+40;
+  const pr=120;
+  // Planet body
+  const grad=ctx.createRadialGradient(px-30,py-30,10,px,py,pr);
+  grad.addColorStop(0,'#3d2a1a');
+  grad.addColorStop(0.5,'#2a1a0e');
+  grad.addColorStop(1,'#0d0808');
+  ctx.fillStyle=grad;
+  ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fill();
+
+  // Planet ring
+  ctx.strokeStyle='rgba(255,200,50,0.35)';ctx.lineWidth=6;
+  ctx.beginPath();ctx.ellipse(px,py,pr*1.6,pr*0.35,-0.3,0,Math.PI*2);ctx.stroke();
+
+  // Title text
+  ctx.fillStyle='rgba(0,0,20,0.8)';ctx.fillRect(0,0,GW,180);
+  ctx.font='bold 64px Fredoka One';ctx.textAlign='center';
+  ctx.fillStyle='#ffcc02';
+  ctx.shadowColor='#ff6600';ctx.shadowBlur=20;
+  ctx.fillText('CRANKY CHICKENS',GW/2,70);
+  ctx.font='bold 40px Fredoka One';
+  ctx.fillStyle='#7af';
+  ctx.shadowColor='#4488ff';
+  ctx.fillText('IN SPACE 🚀',GW/2,118);
+  ctx.shadowBlur=0;
+
+  ctx.font='bold 14px Fredoka One';ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.fillText('"Houston, We Have a Clucking Problem"',GW/2,148);
+
+  // Chicken floating in space
+  ctx.save();
+  const bob=Math.sin(frame*0.04)*8;
+  ctx.translate(0,bob);
+  drawChicken(GW/2-16,GH/2-60,2,0,frame);
+  ctx.restore();
+
+  // Press to start
+  const pulse=0.6+Math.sin(frame*0.08)*0.4;
+  ctx.globalAlpha=pulse;
+  ctx.font='bold 18px Fredoka One';ctx.fillStyle='#ffcc02';
+  if(isMobile){
+    ctx.fillText('TAP THE BUTTON BELOW TO START',GW/2,GH-40);
+    const sb=document.getElementById('startTouchBtn');
+    if(sb)sb.style.display='block';
+  } else {
+    ctx.fillText('PRESS ENTER OR SPACE TO START',GW/2,GH-40);
+  }
+  ctx.globalAlpha=1;
+  ctx.textAlign='left';
+}
+
+// ═══════════════════════════════════════════════
+//  GAME START / RESTART
+// ═══════════════════════════════════════════════
+function startGame(){
+  gameState='play';
+  player.x=288; player.y=240;
+  player.hp=player.maxHp; player.atk=0; player.inv=0;
+  player.vx=0; player.vy=0;
+  screenCol=0; screenRow=0;
+  score=0; cornCount=0; frame=0;
+  currentZone='cornmoon';
+  hideMsg();
+  updateHUD();
+  document.getElementById('zone').textContent=currentScreen().name;
+
+  const sb=document.getElementById('startTouchBtn');
+  const rb=document.getElementById('restartTouchBtn');
+  if(sb)sb.style.display='none';
+  if(rb)rb.style.display='none';
+  updateZeroGUI();
+}
+
+function restartGame(){
+  // Clear screen states
+  for(const k in screenState) delete screenState[k];
+  startGame();
+}
+
+// ═══════════════════════════════════════════════
+//  KEYBOARD GAME START
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(gameState==='title'&&(e.key==='Enter'||e.key===' ')){ startGame(); return; }
+  if(gameState==='lose'&&(e.key==='r'||e.key==='R')){ restartGame(); return; }
+});
+
+// ═══════════════════════════════════════════════
+//  MAIN GAME LOOP
+// ═══════════════════════════════════════════════
+function loop(){
+  frame++;
+
+  // Screen shake
+  if(screenShake>0) screenShake--;
+  const shakeX=screenShake>0?(Math.random()-0.5)*screenShake*2:0;
+  const shakeY=screenShake>0?(Math.random()-0.5)*screenShake*2:0;
+  ctx.save();
+  if(screenShake>0) ctx.translate(shakeX,shakeY);
+  ctx.clearRect(-4,-4,GW+8,GH+8);
+
+  // ── TITLE ──
+  if(gameState==='title'){
+    drawTitle();
+    ctx.restore();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  // ── PLAY / LOSE ──
+  if(gameState==='play'){
+    updatePlayer();
+    updateScroll();
+    updateEnemies();
+    updateCorn();
+  }
+
+  // ── DRAW ──
+  if(isScrolling){
+    // Current screen scrolling out
+    ctx.save();ctx.translate(scrollOffX,scrollOffY);
+    const sc=currentScreen();
+    const ss=getScreenState(screenCol,screenRow);
+    drawScreen(sc);
+    sc.corn.forEach((c,i)=>{ if(!ss.gotCorns.has(i)) drawCorn(c.x*TILE,c.y*TILE,frame); });
+    sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame); });
+    ctx.restore();
+    // Next screen scrolling in
+    const nsc=SCREENS[screenIndex(nextScreenCol,nextScreenRow)];
+    const nss=getScreenState(nextScreenCol,nextScreenRow);
+    ctx.save();ctx.translate(scrollOffX+scrollDirX*GW,scrollOffY+scrollDirY*GH);
+    drawScreen(nsc);
+    nsc.corn.forEach((c,i)=>{ if(!nss.gotCorns.has(i)) drawCorn(c.x*TILE,c.y*TILE,frame); });
+    ctx.restore();
+  } else {
+    const sc=currentScreen();
+    const ss=getScreenState(screenCol,screenRow);
+    drawScreen(sc);
+    sc.corn.forEach((c,i)=>{ if(!ss.gotCorns.has(i)) drawCorn(c.x*TILE,c.y*TILE,frame); });
+    sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame); });
+  }
+
+  // Player (flicker when invincible)
+  if(player.inv<=0||frame%6<3){
+    drawChicken(player.x,player.y,player.dir,player.atk,frame);
+  }
+
+  // Particles
+  tickP();
+
+  // Popup
+  if(popup.timer>0){
+    popup.timer--;
+    const alpha=Math.min(1,popup.timer/15);
+    const yOff=popup.timer>40?0:(40-popup.timer)*0.6;
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle='rgba(0,0,30,0.85)';
+    const tw=ctx.measureText(popup.text).width+24;
+    ctx.fillRect(GW/2-tw/2,GH/2-70-yOff,tw,30);
+    ctx.strokeStyle=getZPal().accent;ctx.lineWidth=2;
+    ctx.strokeRect(GW/2-tw/2,GH/2-70-yOff,tw,30);
+    ctx.fillStyle='#ffcc02';
+    ctx.font='bold 14px Fredoka One';ctx.textAlign='center';
+    ctx.fillText(popup.text,GW/2,GH/2-50-yOff);
+    ctx.globalAlpha=1;ctx.textAlign='left';
+  }
+
+  // Zero-G speed readout (debug/fun)
+  if(isZeroG()&&gameState==='play'){
+    const v=Math.hypot(player.vx,player.vy);
+    if(v>0.5){
+      ctx.fillStyle='rgba(80,150,255,0.6)';
+      ctx.font='bold 10px Fredoka One';ctx.textAlign='right';
+      ctx.fillText(`⚡ ${v.toFixed(1)} m/s`,GW-8,GH-8);
+      ctx.textAlign='left';
+    }
+  }
+
+  if(screenShake>0) ctx.restore();
+  else ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+updateHUD();
+loop();
+</script>
+</body>
+</html>
