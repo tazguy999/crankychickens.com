@@ -132,7 +132,12 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     <span>❤️❤️❤️</span>
     <span>🌽<span id="corn">0</span></span>
     <span>⭐<span id="score">0</span></span>
-    <span style="font-size:11px;background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:8px;">Hype Zone</span>
+    <button id="musicBtn" onclick="toggleMusic()" style="
+      font-family:'Fredoka One',cursive;font-size:clamp(10px,2.5vw,13px);
+      background:rgba(0,0,0,0.4);border:1px solid rgba(255,204,2,0.4);
+      color:rgba(255,204,2,0.6);padding:2px 8px;border-radius:8px;
+      cursor:pointer;letter-spacing:1px;white-space:nowrap;
+      transition:all 0.2s;">🔇 MUSIC</button>
   </div>
 </div>
 
@@ -3542,7 +3547,392 @@ setInterval(()=>{
   document.getElementById('corn').textContent=fakeCorn;
 },800);
 
-// ── POPUP ──
+// ══════════════════════════════════════════════════════
+//  CLUCK ANTHEM VOL. 1 — CHIPTUNE ENGINE
+//  Vibe: 8-bit Heavy Metal meets Confident Chicken Energy
+// ══════════════════════════════════════════════════════
+
+let audioCtx = null;
+let musicPlaying = false;
+let musicNodes = [];
+let sequencerTimeout = null;
+let currentBeat = 0;
+let currentSection = 0;
+
+// ── NOTE FREQUENCIES ──
+const NOTE = {
+  C2:65.41, D2:73.42, E2:82.41, F2:87.31, G2:98.00, A2:110.00, B2:123.47,
+  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, Bb3:233.08, B3:246.94,
+  C4:261.63, D4:293.66, Eb4:311.13, E4:329.63, F4:349.23, G4:392.00, Ab4:415.30, A4:440.00, Bb4:466.16, B4:493.88,
+  C5:523.25, D5:587.33, Eb5:622.25, E5:659.25, F5:698.46, G5:783.99, A5:880.00, Bb5:932.33,
+  C6:1046.5, D6:1174.7, E6:1318.5,
+  R:0 // rest
+};
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+// ── MASTER GAIN ──
+function getMaster() {
+  if (!audioCtx._master) {
+    audioCtx._master = audioCtx.createGain();
+    audioCtx._master.gain.value = 0.18;
+    audioCtx._master.connect(audioCtx.destination);
+  }
+  return audioCtx._master;
+}
+
+// ── OSCILLATOR FACTORY ──
+function playNote(freq, startTime, duration, type, gainVal, detune=0, filterFreq=null) {
+  if (!freq || !audioCtx) return;
+  const g = audioCtx.createGain();
+  const osc = audioCtx.createOscillator();
+  osc.type = type;
+  osc.frequency.value = freq;
+  if (detune) osc.detune.value = detune;
+
+  // Chiptune envelope: snappy attack, held, quick release
+  g.gain.setValueAtTime(0, startTime);
+  g.gain.linearRampToValueAtTime(gainVal, startTime + 0.01);
+  g.gain.setValueAtTime(gainVal, startTime + duration * 0.7);
+  g.gain.linearRampToValueAtTime(0, startTime + duration * 0.95);
+
+  if (filterFreq) {
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = filterFreq;
+    osc.connect(filter);
+    filter.connect(g);
+  } else {
+    osc.connect(g);
+  }
+  g.connect(getMaster());
+  osc.start(startTime);
+  osc.stop(startTime + duration);
+  musicNodes.push(osc);
+}
+
+// ── DISTORTION (for metal riff) ──
+function playDistorted(freq, startTime, duration, gainVal) {
+  if (!freq || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const waveShaper = audioCtx.createWaveShaper();
+  const g = audioCtx.createGain();
+
+  // Waveshaper curve = heavy distortion
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i * 2) / 256 - 1;
+    curve[i] = (Math.PI + 400) * x / (Math.PI + 400 * Math.abs(x));
+  }
+  waveShaper.curve = curve;
+
+  osc.type = 'sawtooth';
+  osc.frequency.value = freq;
+  osc2.type = 'sawtooth';
+  osc2.frequency.value = freq * 1.005; // slight chorus
+
+  g.gain.setValueAtTime(0, startTime);
+  g.gain.linearRampToValueAtTime(gainVal, startTime + 0.008);
+  g.gain.setValueAtTime(gainVal, startTime + duration * 0.75);
+  g.gain.linearRampToValueAtTime(0, startTime + duration);
+
+  osc.connect(waveShaper);
+  osc2.connect(waveShaper);
+  waveShaper.connect(g);
+  g.connect(getMaster());
+
+  osc.start(startTime); osc.stop(startTime + duration);
+  osc2.start(startTime); osc2.stop(startTime + duration);
+  musicNodes.push(osc, osc2);
+}
+
+// ── DRUM MACHINE ──
+function kick(t) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+  g.gain.setValueAtTime(1.2, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  osc.connect(g); g.connect(getMaster());
+  osc.start(t); osc.stop(t + 0.3);
+  musicNodes.push(osc);
+}
+
+function snare(t) {
+  if (!audioCtx) return;
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.15, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const src = audioCtx.createBufferSource();
+  const g = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 1200;
+  src.buffer = buf;
+  g.gain.setValueAtTime(0.5, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  src.connect(filter); filter.connect(g); g.connect(getMaster());
+  src.start(t);
+  musicNodes.push(src);
+}
+
+function hihat(t, open=false) {
+  if (!audioCtx) return;
+  const dur = open ? 0.12 : 0.04;
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const src = audioCtx.createBufferSource();
+  const g = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 7000;
+  src.buffer = buf; g.gain.value = 0.18;
+  src.connect(filter); filter.connect(g); g.connect(getMaster());
+  src.start(t);
+  musicNodes.push(src);
+}
+
+// ── THE SONG ──
+// 3 sections that rotate:
+// A: METAL INTRO — heavy distorted power chords
+// B: CLUCK STRUT — bouncy confident melody (Cardi B energy)
+// C: BREAKDOWN — dramatic build + release
+
+const BPM = 148;
+const BEAT = 60 / BPM;
+const BAR = BEAT * 4;
+
+// Section A: METAL RIFF — drop-D power chord carnage
+function sectionMetal(startTime) {
+  const riff = [
+    // [freq, beat_offset, duration_in_beats]
+    [NOTE.D2, 0,   0.45], [NOTE.D2, 0.5, 0.45], [NOTE.F2, 1, 0.45],
+    [NOTE.D2, 1.5, 0.22], [NOTE.D2, 1.75,0.22], [NOTE.Bb3*0.5, 2, 0.9],
+    [NOTE.D2, 3,   0.45], [NOTE.D2, 3.5, 0.45], [NOTE.G2, 4, 0.45],
+    [NOTE.D2, 4.5, 0.22], [NOTE.D2, 4.75,0.22], [NOTE.A2, 5, 0.9],
+    [NOTE.D2, 6,   0.45], [NOTE.D2, 6.5, 0.45], [NOTE.Bb3*0.5, 7, 0.9],
+    [NOTE.C3, 8,   0.45], [NOTE.D2, 8.5, 0.9],
+  ];
+
+  // Drums: driving double-kick metal pattern over 2 bars
+  for (let bar = 0; bar < 2; bar++) {
+    const b = startTime + bar * BAR;
+    kick(b);          kick(b + BEAT*0.5);
+    kick(b + BEAT);   kick(b + BEAT*1.5);
+    snare(b + BEAT);  snare(b + BEAT*3);
+    kick(b + BEAT*2); kick(b + BEAT*2.5);
+    kick(b + BEAT*3); kick(b + BEAT*3.5);
+    for (let i = 0; i < 8; i++) hihat(b + i * BEAT * 0.5);
+  }
+
+  // Power chords (distorted)
+  riff.forEach(([freq, beatOff, dur]) => {
+    const t = startTime + beatOff * BEAT;
+    playDistorted(freq, t, dur * BEAT, 0.35);
+    playDistorted(freq * 1.5, t, dur * BEAT, 0.2); // fifth
+  });
+
+  // Lead screech on top (square wave)
+  const screech = [
+    [NOTE.D5, 0, 0.5], [NOTE.F5, 0.5, 0.5], [NOTE.G5, 1, 1],
+    [NOTE.F5, 2, 0.5], [NOTE.E5, 2.5, 0.5], [NOTE.D5, 3, 1],
+    [NOTE.G5, 4, 0.5], [NOTE.A5, 4.5, 0.5], [NOTE.Bb5, 5, 1],
+    [NOTE.A5, 6, 0.33],[NOTE.G5, 6.33, 0.33],[NOTE.F5, 6.67, 0.33],
+    [NOTE.E5, 7, 0.5], [NOTE.D5, 7.5, 0.5],
+  ];
+  screech.forEach(([freq, beatOff, dur]) => {
+    playNote(freq, startTime + beatOff * BEAT, dur * BEAT, 'square', 0.18, 0, 3000);
+  });
+}
+
+// Section B: CLUCK STRUT — the confident bop
+// Original melody in Eb major, strutting 8-bit bounce
+function sectionStrut(startTime) {
+  // Main melody — original composition, bouncy/confident energy
+  const melody = [
+    [NOTE.Eb4, 0, 0.4], [NOTE.Bb4, 0.5, 0.4], [NOTE.G4, 1, 0.4],
+    [NOTE.Eb4, 1.5, 0.2],[NOTE.F4, 1.75, 0.2],[NOTE.G4, 2, 0.8],
+    [NOTE.Ab4, 3, 0.4],  [NOTE.Bb4, 3.5, 0.2],[NOTE.Bb4, 3.75, 0.2],
+    [NOTE.C5, 4, 0.4],   [NOTE.Bb4, 4.5, 0.2],[NOTE.Ab4, 4.75, 0.2],
+    [NOTE.G4, 5, 0.4],   [NOTE.Eb4, 5.5, 0.4],[NOTE.F4, 6, 0.4],
+    [NOTE.Eb4, 6.5, 0.2],[NOTE.F4, 6.75, 0.2],[NOTE.Eb4, 7, 1.0],
+    // Bar 3
+    [NOTE.Bb4, 8, 0.4],  [NOTE.C5, 8.5, 0.4], [NOTE.Bb4, 9, 0.4],
+    [NOTE.Ab4, 9.5, 0.2],[NOTE.G4, 9.75, 0.2],[NOTE.Ab4, 10, 0.8],
+    [NOTE.G4, 11, 0.4],  [NOTE.F4, 11.5, 0.4],
+    [NOTE.Eb4, 12, 0.4], [NOTE.F4, 12.5, 0.4],[NOTE.G4, 13, 0.4],
+    [NOTE.Ab4, 13.5, 0.4],[NOTE.Bb4, 14, 1.0],
+    [NOTE.Eb5, 15.5, 0.25],[NOTE.D5, 15.75, 0.25],
+  ];
+
+  // Bassline — low square, punchy
+  const bass = [
+    [NOTE.Eb3, 0, 0.35], [NOTE.Eb3, 1, 0.35], [NOTE.Bb2, 2, 0.35], [NOTE.Bb2, 3, 0.35],
+    [NOTE.Ab2, 4, 0.35], [NOTE.Ab2, 5, 0.35], [NOTE.F3, 6, 0.35],  [NOTE.G3, 7, 0.35],
+    [NOTE.Eb3, 8, 0.35], [NOTE.Eb3, 9, 0.35], [NOTE.Bb2, 10, 0.35],[NOTE.Bb2, 11, 0.35],
+    [NOTE.C3, 12, 0.35], [NOTE.C3, 13, 0.35], [NOTE.Bb2, 14, 0.35],[NOTE.Eb3, 15, 0.35],
+  ];
+
+  // Drums: 4-on-the-floor with heavy snare — bop energy
+  for (let bar = 0; bar < 4; bar++) {
+    const b = startTime + bar * BAR;
+    kick(b); kick(b + BEAT * 2);
+    snare(b + BEAT); snare(b + BEAT * 3);
+    for (let i = 0; i < 16; i++) hihat(b + i * BEAT * 0.25, i % 4 === 2);
+    // Extra accent kicks on off-beats (the strut)
+    kick(b + BEAT * 0.75);
+    kick(b + BEAT * 2.75);
+  }
+
+  melody.forEach(([freq, beatOff, dur]) => {
+    playNote(freq, startTime + beatOff * BEAT, dur * BEAT, 'square', 0.22, 0, 4000);
+    // Harmony a third below
+    playNote(freq * 0.794, startTime + beatOff * BEAT, dur * BEAT, 'triangle', 0.08, 0, 3000);
+  });
+
+  bass.forEach(([freq, beatOff, dur]) => {
+    playNote(freq, startTime + beatOff * BEAT, dur * BEAT, 'square', 0.3, 0, 800);
+  });
+
+  // Chicken cluck percussion (triangle wave blips)
+  [0.25, 1.25, 2.25, 3.25, 4.25, 5.25, 6.25, 7.25,
+   8.25, 9.25, 10.25, 11.25, 12.25, 13.25, 14.25, 15.25].forEach(beat => {
+    playNote(NOTE.A5, startTime + beat * BEAT, 0.05 * BEAT, 'triangle', 0.12);
+  });
+}
+
+// Section C: BREAKDOWN + BUILDUP — cinematic 8-bit drama
+function sectionBreakdown(startTime) {
+  // Sparse beginning — just bass hits
+  const sparseBass = [
+    [NOTE.D3, 0, 0.9], [NOTE.R, 1, 0], [NOTE.D3, 2, 0.9],
+    [NOTE.R, 3, 0],    [NOTE.F3, 4, 0.9],[NOTE.R, 5, 0],
+    [NOTE.G3, 6, 1.8],
+  ];
+  sparseBass.forEach(([freq, beatOff, dur]) => {
+    if (!freq) return;
+    playDistorted(freq, startTime + beatOff * BEAT, dur * BEAT, 0.3);
+  });
+
+  // Sparse kick
+  [0, 2, 4, 6].forEach(b => kick(startTime + b * BEAT));
+  [1, 3, 5, 7].forEach(b => snare(startTime + b * BEAT));
+
+  // Bar 3: BUILD — arpeggiated chord climbing
+  const arp = [
+    NOTE.D4, NOTE.F4, NOTE.A4, NOTE.C5,
+    NOTE.D5, NOTE.F5, NOTE.A5, NOTE.D6,
+  ];
+  arp.forEach((freq, i) => {
+    playNote(freq, startTime + (8 + i * 0.5) * BEAT, 0.4 * BEAT, 'square', 0.15 + i * 0.02, 0, 5000 + i * 500);
+  });
+
+  // Bar 4: FULL EXPLOSION back in
+  for (let i = 0; i < 8; i++) {
+    kick(startTime + (12 + i * 0.5) * BEAT);
+    hihat(startTime + (12 + i * 0.5) * BEAT);
+  }
+  snare(startTime + 13 * BEAT);
+  snare(startTime + 14 * BEAT);
+  snare(startTime + 14.5 * BEAT);
+  snare(startTime + 15 * BEAT);
+  snare(startTime + 15.25 * BEAT);
+  snare(startTime + 15.5 * BEAT);
+  snare(startTime + 15.75 * BEAT);
+
+  // Big sustained chord at end
+  [NOTE.D4, NOTE.F4, NOTE.A4, NOTE.D5].forEach((freq, i) => {
+    playDistorted(freq, startTime + 15 * BEAT, BEAT * 1.2, 0.25);
+  });
+}
+
+// ── SECTION LENGTHS IN BEATS ──
+const SECTION_BEATS = [16, 32, 16]; // metal=2bars, strut=4bars, breakdown=2bars+2bars
+
+function getSectionDuration(s) {
+  return SECTION_BEATS[s % 3] * BEAT;
+}
+
+// ── SEQUENCER ──
+const SECTIONS = [sectionMetal, sectionStrut, sectionBreakdown];
+const SECTION_NAMES = ['🤘 CLUCK METAL', '🐔 STRUT MODE', '💥 BREAKDOWN'];
+
+function scheduleSection(sectionIdx, startTime) {
+  if (!musicPlaying) return;
+  const fn = SECTIONS[sectionIdx % 3];
+  fn(startTime);
+  const dur = getSectionDuration(sectionIdx) * 1000;
+  const nextIdx = (sectionIdx + 1) % 3;
+  sequencerTimeout = setTimeout(() => {
+    currentSection = nextIdx;
+    scheduleSection(nextIdx, audioCtx.currentTime + 0.05);
+    updateMusicBtn();
+  }, dur - 200);
+}
+
+function updateMusicBtn() {
+  const btn = document.getElementById('musicBtn');
+  if (!btn) return;
+  if (musicPlaying) {
+    btn.textContent = '🔊 ' + SECTION_NAMES[currentSection % 3];
+    btn.style.color = '#ffcc02';
+    btn.style.borderColor = 'rgba(255,204,2,0.8)';
+    btn.style.background = 'rgba(0,0,0,0.6)';
+  } else {
+    btn.textContent = '🔇 MUSIC';
+    btn.style.color = 'rgba(255,204,2,0.6)';
+    btn.style.borderColor = 'rgba(255,204,2,0.3)';
+    btn.style.background = 'rgba(0,0,0,0.4)';
+  }
+}
+
+function toggleMusic() {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  if (musicPlaying) {
+    // Stop
+    musicPlaying = false;
+    clearTimeout(sequencerTimeout);
+    musicNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    musicNodes = [];
+    getMaster().gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+    setTimeout(() => { if (!musicPlaying) getMaster().gain.value = 0.18; }, 400);
+  } else {
+    // Start
+    musicPlaying = true;
+    getMaster().gain.value = 0;
+    getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
+    currentSection = 0;
+    currentBeat = 0;
+    scheduleSection(0, audioCtx.currentTime + 0.1);
+  }
+  updateMusicBtn();
+}
+
+// Shift to trailer music mode when trailer opens
+const _origPlay = playTrailer;
+function playTrailer(id) {
+  if (musicPlaying) {
+    // Duck the music during trailer
+    getMaster().gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.3);
+  }
+  _origPlay(id);
+}
+const _origClose = closeTrailer;
+function closeTrailer() {
+  _origClose();
+  if (musicPlaying && audioCtx) {
+    getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
+  }
+}
+
 const BAWKS=['🐔 BAWK!','🥚 EGG ACQUIRED','🐔 CLUCK YEAH!','🌽 +1 CORN','🎯 PECK LANDED!',
   '🐶 DOG ADOPTED','🚀 TO THE COOP!','⚔️ FOR HENSBOROUGH!','🦖 RUN.','❓ ...','🐔 THE CHICKENS APPROVE'];
 let bIdx=0;
