@@ -3916,22 +3916,28 @@ function toggleMusic() {
   updateMusicBtn();
 }
 
-// Shift to trailer music mode when trailer opens
-const _origPlay = playTrailer;
-function playTrailer(id) {
-  if (musicPlaying) {
-    // Duck the music during trailer
-    getMaster().gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.3);
+// Duck music when trailer opens/closes — patch onto the modal buttons
+document.addEventListener('DOMContentLoaded', () => {});
+// We patch after modal is created (it's created inline above)
+setTimeout(() => {
+  const tClose = document.getElementById('tClose');
+  if (tClose) {
+    const origClose = tClose.onclick;
+    tClose.onclick = () => {
+      if (origClose) origClose();
+      if (musicPlaying && audioCtx) getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
+    };
   }
-  _origPlay(id);
-}
-const _origClose = closeTrailer;
-function closeTrailer() {
-  _origClose();
-  if (musicPlaying && audioCtx) {
-    getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
-  }
-}
+}, 100);
+
+// Patch play buttons to duck music
+document.querySelectorAll('.play-hint').forEach(btn => {
+  const orig = btn.onclick;
+  btn.onclick = (e) => {
+    if (musicPlaying && audioCtx) getMaster().gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.3);
+    if (orig) orig.call(btn, e);
+  };
+});
 
 const BAWKS=['🐔 BAWK!','🥚 EGG ACQUIRED','🐔 CLUCK YEAH!','🌽 +1 CORN','🎯 PECK LANDED!',
   '🐶 DOG ADOPTED','🚀 TO THE COOP!','⚔️ FOR HENSBOROUGH!','🦖 RUN.','❓ ...','🐔 THE CHICKENS APPROVE'];
