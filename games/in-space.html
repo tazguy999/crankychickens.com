@@ -200,6 +200,10 @@ const ctx = canvas.getContext('2d');
 const msg = document.getElementById('message');
 const GW=640, GH=480, TILE=32;
 
+// Declare early — canvas click handlers reference this immediately
+let gameState='title';
+let titleBtn=null;
+
 let isMobile = ('ontouchstart' in window)||navigator.maxTouchPoints>0;
 const tc = document.getElementById('touchControls');
 const hint = document.getElementById('hint');
@@ -475,8 +479,7 @@ const player={
   sliding:false,  // true when drifting in zero-G
 };
 
-let score=0, cornCount=0, frame=0, gameState='title';
-let titleBtn=null;
+let score=0, cornCount=0, frame=0;
 
 canvas.addEventListener('click',e=>{
   if(gameState!=='title')return;
