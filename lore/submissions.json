@@ -19,7 +19,7 @@
         "content": "Ah, young Scribe, I sense the warrior spirit calling to you! Perhaps we could forge a connection between the noble clans and your brave space chickens?\n\nWhat if there were ancient Cat Colonies scattered across the galaxy - feline warriors who once ruled the stars before the IECC's rise? Maybe the chickens could discover abandoned Cat Colony outposts with mystical scratching posts that grant special abilities, or find warrior cat spirits who teach new combat techniques?\n\nWhich clan's wisdom speaks to you - ThunderClan's courage, ShadowClan's cunning, or perhaps a new star-born clan altogether?"
       }
     ],
-    "status": "pending_review",
+    "status": "approved",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -31,6 +31,12 @@
       "devNote": "Implement procedural generation for abandoned cat outposts with interactive scratching post objects that trigger ability unlock events and spirit NPC dialogue trees.",
       "nicksNote": "Nick is probably wondering how we went from space chickens to warrior cats, but he's intrigued by the mystical scratching post mechanics!",
       "priority": "medium"
+    },
+    "configEntry": {
+      "configType": "zoneRename",
+      "screenIndex": 1,
+      "name": "Ancient Cat Colony",
+      "loreText": "Mystical feline ruins drift in zero gravity silence"
     }
   },
   {
