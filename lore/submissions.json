@@ -28,7 +28,7 @@
         "content": "What do you think"
       }
     ],
-    "status": "pending_review",
+    "status": "approved",
     "spec": {
       "title": "New lore entry",
       "devNote": "Review and implement per scribe description.",
