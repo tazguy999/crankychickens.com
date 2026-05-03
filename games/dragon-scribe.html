@@ -802,10 +802,11 @@ Be mystical but clear. Use occasional fantasy/sci-fi language but stay readable 
 // ═══════════════════════════════
 //  CAST THE SPELL
 // ═══════════════════════════════
+const PROXY='/.netlify/functions/github-proxy';
+
 async function commitToKidsPreview(loreEntry, spec){
   try{
-    // Get current submissions via proxy
-    const getRes=await fetch('/api/github-proxy',{
+    const getRes=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'get_submissions'})
     });
@@ -815,8 +816,7 @@ async function commitToKidsPreview(loreEntry, spec){
 
     existing.unshift({...loreEntry,spec});
 
-    // Save via proxy
-    const saveRes=await fetch('/api/github-proxy',{
+    const saveRes=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         action:'save_submissions',
