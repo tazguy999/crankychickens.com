@@ -10,45 +10,28 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{
   background:#000008;
-  width:100%;height:100%;overflow:hidden;
+  width:100%;height:100%;
+  overflow:hidden;
   touch-action:none;
   font-family:'Nunito',sans-serif;
-  display:flex;flex-direction:column;align-items:center;
 }
 
-/* ── TOP BAR ── */
-#ui{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;max-width:640px;
-  padding:5px 10px;
-  background:linear-gradient(135deg,#0d0d2e,#1a0a4e);
-  border-bottom:3px solid #4040ff;
-  flex-shrink:0;
+/* ── CANVAS: fills entire viewport ── */
+#canvasWrap{
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#000008;
 }
-#ui .title{
-  font-family:'Fredoka One',cursive;color:#7af;
-  font-size:clamp(10px,3vw,16px);
-  text-shadow:0 0 10px #48f;
-}
-#ui .stats{
-  display:flex;gap:8px;align-items:center;
-  font-family:'Fredoka One',cursive;
-  font-size:clamp(10px,3vw,15px);color:#fff;
-}
-#hearts{display:flex;gap:1px;}
-.heart{font-size:clamp(10px,3vw,16px);}
-#zone{
-  font-size:clamp(9px,2.5vw,13px);color:#adf;
-  background:rgba(0,20,80,0.6);
-  padding:1px 6px;border-radius:8px;
-  border:1px solid rgba(100,150,255,0.3);
+canvas#game{
+  display:block;
+  image-rendering:pixelated;
+  touch-action:none;
+  /* size set by JS to fill viewport maintaining aspect ratio */
 }
 
-/* ── CANVAS WRAP ── */
-#canvasWrap{position:relative;flex-shrink:0;}
-canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
+/* ── MESSAGE OVERLAY ── */
 #message{
-  position:absolute;top:50%;left:50%;
+  position:fixed;top:50%;left:50%;
   transform:translate(-50%,-50%);
   background:rgba(0,0,30,0.95);
   color:#ffcc02;font-family:'Fredoka One',cursive;
@@ -56,10 +39,10 @@ canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
   padding:14px 22px;border-radius:14px;
   border:3px solid #4444ff;
   text-align:center;display:none;
-  max-width:92%;line-height:1.5;z-index:10;
+  max-width:92%;line-height:1.5;z-index:50;
 }
 
-/* ── LANDSCAPE PROMPT ── */
+/* ── ROTATE PROMPT ── */
 #rotatePrompt{
   display:none;
   position:fixed;inset:0;
@@ -75,34 +58,35 @@ canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
 #rotatePrompt .icon{font-size:52px;animation:rotate90 1.5s ease-in-out infinite alternate;}
 @keyframes rotate90{from{transform:rotate(0deg)}to{transform:rotate(90deg)}}
 
-/* ── MOBILE CONTROLS ── */
+/* ── TOUCH CONTROLS: float over canvas bottom ── */
 #touchControls{
   display:none;
-  width:100%;max-width:640px;
-  flex-shrink:0;
-  background:#03030f;
-  border-top:2px solid #1a1a4a;
-  position:relative;
+  position:fixed;bottom:0;left:0;right:0;
+  z-index:40;
+  pointer-events:none; /* children override this */
   flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom,0px);
 }
 #ctrlTop{
   display:flex;justify-content:flex-end;align-items:center;
-  gap:6px;padding:5px 10px 2px 10px;
+  gap:6px;padding:4px 14px 0 14px;
+  pointer-events:auto;
 }
 #ctrlMain{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:4px 12px 6px 12px;gap:8px;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  padding:6px 16px 10px 16px;gap:8px;
+  pointer-events:auto;
 }
 
 /* Joystick */
-#joystickZone{width:116px;height:116px;flex-shrink:0;position:relative;}
+#joystickZone{width:130px;height:130px;flex-shrink:0;position:relative;}
 #joystickBase{
   position:absolute;inset:0;border-radius:50%;
-  background:rgba(100,150,255,0.06);
-  border:3px solid rgba(100,150,255,0.3);
+  background:rgba(100,150,255,0.08);
+  border:3px solid rgba(100,150,255,0.35);
 }
 #joystickThumb{
-  position:absolute;width:46px;height:46px;border-radius:50%;
+  position:absolute;width:50px;height:50px;border-radius:50%;
   background:radial-gradient(circle at 35% 35%,#5599ff,#2244cc);
   border:3px solid #aacfff;
   top:50%;left:50%;transform:translate(-50%,-50%);
@@ -111,53 +95,68 @@ canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
 
 /* PECK button */
 #attackBtn{
-  width:100px;height:100px;border-radius:50%;
+  width:110px;height:110px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#ff6b35,#cc2200);
   border:4px solid #ffcc02;
-  color:#fff;font-family:'Fredoka One',cursive;font-size:13px;
+  color:#fff;font-family:'Fredoka One',cursive;font-size:14px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.7),0 0 20px rgba(255,100,50,0.3);
+  box-shadow:0 4px 20px rgba(0,0,0,0.8),0 0 24px rgba(255,100,50,0.4);
   cursor:pointer;user-select:none;-webkit-user-select:none;flex-shrink:0;
   transition:transform 0.05s,filter 0.05s;
+  pointer-events:auto;
 }
-#attackBtn span{font-size:28px;line-height:1;}
+#attackBtn span{font-size:30px;line-height:1;}
 #attackBtn.pressed{transform:scale(0.91);filter:brightness(1.4);}
-
-/* Zero-G indicator on peck button */
 #attackBtn.zerog{
   background:radial-gradient(circle at 35% 30%,#5599ff,#1133aa);
   border-color:#aacfff;
-  box-shadow:0 4px 14px rgba(0,0,80,0.7),0 0 20px rgba(80,150,255,0.5);
+  box-shadow:0 4px 14px rgba(0,0,80,0.7),0 0 24px rgba(80,150,255,0.6);
 }
 
 /* Small action buttons */
 .ctrl-sm{
   font-family:'Fredoka One',cursive;font-size:11px;
   padding:0;border-radius:12px;
-  border:2px solid rgba(100,150,255,0.2);
-  background:rgba(100,150,255,0.06);
+  border:2px solid rgba(100,150,255,0.25);
+  background:rgba(0,0,20,0.65);
+  backdrop-filter:blur(4px);
   color:#adf;cursor:pointer;
   user-select:none;-webkit-user-select:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   transition:transform 0.07s,filter 0.07s;
   -webkit-tap-highlight-color:transparent;flex-shrink:0;
+  pointer-events:auto;
 }
 .ctrl-sm:active,.ctrl-sm.pressed{transform:scale(0.88);filter:brightness(1.5);}
 .ctrl-sm .icon{font-size:18px;line-height:1.1;}
 .ctrl-sm .lbl{font-size:9px;opacity:0.8;letter-spacing:0.3px;}
 
-/* Start/restart overlay */
-#startTouchBtn,#restartTouchBtn{
-  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-  font-family:'Fredoka One',cursive;font-size:18px;
-  padding:10px 32px;border-radius:30px;border:none;
-  cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.6);
-  display:none;z-index:20;
+/* Fullscreen button */
+#fsBtn{
+  position:fixed;top:8px;right:8px;
+  z-index:45;
+  font-size:18px;
+  background:rgba(0,0,20,0.55);
+  backdrop-filter:blur(4px);
+  border:1px solid rgba(100,150,255,0.25);
+  border-radius:8px;
+  padding:5px 8px;
+  cursor:pointer;
+  color:#7af;
+  font-family:'Fredoka One',cursive;
+  pointer-events:auto;
+  transition:opacity 0.2s;
 }
-#startTouchBtn{background:#4455ff;color:#fff;border:2px solid #aacfff;}
-#restartTouchBtn{background:#ff6b35;color:#fff;}
+#fsBtn:hover{opacity:0.8;}
 
-#hint{color:#334;font-size:9px;padding:1px 0;text-align:center;flex-shrink:0;}
+/* hint — desktop only, sits over canvas bottom-center */
+#hint{
+  position:fixed;bottom:6px;left:50%;transform:translateX(-50%);
+  color:rgba(100,150,255,0.4);font-size:10px;
+  font-family:'Fredoka One',cursive;letter-spacing:0.5px;
+  pointer-events:none;z-index:41;
+  white-space:nowrap;
+}
 </style>
 </head>
 <body>
@@ -167,26 +166,16 @@ canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
   <div>Rotate your device<br>for the best experience!</div>
 </div>
 
-<div id="ui">
-  <div class="title">🚀 Cranky Chickens: In Space</div>
-  <div class="stats">
-    <div id="hearts"></div>
-    <div>🌽<span id="cornCount">0</span></div>
-    <div>⭐<span id="score">0</span></div>
-    <div id="zone">Star Map</div>
-  </div>
-</div>
-
 <div id="canvasWrap">
   <canvas id="game" width="640" height="480"></canvas>
-  <div id="message"></div>
 </div>
+<div id="message"></div>
+
+<!-- Fullscreen toggle -->
+<button id="fsBtn" title="Fullscreen">⛶</button>
 
 <div id="touchControls">
   <div id="ctrlTop">
-    <button class="ctrl-sm" id="mapBtn" style="width:52px;height:44px;">
-      <span class="icon">🗺️</span><span class="lbl">MAP</span>
-    </button>
     <button class="ctrl-sm" id="unstuckBtn" style="width:52px;height:44px;">
       <span class="icon">📍</span><span class="lbl">UNSTUCK</span>
     </button>
@@ -198,10 +187,8 @@ canvas#game{display:block;image-rendering:pixelated;touch-action:none;}
     </div>
     <div id="attackBtn"><span>💥</span>PECK!</div>
   </div>
-  <button id="startTouchBtn">🚀 TAP TO LAUNCH!</button>
-  <button id="restartTouchBtn">🔄 TRY AGAIN!</button>
 </div>
-<div id="hint">⌨️ WASD/Arrows — move &nbsp;|&nbsp; SPACE — peck</div>
+<div id="hint">⌨️ WASD / Arrows — move &nbsp;|&nbsp; SPACE — peck &nbsp;|&nbsp; ⛶ fullscreen</div>
 
 <script>
 'use strict';
@@ -230,16 +217,34 @@ window.addEventListener('resize', ()=>{ checkOrientation(); resize(); });
 window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ checkOrientation(); resize(); },200); });
 
 function resize(){
-  const uiH = document.getElementById('ui').offsetHeight;
-  const tcH = isMobile ? (tc.offsetHeight||158) : 0;
-  const hH  = isMobile ? 0 : hint.offsetHeight;
-  const scale = Math.min(window.innerWidth/GW, (window.innerHeight-uiH-tcH-hH-4)/GH, 1);
+  // Fill the full viewport, letterbox with aspect ratio
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const scale = Math.min(vw/GW, vh/GH);
   canvas.style.width  = (GW*scale)+'px';
   canvas.style.height = (GH*scale)+'px';
-  document.getElementById('canvasWrap').style.width = (GW*scale)+'px';
 }
-if(isMobile){ tc.style.display='flex'; tc.style.flexDirection='column'; hint.style.display='none'; }
+if(isMobile){
+  tc.style.display='flex';
+  hint.style.display='none';
+}
 resize();
+
+// ── FULLSCREEN ──
+const fsBtn = document.getElementById('fsBtn');
+fsBtn.addEventListener('click',()=>{
+  const el = document.documentElement;
+  if(!document.fullscreenElement){
+    (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen).call(el);
+    fsBtn.textContent='✕';
+  } else {
+    (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen).call(document);
+    fsBtn.textContent='⛶';
+  }
+});
+document.addEventListener('fullscreenchange',()=>{
+  fsBtn.textContent = document.fullscreenElement ? '✕' : '⛶';
+  resize();
+});
 
 // ═══════════════════════════════════════════════
 //  JOYSTICK
@@ -247,8 +252,6 @@ resize();
 const jZone  = document.getElementById('joystickZone');
 const jThumb = document.getElementById('joystickThumb');
 const atkBtn = document.getElementById('attackBtn');
-const startBtn   = document.getElementById('startTouchBtn');
-const restartBtn = document.getElementById('restartTouchBtn');
 
 let joyActive=false, joyId=null, joyDx=0, joyDy=0;
 const JR=34;
@@ -287,10 +290,7 @@ atkBtn.addEventListener('touchend',e=>{
   e.preventDefault(); atkBtn.classList.remove('pressed');
 },{passive:false});
 
-startBtn.addEventListener('touchstart',e=>{ e.preventDefault(); startGame(); },{passive:false});
-startBtn.addEventListener('click',()=>startGame());
-restartBtn.addEventListener('touchstart',e=>{ e.preventDefault(); restartGame(); },{passive:false});
-restartBtn.addEventListener('click',()=>restartGame());
+
 
 // ═══════════════════════════════════════════════
 //  KEYBOARD INPUT
@@ -688,7 +688,7 @@ function startScroll(ncol,nrow,npx,npy){
 
   // Update zone name
   const ns=SCREENS[screenIndex(ncol,nrow)];
-  if(ns) document.getElementById('zone').textContent=ns.name;
+  if(ns) hudZone=ns.name;
 }
 
 function updateScroll(){
@@ -1100,19 +1100,40 @@ function drawCorn(x,y,fr){
 }
 
 // ═══════════════════════════════════════════════
-//  HUD
+//  HUD — drawn on canvas
 // ═══════════════════════════════════════════════
+let hudHearts=player.maxHp, hudHp=player.hp, hudCorn=0, hudScore=0, hudZone='Landing Zone';
+
 function updateHUD(){
-  const hearts=document.getElementById('hearts');
-  hearts.innerHTML='';
-  for(let i=0;i<player.maxHp;i++){
-    const h=document.createElement('span');
-    h.className='heart';
-    h.textContent=i<player.hp?'❤️':'🖤';
-    hearts.appendChild(h);
+  hudHp=player.hp; hudHearts=player.maxHp;
+  hudCorn=cornCount; hudScore=score;
+  hudZone=currentScreen?currentScreen().name:'';
+}
+
+function drawHUD(){
+  // Top-left: hearts
+  const heartSize=18;
+  for(let i=0;i<hudHearts;i++){
+    ctx.font=`${heartSize}px Arial`;
+    ctx.fillText(i<hudHp?'❤️':'🖤',8+i*(heartSize+2),22);
   }
-  document.getElementById('cornCount').textContent=cornCount;
-  document.getElementById('score').textContent=score;
+
+  // Top-right: corn + score
+  ctx.fillStyle='rgba(0,0,20,0.6)';
+  ctx.beginPath();ctx.roundRect(GW-120,4,116,26,8);ctx.fill();
+  ctx.font='bold 13px Fredoka One';ctx.textAlign='right';
+  ctx.fillStyle='#ffcc02';
+  ctx.fillText(`🌽 ${hudCorn}  ⭐ ${hudScore}`,GW-8,21);
+  ctx.textAlign='left';
+
+  // Bottom-left: zone name
+  if(hudZone){
+    ctx.fillStyle='rgba(0,0,20,0.55)';
+    const tw=ctx.measureText(hudZone).width+20;
+    ctx.beginPath();ctx.roundRect(4,GH-26,tw,22,6);ctx.fill();
+    ctx.fillStyle='#aacfff';ctx.font='bold 12px Fredoka One';
+    ctx.fillText(hudZone,10,GH-10);
+  }
 }
 
 function showMsg(txt){
@@ -1165,10 +1186,11 @@ function drawTitle(){
   drawChicken(GW/2-16,GH/2-60,2,0,frame);
   ctx.restore();
 
-  // Press to start
+  // Hint below button
   const pulse=0.6+Math.sin(frame*0.08)*0.4;
   ctx.globalAlpha=pulse;
-  ctx.font='bold 18px Fredoka One';ctx.fillStyle='#ffcc02';
+  ctx.font='bold 13px Fredoka One';ctx.fillStyle='rgba(200,220,255,0.7)';ctx.textAlign='center';
+  ctx.fillText(isMobile?'TAP TO START':'PRESS ENTER OR SPACE',GW/2,GH-28);
   ctx.globalAlpha=1;ctx.textAlign='left';
 
   // Draw clickable PLAY DEMO button on canvas
@@ -1180,7 +1202,6 @@ function drawTitle(){
   ctx.fillStyle='#1a0a2e';ctx.font='bold 22px Fredoka One';ctx.textAlign='center';
   ctx.fillText('▶ PLAY DEMO',GW/2,by+34);
   ctx.textAlign='left';
-  // Store button bounds for click/tap detection
   titleBtn={x:bx,y:by,w:bw,h:bh};
 }
 
@@ -1197,10 +1218,7 @@ function startGame(){
   currentZone='cornmoon';
   hideMsg();
   updateHUD();
-  document.getElementById('zone').textContent=currentScreen().name;
-
-  const rb=document.getElementById('restartTouchBtn');
-  if(rb)rb.style.display='none';
+  hudZone=currentScreen().name;
   titleBtn=null;
   updateZeroGUI();
 }
@@ -1281,6 +1299,9 @@ function loop(){
 
   // Particles
   tickP();
+
+  // Canvas HUD overlay
+  if(gameState==='play') drawHUD();
 
   // Popup
   if(popup.timer>0){
