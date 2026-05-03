@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Control — Nick's Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+  --green: #00cc66;
+  --blue: #4488ff;
+  --orange: #ff6b00;
+  --red: #e63946;
+  --gold: #ffcc02;
+  --dark: #0a0f1a;
+  --surface: #111827;
+  --surface2: #1a2535;
+  --border: rgba(100,150,255,0.2);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  background:var(--dark);
+  min-height:100vh;
+  font-family:'Nunito',sans-serif;
+  color:#e0e8f0;
+}
+
+/* ── HEADER ── */
+.hdr {
+  background:linear-gradient(135deg,#0d1220,#111827);
+  border-bottom:2px solid var(--border);
+  padding:16px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;
+}
+.hdr-left { display:flex;flex-direction:column; }
+.hdr-title {
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(20px,4vw,28px);
+  color:var(--gold);
+  text-shadow:0 0 20px rgba(255,204,2,0.4);
+}
+.hdr-sub { font-size:13px;color:rgba(100,150,255,0.7);letter-spacing:1px; }
+
+.hdr-stats { display:flex;gap:12px;flex-wrap:wrap; }
+.stat-pill {
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:6px 14px;
+  font-family:'Fredoka One',cursive;font-size:14px;
+  display:flex;align-items:center;gap:6px;
+}
+.stat-pill .stat-n { color:var(--gold); }
+
+/* ── LAYOUT ── */
+.main { max-width:900px;margin:0 auto;padding:20px 16px; }
+
+/* ── TABS ── */
+.tabs { display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0; }
+.tab {
+  font-family:'Fredoka One',cursive;font-size:14px;
+  padding:10px 18px;border-radius:10px 10px 0 0;
+  cursor:pointer;color:rgba(200,220,255,0.5);
+  border:1px solid transparent;border-bottom:none;
+  transition:all 0.15s;
+  -webkit-user-select:none;user-select:none;
+}
+.tab.active { background:var(--surface);color:var(--gold);border-color:var(--border); }
+.tab:hover:not(.active) { color:rgba(200,220,255,0.8); }
+.tab-count {
+  background:var(--red);color:#fff;
+  font-size:10px;border-radius:10px;padding:1px 6px;
+  margin-left:4px;vertical-align:middle;
+}
+
+/* ── SUBMISSION CARD ── */
+.submission-card {
+  background:var(--surface);
+  border:2px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  margin-bottom:14px;
+  transition:border-color 0.2s;
+}
+.submission-card:hover { border-color:rgba(100,150,255,0.4); }
+.submission-card.approved { border-color:rgba(0,204,102,0.4);background:rgba(0,204,102,0.04); }
+.submission-card.rejected { border-color:rgba(230,57,70,0.3);background:rgba(230,57,70,0.03);opacity:0.7; }
+
+.card-top { display:flex;align-items:flex-start;gap:12px;margin-bottom:12px; }
+.card-type-icon { font-size:32px;flex-shrink:0; }
+.card-header { flex:1;min-width:0; }
+.card-title {
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(15px,3vw,18px);
+  color:#e0e8ff;line-height:1.2;margin-bottom:4px;
+}
+.card-meta { display:flex;gap:8px;flex-wrap:wrap;align-items:center; }
+.badge {
+  font-size:11px;padding:2px 10px;border-radius:12px;
+  font-family:'Fredoka One',cursive;letter-spacing:0.5px;
+}
+.badge-cannon { background:rgba(255,107,0,0.15);color:var(--orange);border:1px solid rgba(255,107,0,0.3); }
+.badge-scribe { background:rgba(123,47,255,0.15);color:#aa66ff;border:1px solid rgba(123,47,255,0.3); }
+.badge-type { background:rgba(100,150,255,0.1);color:#88aaff;border:1px solid var(--border); }
+.badge-priority-high { background:rgba(230,57,70,0.15);color:#ff6b7a;border:1px solid rgba(230,57,70,0.3); }
+.badge-priority-medium { background:rgba(255,204,2,0.1);color:var(--gold);border:1px solid rgba(255,204,2,0.2); }
+.badge-priority-low { background:rgba(100,150,255,0.1);color:#88aaff;border:1px solid var(--border); }
+.card-time { font-size:11px;color:rgba(150,170,200,0.5);margin-left:auto; }
+
+.card-summary {
+  font-size:clamp(13px,2.5vw,15px);
+  color:rgba(200,220,255,0.85);line-height:1.5;
+  margin-bottom:10px;
+}
+.card-dev-note {
+  background:rgba(0,0,0,0.2);border-left:3px solid var(--blue);
+  border-radius:0 8px 8px 0;padding:10px 12px;
+  font-size:clamp(12px,2.2vw,14px);color:rgba(150,200,255,0.8);
+  font-style:italic;margin-bottom:12px;line-height:1.5;
+}
+.card-lore {
+  background:rgba(123,47,255,0.05);border:1px solid rgba(123,47,255,0.2);
+  border-radius:8px;padding:10px 12px;
+  font-size:clamp(12px,2.2vw,13px);color:rgba(200,180,255,0.75);
+  line-height:1.6;margin-bottom:12px;
+  max-height:80px;overflow:hidden;transition:max-height 0.3s;
+  cursor:pointer;
+}
+.card-lore.expanded { max-height:400px; }
+.card-lore-label {
+  font-family:'Fredoka One',cursive;font-size:10px;
+  color:#aa66ff;letter-spacing:1px;text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+/* ── ACTION BUTTONS ── */
+.card-actions { display:flex;gap:8px;flex-wrap:wrap; }
+.act-btn {
+  font-family:'Fredoka One',cursive;font-size:13px;
+  padding:8px 18px;border-radius:20px;cursor:pointer;
+  border:2px solid;transition:all 0.15s;
+  -webkit-user-select:none;user-select:none;
+  display:flex;align-items:center;gap:6px;
+}
+.act-btn:active { transform:scale(0.96); }
+.btn-approve { background:rgba(0,204,102,0.1);border-color:rgba(0,204,102,0.4);color:var(--green); }
+.btn-approve:hover { background:rgba(0,204,102,0.2); }
+.btn-reject { background:rgba(230,57,70,0.08);border-color:rgba(230,57,70,0.3);color:var(--red); }
+.btn-reject:hover { background:rgba(230,57,70,0.15); }
+.btn-view { background:rgba(100,150,255,0.08);border-color:var(--border);color:#88aaff; }
+.btn-view:hover { background:rgba(100,150,255,0.15); }
+.btn-merge { background:rgba(0,204,102,0.15);border-color:var(--green);color:var(--green);font-size:14px; }
+.btn-merge:hover { background:rgba(0,204,102,0.25); }
+
+.status-approved {
+  display:flex;align-items:center;gap:6px;
+  font-family:'Fredoka One',cursive;font-size:13px;color:var(--green);
+}
+.status-rejected {
+  display:flex;align-items:center;gap:6px;
+  font-family:'Fredoka One',cursive;font-size:13px;color:var(--red);
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align:center;padding:60px 24px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.empty-icon { font-size:56px;opacity:0.3; }
+.empty-text { font-family:'Fredoka One',cursive;font-size:18px;color:rgba(150,170,200,0.4); }
+.empty-sub { font-size:13px;color:rgba(150,170,200,0.3);max-width:300px;line-height:1.6; }
+
+/* ── MERGE PANEL ── */
+.merge-panel {
+  background:linear-gradient(135deg,rgba(0,204,102,0.08),rgba(0,0,0,0));
+  border:2px solid rgba(0,204,102,0.3);
+  border-radius:16px;padding:18px;margin-bottom:20px;
+  display:none;
+}
+.merge-panel.active { display:block; }
+.merge-title {
+  font-family:'Fredoka One',cursive;font-size:18px;
+  color:var(--green);margin-bottom:8px;
+}
+.merge-sub { font-size:13px;color:rgba(150,200,150,0.7);margin-bottom:14px;line-height:1.5; }
+
+/* ── PREVIEW LINK ── */
+.preview-link {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(100,150,255,0.08);border:1px solid var(--border);
+  border-radius:10px;padding:6px 12px;
+  font-size:13px;color:#88aaff;text-decoration:none;
+  transition:background 0.15s;
+}
+.preview-link:hover { background:rgba(100,150,255,0.15); }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed;bottom:24px;right:24px;
+  background:var(--surface2);border:2px solid var(--green);
+  border-radius:12px;padding:12px 18px;
+  font-family:'Fredoka One',cursive;font-size:14px;color:var(--green);
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  transform:translateY(80px);opacity:0;
+  transition:all 0.3s;z-index:100;
+}
+.toast.show { transform:translateY(0);opacity:1; }
+
+/* ── LOADING ── */
+.loading {
+  display:flex;align-items:center;gap:10px;
+  padding:20px;color:rgba(150,170,200,0.6);
+  font-family:'Fredoka One',cursive;font-size:14px;
+}
+.spinner { animation:spin 1s linear infinite;font-size:20px; }
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-title">🚀 Mission Control</div>
+    <div class="hdr-sub">CRANKY CHICKENS — NICK'S REVIEW DASHBOARD</div>
+  </div>
+  <div class="hdr-stats">
+    <div class="stat-pill">📜 Pending <span class="stat-n" id="statPending">—</span></div>
+    <div class="stat-pill">✅ Approved <span class="stat-n" id="statApproved">—</span></div>
+    <div class="stat-pill">🚀 Deployed <span class="stat-n" id="statDeployed">—</span></div>
+    <a href="https://kids-preview--crankychickens.netlify.app" target="_blank" class="preview-link">
+      🌐 Preview Branch ↗
+    </a>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Merge panel -->
+  <div class="merge-panel" id="mergePanel">
+    <div class="merge-title">✅ Ready to Merge to Main</div>
+    <div class="merge-sub" id="mergeSub">You have approved submissions ready to deploy to production.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="act-btn btn-merge" onclick="mergeToMain()">🚀 Merge kids-preview → main</button>
+      <a href="https://github.com/tazguy999/crankychickens.com/compare/main...kids-preview" target="_blank" class="act-btn btn-view">👁 View PR on GitHub ↗</a>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('pending',this)">📬 Pending <span class="tab-count" id="tabPendingCount">0</span></div>
+    <div class="tab" onclick="switchTab('approved',this)">✅ Approved</div>
+    <div class="tab" onclick="switchTab('all',this)">📋 All</div>
+  </div>
+
+  <!-- Content -->
+  <div id="tabContent">
+    <div class="loading"><span class="spinner">⚙️</span> Loading submissions from kids-preview branch...</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PROXY='/api/github-proxy';
+
+let allSubmissions=[];
+let currentSha=null;
+let currentTab='pending';
+
+// ── LOAD SUBMISSIONS ──
+async function loadSubmissions(){
+  try{
+    const res=await fetch(PROXY,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_submissions'})
+    });
+    const data=await res.json();
+    if(data.error){ showEmpty('Could not load submissions: '+data.error); return; }
+    if(!data.submissions||data.submissions.length===0){ showEmpty('No submissions file yet — waiting for the Dragon Scribe to cast her first spell! 🐉'); return; }
+    allSubmissions=data.submissions;
+    currentSha=data.sha||null;
+    renderAll();
+  }catch(e){
+    showEmpty('Could not load submissions. Check your connection.');
+    console.error(e);
+  }
+}
+
+function renderAll(){
+  updateStats();
+  renderTab(currentTab);
+  // Show merge panel if any approved
+  const approved=allSubmissions.filter(s=>s.status==='approved');
+  const mergePanel=document.getElementById('mergePanel');
+  if(approved.length>0){
+    mergePanel.classList.add('active');
+    document.getElementById('mergeSub').textContent=
+      `${approved.length} approved submission${approved.length>1?'s':''} ready to deploy to crankychickens.com`;
+  } else {
+    mergePanel.classList.remove('active');
+  }
+}
+
+function updateStats(){
+  const pending=allSubmissions.filter(s=>s.status==='pending_review').length;
+  const approved=allSubmissions.filter(s=>s.status==='approved').length;
+  const deployed=allSubmissions.filter(s=>s.status==='deployed').length;
+  document.getElementById('statPending').textContent=pending;
+  document.getElementById('statApproved').textContent=approved;
+  document.getElementById('statDeployed').textContent=deployed;
+  document.getElementById('tabPendingCount').textContent=pending;
+}
+
+function switchTab(tab, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab=tab;
+  renderTab(tab);
+}
+
+function renderTab(tab){
+  let items=allSubmissions;
+  if(tab==='pending') items=allSubmissions.filter(s=>s.status==='pending_review');
+  if(tab==='approved') items=allSubmissions.filter(s=>s.status==='approved'||s.status==='deployed');
+
+  const el=document.getElementById('tabContent');
+  if(items.length===0){
+    el.innerHTML=`
+      <div class="empty">
+        <div class="empty-icon">${tab==='pending'?'📬':'✅'}</div>
+        <div class="empty-text">${tab==='pending'?'Nothing pending!':'Nothing approved yet'}</div>
+        <div class="empty-sub">${tab==='pending'?'All caught up. The kids haven\'t submitted anything new.':'Approve some submissions to see them here.'}</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML=items.map((s,i)=>renderCard(s,i)).join('');
+}
+
+function renderCard(s, i){
+  const globalIdx=allSubmissions.indexOf(s);
+  const isApproved=s.status==='approved'||s.status==='deployed';
+  const isRejected=s.status==='rejected';
+  const priorityBadge=s.spec?.priority?`<span class="badge badge-priority-${s.spec.priority}">${s.spec.priority} priority</span>`:'';
+  const typeIcon={'mechanic':'⚙️','enemy':'👾','level':'🗺️','visual':'🎨','story':'📖','sound':'🔊','vote':'⚡','rating':'⭐','drawing':'✏️','photo':'📸','text':'💬'}[s.type]||'📜';
+  const source=s.originalSubmission?'<span class="badge badge-cannon">💥 Cannon Master</span>':'<span class="badge badge-scribe">🐉 Dragon Scribe</span>';
+
+  return `
+  <div class="submission-card ${isApproved?'approved':''} ${isRejected?'rejected':''}" id="card_${globalIdx}">
+    <div class="card-top">
+      <div class="card-type-icon">${typeIcon}</div>
+      <div class="card-header">
+        <div class="card-title">${s.spec?.title||s.scribeName||s.summary||'Untitled'}</div>
+        <div class="card-meta">
+          ${source}
+          <span class="badge badge-type">${s.type||'idea'}</span>
+          ${priorityBadge}
+          <span class="card-time">${formatTime(s.timestamp)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-summary">${s.summary||s.description||''}</div>
+
+    ${s.spec?.devNote?`<div class="card-dev-note">🔧 ${s.spec.devNote}</div>`:''}
+
+    ${s.description?`
+    <div class="card-lore" onclick="this.classList.toggle('expanded')">
+      <div class="card-lore-label">🐉 Dragon Scribe's Lore</div>
+      ${s.description}
+    </div>`:''}
+
+    <div class="card-actions">
+      ${isApproved?`<div class="status-approved">✅ ${s.status==='deployed'?'Deployed to production':'Approved — ready to merge'}</div>`:
+        isRejected?`<div class="status-rejected">✕ Rejected</div>`:`
+        <button class="act-btn btn-approve" onclick="approve(${globalIdx})">✅ Approve</button>
+        <button class="act-btn btn-reject" onclick="reject(${globalIdx})">✕ Pass</button>`}
+      <a href="https://kids-preview--crankychickens.netlify.app" target="_blank" class="act-btn btn-view">🌐 Preview</a>
+    </div>
+  </div>`;
+}
+
+function formatTime(ts){
+  if(!ts)return '';
+  const d=new Date(ts);
+  const diff=Date.now()-d;
+  if(diff<60000) return 'just now';
+  if(diff<3600000) return Math.floor(diff/60000)+'m ago';
+  if(diff<86400000) return Math.floor(diff/3600000)+'h ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+function showEmpty(msg){
+  document.getElementById('tabContent').innerHTML=`
+    <div class="empty">
+      <div class="empty-icon">🐉</div>
+      <div class="empty-text">Waiting for submissions</div>
+      <div class="empty-sub">${msg}</div>
+    </div>`;
+}
+
+// ── APPROVE / REJECT ──
+async function approve(idx){
+  allSubmissions[idx].status='approved';
+  await saveSubmissions('✅ Approved: '+( allSubmissions[idx].spec?.title||allSubmissions[idx].scribeName));
+  toast('✅ Approved! Merge when ready.');
+  renderAll();
+}
+
+async function reject(idx){
+  allSubmissions[idx].status='rejected';
+  await saveSubmissions('✕ Rejected: '+(allSubmissions[idx].spec?.title||allSubmissions[idx].scribeName));
+  toast('Passed on this one.');
+  renderAll();
+}
+
+async function saveSubmissions(commitMsg){
+  try{
+    const res=await fetch(PROXY,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_submissions',
+        submissions:allSubmissions,
+        sha:currentSha,
+        commitMsg
+      })
+    });
+    const data=await res.json();
+    if(data.sha) currentSha=data.sha;
+  }catch(e){ console.error('Save failed',e); }
+}
+
+// ── MERGE TO MAIN ──
+async function mergeToMain(){
+  if(!confirm('Merge kids-preview → main? This deploys to crankychickens.com!'))return;
+  try{
+    const res=await fetch(PROXY,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'merge_to_main'})
+    });
+    const data=await res.json();
+    if(data.merged){
+      allSubmissions.filter(s=>s.status==='approved').forEach(s=>s.status='deployed');
+      await saveSubmissions('Post-merge: mark submissions as deployed');
+      toast('🚀 Merged to main! Netlify is deploying now...');
+      renderAll();
+    } else {
+      toast('Merge failed — open GitHub to do it manually.');
+    }
+  }catch(e){ toast('Merge error — check GitHub.'); console.error(e); }
+}
+
+// ── TOAST ──
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── INIT ──
+loadSubmissions();
+setInterval(loadSubmissions,30000); // auto-refresh every 30s
+</script>
+</body>
+</html>

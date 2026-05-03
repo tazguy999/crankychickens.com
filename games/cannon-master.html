@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cannon Master HQ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+  --orange: #ff6b00;
+  --yellow: #ffcc02;
+  --red: #e63946;
+  --dark: #1a0a00;
+  --darker: #0d0500;
+  --surface: #2a1200;
+  --glow: rgba(255,107,0,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  background: var(--darker);
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  overflow-x: hidden;
+  touch-action: manipulation;
+}
+
+/* ── STARS BG ── */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,107,0,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255,204,2,0.06) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+.screen { display:none; flex-direction:column; align-items:center; min-height:100vh; padding:0 0 40px; position:relative; z-index:1; }
+.screen.active { display:flex; }
+
+/* ── HEADER ── */
+.hdr {
+  width:100%;
+  background: linear-gradient(135deg, #1a0800, #2d1200);
+  border-bottom: 3px solid var(--orange);
+  padding: 14px 16px 10px;
+  text-align:center;
+  box-shadow: 0 4px 20px rgba(255,107,0,0.3);
+}
+.hdr .title {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(22px,7vw,34px);
+  color: var(--yellow);
+  text-shadow: 0 0 20px var(--orange), 0 2px 0 #8b3a00;
+  line-height:1;
+}
+.hdr .sub {
+  font-size: clamp(11px,3.5vw,14px);
+  color: rgba(255,180,80,0.7);
+  margin-top:3px;
+  letter-spacing:1px;
+}
+
+/* ── SLINGSHOT LAUNCHER ANIM (home screen) ── */
+.launcher-wrap {
+  width:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding: 20px 0 8px;
+  position:relative;
+  height:140px;
+}
+.slingshot {
+  font-size:80px;
+  animation: slingshotPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px var(--orange));
+  user-select:none;
+}
+@keyframes slingshotPulse {
+  0%,100%{transform:scale(1) rotate(-5deg);}
+  50%{transform:scale(1.08) rotate(5deg);}
+}
+.stars-fly {
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;overflow:hidden;
+}
+.star-particle {
+  position:absolute;
+  font-size:20px;
+  animation: flyAcross linear infinite;
+  opacity:0;
+}
+@keyframes flyAcross {
+  0%{opacity:0;transform:translateX(-20px) scale(0.5);}
+  10%{opacity:1;}
+  90%{opacity:1;}
+  100%{opacity:0;transform:translateX(100vw) scale(1.2);}
+}
+
+/* ── BIG ACTION BUTTONS ── */
+.big-btn-grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width:100%;
+  padding: 0 16px;
+  margin-top:8px;
+}
+.big-btn {
+  background: linear-gradient(145deg, #2d1800, #1a0a00);
+  border: 3px solid var(--orange);
+  border-radius: 20px;
+  padding: 20px 12px 16px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  cursor:pointer;
+  box-shadow: 0 4px 20px rgba(255,107,0,0.25), inset 0 1px 0 rgba(255,180,80,0.1);
+  transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
+  -webkit-user-select:none;user-select:none;
+  position:relative;overflow:hidden;
+}
+.big-btn::after {
+  content:'';position:absolute;inset:0;
+  background: radial-gradient(circle at 50% 0%, rgba(255,180,80,0.12), transparent 70%);
+}
+.big-btn:active {
+  transform: scale(0.94);
+  box-shadow: 0 2px 10px rgba(255,107,0,0.4);
+  border-color: var(--yellow);
+}
+.big-btn .btn-icon { font-size: clamp(36px,11vw,52px); line-height:1; }
+.big-btn .btn-label {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(14px,4.5vw,18px);
+  color: var(--yellow);
+  text-align:center;
+  line-height:1.2;
+}
+.big-btn .btn-sub {
+  font-size: clamp(10px,3vw,12px);
+  color: rgba(255,180,80,0.6);
+  text-align:center;
+}
+
+/* Draw button — full width */
+.big-btn.full {
+  grid-column: 1 / -1;
+  flex-direction:row;
+  padding: 18px 24px;
+  gap:16px;
+  justify-content:flex-start;
+}
+.big-btn.full .btn-label { font-size: clamp(16px,5vw,22px); }
+
+/* ── FIRE BUTTON ── */
+.fire-btn {
+  width: calc(100% - 32px);
+  margin: 20px 16px 0;
+  background: linear-gradient(135deg, #ff4500, #ff8c00, #ff4500);
+  background-size:200% 200%;
+  animation: firePulse 1.5s ease infinite;
+  border: none;
+  border-radius: 24px;
+  padding: 22px;
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(24px,7vw,34px);
+  color:#fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 6px 30px rgba(255,100,0,0.6), 0 0 0 0 rgba(255,100,0,0.4);
+  cursor:pointer;
+  letter-spacing:2px;
+  position:relative;overflow:hidden;
+  -webkit-user-select:none;user-select:none;
+}
+@keyframes firePulse {
+  0%,100%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+}
+.fire-btn:active { transform:scale(0.96); }
+.fire-btn .fire-icon { display:block; font-size: clamp(30px,10vw,48px); margin-bottom:4px; }
+
+/* ── DRAW SCREEN ── */
+.draw-screen-inner {
+  width:100%;padding:0 16px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.canvas-wrap {
+  width:100%;
+  border-radius:16px;
+  border: 3px solid var(--orange);
+  overflow:hidden;
+  box-shadow: 0 4px 20px rgba(255,107,0,0.3);
+  background:#fff;
+  position:relative;
+}
+#drawCanvas {
+  display:block;
+  width:100%;
+  touch-action:none;
+  cursor:crosshair;
+}
+.canvas-tools {
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+}
+.color-swatch {
+  width:44px;height:44px;border-radius:50%;
+  border:3px solid transparent;
+  cursor:pointer;transition:transform 0.1s,border-color 0.1s;
+  -webkit-user-select:none;user-select:none;
+  flex-shrink:0;
+}
+.color-swatch.active { border-color:#fff; transform:scale(1.15); }
+.color-swatch:active { transform:scale(0.9); }
+.size-btn {
+  background:var(--surface);border:2px solid var(--orange);
+  border-radius:12px;color:var(--yellow);
+  font-family:'Fredoka One',cursive;font-size:14px;
+  padding:8px 14px;cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+}
+.size-btn.active { background:var(--orange); color:#fff; }
+.clear-btn {
+  margin-left:auto;
+  background:rgba(230,57,70,0.2);border:2px solid var(--red);
+  border-radius:12px;color:var(--red);
+  font-family:'Fredoka One',cursive;font-size:14px;
+  padding:8px 14px;cursor:pointer;
+}
+
+/* ── TEXT INPUT SCREEN ── */
+.idea-wrap {
+  width:100%;padding:0 16px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.idea-label {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(18px,5.5vw,24px);
+  color:var(--yellow);text-align:center;
+}
+.idea-prompt {
+  background:var(--surface);
+  border:3px solid var(--orange);
+  border-radius:16px;
+  padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.prompt-chip {
+  background: linear-gradient(135deg, rgba(255,107,0,0.2), rgba(255,204,2,0.1));
+  border:2px solid rgba(255,107,0,0.4);
+  border-radius:20px;padding:10px 16px;
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(13px,4vw,16px);
+  color:#ffcc02;cursor:pointer;
+  transition:transform 0.1s,background 0.1s;
+  -webkit-user-select:none;user-select:none;
+  text-align:center;
+}
+.prompt-chip:active { transform:scale(0.96); background:rgba(255,107,0,0.4); }
+.prompt-chip.selected { background:rgba(255,107,0,0.5); border-color:var(--yellow); }
+.idea-textarea {
+  width:100%;
+  min-height:100px;
+  background:#1a0800;
+  border:2px solid rgba(255,107,0,0.4);
+  border-radius:12px;
+  color:#fff;
+  font-family:'Nunito',sans-serif;
+  font-size: clamp(16px,4.5vw,20px);
+  padding:12px;
+  resize:none;
+  outline:none;
+}
+.idea-textarea::placeholder { color:rgba(255,180,80,0.4); }
+.idea-textarea:focus { border-color:var(--orange); }
+
+/* ── EMOJI VOTE SCREEN ── */
+.vote-wrap { width:100%;padding:0 16px;display:flex;flex-direction:column;gap:16px; }
+.vote-q {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(16px,5vw,22px);
+  color:var(--yellow);text-align:center;
+  line-height:1.3;
+}
+.vote-options {
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+}
+.vote-opt {
+  background:var(--surface);
+  border:3px solid rgba(255,107,0,0.3);
+  border-radius:16px;
+  padding:14px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;transition:transform 0.1s,border-color 0.1s,background 0.1s;
+  -webkit-user-select:none;user-select:none;
+}
+.vote-opt:active, .vote-opt.selected {
+  transform:scale(0.95);border-color:var(--yellow);
+  background:rgba(255,107,0,0.25);
+}
+.vote-opt .opt-emoji { font-size: clamp(28px,9vw,40px); }
+.vote-opt .opt-label {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(10px,3vw,13px);
+  color:rgba(255,200,100,0.9);
+  text-align:center;line-height:1.2;
+}
+
+/* ── PHOTO UPLOAD ── */
+.upload-wrap {
+  width:100%;padding:0 16px;display:flex;flex-direction:column;gap:14px;align-items:center;
+}
+.upload-zone {
+  width:100%;
+  border:3px dashed var(--orange);
+  border-radius:20px;
+  padding:32px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:rgba(255,107,0,0.05);
+  cursor:pointer;
+  transition:background 0.2s;
+}
+.upload-zone:active { background:rgba(255,107,0,0.12); }
+.upload-zone .upload-icon { font-size:60px; }
+.upload-zone .upload-label {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(16px,5vw,20px);
+  color:var(--yellow);text-align:center;
+}
+.upload-zone .upload-sub {
+  font-size: clamp(11px,3.5vw,14px);
+  color:rgba(255,180,80,0.6);text-align:center;
+}
+#photoInput { display:none; }
+.photo-preview {
+  width:100%;border-radius:16px;
+  border:3px solid var(--orange);
+  overflow:hidden;display:none;
+}
+.photo-preview img { width:100%;display:block; }
+
+/* ── SUCCESS SCREEN ── */
+.success-wrap {
+  width:100%;padding:0 16px;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+.success-icon { font-size:80px; animation: successBounce 0.6s ease; }
+@keyframes successBounce {
+  0%{transform:scale(0);}50%{transform:scale(1.2);}100%{transform:scale(1);}
+}
+.success-title {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(24px,7vw,36px);
+  color:var(--yellow);text-align:center;
+  text-shadow: 0 0 20px var(--orange);
+}
+.success-sub {
+  font-size: clamp(14px,4vw,17px);
+  color:rgba(255,200,100,0.8);text-align:center;line-height:1.5;
+  max-width:300px;
+}
+.success-explosion {
+  font-size:50px;
+  animation: explode 0.8s ease-out forwards;
+}
+@keyframes explode {
+  0%{transform:scale(0) rotate(0deg);opacity:1;}
+  60%{transform:scale(1.5) rotate(20deg);opacity:1;}
+  100%{transform:scale(1) rotate(-5deg);opacity:0.7;}
+}
+.back-btn {
+  background:var(--surface);border:3px solid var(--orange);
+  border-radius:20px;padding:16px 32px;
+  font-family:'Fredoka One',cursive;font-size: clamp(16px,5vw,20px);
+  color:var(--yellow);cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+}
+.back-btn:active { transform:scale(0.96); }
+
+/* ── NAV BACK ── */
+.nav-back {
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;
+  color:rgba(255,180,80,0.7);
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(14px,4vw,17px);
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+  align-self:flex-start;
+}
+.nav-back:active { color:var(--yellow); }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(16px,5vw,21px);
+  color:var(--yellow);
+  text-align:center;
+  padding:8px 0 4px;
+}
+
+/* ── LOADING ── */
+.loading-wrap {
+  display:none;flex-direction:column;align-items:center;gap:16px;
+  padding:32px 16px;
+}
+.loading-wrap.active { display:flex; }
+.loading-icon { font-size:60px; animation:spin 1s linear infinite; }
+@keyframes spin { to{ transform:rotate(360deg); } }
+.loading-text {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(16px,5vw,20px);
+  color:var(--yellow);text-align:center;
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ -->
+<!--  HOME SCREEN                        -->
+<!-- ════════════════════════════════════ -->
+<div class="screen active" id="screenHome">
+  <div class="hdr">
+    <div class="title">💥 CANNON MASTER HQ</div>
+    <div class="sub">YOUR IDEAS GO IN THE GAME</div>
+  </div>
+
+  <div class="launcher-wrap">
+    <div class="stars-fly" id="starsFly"></div>
+    <div class="slingshot">🪃</div>
+  </div>
+
+  <div class="big-btn-grid">
+    <button class="big-btn full" onclick="goTo('screenDraw')">
+      <span class="btn-icon">🎨</span>
+      <div>
+        <div class="btn-label">DRAW IT!</div>
+        <div class="btn-sub">Use your finger</div>
+      </div>
+    </button>
+
+    <button class="big-btn" onclick="goTo('screenVote')">
+      <span class="btn-icon">⚡</span>
+      <div class="btn-label">WHAT SHOULD HAPPEN?</div>
+      <div class="btn-sub">Tap your pick</div>
+    </button>
+
+    <button class="big-btn" onclick="goTo('screenText')">
+      <span class="btn-icon">💬</span>
+      <div class="btn-label">TELL US YOUR IDEA</div>
+      <div class="btn-sub">Type it out</div>
+    </button>
+
+    <button class="big-btn" onclick="goTo('screenPhoto')">
+      <span class="btn-icon">📸</span>
+      <div class="btn-label">SEND A PHOTO</div>
+      <div class="btn-sub">Drawing or anything!</div>
+    </button>
+
+    <button class="big-btn" onclick="goTo('screenVote2')">
+      <span class="btn-icon">🎮</span>
+      <div class="btn-label">RATE THE GAME</div>
+      <div class="btn-sub">Is it fun?</div>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  DRAW SCREEN                        -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenDraw">
+  <div class="hdr">
+    <div class="title">🎨 DRAW YOUR IDEA</div>
+    <div class="sub">USE YOUR FINGER!</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenHome')">← Back</div>
+
+  <div class="draw-screen-inner">
+    <div class="section-label">Draw anything — a level, a chicken, an explosion!</div>
+
+    <div class="canvas-wrap">
+      <canvas id="drawCanvas" width="640" height="480"></canvas>
+    </div>
+
+    <div class="canvas-tools">
+      <div class="color-swatch active" style="background:#ff6b00" data-color="#ff6b00" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#ffcc02" data-color="#ffcc02" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#ff3333" data-color="#ff3333" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#00cc66" data-color="#00cc66" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#4488ff" data-color="#4488ff" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#aa44ff" data-color="#aa44ff" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#222" data-color="#222" onclick="setColor(this)"></div>
+      <div class="color-swatch" style="background:#fff;border-color:rgba(255,107,0,0.5)" data-color="#fff" onclick="setColor(this)"></div>
+      <button class="size-btn active" data-size="8" onclick="setSize(this)">S</button>
+      <button class="size-btn" data-size="16" onclick="setSize(this)">M</button>
+      <button class="size-btn" data-size="28" onclick="setSize(this)">L</button>
+      <button class="clear-btn" onclick="clearCanvas()">🗑️ CLEAR</button>
+    </div>
+
+    <div style="padding:0 0 4px">
+      <label class="section-label" style="font-size:clamp(13px,4vw,16px);color:rgba(255,200,100,0.7)">What did you draw? (optional)</label>
+      <textarea class="idea-textarea" id="drawCaption" placeholder="Tell us what it is..." rows="2"></textarea>
+    </div>
+  </div>
+
+  <button class="fire-btn" onclick="submitDraw()">
+    <span class="fire-icon">🔥</span>
+    FIRE IT INTO THE GAME!
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  VOTE SCREEN — WHAT SHOULD HAPPEN   -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenVote">
+  <div class="hdr">
+    <div class="title">⚡ WHAT SHOULD HAPPEN?</div>
+    <div class="sub">TAP YOUR PICK!</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenHome')">← Back</div>
+
+  <div class="vote-wrap">
+    <div class="vote-q">What should the chickens be able to do?</div>
+    <div class="vote-options" id="voteOptions1">
+      <div class="vote-opt" onclick="toggleVote(this,'vote1')">
+        <span class="opt-emoji">💣</span>
+        <span class="opt-label">Drop BOMBS</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote1')">
+        <span class="opt-emoji">🌪️</span>
+        <span class="opt-label">SPIN really fast</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote1')">
+        <span class="opt-emoji">🚀</span>
+        <span class="opt-label">Launch into SPACE</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote1')">
+        <span class="opt-emoji">🌊</span>
+        <span class="opt-label">Make WAVES</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote1')">
+        <span class="opt-emoji">⚡</span>
+        <span class="opt-label">ZAP enemies</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote1')">
+        <span class="opt-emoji">🎯</span>
+        <span class="opt-label">LOCK ON target</span>
+      </div>
+    </div>
+
+    <div class="vote-q" style="margin-top:8px">What should the new enemy look like?</div>
+    <div class="vote-options" id="voteOptions2">
+      <div class="vote-opt" onclick="toggleVote(this,'vote2')">
+        <span class="opt-emoji">👾</span>
+        <span class="opt-label">Alien Robot</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote2')">
+        <span class="opt-emoji">🐊</span>
+        <span class="opt-label">Space Croc</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote2')">
+        <span class="opt-emoji">🕷️</span>
+        <span class="opt-label">Moon Spider</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote2')">
+        <span class="opt-emoji">🧊</span>
+        <span class="opt-label">Ice Monster</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote2')">
+        <span class="opt-emoji">🌋</span>
+        <span class="opt-label">Lava Boss</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'vote2')">
+        <span class="opt-emoji">🌀</span>
+        <span class="opt-label">Tornado Guy</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="fire-btn" onclick="submitVote()">
+    <span class="fire-icon">💥</span>
+    LAUNCH MY PICKS!
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  RATE SCREEN                        -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenVote2">
+  <div class="hdr">
+    <div class="title">🎮 RATE THE GAME</div>
+    <div class="sub">HOW IS IT?</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenHome')">← Back</div>
+
+  <div class="vote-wrap">
+    <div class="vote-q">How fun is the game RIGHT NOW?</div>
+    <div class="vote-options" style="grid-template-columns:repeat(5,1fr)">
+      <div class="vote-opt" onclick="setRating(1,this)">
+        <span class="opt-emoji">😴</span><span class="opt-label">Boring</span>
+      </div>
+      <div class="vote-opt" onclick="setRating(2,this)">
+        <span class="opt-emoji">😐</span><span class="opt-label">Meh</span>
+      </div>
+      <div class="vote-opt" onclick="setRating(3,this)">
+        <span class="opt-emoji">🙂</span><span class="opt-label">OK</span>
+      </div>
+      <div class="vote-opt" onclick="setRating(4,this)">
+        <span class="opt-emoji">😄</span><span class="opt-label">Fun!</span>
+      </div>
+      <div class="vote-opt" onclick="setRating(5,this)">
+        <span class="opt-emoji">🤯</span><span class="opt-label">EPIC!</span>
+      </div>
+    </div>
+
+    <div class="vote-q" style="margin-top:8px">What's the BEST part?</div>
+    <div class="vote-options">
+      <div class="vote-opt" onclick="toggleVote(this,'best')">
+        <span class="opt-emoji">🐔</span><span class="opt-label">The Chicken</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'best')">
+        <span class="opt-emoji">👾</span><span class="opt-label">The Enemies</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'best')">
+        <span class="opt-emoji">🌌</span><span class="opt-label">Space Vibes</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'best')">
+        <span class="opt-emoji">💥</span><span class="opt-label">The PECK</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'best')">
+        <span class="opt-emoji">🌽</span><span class="opt-label">The Corn</span>
+      </div>
+      <div class="vote-opt" onclick="toggleVote(this,'best')">
+        <span class="opt-emoji">🗺️</span><span class="opt-label">Exploring</span>
+      </div>
+    </div>
+
+    <div class="vote-q" style="margin-top:8px">What needs to be FIXED?</div>
+    <textarea class="idea-textarea" id="fixText" placeholder="Something is broken or annoying..." rows="3"></textarea>
+  </div>
+
+  <button class="fire-btn" onclick="submitRating()">
+    <span class="fire-icon">⭐</span>
+    SEND MY REVIEW!
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  TEXT IDEA SCREEN                   -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenText">
+  <div class="hdr">
+    <div class="title">💬 YOUR BIG IDEA</div>
+    <div class="sub">TYPE IT OUT!</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenHome')">← Back</div>
+
+  <div class="idea-wrap">
+    <div class="section-label">Pick a starter or just type!</div>
+
+    <div class="idea-prompt">
+      <div class="prompt-chip" onclick="usePrompt(this)">💣 There should be a new weapon that...</div>
+      <div class="prompt-chip" onclick="usePrompt(this)">🌍 There should be a new planet where...</div>
+      <div class="prompt-chip" onclick="usePrompt(this)">👾 The enemy should...</div>
+      <div class="prompt-chip" onclick="usePrompt(this)">🐔 The chicken should be able to...</div>
+      <div class="prompt-chip" onclick="usePrompt(this)">💥 The most epic thing would be...</div>
+      <div class="prompt-chip" onclick="usePrompt(this)">🎮 The game needs...</div>
+    </div>
+
+    <textarea class="idea-textarea" id="ideaText" placeholder="Type your amazing idea here! The bigger the better! 🚀" rows="5"></textarea>
+  </div>
+
+  <button class="fire-btn" onclick="submitText()">
+    <span class="fire-icon">🚀</span>
+    BLAST IT TO THE TEAM!
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  PHOTO UPLOAD SCREEN                -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenPhoto">
+  <div class="hdr">
+    <div class="title">📸 SEND A PHOTO</div>
+    <div class="sub">DRAW IT, SNAP IT, SEND IT!</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenHome')">← Back</div>
+
+  <div class="upload-wrap">
+    <div class="section-label">Draw on paper, take a photo, send it to the game!</div>
+
+    <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
+      <span class="upload-icon">📷</span>
+      <div class="upload-label">TAP TO PICK A PHOTO</div>
+      <div class="upload-sub">From your camera or photo album</div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)">
+
+    <div class="photo-preview" id="photoPreview">
+      <img id="photoImg" src="" alt="Your drawing">
+    </div>
+
+    <textarea class="idea-textarea" id="photoCaption" placeholder="What is this? Tell us about it! 🎨" rows="3"></textarea>
+  </div>
+
+  <button class="fire-btn" onclick="submitPhoto()">
+    <span class="fire-icon">📬</span>
+    SEND TO THE TEAM!
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  SUCCESS SCREEN                     -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenSuccess">
+  <div class="hdr">
+    <div class="title">💥 IDEA LAUNCHED!</div>
+    <div class="sub">NICE SHOT, CANNON MASTER!</div>
+  </div>
+
+  <div class="success-wrap" style="margin-top:32px">
+    <div class="success-explosion">💥</div>
+    <div class="success-icon">🏆</div>
+    <div class="success-title">DIRECT HIT!</div>
+    <div class="success-sub" id="successMsg">
+      Your idea is flying through space to the Dragon Scribe right now! She'll turn it into real game stuff! 🐉
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+      <div style="font-size:40px;animation:successBounce 0.5s ease 0.1s both">🐔</div>
+      <div style="font-size:40px;animation:successBounce 0.5s ease 0.2s both">🌽</div>
+      <div style="font-size:40px;animation:successBounce 0.5s ease 0.3s both">🚀</div>
+      <div style="font-size:40px;animation:successBounce 0.5s ease 0.4s both">💫</div>
+    </div>
+
+    <div style="background:rgba(255,107,0,0.1);border:2px solid rgba(255,107,0,0.3);border-radius:16px;padding:16px;margin-top:8px;text-align:center">
+      <div style="font-family:'Fredoka One',cursive;color:var(--yellow);font-size:clamp(13px,4vw,16px)">Your idea goes to Nick next! 👾</div>
+      <div style="font-size:clamp(11px,3.5vw,13px);color:rgba(255,200,100,0.6);margin-top:4px">If he likes it, it goes LIVE in the game!</div>
+    </div>
+
+    <button class="back-btn" onclick="goHome()" style="margin-top:16px">
+      🔥 FIRE ANOTHER IDEA!
+    </button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screenDraw') setTimeout(resizeCanvas,50);
+}
+function goHome(){ goTo('screenHome'); resetAll(); }
+
+// ═══════════════════════════════
+//  FLOATING STARS ANIMATION
+// ═══════════════════════════════
+const STAR_EMOJIS=['⭐','💥','🌟','✨','💫','🔥'];
+const flyZone=document.getElementById('starsFly');
+function spawnStar(){
+  const el=document.createElement('div');
+  el.className='star-particle';
+  el.textContent=STAR_EMOJIS[Math.floor(Math.random()*STAR_EMOJIS.length)];
+  el.style.top=Math.random()*100+'%';
+  el.style.left='-30px';
+  el.style.animationDuration=(2+Math.random()*3)+'s';
+  el.style.animationDelay=Math.random()*0.5+'s';
+  flyZone.appendChild(el);
+  setTimeout(()=>el.remove(),6000);
+}
+setInterval(spawnStar,800);
+
+// ═══════════════════════════════
+//  DRAWING CANVAS
+// ═══════════════════════════════
+const drawCanvas=document.getElementById('drawCanvas');
+const dCtx=drawCanvas.getContext('2d');
+let drawing=false, brushColor='#ff6b00', brushSize=8;
+
+// Resize canvas to match display size
+function resizeCanvas(){
+  const wrap=drawCanvas.parentElement;
+  const w=wrap.clientWidth;
+  const ratio=480/640;
+  drawCanvas.width=w;
+  drawCanvas.height=Math.round(w*ratio);
+  dCtx.fillStyle='#fff';
+  dCtx.fillRect(0,0,drawCanvas.width,drawCanvas.height);
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
+
+function getPos(e){
+  const r=drawCanvas.getBoundingClientRect();
+  const src=e.touches?e.touches[0]:e;
+  return{x:src.clientX-r.left,y:src.clientY-r.top};
+}
+drawCanvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=getPos(e);dCtx.beginPath();dCtx.moveTo(p.x,p.y);},{passive:false});
+drawCanvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=getPos(e);dCtx.lineTo(p.x,p.y);dCtx.strokeStyle=brushColor;dCtx.lineWidth=brushSize;dCtx.lineCap='round';dCtx.lineJoin='round';dCtx.stroke();},{passive:false});
+drawCanvas.addEventListener('touchend',()=>drawing=false);
+drawCanvas.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);dCtx.beginPath();dCtx.moveTo(p.x,p.y);});
+drawCanvas.addEventListener('mousemove',e=>{if(!drawing)return;const p=getPos(e);dCtx.lineTo(p.x,p.y);dCtx.strokeStyle=brushColor;dCtx.lineWidth=brushSize;dCtx.lineCap='round';dCtx.lineJoin='round';dCtx.stroke();});
+drawCanvas.addEventListener('mouseup',()=>drawing=false);
+
+function setColor(el){
+  brushColor=el.dataset.color;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+function setSize(el){
+  brushSize=parseInt(el.dataset.size);
+  document.querySelectorAll('.size-btn').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+function clearCanvas(){
+  dCtx.fillStyle='#fff';dCtx.fillRect(0,0,drawCanvas.width,drawCanvas.height);
+}
+
+// ═══════════════════════════════
+//  VOTING
+// ═══════════════════════════════
+const voteSelections={};
+function toggleVote(el,group){
+  const opts=el.parentElement.querySelectorAll('.vote-opt');
+  opts.forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  voteSelections[group]=el.querySelector('.opt-label').textContent;
+}
+let currentRating=0;
+function setRating(n,el){
+  currentRating=n;
+  const opts=el.parentElement.querySelectorAll('.vote-opt');
+  opts.forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ═══════════════════════════════
+//  PROMPT CHIPS
+// ═══════════════════════════════
+function usePrompt(el){
+  document.querySelectorAll('.prompt-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  const ta=document.getElementById('ideaText');
+  const text=el.textContent.trim().replace(/^[^\s]+\s/,'');
+  ta.value=text+' ';
+  ta.focus();
+}
+
+// ═══════════════════════════════
+//  PHOTO UPLOAD
+// ═══════════════════════════════
+let photoDataUrl=null;
+function handlePhoto(input){
+  if(!input.files||!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    photoDataUrl=e.target.result;
+    document.getElementById('photoImg').src=photoDataUrl;
+    document.getElementById('photoPreview').style.display='block';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// ═══════════════════════════════
+//  SUBMISSION — sends to Claude API
+// ═══════════════════════════════
+async function submitToAI(type, content, caption=''){
+  const systemPrompt=`You are receiving a game idea submission from an 8-year-old boy who loves Angry Birds cannon mechanics. He is contributing to "Cranky Chickens: In Space" — a Zelda-style top-down space adventure game. 
+
+Respond with a JSON object (no markdown, no backticks) with these fields:
+{
+  "summary": "A fun, encouraging 1-sentence summary of the idea in kid-friendly language",
+  "feature": "A concrete game feature this translates to (1 sentence, technical enough for a developer)",  
+  "type": "one of: mechanic, enemy, level, visual, sound, story",
+  "excitement": "A one-line hype message for the kid (use their Angry Birds/cannon energy)",
+  "forScribe": "A detailed brief for the 11-year-old Dragon Scribe to work with — describe the lore/narrative angle and implementation notes"
+}`;
+
+  try{
+    const messages=[{role:'user',content:[]}];
+    if(type==='drawing'||type==='photo'){
+      messages[0].content.push({type:'image',source:{type:'base64',media_type:'image/png',data:content.split(',')[1]}});
+      if(caption) messages[0].content.push({type:'text',text:`Caption: ${caption}`});
+      else messages[0].content.push({type:'text',text:'This is a drawing/photo submitted as a game idea.'});
+    } else {
+      messages[0].content.push({type:'text',text:content});
+    }
+
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:systemPrompt,
+        messages
+      })
+    });
+    const data=await res.json();
+    const text=data.content.find(b=>b.type==='text')?.text||'{}';
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){
+    console.error(e);
+    return{summary:'Awesome idea received!',feature:'To be determined',type:'mechanic',excitement:'BOOM! Your idea is on its way!',forScribe:'Raw submission received — needs interpretation.'};
+  }
+}
+
+function storeSubmission(parsed, raw){
+  const submissions=JSON.parse(localStorage.getItem('cannonmaster_submissions')||'[]');
+  submissions.unshift({
+    id:Date.now(),
+    timestamp:new Date().toISOString(),
+    raw,
+    ...parsed,
+    status:'pending'
+  });
+  localStorage.setItem('cannonmaster_submissions',JSON.stringify(submissions.slice(0,50)));
+}
+
+async function submitDraw(){
+  const caption=document.getElementById('drawCaption').value;
+  const imgData=drawCanvas.toDataURL('image/png');
+  goTo('screenSuccess');
+  document.getElementById('successMsg').textContent='Your drawing is flying through space to the Dragon Scribe! 🐉🎨';
+  const parsed=await submitToAI('drawing',imgData,caption);
+  storeSubmission(parsed,{type:'drawing',caption});
+  document.getElementById('successMsg').textContent=parsed.excitement||'Your idea is on its way!';
+}
+
+async function submitVote(){
+  const picks=Object.entries(voteSelections).map(([k,v])=>v).join(', ');
+  if(!picks){alert('Tap something first! 👆');return;}
+  goTo('screenSuccess');
+  const parsed=await submitToAI('vote',`Game mechanic votes: ${picks}`);
+  storeSubmission(parsed,{type:'vote',picks});
+  document.getElementById('successMsg').textContent=parsed.excitement||'Your votes are in!';
+}
+
+async function submitText(){
+  const text=document.getElementById('ideaText').value.trim();
+  if(!text){alert('Type your idea first! 💬');return;}
+  goTo('screenSuccess');
+  const parsed=await submitToAI('text',text);
+  storeSubmission(parsed,{type:'text',text});
+  document.getElementById('successMsg').textContent=parsed.excitement||'Your idea has been launched!';
+}
+
+async function submitPhoto(){
+  if(!photoDataUrl){alert('Pick a photo first! 📸');return;}
+  const caption=document.getElementById('photoCaption').value;
+  goTo('screenSuccess');
+  const parsed=await submitToAI('photo',photoDataUrl,caption);
+  storeSubmission(parsed,{type:'photo',caption});
+  document.getElementById('successMsg').textContent=parsed.excitement||'Your photo is on its way!';
+}
+
+async function submitRating(){
+  const fix=document.getElementById('fixText').value;
+  const best=voteSelections['best']||'not specified';
+  const summary=`Rating: ${currentRating}/5. Best part: ${best}. Fix: ${fix||'nothing'}`;
+  goTo('screenSuccess');
+  document.getElementById('successMsg').textContent='Your review blasted off! ⭐🚀';
+  const parsed=await submitToAI('rating',summary);
+  storeSubmission(parsed,{type:'rating',rating:currentRating,best,fix});
+}
+
+function resetAll(){
+  clearCanvas();
+  document.getElementById('drawCaption').value='';
+  document.getElementById('ideaText').value='';
+  document.getElementById('photoCaption').value='';
+  document.getElementById('fixText').value='';
+  photoDataUrl=null;
+  document.getElementById('photoPreview').style.display='none';
+  document.querySelectorAll('.vote-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelectorAll('.prompt-chip').forEach(c=>c.classList.remove('selected'));
+  Object.keys(voteSelections).forEach(k=>delete voteSelections[k]);
+  currentRating=0;
+}
+</script>
+</body>
+</html>

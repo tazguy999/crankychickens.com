@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dragon Scribe's Workshop</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+  --gold: #c9a84c;
+  --gold-bright: #f0c040;
+  --deep: #0a0612;
+  --surface: #130d1f;
+  --surface2: #1e1530;
+  --dragon: #7b2fff;
+  --dragon-bright: #aa66ff;
+  --ember: #ff6030;
+  --ink: rgba(200,168,76,0.15);
+  --border: rgba(200,168,76,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body {
+  background: var(--deep);
+  min-height:100vh;
+  font-family: 'Nunito', sans-serif;
+  overflow-x:hidden;
+  touch-action:manipulation;
+  color:#e8d9b0;
+}
+
+/* parchment texture overlay */
+body::before {
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(123,47,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(201,168,76,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,96,48,0.04) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+.screen { display:none;flex-direction:column;align-items:center;min-height:100vh;padding:0 0 50px;position:relative;z-index:1; }
+.screen.active { display:flex; }
+
+/* ── HEADER ── */
+.hdr {
+  width:100%;
+  background: linear-gradient(135deg, #0d0820, #1a1035);
+  border-bottom: 2px solid var(--gold);
+  padding:14px 16px 10px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hdr::before {
+  content:'🐉';position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:28px;opacity:0.6;
+}
+.hdr::after {
+  content:'🐉';position:absolute;right:12px;top:50%;transform:translateY(-50%) scaleX(-1);
+  font-size:28px;opacity:0.6;
+}
+.hdr .title {
+  font-family:'Cinzel',serif;
+  font-size:clamp(18px,5.5vw,26px);
+  color:var(--gold-bright);
+  text-shadow:0 0 20px rgba(201,168,76,0.6);
+  letter-spacing:2px;line-height:1.1;
+}
+.hdr .sub {
+  font-size:clamp(10px,3vw,13px);
+  color:rgba(201,168,76,0.6);
+  margin-top:3px;letter-spacing:3px;
+  font-family:'Cinzel',serif;
+}
+
+/* ── TOME DECORATION ── */
+.tome-divider {
+  width:100%;padding:8px 16px;
+  display:flex;align-items:center;gap:8px;
+}
+.tome-line {
+  flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border),transparent);
+}
+.tome-glyph { color:var(--gold);font-size:16px;opacity:0.7; }
+
+/* ── SCROLL CARDS (submissions inbox) ── */
+.inbox-wrap { width:100%;padding:0 16px;display:flex;flex-direction:column;gap:12px; }
+
+.scroll-card {
+  background:linear-gradient(135deg, #1a1030, #120e25);
+  border:2px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  position:relative;overflow:hidden;
+  cursor:pointer;
+  transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s;
+}
+.scroll-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--dragon),var(--gold),var(--dragon));
+  opacity:0.6;
+}
+.scroll-card:active, .scroll-card.selected {
+  transform:scale(0.98);
+  border-color:var(--gold);
+  box-shadow:0 0 20px rgba(201,168,76,0.2);
+}
+.scroll-card .card-type {
+  font-family:'Cinzel',serif;
+  font-size:clamp(9px,2.5vw,11px);
+  color:var(--dragon-bright);
+  letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:6px;
+}
+.scroll-card .card-summary {
+  font-size:clamp(14px,4vw,16px);
+  color:#e8d9b0;line-height:1.4;
+  font-weight:700;margin-bottom:8px;
+}
+.scroll-card .card-for-scribe {
+  font-size:clamp(11px,3.2vw,13px);
+  color:rgba(200,180,140,0.7);
+  line-height:1.5;font-style:italic;
+}
+.scroll-card .card-meta {
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+}
+.type-badge {
+  font-family:'Cinzel',serif;
+  font-size:clamp(9px,2.5vw,11px);
+  padding:3px 10px;border-radius:20px;
+  border:1px solid var(--border);
+  color:var(--gold);
+  background:rgba(201,168,76,0.08);
+  text-transform:uppercase;letter-spacing:1px;
+}
+.card-time {
+  font-size:clamp(9px,2.5vw,11px);
+  color:rgba(200,168,76,0.4);
+  margin-left:auto;
+}
+.new-badge {
+  background:var(--ember);
+  color:#fff;font-family:'Cinzel',serif;
+  font-size:9px;padding:2px 8px;border-radius:10px;
+  letter-spacing:1px;
+}
+
+.empty-inbox {
+  text-align:center;padding:48px 24px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.empty-icon { font-size:60px;opacity:0.4; }
+.empty-text {
+  font-family:'Cinzel',serif;
+  font-size:clamp(14px,4vw,17px);
+  color:rgba(201,168,76,0.5);
+  line-height:1.5;
+}
+
+/* ── SECTION HEADER ── */
+.section-hdr {
+  width:100%;padding:12px 16px 4px;
+  font-family:'Cinzel',serif;
+  font-size:clamp(11px,3.5vw,14px);
+  color:var(--gold);letter-spacing:2px;
+  text-transform:uppercase;opacity:0.8;
+}
+
+/* ── WORKSHOP (craft screen) ── */
+.workshop-wrap { width:100%;padding:0 16px;display:flex;flex-direction:column;gap:14px; }
+
+.submission-preview {
+  background:linear-gradient(135deg,#1a1030,#120e25);
+  border:2px solid var(--border);
+  border-radius:16px;padding:16px;
+  position:relative;
+}
+.submission-preview .preview-label {
+  font-family:'Cinzel',serif;
+  font-size:clamp(10px,3vw,12px);
+  color:var(--dragon-bright);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:8px;
+}
+.submission-preview .preview-drawing {
+  width:100%;border-radius:10px;
+  border:1px solid var(--border);
+  margin-bottom:8px;display:none;
+}
+.submission-preview .preview-text {
+  font-size:clamp(13px,4vw,15px);
+  color:#e8d9b0;line-height:1.5;
+  background:rgba(0,0,0,0.2);
+  padding:10px;border-radius:8px;
+}
+
+/* ── LORE TOOLS ── */
+.lore-tools { display:flex;flex-direction:column;gap:10px; }
+
+.lore-section-title {
+  font-family:'Cinzel',serif;
+  font-size:clamp(12px,3.5vw,14px);
+  color:var(--gold-bright);letter-spacing:1px;
+  padding:4px 0;
+}
+
+.lore-chips { display:flex;flex-wrap:wrap;gap:8px; }
+.lore-chip {
+  background:rgba(123,47,255,0.12);
+  border:1px solid rgba(123,47,255,0.35);
+  border-radius:20px;padding:7px 14px;
+  font-family:'Cinzel',serif;
+  font-size:clamp(10px,3vw,12px);
+  color:var(--dragon-bright);
+  cursor:pointer;transition:all 0.15s;
+  -webkit-user-select:none;user-select:none;
+}
+.lore-chip:active,.lore-chip.used {
+  background:rgba(123,47,255,0.35);
+  border-color:var(--dragon-bright);color:#fff;
+}
+
+.lore-input {
+  width:100%;background:#0d0a1a;
+  border:2px solid var(--border);border-radius:12px;
+  padding:12px;color:#e8d9b0;
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(15px,4.2vw,18px);
+  resize:none;outline:none;
+  transition:border-color 0.2s;
+  min-height:80px;
+}
+.lore-input:focus { border-color:var(--gold); }
+.lore-input::placeholder { color:rgba(200,168,76,0.3);font-style:italic; }
+
+/* ── CLAUDE CHAT ── */
+.chat-wrap {
+  background:linear-gradient(135deg,#100820,#0d0618);
+  border:2px solid var(--border);
+  border-radius:16px;padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+  max-height:320px;overflow-y:auto;
+}
+.chat-msg {
+  display:flex;flex-direction:column;gap:4px;
+}
+.chat-msg .msg-from {
+  font-family:'Cinzel',serif;font-size:10px;
+  letter-spacing:1px;text-transform:uppercase;
+}
+.chat-msg.claude .msg-from { color:var(--dragon-bright); }
+.chat-msg.user .msg-from { color:var(--gold);text-align:right; }
+.chat-msg .msg-bubble {
+  padding:10px 14px;border-radius:12px;
+  font-size:clamp(13px,3.8vw,15px);line-height:1.5;
+}
+.chat-msg.claude .msg-bubble {
+  background:rgba(123,47,255,0.12);
+  border:1px solid rgba(123,47,255,0.25);
+  color:#e0d0f8;border-radius:12px 12px 12px 4px;
+}
+.chat-msg.user .msg-bubble {
+  background:rgba(201,168,76,0.1);
+  border:1px solid var(--border);
+  color:#e8d9b0;border-radius:12px 12px 4px 12px;
+  align-self:flex-end;max-width:85%;
+}
+.chat-input-row {
+  display:flex;gap:8px;align-items:flex-end;
+}
+.chat-input {
+  flex:1;background:#0d0a1a;
+  border:2px solid var(--border);border-radius:12px;
+  padding:10px 12px;color:#e8d9b0;
+  font-family:'Nunito',sans-serif;font-size:clamp(14px,4vw,16px);
+  outline:none;resize:none;min-height:44px;max-height:100px;
+  transition:border-color 0.2s;
+}
+.chat-input:focus { border-color:var(--gold); }
+.chat-send {
+  background:linear-gradient(135deg,var(--dragon),#5500cc);
+  border:none;border-radius:12px;
+  width:48px;height:48px;
+  font-size:22px;cursor:pointer;flex-shrink:0;
+  transition:transform 0.1s;
+  -webkit-user-select:none;user-select:none;
+}
+.chat-send:active { transform:scale(0.92); }
+
+/* ── SPELL BUTTON ── */
+.spell-btn {
+  width:calc(100% - 32px);margin:8px 16px 0;
+  background:linear-gradient(135deg,#4400aa,#7b2fff,#4400aa);
+  background-size:200% 200%;
+  animation:spellPulse 2s ease infinite;
+  border:2px solid var(--dragon-bright);
+  border-radius:24px;padding:20px;
+  font-family:'Cinzel',serif;
+  font-size:clamp(18px,5.5vw,26px);
+  color:#fff;letter-spacing:2px;
+  text-shadow:0 0 20px var(--dragon-bright);
+  box-shadow:0 6px 30px rgba(123,47,255,0.5);
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+  position:relative;overflow:hidden;
+}
+@keyframes spellPulse {
+  0%,100%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+}
+.spell-btn:active { transform:scale(0.96); }
+.spell-icon { display:block;font-size:clamp(28px,8vw,40px);margin-bottom:4px; }
+
+/* ── SUCCESS ── */
+.success-wrap {
+  width:100%;padding:0 16px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  text-align:center;
+}
+.success-dragon { font-size:80px;animation:dragonRise 0.8s ease; }
+@keyframes dragonRise {
+  0%{transform:translateY(40px) scale(0.5);opacity:0;}
+  60%{transform:translateY(-10px) scale(1.1);}
+  100%{transform:translateY(0) scale(1);opacity:1;}
+}
+.success-title {
+  font-family:'Cinzel',serif;
+  font-size:clamp(20px,6vw,30px);
+  color:var(--gold-bright);
+  text-shadow:0 0 20px rgba(201,168,76,0.6);
+  line-height:1.2;
+}
+.success-sub {
+  font-size:clamp(13px,3.8vw,16px);
+  color:rgba(200,180,140,0.8);line-height:1.6;
+  max-width:320px;font-style:italic;
+}
+.preview-url {
+  background:rgba(123,47,255,0.12);
+  border:2px solid rgba(123,47,255,0.3);
+  border-radius:14px;padding:14px 16px;
+  width:100%;
+}
+.preview-url .url-label {
+  font-family:'Cinzel',serif;font-size:11px;
+  color:var(--dragon-bright);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:6px;
+}
+.preview-url .url-text {
+  font-size:clamp(13px,3.8vw,15px);
+  color:#e8d9b0;word-break:break-all;
+}
+.preview-url .url-note {
+  font-size:clamp(10px,3vw,12px);
+  color:rgba(200,168,76,0.5);margin-top:4px;
+  font-style:italic;
+}
+
+/* ── NAV ── */
+.nav-back {
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;
+  color:rgba(201,168,76,0.6);
+  font-family:'Cinzel',serif;font-size:clamp(12px,3.5vw,14px);
+  cursor:pointer;letter-spacing:1px;
+  -webkit-user-select:none;user-select:none;
+  align-self:flex-start;
+}
+.nav-back:active { color:var(--gold-bright); }
+
+/* ── BIG ACTION BTN ── */
+.action-btn {
+  width:calc(100% - 32px);margin:0 16px;
+  background:linear-gradient(135deg,#1e1535,#130d1f);
+  border:2px solid var(--border);border-radius:20px;
+  padding:18px;
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all 0.15s;
+  -webkit-user-select:none;user-select:none;
+}
+.action-btn:active {
+  border-color:var(--gold);
+  background:rgba(201,168,76,0.08);
+  transform:scale(0.98);
+}
+.action-btn .ab-icon { font-size:clamp(28px,8vw,36px);flex-shrink:0; }
+.action-btn .ab-text { display:flex;flex-direction:column;gap:2px; }
+.action-btn .ab-label {
+  font-family:'Cinzel',serif;
+  font-size:clamp(14px,4vw,17px);
+  color:var(--gold-bright);letter-spacing:1px;
+}
+.action-btn .ab-sub {
+  font-size:clamp(11px,3vw,13px);
+  color:rgba(200,168,76,0.55);font-style:italic;
+}
+
+/* ── LOADING ── */
+.thinking-wrap {
+  display:none;flex-direction:column;align-items:center;gap:12px;
+  padding:24px 16px;
+}
+.thinking-wrap.active { display:flex; }
+.thinking-rune {
+  font-size:44px;
+  animation:runeGlow 1s ease-in-out infinite alternate;
+}
+@keyframes runeGlow {
+  from{filter:drop-shadow(0 0 8px rgba(123,47,255,0.4));}
+  to{filter:drop-shadow(0 0 24px rgba(123,47,255,0.9));}
+}
+.thinking-text {
+  font-family:'Cinzel',serif;font-size:clamp(13px,4vw,16px);
+  color:var(--dragon-bright);letter-spacing:1px;text-align:center;
+  animation:blink 1.4s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* ── SCROLLBAR ── */
+.chat-wrap::-webkit-scrollbar{width:4px;}
+.chat-wrap::-webkit-scrollbar-track{background:transparent;}
+.chat-wrap::-webkit-scrollbar-thumb{background:rgba(123,47,255,0.3);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ -->
+<!--  HOME / INBOX                       -->
+<!-- ════════════════════════════════════ -->
+<div class="screen active" id="screenInbox">
+  <div class="hdr">
+    <div class="title">THE DRAGON SCRIBE</div>
+    <div class="sub">WORKSHOP OF LORE</div>
+  </div>
+
+  <div class="tome-divider">
+    <div class="tome-line"></div>
+    <div class="tome-glyph">✦</div>
+    <div class="tome-glyph">🐉</div>
+    <div class="tome-glyph">✦</div>
+    <div class="tome-line"></div>
+  </div>
+
+  <div class="section-hdr">📜 Scrolls from the Cannon Master</div>
+
+  <div class="inbox-wrap" id="inboxList">
+    <!-- populated by JS -->
+  </div>
+
+  <div class="tome-divider" style="margin-top:16px">
+    <div class="tome-line"></div>
+    <div class="tome-glyph">✦</div>
+    <div class="tome-line"></div>
+  </div>
+
+  <div style="width:100%;padding:8px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px">
+    <button class="action-btn" onclick="goTo('screenCraft',null,true)">
+      <span class="ab-icon">✍️</span>
+      <div class="ab-text">
+        <div class="ab-label">Write New Lore</div>
+        <div class="ab-sub">Add your own idea to the game</div>
+      </div>
+    </button>
+    <button class="action-btn" onclick="refreshInbox()" style="border-color:rgba(123,47,255,0.3)">
+      <span class="ab-icon">🔄</span>
+      <div class="ab-text">
+        <div class="ab-label">Check for New Scrolls</div>
+        <div class="ab-sub">Refresh the inbox</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  CRAFT / WORKSHOP                   -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenCraft">
+  <div class="hdr">
+    <div class="title">THE SCRIBE'S WORKSHOP</div>
+    <div class="sub">SHAPE THE LORE</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenInbox')">← Back to Scrolls</div>
+
+  <div class="workshop-wrap">
+
+    <!-- Submission preview -->
+    <div class="submission-preview" id="submissionPreview">
+      <div class="preview-label">📜 Scroll from the Cannon Master</div>
+      <img class="preview-drawing" id="previewDrawing" src="" alt="Drawing">
+      <div class="preview-text" id="previewText">Loading scroll...</div>
+    </div>
+
+    <!-- Claude's interpretation -->
+    <div class="thinking-wrap" id="thinkingWrap">
+      <div class="thinking-rune">🔮</div>
+      <div class="thinking-text">The ancient runes are translating...</div>
+    </div>
+
+    <!-- Lore tools -->
+    <div class="lore-tools" id="loreTools" style="display:none">
+
+      <div class="lore-section-title">✦ Give it a Name in the Lore</div>
+      <div class="lore-chips" id="nameChips">
+        <!-- populated by Claude -->
+      </div>
+      <input class="lore-input" id="loreName" placeholder="Or write your own name..." style="min-height:44px">
+
+      <div class="lore-section-title">✦ Describe It (in your words)</div>
+      <textarea class="lore-input" id="loreDesc" placeholder="What does it look like? What does it do? Is it evil? Does it have a backstory?..." rows="4"></textarea>
+
+      <div class="lore-section-title">✦ Ask the Ancient AI</div>
+      <div class="chat-wrap" id="chatWrap">
+        <div class="chat-msg claude">
+          <div class="msg-from">Ancient AI</div>
+          <div class="msg-bubble" id="firstClaudeMsg">Consulting the dragon scrolls...</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="Ask anything — what should it do, what's its name, how does it fit the story..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+        <button class="chat-send" onclick="sendChat()">🐉</button>
+      </div>
+    </div>
+
+  </div>
+
+  <button class="spell-btn" id="spellBtn" onclick="castSpell()" style="display:none">
+    <span class="spell-icon">🐉</span>
+    CAST THE SPELL
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  SUCCESS                            -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenSuccess">
+  <div class="hdr">
+    <div class="title">SPELL CAST!</div>
+    <div class="sub">THE LORE IS WRITTEN</div>
+  </div>
+
+  <div class="success-wrap" style="margin-top:28px">
+    <div class="success-dragon">🐉</div>
+    <div class="success-title">The Scroll Has Been Sent!</div>
+    <div class="success-sub" id="successMsg">
+      Your lore is flying to Nick's review queue. When he approves it, it becomes part of the real game forever.
+    </div>
+
+    <div class="preview-url">
+      <div class="url-label">🚀 Preview Link</div>
+      <div class="url-text" id="previewUrlText">Waiting for Netlify to build...</div>
+      <div class="url-note">Check back in ~60 seconds — your change will be live there</div>
+    </div>
+
+    <div style="background:rgba(201,168,76,0.08);border:2px solid var(--border);border-radius:16px;padding:16px;width:100%">
+      <div style="font-family:'Cinzel',serif;font-size:clamp(12px,3.5vw,14px);color:var(--gold-bright);margin-bottom:6px">✦ Your Contribution</div>
+      <div style="font-size:clamp(12px,3.5vw,14px);color:rgba(200,180,140,0.8);font-style:italic;line-height:1.5" id="contributionSummary"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center">
+      <button class="action-btn" style="width:auto;margin:0;padding:14px 20px" onclick="goTo('screenInbox')">
+        <span class="ab-icon">📜</span>
+        <div class="ab-text"><div class="ab-label">Back to Scrolls</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════
+let currentSubmission=null;
+let chatHistory=[];
+
+function goTo(id, submission=null, isNew=false){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screenCraft'){
+    if(isNew){
+      loadNewLore();
+    } else if(submission){
+      loadSubmission(submission);
+    }
+  }
+  if(id==='screenInbox') refreshInbox();
+}
+
+// ═══════════════════════════════
+//  INBOX
+// ═══════════════════════════════
+function refreshInbox(){
+  const list=document.getElementById('inboxList');
+  // Load from localStorage (Cannon Master stores here; in production this would be a shared API)
+  const raw=localStorage.getItem('cannonmaster_submissions');
+  const submissions=raw?JSON.parse(raw):[];
+
+  if(submissions.length===0){
+    list.innerHTML=`
+      <div class="empty-inbox">
+        <div class="empty-icon">📜</div>
+        <div class="empty-text">No scrolls yet from the Cannon Master.<br><br>Ask him to fire some ideas!</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML=submissions.map((s,i)=>`
+    <div class="scroll-card" onclick="openSubmission(${i})">
+      <div class="card-type">📜 ${s.type||'idea'} ${s.status==='pending'?'<span class="new-badge">NEW</span>':''}</div>
+      <div class="card-summary">${s.summary||'Untitled scroll'}</div>
+      <div class="card-for-scribe">${(s.forScribe||'').substring(0,120)}${(s.forScribe||'').length>120?'...':''}</div>
+      <div class="card-meta">
+        <span class="type-badge">${s.type||'mechanic'}</span>
+        <span class="card-time">${formatTime(s.timestamp)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function formatTime(ts){
+  if(!ts)return '';
+  const d=new Date(ts);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function openSubmission(index){
+  const raw=localStorage.getItem('cannonmaster_submissions');
+  const submissions=JSON.parse(raw||'[]');
+  const sub=submissions[index];
+  if(!sub)return;
+  // Mark as read
+  sub.status='read';
+  submissions[index]=sub;
+  localStorage.setItem('cannonmaster_submissions',JSON.stringify(submissions));
+  goTo('screenCraft',sub);
+}
+
+// ═══════════════════════════════
+//  LOAD SUBMISSION INTO WORKSHOP
+// ═══════════════════════════════
+async function loadSubmission(sub){
+  currentSubmission=sub;
+  chatHistory=[];
+
+  // Show submission preview
+  const previewText=document.getElementById('previewText');
+  const previewDrawing=document.getElementById('previewDrawing');
+
+  if(sub.raw?.type==='drawing'||sub.raw?.type==='photo'){
+    previewDrawing.style.display='block';
+    // Drawing data isn't re-stored for size reasons; show summary
+    previewDrawing.style.display='none';
+    previewText.textContent=sub.summary||'A drawing or photo was submitted.';
+  } else {
+    previewDrawing.style.display='none';
+    previewText.textContent=sub.raw?.text||sub.raw?.picks||sub.summary||'Submission received.';
+  }
+
+  // Show thinking
+  document.getElementById('thinkingWrap').classList.add('active');
+  document.getElementById('loreTools').style.display='none';
+  document.getElementById('spellBtn').style.display='none';
+
+  // Get Claude to brief the scribe
+  const brief=await getScribeBrief(sub);
+  document.getElementById('thinkingWrap').classList.remove('active');
+  document.getElementById('loreTools').style.display='flex';
+  document.getElementById('spellBtn').style.display='block';
+
+  // Populate name chips
+  const chips=document.getElementById('nameChips');
+  chips.innerHTML=(brief.nameOptions||[]).map(n=>
+    `<div class="lore-chip" onclick="useName(this,'${n}')">${n}</div>`
+  ).join('');
+
+  // First claude message
+  document.getElementById('firstClaudeMsg').textContent=brief.greeting;
+  chatHistory=[{role:'assistant',content:brief.greeting}];
+}
+
+function loadNewLore(){
+  currentSubmission=null;
+  chatHistory=[];
+  document.getElementById('previewText').textContent="You're writing new lore from scratch. What do you want to add to the world of Cranky Chickens: In Space?";
+  document.getElementById('previewDrawing').style.display='none';
+  document.getElementById('thinkingWrap').classList.remove('active');
+  document.getElementById('loreTools').style.display='flex';
+  document.getElementById('spellBtn').style.display='block';
+  document.getElementById('loreName').value='';
+  document.getElementById('loreDesc').value='';
+  document.getElementById('nameChips').innerHTML='';
+
+  const chatWrap=document.getElementById('chatWrap');
+  chatWrap.innerHTML=`
+    <div class="chat-msg claude">
+      <div class="msg-from">Ancient AI</div>
+      <div class="msg-bubble">The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe.</div>
+    </div>`;
+  chatHistory=[{role:'assistant',content:"The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."}];
+}
+
+// ═══════════════════════════════
+//  CLAUDE — SCRIBE BRIEF
+// ═══════════════════════════════
+async function getScribeBrief(sub){
+  const prompt=`You are the Ancient AI advising an 11-year-old Dragon Scribe (she loves Warriors, Wings of Fire, and Harry Potter). She is interpreting her younger brother's game idea submission for "Cranky Chickens: In Space" — a Zelda-style top-down space adventure.
+
+The submission:
+Summary: ${sub.summary}
+Feature idea: ${sub.feature}
+Type: ${sub.type}
+For Scribe notes: ${sub.forScribe}
+
+Respond with JSON only (no markdown):
+{
+  "greeting": "A 2-3 sentence greeting to the Dragon Scribe in a mystical tome-keeper voice. Reference the submission, get her excited about the lore potential. Keep it age-appropriate and fun.",
+  "nameOptions": ["3-5 creative lore-appropriate names for this thing — fantasy/sci-fi crossover style, max 3 words each"]
+}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:600,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content.find(b=>b.type==='text')?.text||'{}';
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){
+    return{
+      greeting:"A new scroll arrives from the Cannon Master! The ancient runes shimmer with potential. What lore shall we weave from this idea, Scribe?",
+      nameOptions:["The Void Striker","Star Cannon Mk-7","The Clucking Harbinger","Nebula Beak","The Corn Destroyer"]
+    };
+  }
+}
+
+function useName(el,name){
+  document.querySelectorAll('.lore-chip').forEach(c=>c.classList.remove('used'));
+  el.classList.add('used');
+  document.getElementById('loreName').value=name;
+}
+
+// ═══════════════════════════════
+//  CHAT WITH CLAUDE
+// ═══════════════════════════════
+async function sendChat(){
+  const input=document.getElementById('chatInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+
+  const chatWrap=document.getElementById('chatWrap');
+
+  // Add user message
+  chatHistory.push({role:'user',content:msg});
+  chatWrap.innerHTML+=`
+    <div class="chat-msg user">
+      <div class="msg-from">Dragon Scribe</div>
+      <div class="msg-bubble">${msg}</div>
+    </div>`;
+
+  // Thinking indicator
+  const thinkId='think'+Date.now();
+  chatWrap.innerHTML+=`<div id="${thinkId}" class="chat-msg claude"><div class="msg-from">Ancient AI</div><div class="msg-bubble" style="opacity:0.5">✦ consulting the dragon scrolls...</div></div>`;
+  chatWrap.scrollTop=chatWrap.scrollHeight;
+
+  try{
+    const systemPrompt=`You are the Ancient AI — a wise, mystical advisor helping an 11-year-old Dragon Scribe (she loves Warriors, Wings of Fire, Harry Potter) build lore for "Cranky Chickens: In Space." 
+
+The game context: Zelda-style top-down space adventure. Chickens stole a NASA shuttle to recover stolen corn from the Interstellar Egg Harvesting Consortium (IECC). Alien iguana variants are enemies. Zero-G peck mechanic. Corn Moon is the first planet.
+
+She's working on: ${currentSubmission?`interpreting her brother's idea: "${currentSubmission.summary}"`:'writing new lore from scratch'}.
+
+Be mystical but clear. Use occasional fantasy/sci-fi language but stay readable for an 11-year-old. Keep responses to 3-5 sentences max. Encourage her creative instincts. Reference Warriors/Wings of Fire/HP when helpful.`;
+
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:300,
+        system:systemPrompt,
+        messages:chatHistory
+      })
+    });
+    const data=await res.json();
+    const reply=data.content.find(b=>b.type==='text')?.text||'The runes are unclear. Try asking again.';
+    chatHistory.push({role:'assistant',content:reply});
+
+    document.getElementById(thinkId).querySelector('.msg-bubble').textContent=reply;
+    document.getElementById(thinkId).querySelector('.msg-bubble').style.opacity='1';
+  }catch(e){
+    document.getElementById(thinkId).querySelector('.msg-bubble').textContent='The ancient magic flickers... try again in a moment.';
+  }
+  chatWrap.scrollTop=chatWrap.scrollHeight;
+}
+
+// ═══════════════════════════════
+//  CAST THE SPELL
+// ═══════════════════════════════
+async function commitToKidsPreview(loreEntry, spec){
+  try{
+    // Get current submissions via proxy
+    const getRes=await fetch('/api/github-proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_submissions'})
+    });
+    const getData=await getRes.json();
+    const existing=getData.submissions||[];
+    const sha=getData.sha||null;
+
+    existing.unshift({...loreEntry,spec});
+
+    // Save via proxy
+    const saveRes=await fetch('/api/github-proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_submissions',
+        submissions:existing,
+        sha,
+        commitMsg:`🐉 Dragon Scribe lore: "${loreEntry.scribeName}" — ${new Date().toLocaleDateString()}`
+      })
+    });
+    return saveRes.ok;
+  }catch(e){
+    console.error('Proxy commit failed:',e);
+    return false;
+  }
+}
+
+async function castSpell(){
+  const name=document.getElementById('loreName').value.trim();
+  const desc=document.getElementById('loreDesc').value.trim();
+
+  if(!desc){ alert('Write something in the description first! ✍️'); return; }
+
+  document.getElementById('spellBtn').textContent='🔮 Casting...';
+  document.getElementById('spellBtn').style.opacity='0.7';
+
+  const loreEntry={
+    id:Date.now(),
+    timestamp:new Date().toISOString(),
+    scribeName:name||'Unnamed',
+    description:desc,
+    originalSubmission:currentSubmission||null,
+    chatHistory:chatHistory.slice(0,6),
+    status:'pending_review',
+  };
+
+  // Store locally
+  const lore=JSON.parse(localStorage.getItem('dragonscribe_lore')||'[]');
+  lore.unshift(loreEntry);
+  localStorage.setItem('dragonscribe_lore',JSON.stringify(lore.slice(0,30)));
+
+  // Generate spec + commit to GitHub
+  const spec=await generateSpec(loreEntry);
+  loreEntry.spec=spec;
+  const committed=await commitToKidsPreview(loreEntry,spec);
+
+  document.getElementById('spellBtn').textContent='🐉 CAST THE SPELL';
+  document.getElementById('spellBtn').style.opacity='1';
+
+  goTo('screenSuccess');
+  document.getElementById('contributionSummary').textContent=
+    `"${name||'Unnamed'}" — ${desc.substring(0,100)}${desc.length>100?'...':''}`;
+  document.getElementById('previewUrlText').textContent=
+    committed
+      ? 'kids-preview--crankychickens.netlify.app'
+      : 'Saved locally — will sync when online';
+  document.getElementById('successMsg').textContent=
+    committed
+      ? (spec.nicksNote||'Your lore is committed! Nick will review it soon.')
+      : 'Saved locally! Ask Nick to sync it.';
+}
+
+async function generateSpec(entry){
+  const prompt=`An 11-year-old Dragon Scribe has crafted game lore for "Cranky Chickens: In Space." Generate a concise developer spec for the engineering lead (Nick) to review.
+
+Lore name: ${entry.scribeName}
+Description: ${entry.description}
+Original idea summary: ${entry.originalSubmission?.summary||'Original lore from scribe'}
+
+Respond with JSON only:
+{
+  "title": "Feature title (max 6 words)",
+  "devNote": "1-2 sentence technical implementation note for Nick",
+  "nicksNote": "A fun 1-sentence message to show the scribe while they wait for Nick's review",
+  "priority": "low/medium/high based on how fun/impactful this sounds"
+}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content.find(b=>b.type==='text')?.text||'{}';
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){
+    return{title:'New lore entry',devNote:'Review and implement per scribe description.',nicksNote:'Your scroll is sealed and flying to Nick!',priority:'medium'};
+  }
+}
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+refreshInbox();
+
+// Demo: seed a fake submission if inbox is empty so the scribe has something to work with
+window.addEventListener('load',()=>{
+  const raw=localStorage.getItem('cannonmaster_submissions');
+  if(!raw||JSON.parse(raw).length===0){
+    const demo=[{
+      id:Date.now()-1000,
+      timestamp:new Date(Date.now()-300000).toISOString(),
+      type:'mechanic',
+      summary:'There should be a giant cannon that shoots chickens through black holes!',
+      feature:'A black hole portal mechanic that teleports the player chicken across the map',
+      forScribe:'The Cannon Master envisions inter-dimensional chicken travel. Lore opportunity: the IECC built the black holes to trap chickens, but the chickens figured out how to use them as shortcuts. The Dragon Scribe could name this mechanic and write its backstory.',
+      excitement:'BOOM! Black hole cannon idea LOCKED AND LOADED!',
+      raw:{type:'text',text:'There should be a giant cannon that shoots chickens through black holes!'},
+      status:'pending'
+    }];
+    localStorage.setItem('cannonmaster_submissions',JSON.stringify(demo));
+    refreshInbox();
+  }
+});
+</script>
+</body>
+</html>
