@@ -10,7 +10,6 @@
   NODE_VERSION = "18"
 
 # ── FUNCTION ROUTING ──
-# Explicitly pass through function calls before catch-all
 [[redirects]]
   from = "/.netlify/functions/*"
   to = "/.netlify/functions/:splat"
@@ -23,10 +22,12 @@
   status = 200
   force = true
 
+# Catch-all only for GET — don't redirect POST/fetch calls
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  conditions = {Method = ["GET"]}
 
 # ── EDGE FUNCTION — auth gate ──
 [[edge_functions]]
