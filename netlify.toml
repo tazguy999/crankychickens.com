@@ -3,33 +3,9 @@
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"
 
-[functions]
-  node_bundler = "zisi"
-
 [build.environment]
   NODE_VERSION = "18"
 
-# ── FUNCTION ROUTING ──
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
-# Catch-all only for GET — don't redirect POST/fetch calls
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  conditions = {Method = ["GET"]}
-
-# ── EDGE FUNCTION — auth gate ──
 [[edge_functions]]
   function = "auth-gate"
   path = "/mission-control.html"
@@ -41,22 +17,3 @@
 [[edge_functions]]
   function = "auth-gate"
   path = "/games/cannon-master.html"
-
-# ── SECURITY HEADERS ──
-[[headers]]
-  for = "/mission-control.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    X-Frame-Options = "DENY"
-
-[[headers]]
-  for = "/games/dragon-scribe.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    X-Frame-Options = "DENY"
-
-[[headers]]
-  for = "/games/cannon-master.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    X-Frame-Options = "DENY"
