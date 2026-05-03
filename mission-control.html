@@ -274,34 +274,19 @@ let currentTab='pending';
 // ── LOAD SUBMISSIONS ──
 async function loadSubmissions(){
   try{
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),8000);
     const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'get_submissions'}),
-      signal:controller.signal
+      body:JSON.stringify({action:'get_submissions'})
     });
-    clearTimeout(timeout);
-    if(!res.ok){
-      showEmpty(`Proxy returned HTTP ${res.status}. Check Netlify Function logs.`);
-      return;
-    }
-    const text=await res.text();
-    let data;
-    try{ data=JSON.parse(text); }
-    catch(e){ showEmpty('Proxy returned non-JSON: '+text.slice(0,100)); return; }
-    if(data.error){ showEmpty('Proxy error: '+data.error); return; }
-    if(!data.submissions||data.submissions.length===0){ showEmpty('No submissions yet — waiting for the Dragon Scribe! 🐉'); return; }
+    const data=await res.json();
+    if(data.error){ showEmpty('Could not load submissions: '+data.error); return; }
+    if(!data.submissions||data.submissions.length===0){ showEmpty('No submissions file yet — waiting for the Dragon Scribe to cast her first spell! 🐉'); return; }
     allSubmissions=data.submissions;
     currentSha=data.sha||null;
     renderAll();
   }catch(e){
-    if(e.name==='AbortError'){
-      showEmpty('Timed out after 8s. The Netlify Function may not be running — check the Functions tab in Netlify dashboard.');
-    } else {
-      showEmpty('Fetch failed: '+e.message);
-    }
-    console.error('loadSubmissions error:',e);
+    showEmpty('Could not load submissions. Check your connection.');
+    console.error(e);
   }
 }
 
@@ -455,51 +440,29 @@ async function generateConfigEntry(sub){
   const prompt=`You are converting a Dragon Scribe's game lore submission into a structured game config entry for "Cranky Chickens: In Space."
 
 Submission:
-Name: "${sub.scribeName||'Unnamed'}"
-Description: "${sub.description||sub.summary||''}"
+Name: ${sub.scribeName||'Unnamed'}
+Description: ${sub.description||sub.summary||''}
 Type: ${sub.type||'mechanic'}
-Target zone: ${sub.targetZone?sub.targetZone.name+' (screenIndex '+sub.targetZone.index+')':'any'}
+Original idea: ${sub.originalSubmission?.summary||''}
 
-RULES:
-- If the description mentions ANY creature, character, entity, being, or thing that moves — generate an enemyVariant. This is the most exciting option for kids.
-- If it mentions a place, location, or area name — generate a zoneRename WITH a loreText.
-- If it mentions finding something or a reward — generate a cornPatch.
-- Only use loreText alone if nothing else fits.
-- ALWAYS use the target zone's screenIndex if provided.
-- Make the enemy color vivid and thematic. Cat/feline = orange/gold. Ghost = white/blue. Fire = red/orange. Ice = cyan. Shadow = dark purple.
+The game has 4 screens (indices 0-3): Landing Zone, Crater Fields, Moon Base, Harvester Core.
+Screens 1 and 3 are zero-G. Screens 0 and 2 have gravity.
 
-The game has 4 screens:
-- screenIndex 0: Landing Zone (moon surface, gravity)
-- screenIndex 1: Crater Fields (zero-G, open space)  
-- screenIndex 2: Moon Base (station interior, gravity)
-- screenIndex 3: Harvester Core (zero-G, boss arena)
+Based on the submission, generate ONE of these config types (pick the best fit):
 
-Generate ONE config object. For enemyVariant use this exact structure:
-{"configType":"enemyVariant","screenIndex":1,"name":"Name of creature","color":"#hexcolor","eyeColor":"#hexcolor","spd":0.6,"pat":"h","size":1.0,"tx":9,"ty":8}
+For a new enemy variant:
+{"configType":"enemyVariant","screenIndex":1,"name":"Name","color":"#hexcolor","eyeColor":"#hexcolor","spd":0.6,"pat":"h","size":1.0,"tx":9,"ty":8}
 
-For zoneRename:
-{"configType":"zoneRename","screenIndex":0,"name":"New Zone Name","loreText":"Atmospheric sentence shown on screen entry (max 55 chars)"}
+For a zone rename:
+{"configType":"zoneRename","screenIndex":0,"name":"New Zone Name","loreText":"Short lore sentence shown on entry (max 60 chars)"}
 
-Respond with ONLY the JSON object. No markdown, no explanation.`;
+For new corn:
+{"configType":"cornPatch","screenIndex":0,"x":5,"y":8}
 
-  try{
-    const res=await fetch(PROXY,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        action:'claude_complete',
-        max_tokens:200,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    if(data.error) throw new Error(data.error);
-    const text=data.content?.find(b=>b.type==='text')?.text||'{}';
-    return JSON.parse(text.replace(/```json|```/g,'').trim());
-  }catch(e){
-    console.error('Config generation failed',e);
-    return null;
-  }
-}
+For lore text only:
+{"configType":"loreText","screenIndex":0,"loreText":"Short atmospheric text (max 60 chars)"}
+
+Respond with ONLY the JSON object, nothing else. Choose colors that match the lore description. Make it feel real and exciting.`;
 
   try{
     const res=await fetch(PROXY,{
