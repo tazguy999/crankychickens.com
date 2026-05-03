@@ -28,7 +28,7 @@
         "content": "What do you think"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "spec": {
       "title": "New lore entry",
       "devNote": "Review and implement per scribe description.",
