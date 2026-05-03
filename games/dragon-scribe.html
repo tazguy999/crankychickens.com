@@ -851,7 +851,9 @@ Be mystical but clear. Use occasional fantasy/sci-fi language but stay readable 
       })
     });
     const data=await res.json();
-    if(data.error) throw new Error(data.error);
+    console.log('Proxy response:', JSON.stringify(data).slice(0,300));
+    if(data.error) throw new Error('Proxy error: '+data.error);
+    if(!res.ok) throw new Error('HTTP '+res.status);
     const reply=data.content?.find(b=>b.type==='text')?.text||'The runes are unclear. Try asking again.';
     chatHistory.push({role:'assistant',content:reply});
 

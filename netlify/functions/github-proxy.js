@@ -65,12 +65,13 @@ function validateMessages(messages) {
   for (const m of messages) {
     if (!m.role || !m.content) return false;
     if (!['user','assistant'].includes(m.role)) return false;
-    // Check text content for injection
-    const text = typeof m.content === 'string' ? m.content :
-      (m.content || []).filter(b => b.type === 'text').map(b => b.text).join(' ');
-    if (detectInjection(text)) return false;
-    // Sanitize
-    if (typeof m.content === 'string') m.content = sanitizeInput(m.content);
+    // Only check user messages for injection — assistant messages are safe (we wrote them)
+    if (m.role === 'user') {
+      const text = typeof m.content === 'string' ? m.content :
+        (m.content || []).filter(b => b.type === 'text').map(b => b.text).join(' ');
+      if (detectInjection(text)) return false;
+      if (typeof m.content === 'string') m.content = sanitizeInput(m.content);
+    }
   }
   return true;
 }
