@@ -274,19 +274,27 @@ let currentTab='pending';
 // ── LOAD SUBMISSIONS ──
 async function loadSubmissions(){
   try{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),8000);
     const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'get_submissions'})
+      body:JSON.stringify({action:'get_submissions'}),
+      signal:controller.signal
     });
+    clearTimeout(timeout);
     const data=await res.json();
-    if(data.error){ showEmpty('Could not load submissions: '+data.error); return; }
-    if(!data.submissions||data.submissions.length===0){ showEmpty('No submissions file yet — waiting for the Dragon Scribe to cast her first spell! 🐉'); return; }
+    if(data.error){ showEmpty('Proxy error: '+data.error); return; }
+    if(!data.submissions||data.submissions.length===0){ showEmpty('No submissions yet — waiting for the Dragon Scribe! 🐉'); return; }
     allSubmissions=data.submissions;
     currentSha=data.sha||null;
     renderAll();
   }catch(e){
-    showEmpty('Could not load submissions. Check your connection.');
-    console.error(e);
+    if(e.name==='AbortError'){
+      showEmpty('Connection timed out. Check that Netlify Functions are deployed and the GITHUB_TOKEN env var is set.');
+    } else {
+      showEmpty('Could not load submissions: '+e.message);
+    }
+    console.error('loadSubmissions error:',e);
   }
 }
 
