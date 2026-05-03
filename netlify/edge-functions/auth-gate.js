@@ -15,6 +15,9 @@ export default async function handler(request, context) {
   const url = new URL(request.url);
   const path = url.pathname;
 
+  // Never intercept function calls or API paths
+  if(path.startsWith('/.netlify/') || path.startsWith('/api/')) return context.next();
+
   const config = PROTECTED_PAGES[path];
   if (!config) return context.next();
 

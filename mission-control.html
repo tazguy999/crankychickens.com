@@ -282,7 +282,14 @@ async function loadSubmissions(){
       signal:controller.signal
     });
     clearTimeout(timeout);
-    const data=await res.json();
+    if(!res.ok){
+      showEmpty(`Proxy returned HTTP ${res.status}. Check Netlify Function logs.`);
+      return;
+    }
+    const text=await res.text();
+    let data;
+    try{ data=JSON.parse(text); }
+    catch(e){ showEmpty('Proxy returned non-JSON: '+text.slice(0,100)); return; }
     if(data.error){ showEmpty('Proxy error: '+data.error); return; }
     if(!data.submissions||data.submissions.length===0){ showEmpty('No submissions yet — waiting for the Dragon Scribe! 🐉'); return; }
     allSubmissions=data.submissions;
@@ -290,9 +297,9 @@ async function loadSubmissions(){
     renderAll();
   }catch(e){
     if(e.name==='AbortError'){
-      showEmpty('Connection timed out. Check that Netlify Functions are deployed and the GITHUB_TOKEN env var is set.');
+      showEmpty('Timed out after 8s. The Netlify Function may not be running — check the Functions tab in Netlify dashboard.');
     } else {
-      showEmpty('Could not load submissions: '+e.message);
+      showEmpty('Fetch failed: '+e.message);
     }
     console.error('loadSubmissions error:',e);
   }
