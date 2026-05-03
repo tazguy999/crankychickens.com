@@ -641,33 +641,34 @@ function updatePlayer(){
   if(player.inv>0) player.inv--;
 
   // ── SCREEN TRANSITION ──
+  // Trigger when player center crosses into the edge tile column/row
   if(!isScrolling){
     let ncol=screenCol, nrow=screenRow;
     let npx=player.x, npy=player.y;
+    const cx=player.x+16, cy=player.y+16; // player center
 
-    // Top edge — go north
-    if(player.y<-4 && screenRow>0){
+    // North — player center in top tile row
+    if(cy < TILE && screenRow>0){
       ncol=screenCol; nrow=screenRow-1;
-      npx=player.x; npy=GH-TILE*2;
+      npx=player.x; npy=GH-TILE*3;
     }
-    // Bottom edge — go south
-    if(player.y>GH-TILE+4 && screenRow<WORLD_ROWS-1){
+    // South — player center in bottom tile row
+    else if(cy > GH-TILE && screenRow<WORLD_ROWS-1){
       ncol=screenCol; nrow=screenRow+1;
-      npx=player.x; npy=TILE;
+      npx=player.x; npy=TILE*2;
     }
-    // Left edge — go west
-    if(player.x<-4 && screenCol>0){
+    // West — player center in left tile column
+    else if(cx < TILE && screenCol>0){
       ncol=screenCol-1; nrow=screenRow;
-      npx=GW-TILE*2; npy=player.y;
+      npx=GW-TILE*3; npy=player.y;
     }
-    // Right edge — go east
-    if(player.x>GW-TILE+4 && screenCol<WORLD_COLS-1){
+    // East — player center in right tile column
+    else if(cx > GW-TILE && screenCol<WORLD_COLS-1){
       ncol=screenCol+1; nrow=screenRow;
-      npx=TILE; npy=player.y;
+      npx=TILE*2; npy=player.y;
     }
 
     if(ncol!==screenCol||nrow!==screenRow){
-      // Reset zero-G velocity on transition
       player.vx*=0.5; player.vy*=0.5;
       startScroll(ncol,nrow,npx,npy);
     }
