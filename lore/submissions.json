@@ -1,0 +1,39 @@
+[
+  {
+    "id": 1777844307405,
+    "timestamp": "2026-05-03T21:38:27.405Z",
+    "scribeName": "Unnamed",
+    "description": "Mechanic who only speaks 6 7",
+    "originalSubmission": {
+      "id": 1777843788231,
+      "timestamp": "2026-05-03T21:29:48.231Z",
+      "raw": {
+        "type": "photo",
+        "caption": ""
+      },
+      "summary": "Awesome idea received!",
+      "feature": "To be determined",
+      "type": "mechanic",
+      "excitement": "BOOM! Your idea is on its way!",
+      "forScribe": "Raw submission received — needs interpretation.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "A new scroll arrives from the Cannon Master! The ancient runes shimmer with potential. What lore shall we weave from this idea, Scribe?"
+      },
+      {
+        "role": "user",
+        "content": "What do you think"
+      }
+    ],
+    "status": "approved",
+    "spec": {
+      "title": "New lore entry",
+      "devNote": "Review and implement per scribe description.",
+      "nicksNote": "Your scroll is sealed and flying to Nick!",
+      "priority": "medium"
+    }
+  }
+]
