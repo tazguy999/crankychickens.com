@@ -1,54 +1,7 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-
-# ── PASSWORD PROTECTION ──
-# Mission Control — full basic auth (Netlify Pro)
-[[redirects]]
-  from = "/mission-control.html"
-  to = "/mission-control.html"
-  status = 200
-  [redirects.headers]
-    Basic-Auth = "nick:{{MISSION_CONTROL_PASSWORD}}"
-
-# Dragon Scribe — password protected
-[[redirects]]
-  from = "/games/dragon-scribe.html"
-  to = "/games/dragon-scribe.html"
-  status = 200
-  [redirects.headers]
-    Basic-Auth = "scribe:{{DRAGON_SCRIBE_PASSWORD}}"
-
-# Cannon Master — password protected  
-[[redirects]]
-  from = "/games/cannon-master.html"
-  to = "/games/cannon-master.html"
-  status = 200
-  [redirects.headers]
-    Basic-Auth = "cannon:{{CANNON_MASTER_PASSWORD}}"
-
-# ── SECURITY HEADERS ──
-# Noindex on all tool pages
-[[headers]]
-  for = "/mission-control.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-
-[[headers]]
-  for = "/games/dragon-scribe.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-
-[[headers]]
-  for = "/games/cannon-master.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
+  edge_functions = "netlify/edge-functions"
 
 # ── FUNCTION ROUTING ──
 [[redirects]]
@@ -60,3 +13,35 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# ── EDGE FUNCTION — auth gate ──
+[[edge_functions]]
+  function = "auth-gate"
+  path = "/mission-control.html"
+
+[[edge_functions]]
+  function = "auth-gate"
+  path = "/games/dragon-scribe.html"
+
+[[edge_functions]]
+  function = "auth-gate"
+  path = "/games/cannon-master.html"
+
+# ── SECURITY HEADERS ──
+[[headers]]
+  for = "/mission-control.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Frame-Options = "DENY"
+
+[[headers]]
+  for = "/games/dragon-scribe.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Frame-Options = "DENY"
+
+[[headers]]
+  for = "/games/cannon-master.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Frame-Options = "DENY"
