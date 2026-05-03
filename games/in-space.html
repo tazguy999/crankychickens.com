@@ -691,6 +691,7 @@ function updateScroll(){
     screenCol=nextScreenCol; screenRow=nextScreenRow;
     currentZone=currentScreen().gravity?'cornmoon':'station';
     scrollOffX=0; scrollOffY=0;
+    triggerLoreFlash(currentScreen());
     updateZeroGUI();
   }
 }
@@ -1438,6 +1439,9 @@ function loop(){
   // Canvas HUD overlay
   if(gameState==='play') drawHUD();
 
+  // Lore flash (kid contributions)
+  if(gameState==='play') drawLoreFlash();
+
   // Popup
   if(popup.timer>0){
     popup.timer--;
@@ -1473,15 +1477,15 @@ function loop(){
 }
 
 // ═══════════════════════════════════════════════
-//  GAME CONFIG — loaded from game-config.json
+//  GAME CONFIG — loaded from /configs/in-space.json
 // ═══════════════════════════════════════════════
 let gameConfig = null;
+let loreFlash = { text:'', timer:0, screenIndex:-1 };
 
 function applyConfig(cfg){
   if(!cfg) return;
   gameConfig = cfg;
 
-  // Apply zone name/lore overrides
   if(cfg.zones){
     cfg.zones.forEach(z=>{
       const sc = SCREENS[z.screenIndex];
@@ -1490,17 +1494,15 @@ function applyConfig(cfg){
       if(z.loreText) sc.loreText = z.loreText;
     });
   }
-
-  // Apply extra corn patches
   if(cfg.cornPatches){
     cfg.cornPatches.forEach(p=>{
       const sc = SCREENS[p.screenIndex];
       if(!sc) return;
-      sc.corn.push({x:p.x, y:p.y});
+      // avoid duplicates
+      if(!sc.corn.find(c=>c.x===p.x&&c.y===p.y))
+        sc.corn.push({x:p.x, y:p.y});
     });
   }
-
-  // Apply enemy variants — override existing enemies or add new ones
   if(cfg.enemyVariants){
     cfg.enemyVariants.forEach(v=>{
       const sc = SCREENS[v.screenIndex];
@@ -1509,19 +1511,49 @@ function applyConfig(cfg){
         Object.assign(sc.enemies[v.enemyIndex], v);
       } else {
         sc.enemies.push({
-          tx: v.tx||9, ty: v.ty||7,
-          spd: v.spd||0.5, pat: v.pat||'h',
-          name: v.name, color: v.color,
-          eyeColor: v.eyeColor, size: v.size||1,
+          tx:v.tx||9, ty:v.ty||7,
+          spd:v.spd||0.5, pat:v.pat||'h',
+          name:v.name, color:v.color,
+          eyeColor:v.eyeColor, size:v.size||1,
         });
       }
     });
   }
 }
 
+function triggerLoreFlash(sc){
+  if(sc.loreText && sc.loreText.trim()){
+    loreFlash = { text:sc.loreText, timer:200, screenIndex:SCREENS.indexOf(sc) };
+  }
+}
+
+function drawLoreFlash(){
+  if(loreFlash.timer<=0) return;
+  loreFlash.timer--;
+  const alpha = loreFlash.timer > 160 ? 1 :
+                loreFlash.timer > 40  ? 1 :
+                loreFlash.timer / 40;
+  const isMoon = currentScreen().gravity;
+  ctx.globalAlpha = alpha * 0.95;
+  const tw = ctx.measureText(loreFlash.text).width + 32;
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.beginPath();
+  ctx.roundRect(GW/2-tw/2, GH-54, tw, 28, 8);
+  ctx.fill();
+  ctx.strokeStyle = isMoon ? 'rgba(255,204,2,0.5)' : 'rgba(0,200,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = isMoon ? '#ffcc02' : '#00ccff';
+  ctx.font = 'bold 13px Fredoka One';
+  ctx.textAlign = 'center';
+  ctx.fillText(loreFlash.text, GW/2, GH-35);
+  ctx.textAlign = 'left';
+  ctx.globalAlpha = 1;
+}
+
 async function loadConfig(){
   try{
-    const res = await fetch('/game-config.json?t='+Date.now());
+    const res = await fetch('/configs/in-space.json?t='+Date.now());
     if(res.ok){
       const cfg = await res.json();
       applyConfig(cfg);
@@ -1529,6 +1561,8 @@ async function loadConfig(){
   }catch(e){
     console.log('No game config found, using defaults');
   }
+  // Trigger lore flash for first screen
+  triggerLoreFlash(currentScreen());
   updateHUD();
   loop();
 }

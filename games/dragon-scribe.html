@@ -502,10 +502,18 @@ body::before {
     <!-- Lore tools -->
     <div class="lore-tools" id="loreTools" style="display:none">
 
-      <div class="lore-section-title">✦ Give it a Name in the Lore</div>
-      <div class="lore-chips" id="nameChips">
-        <!-- populated by Claude -->
+      <div class="lore-section-title">✦ Which Game?</div>
+      <div class="lore-chips" id="gameChips">
+        <!-- populated by JS -->
       </div>
+
+      <div class="lore-section-title">✦ Which Zone? <span style="opacity:0.5;font-size:11px">(optional)</span></div>
+      <div class="lore-chips" id="zoneChips">
+        <!-- populated after game pick -->
+      </div>
+
+      <div class="lore-section-title">✦ Give it a Name in the Lore</div>
+      <div class="lore-chips" id="nameChips"></div>
       <input class="lore-input" id="loreName" placeholder="Or write your own name..." style="min-height:44px">
 
       <div class="lore-section-title">✦ Describe It (in your words)</div>
@@ -545,8 +553,11 @@ body::before {
   <div class="success-wrap" style="margin-top:28px">
     <div class="success-dragon">🐉</div>
     <div class="success-title">The Scroll Has Been Sent!</div>
-    <div class="success-sub" id="successMsg">
-      Your lore is flying to Nick's review queue. When he approves it, it becomes part of the real game forever.
+    <div class="success-sub" id="successMsg">Your lore is flying to Nick's review queue.</div>
+
+    <div id="successLocation" style="display:none;background:rgba(123,47,255,0.12);border:2px solid rgba(123,47,255,0.3);border-radius:16px;padding:14px;width:100%;text-align:center">
+      <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--dragon-bright);letter-spacing:2px;margin-bottom:6px">📍 YOUR LORE GOES INTO</div>
+      <div style="font-family:'Cinzel',serif;font-size:clamp(15px,4.5vw,20px);color:var(--gold-bright)" id="successLocationText"></div>
     </div>
 
     <div class="preview-url">
@@ -570,6 +581,56 @@ body::before {
 </div>
 
 <script>
+// ═══════════════════════════════
+//  GAME & ZONE SELECTION
+// ═══════════════════════════════
+let selectedGame=null, selectedZone=null, gamesManifest=null;
+
+async function loadGamesManifest(){
+  try{
+    const res=await fetch('/configs/games.json?t='+Date.now());
+    if(res.ok) gamesManifest=await res.json();
+  }catch(e){}
+  populateGameChips();
+}
+
+function populateGameChips(){
+  const chips=document.getElementById('gameChips');
+  if(!chips)return;
+  const games=gamesManifest?.games?.filter(g=>g.status==='active')||[{slug:'in-space',title:'In Space',emoji:'🚀'}];
+  chips.innerHTML=games.map(g=>`
+    <div class="lore-chip" onclick="pickGame('${g.slug}','${g.title}','${g.emoji}',this)">${g.emoji} ${g.title}</div>
+  `).join('');
+  // Auto-select if only one game
+  if(games.length===1){
+    const chip=chips.querySelector('.lore-chip');
+    if(chip){ chip.classList.add('used'); pickGame(games[0].slug,games[0].title,games[0].emoji,chip,true); }
+  }
+}
+
+function pickGame(slug,title,emoji,el,silent=false){
+  selectedGame={slug,title,emoji};
+  document.querySelectorAll('#gameChips .lore-chip').forEach(c=>c.classList.remove('used'));
+  if(el)el.classList.add('used');
+  // Populate zone chips
+  const game=gamesManifest?.games?.find(g=>g.slug===slug);
+  const zones=game?.zones||[];
+  const zoneChips=document.getElementById('zoneChips');
+  if(zoneChips){
+    zoneChips.innerHTML=`<div class="lore-chip used" onclick="pickZone(null,null,null,this)">🎲 Anywhere</div>`+
+      zones.map(z=>`<div class="lore-chip" onclick="pickZone(${z.screenIndex},'${z.name}','${z.emoji||'📍'}',this)">${z.emoji||'📍'} ${z.name}</div>`).join('');
+    selectedZone=null; // reset zone when game changes
+  }
+}
+
+function pickZone(index,name,emoji,el){
+  selectedZone=index!==null?{index,name,emoji}:null;
+  document.querySelectorAll('#zoneChips .lore-chip').forEach(c=>c.classList.remove('used'));
+  if(el)el.classList.add('used');
+}
+
+loadGamesManifest();
+
 // ═══════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════
@@ -849,14 +910,14 @@ async function castSpell(){
     originalSubmission:currentSubmission||null,
     chatHistory:chatHistory.slice(0,6),
     status:'pending_review',
+    targetGame:selectedGame||{slug:'in-space',title:'In Space',emoji:'🚀'},
+    targetZone:selectedZone||null,
   };
 
-  // Store locally
   const lore=JSON.parse(localStorage.getItem('dragonscribe_lore')||'[]');
   lore.unshift(loreEntry);
   localStorage.setItem('dragonscribe_lore',JSON.stringify(lore.slice(0,30)));
 
-  // Generate spec + commit to GitHub
   const spec=await generateSpec(loreEntry);
   loreEntry.spec=spec;
   const committed=await commitToKidsPreview(loreEntry,spec);
@@ -865,16 +926,20 @@ async function castSpell(){
   document.getElementById('spellBtn').style.opacity='1';
 
   goTo('screenSuccess');
+
+  // Show where it lands
+  if(selectedGame){
+    const loc=selectedGame.emoji+' '+selectedGame.title+(selectedZone?' → '+selectedZone.emoji+' '+selectedZone.name:'');
+    document.getElementById('successLocationText').textContent=loc;
+    document.getElementById('successLocation').style.display='block';
+  }
+
   document.getElementById('contributionSummary').textContent=
     `"${name||'Unnamed'}" — ${desc.substring(0,100)}${desc.length>100?'...':''}`;
   document.getElementById('previewUrlText').textContent=
-    committed
-      ? 'kids-preview--crankychickens.netlify.app'
-      : 'Saved locally — will sync when online';
+    committed?'kids-preview--crankychickens.netlify.app':'Saved locally — will sync when online';
   document.getElementById('successMsg').textContent=
-    committed
-      ? (spec.nicksNote||'Your lore is committed! Nick will review it soon.')
-      : 'Saved locally! Ask Nick to sync it.';
+    committed?(spec.nicksNote||'Your lore is committed! Nick will review it soon.'):'Saved locally! Ask Nick to sync it.';
 }
 
 async function generateSpec(entry){

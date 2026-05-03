@@ -346,6 +346,9 @@ function renderCard(s, i){
   const typeIcon={'mechanic':'⚙️','enemy':'👾','level':'🗺️','visual':'🎨','story':'📖','sound':'🔊','vote':'⚡','rating':'⭐','drawing':'✏️','photo':'📸','text':'💬'}[s.type]||'📜';
   const source=s.originalSubmission?'<span class="badge badge-cannon">💥 Cannon Master</span>':'<span class="badge badge-scribe">🐉 Dragon Scribe</span>';
 
+  const gameTag=s.targetGame?`<span class="badge badge-type">${s.targetGame.emoji} ${s.targetGame.title}</span>`:'';
+  const zoneTag=s.targetZone?`<span class="badge badge-type">${s.targetZone.emoji} ${s.targetZone.name}</span>`:'';
+
   return `
   <div class="submission-card ${isApproved?'approved':''} ${isRejected?'rejected':''}" id="card_${globalIdx}">
     <div class="card-top">
@@ -354,6 +357,8 @@ function renderCard(s, i){
         <div class="card-title">${s.spec?.title||s.scribeName||s.summary||'Untitled'}</div>
         <div class="card-meta">
           ${source}
+          ${gameTag}
+          ${zoneTag}
           <span class="badge badge-type">${s.type||'idea'}</span>
           ${priorityBadge}
           <span class="card-time">${formatTime(s.timestamp)}</span>
@@ -415,7 +420,17 @@ async function approve(idx){
   allSubmissions[idx].status='approved';
   allSubmissions[idx].configEntry=configEntry;
   await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
-  toast('✅ Approved and applied to game config!');
+
+  // Show what was added
+  if(configEntry){
+    const typeLabels={enemyVariant:'👾 New enemy',zoneRename:'🏷️ Zone renamed',cornPatch:'🌽 Corn added',loreText:'📖 Lore text'};
+    const label=typeLabels[configEntry.configType]||'🎮 Config updated';
+    const game=sub.targetGame?.emoji+' '+(sub.targetGame?.title||'In Space');
+    const zone=sub.targetZone?' → '+sub.targetZone.name:'';
+    toast(`${label} in ${game}${zone}!`);
+  } else {
+    toast('✅ Approved! Merge when ready.');
+  }
   renderAll();
 }
 
@@ -467,10 +482,11 @@ Respond with ONLY the JSON object, nothing else. Choose colors that match the lo
 }
 
 async function applyToGameConfig(entry, sub){
+  const gameSlug = sub.targetGame?.slug || 'in-space';
+  const configPath = `configs/${gameSlug}.json`;
   try{
-    // Get current config
     const getRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'get_file',path:'game-config.json',branch:'kids-preview'})});
+      body:JSON.stringify({action:'get_file',path:configPath,branch:'kids-preview'})});
     const getData=await getRes.json();
     let cfg={zones:[],enemyVariants:[],cornPatches:[],loreEntries:[]};
     let sha=null;
@@ -479,7 +495,11 @@ async function applyToGameConfig(entry, sub){
       sha=getData.sha;
     }
 
-    // Apply the entry
+    // Hint zone from kid's selection if Claude didn't specify
+    if(sub.targetZone?.index !== undefined && entry.screenIndex === undefined){
+      entry.screenIndex = sub.targetZone.index;
+    }
+
     if(entry.configType==='enemyVariant'){
       cfg.enemyVariants=cfg.enemyVariants||[];
       cfg.enemyVariants.push(entry);
@@ -493,23 +513,26 @@ async function applyToGameConfig(entry, sub){
     } else if(entry.configType==='loreText'){
       const z=cfg.zones.find(z=>z.screenIndex===entry.screenIndex);
       if(z) z.loreText=entry.loreText;
+      else cfg.zones.push({screenIndex:entry.screenIndex,loreText:entry.loreText});
     }
 
     cfg._updated=new Date().toISOString();
     cfg._version=(cfg._version||0)+1;
 
-    // Save config to kids-preview
     await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         action:'save_file',
-        path:'game-config.json',
+        path:configPath,
         branch:'kids-preview',
         content:JSON.stringify(cfg,null,2),
         sha,
-        commitMsg:`🎮 Config update: ${sub.scribeName||'lore'} by Dragon Scribe`
+        commitMsg:`🎮 Config update: ${sub.scribeName||'lore'} → ${gameSlug}`
       })
     });
-  }catch(e){ console.error('Config apply failed',e); }
+
+    // Show what was added in the card
+    return entry;
+  }catch(e){ console.error('Config apply failed',e); return null; }
 }
 
 async function reject(idx){

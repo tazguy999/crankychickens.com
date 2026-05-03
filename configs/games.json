@@ -1,0 +1,20 @@
+{
+  "_note": "Add new games here — they appear automatically in kids' pickers",
+  "games": [
+    {
+      "slug": "in-space",
+      "title": "In Space",
+      "subtitle": "Houston, We Have a Clucking Problem",
+      "emoji": "🚀",
+      "status": "active",
+      "gameUrl": "/games/in-space.html",
+      "configPath": "/configs/in-space.json",
+      "zones": [
+        { "screenIndex": 0, "name": "Landing Zone",   "emoji": "🌕" },
+        { "screenIndex": 1, "name": "Crater Fields",  "emoji": "💥" },
+        { "screenIndex": 2, "name": "Moon Base",      "emoji": "🛸" },
+        { "screenIndex": 3, "name": "Harvester Core", "emoji": "⚡" }
+      ]
+    }
+  ]
+}

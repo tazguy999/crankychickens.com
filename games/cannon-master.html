@@ -464,6 +464,47 @@ body::before {
 </div>
 
 <!-- ════════════════════════════════════ -->
+<!--  GAME PICKER                        -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenGamePick">
+  <div class="hdr">
+    <div class="title">🎮 PICK A GAME</div>
+    <div class="sub">WHICH GAME IS YOUR IDEA FOR?</div>
+  </div>
+  <div class="nav-back" onclick="goTo(pendingScreen)">← Back</div>
+
+  <div class="big-btn-grid" id="gamePickGrid" style="margin-top:8px">
+    <!-- populated by JS from games manifest -->
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!--  ZONE PICKER                        -->
+<!-- ════════════════════════════════════ -->
+<div class="screen" id="screenZonePick">
+  <div class="hdr">
+    <div class="title">🗺️ PICK A ZONE</div>
+    <div class="sub">WHERE IN THE GAME?</div>
+  </div>
+  <div class="nav-back" onclick="goTo('screenGamePick')">← Back</div>
+
+  <div style="padding:16px 16px 8px">
+    <div class="section-label" style="font-size:clamp(13px,4vw,16px);color:rgba(255,200,100,0.7)">
+      Skip this if you don't mind where it goes!
+    </div>
+  </div>
+
+  <div class="big-btn-grid" id="zonePickGrid">
+    <!-- populated by JS -->
+  </div>
+
+  <button class="fire-btn" onclick="skipZonePick()" style="margin-top:12px;font-size:clamp(16px,5vw,20px)">
+    <span class="fire-icon" style="font-size:24px">🎲</span>
+    ANYWHERE IS FINE!
+  </button>
+</div>
+
+<!-- ════════════════════════════════════ -->
 <!--  DRAW SCREEN                        -->
 <!-- ════════════════════════════════════ -->
 <div class="screen" id="screenDraw">
@@ -724,6 +765,11 @@ body::before {
       Your idea is flying through space to the Dragon Scribe right now! She'll turn it into real game stuff! 🐉
     </div>
 
+    <div id="successLocation" style="display:none;background:rgba(255,107,0,0.12);border:2px solid rgba(255,107,0,0.4);border-radius:16px;padding:14px;width:100%;text-align:center">
+      <div style="font-family:'Fredoka One',cursive;font-size:clamp(11px,3.5vw,14px);color:rgba(255,200,100,0.7);margin-bottom:4px">📍 YOUR IDEA GOES INTO</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:clamp(16px,5vw,22px);color:#ffcc02" id="successLocationText"></div>
+    </div>
+
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px">
       <div style="font-size:40px;animation:successBounce 0.5s ease 0.1s both">🐔</div>
       <div style="font-size:40px;animation:successBounce 0.5s ease 0.2s both">🌽</div>
@@ -746,6 +792,72 @@ body::before {
 const PROXY='/.netlify/functions/github-proxy';
 
 // ═══════════════════════════════
+//  GAME & ZONE SELECTION
+// ═══════════════════════════════
+let selectedGame = null;
+let selectedZone = null;
+let pendingScreen = 'screenHome';
+let gamesManifest = null;
+
+async function loadGamesManifest(){
+  try{
+    const res = await fetch('/configs/games.json?t='+Date.now());
+    if(res.ok) gamesManifest = await res.json();
+  }catch(e){ console.log('No games manifest'); }
+}
+loadGamesManifest();
+
+function showGamePicker(fromScreen){
+  pendingScreen = fromScreen;
+  const grid = document.getElementById('gamePickGrid');
+  const games = gamesManifest?.games?.filter(g=>g.status==='active')||[{slug:'in-space',title:'In Space',emoji:'🚀',subtitle:'Houston, We Have a Clucking Problem'}];
+  grid.innerHTML = games.map(g=>`
+    <button class="big-btn full" onclick="pickGame('${g.slug}','${g.title}','${g.emoji}')">
+      <span class="btn-icon">${g.emoji}</span>
+      <div>
+        <div class="btn-label">${g.title}</div>
+        <div class="btn-sub">${g.subtitle||''}</div>
+      </div>
+    </button>`).join('');
+  goTo('screenGamePick');
+}
+
+function pickGame(slug, title, emoji){
+  selectedGame = {slug, title, emoji};
+  showZonePicker();
+}
+
+function showZonePicker(){
+  const game = gamesManifest?.games?.find(g=>g.slug===selectedGame.slug);
+  const zones = game?.zones || [{screenIndex:0,name:'Anywhere',emoji:'🎲'}];
+  const grid = document.getElementById('zonePickGrid');
+  grid.innerHTML = zones.map(z=>`
+    <button class="big-btn" onclick="pickZone(${z.screenIndex},'${z.name}','${z.emoji||'📍'}')">
+      <span class="btn-icon">${z.emoji||'📍'}</span>
+      <div class="btn-label">${z.name}</div>
+    </button>`).join('');
+  goTo('screenZonePick');
+}
+
+function pickZone(index, name, emoji){
+  selectedZone = {index, name, emoji};
+  goTo(pendingScreen);
+}
+
+function skipZonePick(){
+  selectedZone = null;
+  goTo(pendingScreen);
+}
+
+function showSuccessLocation(){
+  if(selectedGame){
+    const loc = selectedGame.emoji + ' ' + selectedGame.title + (selectedZone ? ' → ' + selectedZone.emoji + ' ' + selectedZone.name : '');
+    document.getElementById('successLocationText').textContent = loc;
+    document.getElementById('successLocation').style.display = 'block';
+  }
+}
+
+// ═══════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════
 function goTo(id){
@@ -754,7 +866,7 @@ function goTo(id){
   window.scrollTo(0,0);
   if(id==='screenDraw') setTimeout(resizeCanvas,50);
 }
-function goHome(){ goTo('screenHome'); resetAll(); }
+function goHome(){ goTo('screenHome'); resetAll(); selectedGame=null; selectedZone=null; }
 
 // ═══════════════════════════════
 //  FLOATING STARS ANIMATION
@@ -915,6 +1027,8 @@ function storeSubmission(parsed, raw){
     id:Date.now(),
     timestamp:new Date().toISOString(),
     raw,
+    targetGame: selectedGame,
+    targetZone: selectedZone,
     ...parsed,
     status:'pending'
   });
@@ -922,9 +1036,11 @@ function storeSubmission(parsed, raw){
 }
 
 async function submitDraw(){
+  if(!selectedGame){ showGamePicker('screenDraw'); return; }
   const caption=document.getElementById('drawCaption').value;
   const imgData=drawCanvas.toDataURL('image/png');
   goTo('screenSuccess');
+  showSuccessLocation();
   document.getElementById('successMsg').textContent='Your drawing is flying through space to the Dragon Scribe! 🐉🎨';
   const parsed=await submitToAI('drawing',imgData,caption);
   storeSubmission(parsed,{type:'drawing',caption});
@@ -932,37 +1048,45 @@ async function submitDraw(){
 }
 
 async function submitVote(){
+  if(!selectedGame){ showGamePicker('screenVote'); return; }
   const picks=Object.entries(voteSelections).map(([k,v])=>v).join(', ');
   if(!picks){alert('Tap something first! 👆');return;}
   goTo('screenSuccess');
+  showSuccessLocation();
   const parsed=await submitToAI('vote',`Game mechanic votes: ${picks}`);
   storeSubmission(parsed,{type:'vote',picks});
   document.getElementById('successMsg').textContent=parsed.excitement||'Your votes are in!';
 }
 
 async function submitText(){
+  if(!selectedGame){ showGamePicker('screenText'); return; }
   const text=document.getElementById('ideaText').value.trim();
   if(!text){alert('Type your idea first! 💬');return;}
   goTo('screenSuccess');
+  showSuccessLocation();
   const parsed=await submitToAI('text',text);
   storeSubmission(parsed,{type:'text',text});
   document.getElementById('successMsg').textContent=parsed.excitement||'Your idea has been launched!';
 }
 
 async function submitPhoto(){
+  if(!selectedGame){ showGamePicker('screenPhoto'); return; }
   if(!photoDataUrl){alert('Pick a photo first! 📸');return;}
   const caption=document.getElementById('photoCaption').value;
   goTo('screenSuccess');
+  showSuccessLocation();
   const parsed=await submitToAI('photo',photoDataUrl,caption);
   storeSubmission(parsed,{type:'photo',caption});
   document.getElementById('successMsg').textContent=parsed.excitement||'Your photo is on its way!';
 }
 
 async function submitRating(){
+  if(!selectedGame){ showGamePicker('screenVote2'); return; }
   const fix=document.getElementById('fixText').value;
   const best=voteSelections['best']||'not specified';
   const summary=`Rating: ${currentRating}/5. Best part: ${best}. Fix: ${fix||'nothing'}`;
   goTo('screenSuccess');
+  showSuccessLocation();
   document.getElementById('successMsg').textContent='Your review blasted off! ⭐🚀';
   const parsed=await submitToAI('rating',summary);
   storeSubmission(parsed,{type:'rating',rating:currentRating,best,fix});
