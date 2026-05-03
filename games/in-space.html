@@ -480,20 +480,13 @@ let score=0, cornCount=0, frame=0, gameState='title';
 let titleBtn=null;
 
 canvas.addEventListener('click',e=>{
-  if(gameState!=='title'||!titleBtn)return;
-  const rect=canvas.getBoundingClientRect();
-  const scaleX=GW/rect.width, scaleY=GH/rect.height;
-  const cx=(e.clientX-rect.left)*scaleX, cy=(e.clientY-rect.top)*scaleY;
-  if(cx>=titleBtn.x&&cx<=titleBtn.x+titleBtn.w&&cy>=titleBtn.y&&cy<=titleBtn.y+titleBtn.h) startGame();
+  if(gameState!=='title')return;
+  startGame();
 });
 canvas.addEventListener('touchstart',e=>{
-  if(gameState!=='title'||!titleBtn)return;
+  if(gameState!=='title')return;
   e.preventDefault();
-  const rect=canvas.getBoundingClientRect();
-  const scaleX=GW/rect.width, scaleY=GH/rect.height;
-  const t=e.changedTouches[0];
-  const cx=(t.clientX-rect.left)*scaleX, cy=(t.clientY-rect.top)*scaleY;
-  if(cx>=titleBtn.x&&cx<=titleBtn.x+titleBtn.w&&cy>=titleBtn.y&&cy<=titleBtn.y+titleBtn.h) startGame();
+  startGame();
 },{passive:false});
 
 // Per-screen persistent state
@@ -1200,9 +1193,9 @@ function drawTitle(){
   ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.roundRect(bx,by,bw,bh,12);ctx.fill();
   ctx.shadowBlur=0;
   ctx.fillStyle='#1a0a2e';ctx.font='bold 22px Fredoka One';ctx.textAlign='center';
-  ctx.fillText('▶ PLAY DEMO',GW/2,by+34);
+  ctx.fillText('▶ TAP TO PLAY',GW/2,by+34);
   ctx.textAlign='left';
-  titleBtn={x:bx,y:by,w:bw,h:bh};
+  titleBtn=true; // just a flag now — whole canvas is tappable
 }
 
 // ═══════════════════════════════════════════════
@@ -1219,7 +1212,7 @@ function startGame(){
   hideMsg();
   updateHUD();
   hudZone=currentScreen().name;
-  titleBtn=null;
+  titleBtn=false;
   updateZeroGUI();
 }
 
