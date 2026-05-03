@@ -221,19 +221,12 @@ window.addEventListener('resize', ()=>{ checkOrientation(); resize(); });
 window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ checkOrientation(); resize(); },200); });
 
 function resize(){
-  // Use visualViewport if available (accounts for mobile browser chrome)
-  const vw = (window.visualViewport ? window.visualViewport.width  : window.innerWidth);
-  const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-  // On mobile, reserve space for the floating touch controls (~160px)
-  const controlsH = (isMobile && gameState !== 'title') ? 160 : 0;
-  const availH = vh - controlsH;
-  const scale = Math.min(vw / GW, availH / GH);
-  const cw = Math.round(GW * scale);
-  const ch = Math.round(GH * scale);
-  canvas.style.width  = cw + 'px';
-  canvas.style.height = ch + 'px';
-  // Shift canvas up so touch controls don't overlap it
-  canvas.style.marginBottom = controlsH + 'px';
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const scale = Math.min(vw / GW, vh / GH);
+  canvas.style.width  = Math.round(GW * scale) + 'px';
+  canvas.style.height = Math.round(GH * scale) + 'px';
+  canvas.style.marginBottom = '0';
 }
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize', ()=>{ checkOrientation(); resize(); });
