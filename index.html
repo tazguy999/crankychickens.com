@@ -3894,10 +3894,17 @@ function updateMusicBtn() {
 
 function toggleMusic() {
   initAudio();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
 
+  // Mobile browsers need a silent buffer played first to unlock AudioContext
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(() => _startOrStop());
+  } else {
+    _startOrStop();
+  }
+}
+
+function _startOrStop() {
   if (musicPlaying) {
-    // Stop
     musicPlaying = false;
     clearTimeout(sequencerTimeout);
     musicNodes.forEach(n => { try { n.stop(); } catch(e) {} });
@@ -3905,13 +3912,19 @@ function toggleMusic() {
     getMaster().gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
     setTimeout(() => { if (!musicPlaying) getMaster().gain.value = 0.18; }, 400);
   } else {
-    // Start
+    // Play a silent buffer first to unlock on iOS
+    const silentBuf = audioCtx.createBuffer(1, 1, 22050);
+    const silentSrc = audioCtx.createBufferSource();
+    silentSrc.buffer = silentBuf;
+    silentSrc.connect(audioCtx.destination);
+    silentSrc.start(0);
+
     musicPlaying = true;
     getMaster().gain.value = 0;
     getMaster().gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.5);
     currentSection = 0;
     currentBeat = 0;
-    scheduleSection(0, audioCtx.currentTime + 0.1);
+    scheduleSection(0, audioCtx.currentTime + 0.2);
   }
   updateMusicBtn();
 }
