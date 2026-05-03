@@ -1,0 +1,18 @@
+{
+  "_version": 1,
+  "_updated": "2026-01-01T00:00:00.000Z",
+  "_note": "This file is managed by Mission Control. Kid contributions go here.",
+
+  "zones": [
+    { "screenIndex": 0, "name": "Landing Zone",    "loreText": "" },
+    { "screenIndex": 1, "name": "Crater Fields",   "loreText": "" },
+    { "screenIndex": 2, "name": "Moon Base",        "loreText": "" },
+    { "screenIndex": 3, "name": "Harvester Core",  "loreText": "" }
+  ],
+
+  "enemyVariants": [],
+
+  "cornPatches": [],
+
+  "loreEntries": []
+}

@@ -50,6 +50,41 @@ exports.handler = async (event) => {
 
   const { action } = body;
 
+  // ── GET ANY FILE ──
+  if (action === 'get_file') {
+    const { path: filePath, branch: fileBranch = BRANCH } = body;
+    if (!filePath) return err(CORS, 'Missing path');
+    try {
+      const res = await ghFetch(`/repos/${REPO}/contents/${filePath}?ref=${fileBranch}`, TOKEN);
+      if (res.status === 404) return ok(CORS, { content: null, sha: null });
+      const data = await res.json();
+      const content = Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8');
+      return ok(CORS, { content, sha: data.sha });
+    } catch (e) {
+      return err(CORS, e.message);
+    }
+  }
+
+  // ── SAVE ANY FILE ──
+  if (action === 'save_file') {
+    const { path: filePath, branch: fileBranch = BRANCH, content: fileContent, sha, commitMsg } = body;
+    if (!filePath || !fileContent) return err(CORS, 'Missing path or content');
+    try {
+      const encoded = Buffer.from(fileContent).toString('base64');
+      const res = await ghFetch(`/repos/${REPO}/contents/${filePath}`, TOKEN, 'PUT', {
+        message: commitMsg || `📝 Update ${filePath}`,
+        content: encoded,
+        branch: fileBranch,
+        ...(sha ? { sha } : {}),
+      });
+      const data = await res.json();
+      if (!res.ok) return err(CORS, data.message || 'Write failed');
+      return ok(CORS, { sha: data.content?.sha });
+    } catch (e) {
+      return err(CORS, e.message);
+    }
+  }
+
   // ── GET SUBMISSIONS ──
   if (action === 'get_submissions') {
     try {

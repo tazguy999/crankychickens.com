@@ -402,10 +402,109 @@ function showEmpty(msg){
 
 // ── APPROVE / REJECT ──
 async function approve(idx){
+  const sub = allSubmissions[idx];
+  
+  // Ask Claude to translate the lore into a game config entry
+  const configEntry = await generateConfigEntry(sub);
+  
+  // Apply to game-config.json
+  if(configEntry){
+    await applyToGameConfig(configEntry, sub);
+  }
+
   allSubmissions[idx].status='approved';
-  await saveSubmissions('✅ Approved: '+( allSubmissions[idx].spec?.title||allSubmissions[idx].scribeName));
-  toast('✅ Approved! Merge when ready.');
+  allSubmissions[idx].configEntry=configEntry;
+  await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
+  toast('✅ Approved and applied to game config!');
   renderAll();
+}
+
+async function generateConfigEntry(sub){
+  const prompt=`You are converting a Dragon Scribe's game lore submission into a structured game config entry for "Cranky Chickens: In Space."
+
+Submission:
+Name: ${sub.scribeName||'Unnamed'}
+Description: ${sub.description||sub.summary||''}
+Type: ${sub.type||'mechanic'}
+Original idea: ${sub.originalSubmission?.summary||''}
+
+The game has 4 screens (indices 0-3): Landing Zone, Crater Fields, Moon Base, Harvester Core.
+Screens 1 and 3 are zero-G. Screens 0 and 2 have gravity.
+
+Based on the submission, generate ONE of these config types (pick the best fit):
+
+For a new enemy variant:
+{"configType":"enemyVariant","screenIndex":1,"name":"Name","color":"#hexcolor","eyeColor":"#hexcolor","spd":0.6,"pat":"h","size":1.0,"tx":9,"ty":8}
+
+For a zone rename:
+{"configType":"zoneRename","screenIndex":0,"name":"New Zone Name","loreText":"Short lore sentence shown on entry (max 60 chars)"}
+
+For new corn:
+{"configType":"cornPatch","screenIndex":0,"x":5,"y":8}
+
+For lore text only:
+{"configType":"loreText","screenIndex":0,"loreText":"Short atmospheric text (max 60 chars)"}
+
+Respond with ONLY the JSON object, nothing else. Choose colors that match the lore description. Make it feel real and exciting.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content.find(b=>b.type==='text')?.text||'{}';
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){
+    console.error('Config generation failed',e);
+    return null;
+  }
+}
+
+async function applyToGameConfig(entry, sub){
+  try{
+    // Get current config
+    const getRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'game-config.json',branch:'kids-preview'})});
+    const getData=await getRes.json();
+    let cfg={zones:[],enemyVariants:[],cornPatches:[],loreEntries:[]};
+    let sha=null;
+    if(getData.content){
+      cfg=JSON.parse(getData.content);
+      sha=getData.sha;
+    }
+
+    // Apply the entry
+    if(entry.configType==='enemyVariant'){
+      cfg.enemyVariants=cfg.enemyVariants||[];
+      cfg.enemyVariants.push(entry);
+    } else if(entry.configType==='zoneRename'){
+      const z=cfg.zones.find(z=>z.screenIndex===entry.screenIndex);
+      if(z){z.name=entry.name;z.loreText=entry.loreText||z.loreText;}
+      else cfg.zones.push({screenIndex:entry.screenIndex,name:entry.name,loreText:entry.loreText||''});
+    } else if(entry.configType==='cornPatch'){
+      cfg.cornPatches=cfg.cornPatches||[];
+      cfg.cornPatches.push(entry);
+    } else if(entry.configType==='loreText'){
+      const z=cfg.zones.find(z=>z.screenIndex===entry.screenIndex);
+      if(z) z.loreText=entry.loreText;
+    }
+
+    cfg._updated=new Date().toISOString();
+    cfg._version=(cfg._version||0)+1;
+
+    // Save config to kids-preview
+    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_file',
+        path:'game-config.json',
+        branch:'kids-preview',
+        content:JSON.stringify(cfg,null,2),
+        sha,
+        commitMsg:`🎮 Config update: ${sub.scribeName||'lore'} by Dragon Scribe`
+      })
+    });
+  }catch(e){ console.error('Config apply failed',e); }
 }
 
 async function reject(idx){

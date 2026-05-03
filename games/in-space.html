@@ -1172,20 +1172,54 @@ function drawChicken(x,y,dir,atk,fr){
   }
 }
 
-function drawAlienIguana(x,y,hp,fr){
+function drawAlienIguana(x,y,hp,fr,cfg={}){
+  const bodyCol=cfg.color||'#8855cc';
+  const darkCol=cfg.color?shadeColor(cfg.color,-30):'#6633aa';
+  const spineCol=cfg.color?shadeColor(cfg.color,30):'#aa66ff';
+  const eyeCol=cfg.eyeColor||'#00ff88';
+  const sc=cfg.size||1;
+  ctx.save();
+  if(sc!==1){ ctx.translate(x+14,y+16); ctx.scale(sc,sc); ctx.translate(-14,-16); }
   ctx.fillStyle='rgba(0,0,0,0.12)';ctx.beginPath();ctx.ellipse(x+14,y+26,12,4,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#8855cc';ctx.beginPath();ctx.ellipse(x+14,y+18,12,9,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#6633aa';ctx.fillRect(x+3,y+12,22,12);
-  ctx.fillStyle='#aa66ff';for(let i=0;i<5;i++)ctx.fillRect(x+5+i*4,y+6,3,8);
-  ctx.fillStyle='#8855cc';ctx.beginPath();ctx.arc(x+22,y+14,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.ellipse(x+14,y+18,12,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=darkCol;ctx.fillRect(x+3,y+12,22,12);
+  ctx.fillStyle=spineCol;for(let i=0;i<5;i++)ctx.fillRect(x+5+i*4,y+6,3,8);
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.arc(x+22,y+14,8,0,Math.PI*2);ctx.fill();
   const eg=0.5+Math.sin(fr*0.12)*0.3;
-  ctx.fillStyle=`rgba(0,255,136,${eg})`;ctx.beginPath();ctx.arc(x+24,y+12,5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#00ee77';ctx.beginPath();ctx.arc(x+24,y+12,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=`rgba(${hexToRgb(eyeCol)},${eg})`;ctx.beginPath();ctx.arc(x+24,y+12,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.arc(x+24,y+12,2.5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+24,y+12,1.2,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=eg*0.3;ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(x+24,y+12,10,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+30,y+14);ctx.lineTo(x+36,y+12);ctx.lineTo(x+38,y+10);ctx.stroke();ctx.beginPath();ctx.moveTo(x+36,y+12);ctx.lineTo(x+38,y+14);ctx.stroke();
-  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);ctx.fillStyle='#aa44ff';ctx.fillRect(x,y-8,30*hp,5);
-  ctx.strokeStyle='rgba(180,100,255,0.4)';ctx.lineWidth=1;ctx.strokeRect(x,y-8,30,5);
+  ctx.globalAlpha=eg*0.3;ctx.fillStyle=eyeCol;
+  ctx.beginPath();ctx.arc(x+24,y+12,10,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x+30,y+14);ctx.lineTo(x+36,y+12);ctx.lineTo(x+38,y+10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+36,y+12);ctx.lineTo(x+38,y+14);ctx.stroke();
+  // Name tag if named
+  if(cfg.name){
+    ctx.globalAlpha=0.85;ctx.fillStyle='rgba(0,0,0,0.6)';
+    const tw=ctx.measureText(cfg.name).width+10;
+    ctx.fillRect(x+14-tw/2,y-18,tw,14);
+    ctx.fillStyle=spineCol;ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
+    ctx.fillText(cfg.name,x+14,y-7);ctx.textAlign='left';ctx.globalAlpha=1;
+  }
+  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);
+  ctx.fillStyle=bodyCol;ctx.fillRect(x,y-8,30*hp,5);
+  ctx.strokeStyle=`rgba(${hexToRgb(spineCol)},0.4)`;ctx.lineWidth=1;ctx.strokeRect(x,y-8,30,5);
+  ctx.restore();
+}
+
+// Color helpers
+function shadeColor(hex,pct){
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,Math.max(0,((n>>16)&0xff)+pct));
+  const g=Math.min(255,Math.max(0,((n>>8)&0xff)+pct));
+  const b=Math.min(255,Math.max(0,(n&0xff)+pct));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function hexToRgb(hex){
+  const n=parseInt(hex.replace('#',''),16);
+  return `${(n>>16)&0xff},${(n>>8)&0xff},${n&0xff}`;
 }
 
 function drawCorn(x,y,fr){
@@ -1376,7 +1410,7 @@ function loop(){
     const ss=getScreenState(screenCol,screenRow);
     drawScreen(sc);
     sc.corn.forEach((c,i)=>{ if(!ss.gotCorns.has(i)) drawCorn(c.x*TILE,c.y*TILE,frame); });
-    sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame); });
+    sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame,e); });
     ctx.restore();
     // Next screen scrolling in
     const nsc=SCREENS[screenIndex(nextScreenCol,nextScreenRow)];
@@ -1390,7 +1424,7 @@ function loop(){
     const ss=getScreenState(screenCol,screenRow);
     drawScreen(sc);
     sc.corn.forEach((c,i)=>{ if(!ss.gotCorns.has(i)) drawCorn(c.x*TILE,c.y*TILE,frame); });
-    sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame); });
+    sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame,e); });
   }
 
   // Player (flicker when invincible)
@@ -1439,10 +1473,70 @@ function loop(){
 }
 
 // ═══════════════════════════════════════════════
+//  GAME CONFIG — loaded from game-config.json
+// ═══════════════════════════════════════════════
+let gameConfig = null;
+
+function applyConfig(cfg){
+  if(!cfg) return;
+  gameConfig = cfg;
+
+  // Apply zone name/lore overrides
+  if(cfg.zones){
+    cfg.zones.forEach(z=>{
+      const sc = SCREENS[z.screenIndex];
+      if(!sc) return;
+      if(z.name) sc.name = z.name;
+      if(z.loreText) sc.loreText = z.loreText;
+    });
+  }
+
+  // Apply extra corn patches
+  if(cfg.cornPatches){
+    cfg.cornPatches.forEach(p=>{
+      const sc = SCREENS[p.screenIndex];
+      if(!sc) return;
+      sc.corn.push({x:p.x, y:p.y});
+    });
+  }
+
+  // Apply enemy variants — override existing enemies or add new ones
+  if(cfg.enemyVariants){
+    cfg.enemyVariants.forEach(v=>{
+      const sc = SCREENS[v.screenIndex];
+      if(!sc) return;
+      if(v.enemyIndex !== undefined && sc.enemies[v.enemyIndex]){
+        Object.assign(sc.enemies[v.enemyIndex], v);
+      } else {
+        sc.enemies.push({
+          tx: v.tx||9, ty: v.ty||7,
+          spd: v.spd||0.5, pat: v.pat||'h',
+          name: v.name, color: v.color,
+          eyeColor: v.eyeColor, size: v.size||1,
+        });
+      }
+    });
+  }
+}
+
+async function loadConfig(){
+  try{
+    const res = await fetch('/game-config.json?t='+Date.now());
+    if(res.ok){
+      const cfg = await res.json();
+      applyConfig(cfg);
+    }
+  }catch(e){
+    console.log('No game config found, using defaults');
+  }
+  updateHUD();
+  loop();
+}
+
+// ═══════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════
-updateHUD();
-loop();
+loadConfig();
 </script>
 </body>
 </html>
