@@ -1557,14 +1557,16 @@ function drawLoreFlash(){
 async function loadConfig(){
   try{
     const res = await fetch('/configs/in-space.json?t='+Date.now());
+    console.log('Config fetch status:', res.status);
     if(res.ok){
       const cfg = await res.json();
+      console.log('Config loaded:', JSON.stringify(cfg).slice(0,200));
       applyConfig(cfg);
+      console.log('After applyConfig, screen 1 enemies:', SCREENS[1].enemies.length, SCREENS[1].name);
     }
   }catch(e){
-    console.log('No game config found, using defaults');
+    console.log('Config load error:', e.message);
   }
-  // Trigger lore flash for first screen
   triggerLoreFlash(currentScreen());
   updateHUD();
   loop();
