@@ -191,10 +191,22 @@ canvas#game{
 <div id="hint">⌨️ WASD / Arrows — move &nbsp;|&nbsp; SPACE — peck &nbsp;|&nbsp; ⛶ fullscreen</div>
 
 <script>
-'use strict';
-// ═══════════════════════════════════════════════
-//  SETUP & SCALING
-// ═══════════════════════════════════════════════
+// ── ON-SCREEN DEBUG OVERLAY ──
+const DEBUG = new URLSearchParams(window.location.search).get('debug') === '1';
+const debugLines = [];
+function dbg(msg){
+  if(!DEBUG) return;
+  debugLines.push(msg);
+  if(debugLines.length > 8) debugLines.shift();
+  const el = document.getElementById('debugOverlay');
+  if(el) el.textContent = debugLines.join('\n');
+}
+if(DEBUG){
+  const d = document.createElement('div');
+  d.id = 'debugOverlay';
+  d.style.cssText = 'position:fixed;bottom:170px;left:0;right:0;background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;padding:6px;z-index:999;white-space:pre-wrap;pointer-events:none;';
+  document.body.appendChild(d);
+}
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const msg = document.getElementById('message');
@@ -1557,15 +1569,19 @@ function drawLoreFlash(){
 async function loadConfig(){
   try{
     const res = await fetch('/configs/in-space.json?t='+Date.now());
-    console.log('Config fetch status:', res.status);
+    dbg('Config fetch: '+res.status);
     if(res.ok){
       const cfg = await res.json();
-      console.log('Config loaded:', JSON.stringify(cfg).slice(0,200));
+      dbg('Enemies in config: '+(cfg.enemyVariants||[]).length);
+      dbg('Zone 1 name: '+((cfg.zones||[])[1]||{}).name);
       applyConfig(cfg);
-      console.log('After applyConfig, screen 1 enemies:', SCREENS[1].enemies.length, SCREENS[1].name);
+      dbg('Screen 1 enemies after: '+SCREENS[1].enemies.length);
+      dbg('Screen 1 name after: '+SCREENS[1].name);
+    } else {
+      dbg('Config fetch failed: '+res.status);
     }
   }catch(e){
-    console.log('Config load error:', e.message);
+    dbg('Config error: '+e.message);
   }
   triggerLoreFlash(currentScreen());
   updateHUD();
