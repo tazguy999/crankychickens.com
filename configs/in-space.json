@@ -1,5 +1,5 @@
 {
-  "_version": 8,
+  "_version": 9,
   "_updated": "2026-05-03T23:59:00.000Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
@@ -36,7 +36,8 @@
       "pat": "h",
       "size": 1.0,
       "tx": 9,
-      "ty": 9
+      "ty": 9,
+      "characterType": "feline"
     }
   ],
   "cornPatches": [],
