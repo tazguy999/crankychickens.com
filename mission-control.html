@@ -407,80 +407,226 @@ function showEmpty(msg){
     </div>`;
 }
 
-// ── APPROVE / REJECT ──
+// ── APPROVE — full AI code generation pipeline ──
 async function approve(idx){
   const sub = allSubmissions[idx];
-  
-  // Ask Claude to translate the lore into a game config entry
-  const configEntry = await generateConfigEntry(sub);
-  
-  // Apply to game-config.json
-  if(configEntry){
-    await applyToGameConfig(configEntry, sub);
+  const card = document.getElementById(`card_${idx}`);
+  if(card){
+    card.style.opacity='0.6';
+    card.innerHTML += `<div style="font-family:'Fredoka One',cursive;color:#ffcc02;padding:12px;font-size:14px">⚙️ Generating game code...</div>`;
+  }
+
+  toast('🤖 AI is writing code for this...');
+
+  // Step 1: Generate full code contribution (sprite + behavior + config)
+  const result = await generateFullContribution(sub);
+
+  // Step 2: Apply everything to kids-preview
+  if(result){
+    await applyFullContribution(result, sub);
+  } else {
+    // Fallback to config-only
+    const configEntry = await generateConfigEntry(sub);
+    if(configEntry) await applyToGameConfig(configEntry, sub);
   }
 
   allSubmissions[idx].status='approved';
-  allSubmissions[idx].configEntry=configEntry;
+  allSubmissions[idx].aiResult=result;
   await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
 
-  // Show what was added
-  if(configEntry){
-    const typeLabels={enemyVariant:'👾 New enemy',zoneRename:'🏷️ Zone renamed',cornPatch:'🌽 Corn added',loreText:'📖 Lore text'};
-    const label=typeLabels[configEntry.configType]||'🎮 Config updated';
-    const game=sub.targetGame?.emoji+' '+(sub.targetGame?.title||'In Space');
-    const zone=sub.targetZone?' → '+sub.targetZone.name:'';
-    toast(`${label} in ${game}${zone}!`);
-  } else {
-    toast('✅ Approved! Merge when ready.');
-  }
+  const game=sub.targetGame?.emoji+' '+(sub.targetGame?.title||'In Space');
+  const zone=sub.targetZone?' → '+sub.targetZone.name:'';
+  toast(result
+    ? `🚀 Code generated & deployed to preview! ${game}${zone}`
+    : `✅ Config updated in ${game}${zone}`
+  );
   renderAll();
 }
 
-async function generateConfigEntry(sub){
-  const prompt=`You are converting a Dragon Scribe's game lore submission into a structured game config entry for "Cranky Chickens: In Space."
+// ── FULL AI CONTRIBUTION GENERATOR ──
+async function generateFullContribution(sub){
+  // Style reference — feline draw function (compressed)
+  const styleRef = `// Example draw function signature and style:
+function drawCharacter_feline(x,y,hp,fr,cfg={},isZeroG=false){
+  const bodyCol=cfg.color||'#FF8C00';
+  const eyeCol=cfg.eyeColor||'#FFD700';
+  ctx.save();
+  // shadow if gravity
+  if(!isZeroG){ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x+16,y+30,11,3.5,0,0,Math.PI*2);ctx.fill();}
+  // body, head, features...
+  // HP bar at bottom
+  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);
+  ctx.fillStyle=bodyCol;ctx.fillRect(x,y-8,30*hp,5);
+  ctx.restore();
+}`;
 
-Submission:
-Name: ${sub.scribeName||'Unnamed'}
-Description: ${sub.description||sub.summary||''}
-Type: ${sub.type||'mechanic'}
-Original idea: ${sub.originalSubmission?.summary||''}
+  // Behavior reference
+  const behaviorRef = `// Current enemy update (patrol only):
+// enemy._x += enemy._dir * enemy.spd
+// if wall: enemy._dir *= -1
+// New behavior types go in updateEnemies() after patrol logic
+// Access: player.x, player.y, TILE=32, boxWalkable(map,x,y)`;
 
-The game has 4 screens (indices 0-3): Landing Zone, Crater Fields, Moon Base, Harvester Core.
-Screens 1 and 3 are zero-G. Screens 0 and 2 have gravity.
+  const prompt = `You are an AI game developer for "Cranky Chickens: In Space" — a Zelda-style top-down space adventure. Vanilla JS canvas game, no frameworks.
 
-Based on the submission, generate ONE of these config types (pick the best fit):
+A kid submitted this idea:
+Name: "${sub.scribeName||sub.spec?.title||'New Enemy'}"
+Description: "${sub.description||sub.summary||''}"
+Target zone: "${sub.targetZone?.name||'Landing Zone'}" (screenIndex ${sub.targetZone?.index??0})
+Game context: ${sub.targetGame?.title||'In Space'}
 
-For a new enemy variant:
-{"configType":"enemyVariant","screenIndex":1,"name":"Name","color":"#hexcolor","eyeColor":"#hexcolor","spd":0.6,"pat":"h","size":1.0,"tx":9,"ty":8}
+Generate a complete game contribution as a JSON object with these exact fields:
 
-For a zone rename:
-{"configType":"zoneRename","screenIndex":0,"name":"New Zone Name","loreText":"Short lore sentence shown on entry (max 60 chars)"}
+{
+  "characterType": "short_type_name (e.g. bull, fish, ghost)",
+  "drawFn": "complete JS function: drawCharacter_[type](x,y,hp,fr,cfg={},isZeroG=false){ ... }",
+  "configEntry": {
+    "configType": "enemyVariant",
+    "screenIndex": ${sub.targetZone?.index??0},
+    "name": "Enemy Name",
+    "characterType": "short_type_name",
+    "color": "#hexcolor",
+    "eyeColor": "#hexcolor",
+    "spd": 0.5,
+    "pat": "h",
+    "size": 1.0,
+    "tx": 9,
+    "ty": 9
+  },
+  "commitMessage": "emoji + short description"
+}
 
-For new corn:
-{"configType":"cornPatch","screenIndex":0,"x":5,"y":8}
+RULES for drawFn:
+- Use ctx (global canvas context), frame global for animation
+- Bounding box: 32x32 at (x,y) — stay within it
+- Always ctx.save() at start, ctx.restore() at end
+- Draw HP bar: ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5); ctx.fillStyle=cfg.color||'#888';ctx.fillRect(x,y-8,30*hp,5);
+- If cfg.name: draw name tag above sprite
+- Make it visually match the kid's description — be creative!
+- isZeroG=true means no floor shadow, add floating effect
 
-For lore text only:
-{"configType":"loreText","screenIndex":0,"loreText":"Short atmospheric text (max 60 chars)"}
+Style reference:
+${styleRef}
 
-Respond with ONLY the JSON object, nothing else. Choose colors that match the lore description. Make it feel real and exciting.`;
+Behavior reference (pat field controls movement):
+${behaviorRef}
+
+Respond with ONLY valid JSON. No markdown, no backticks, no explanation.`;
 
   try{
-    const res=await fetch(PROXY,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const res = await fetch(PROXY,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
         action:'claude_complete',
-        max_tokens:200,
+        max_tokens:2000,
         messages:[{role:'user',content:prompt}]
       })
     });
-    const data=await res.json();
+    const data = await res.json();
     if(data.error) throw new Error(data.error);
-    const text=data.content.find(b=>b.type==='text')?.text||'{}';
-    return JSON.parse(text.replace(/```json|```/g,'').trim());
+    const text = data.content?.find(b=>b.type==='text')?.text||'';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const result = JSON.parse(clean);
+    // Validate required fields
+    if(!result.drawFn||!result.configEntry||!result.characterType) throw new Error('Missing required fields');
+    return result;
   }catch(e){
-    console.error('Config generation failed',e);
+    console.error('Full contribution failed:',e);
     return null;
   }
+}
+
+// ── APPLY FULL CONTRIBUTION TO KIDS-PREVIEW ──
+async function applyFullContribution(result, sub){
+  const gameSlug = sub.targetGame?.slug||'in-space';
+  const gameFile = `games/${gameSlug}.html`;
+  const configPath = `configs/${gameSlug}.json`;
+
+  try{
+    // 1. Read current game file
+    const gameRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:gameFile,branch:'kids-preview'})});
+    const gameData = await gameRes.json();
+    if(!gameData.content) throw new Error('Could not read game file');
+
+    // 2. Inject new draw function before the router comment
+    const INJECTION_MARKER = '// ── Router — picks character type from cfg ──';
+    if(!gameData.content.includes(INJECTION_MARKER)) throw new Error('Injection point not found');
+    const newGameContent = gameData.content.replace(
+      INJECTION_MARKER,
+      `${result.drawFn}\n\n${INJECTION_MARKER}`
+    );
+
+    // 3. Save game file
+    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_file', path:gameFile, branch:'kids-preview',
+        content:newGameContent, sha:gameData.sha,
+        commitMsg:`🎨 New character: ${result.characterType} — ${result.commitMessage||sub.scribeName}`
+      })
+    });
+
+    // 4. Update config
+    const cfgRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:configPath,branch:'kids-preview'})});
+    const cfgData = await cfgRes.json();
+    let cfg = cfgData.content ? JSON.parse(cfgData.content) : {zones:[],enemyVariants:[],cornPatches:[],loreEntries:[]};
+    cfg.enemyVariants = cfg.enemyVariants||[];
+    cfg.enemyVariants.push(result.configEntry);
+    cfg._version = (cfg._version||0)+1;
+    cfg._updated = new Date().toISOString();
+
+    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_file', path:configPath, branch:'kids-preview',
+        content:JSON.stringify(cfg,null,2), sha:cfgData.sha,
+        commitMsg:`🎮 Config: add ${result.configEntry.name} to ${sub.targetZone?.name||'game'}`
+      })
+    });
+
+    // 5. Update the router in the game file to include new type
+    // Re-read to get updated SHA after step 3
+    const gameRes2 = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:gameFile,branch:'kids-preview'})});
+    const gameData2 = await gameRes2.json();
+    const ROUTER_MARKER = `default:        drawCharacter_iguana(x,y,hp,fr,cfg,isZG); break;`;
+    const newCase = `case '${result.characterType}': drawCharacter_${result.characterType}(x,y,hp,fr,cfg,isZG); break;\n    `;
+    if(gameData2.content && gameData2.content.includes(ROUTER_MARKER) && !gameData2.content.includes(`case '${result.characterType}'`)){
+      const updatedGame = gameData2.content.replace(ROUTER_MARKER, newCase + ROUTER_MARKER);
+      await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          action:'save_file', path:gameFile, branch:'kids-preview',
+          content:updatedGame, sha:gameData2.sha,
+          commitMsg:`🔀 Router: add ${result.characterType} character type`
+        })
+      });
+    }
+
+  }catch(e){
+    console.error('applyFullContribution failed:',e);
+    // Fallback — at least save the config entry
+    await applyToGameConfig(result.configEntry, sub);
+  }
+}
+
+async function generateConfigEntry(sub){
+  const prompt=`You are converting a game lore submission into a structured game config entry for "Cranky Chickens: In Space."
+Submission: Name: "${sub.scribeName||'Unnamed'}" Description: "${sub.description||sub.summary||''}"
+Screens 0-3: Landing Zone, Quantum Cat Colony, Moon Base, Harvester Core. Screens 1&3 are zero-G.
+Target zone: screenIndex ${sub.targetZone?.index??0}
+Generate ONE JSON object — enemyVariant, zoneRename, cornPatch, or loreText. For enemyVariant include characterType field.
+Examples:
+{"configType":"enemyVariant","screenIndex":0,"name":"Name","characterType":"iguana","color":"#hex","eyeColor":"#hex","spd":0.5,"pat":"h","size":1.0,"tx":9,"ty":9}
+{"configType":"zoneRename","screenIndex":0,"name":"New Name","loreText":"Short text max 55 chars"}
+Respond ONLY with the JSON object.`;
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claude_complete',max_tokens:200,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    const text=data.content?.find(b=>b.type==='text')?.text||'{}';
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){ console.error('Config generation failed',e); return null; }
 }
 
 async function applyToGameConfig(entry, sub){
