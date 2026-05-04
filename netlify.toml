@@ -4,3 +4,14 @@
 
 [build.environment]
   NODE_VERSION = "18"
+
+# Never cache game files — always fresh
+[[headers]]
+  for = "/games/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/configs/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
