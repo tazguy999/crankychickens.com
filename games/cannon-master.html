@@ -539,8 +539,8 @@ body::before {
     </div>
 
     <div style="padding:0 0 4px">
-      <label class="section-label" style="font-size:clamp(13px,4vw,16px);color:rgba(255,200,100,0.7)">What did you draw? (optional)</label>
-      <textarea class="idea-textarea" id="drawCaption" placeholder="Tell us what it is..." rows="2"></textarea>
+      <label class="section-label" style="font-size:clamp(14px,4.5vw,18px);color:var(--yellow)">✏️ What did you draw? Tell us!</label>
+      <textarea class="idea-textarea" id="drawCaption" placeholder="Type what it is, what it does, why it's awesome... 🚀" rows="3"></textarea>
     </div>
   </div>
 
@@ -895,15 +895,28 @@ const drawCanvas=document.getElementById('drawCanvas');
 const dCtx=drawCanvas.getContext('2d');
 let drawing=false, brushColor='#ff6b00', brushSize=8;
 
-// Resize canvas to match display size
+// Resize canvas to match display size — preserves drawing content
 function resizeCanvas(){
   const wrap=drawCanvas.parentElement;
   const w=wrap.clientWidth;
+  if(!w) return;
   const ratio=480/640;
+  const newH=Math.round(w*ratio);
+  // Save current drawing if canvas has content
+  let saved=null;
+  if(drawCanvas.width>0 && drawCanvas.height>0){
+    try{ saved=drawCanvas.toDataURL(); }catch(e){}
+  }
   drawCanvas.width=w;
-  drawCanvas.height=Math.round(w*ratio);
+  drawCanvas.height=newH;
   dCtx.fillStyle='#fff';
-  dCtx.fillRect(0,0,drawCanvas.width,drawCanvas.height);
+  dCtx.fillRect(0,0,w,newH);
+  // Restore drawing
+  if(saved){
+    const img=new Image();
+    img.onload=()=>dCtx.drawImage(img,0,0,w,newH);
+    img.src=saved;
+  }
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
