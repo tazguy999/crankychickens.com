@@ -488,14 +488,17 @@ canvas.addEventListener('touchstart',e=>{
 const screenState={};
 function getScreenState(col,row){
   const k=`${col},${row}`;
+  const sc=SCREENS[screenIndex(col,row)];
   if(!screenState[k]){
-    const sc=SCREENS[screenIndex(col,row)];
     screenState[k]={
       gotCorns:new Set(),
       enemyHps:sc.enemies.map(()=>1),
     };
   }
-  return screenState[k];
+  // Sync enemyHps if config added enemies after init
+  const ss=screenState[k];
+  while(ss.enemyHps.length < sc.enemies.length) ss.enemyHps.push(1);
+  return ss;
 }
 
 // Screen scroll
