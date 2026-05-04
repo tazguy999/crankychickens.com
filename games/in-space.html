@@ -1392,6 +1392,82 @@ function drawCharacter_spirit(x,y,hp,fr,cfg={},isZeroG=false){
   ctx.restore();
 }
 
+// ── bull (Space Bull — charging space beast) ──
+function drawCharacter_bull(x,y,hp,fr,cfg={},isZeroG=false){
+  const bodyCol=cfg.color||'#8B0000';
+  const eyeCol=cfg.eyeColor||'#FF4400';
+  const lightCol='#aa2222';
+  const bob=isZeroG?Math.sin(fr*0.04)*3:0;
+  ctx.save();ctx.translate(0,bob);
+  if(!isZeroG){ctx.fillStyle='rgba(0,0,0,0.18)';ctx.beginPath();ctx.ellipse(x+16,y+30,14,4,0,0,Math.PI*2);ctx.fill();}
+  // Body — stocky and wide
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.ellipse(x+16,y+20,14,11,0,0,Math.PI*2);ctx.fill();
+  // Chest muscle definition
+  ctx.fillStyle=lightCol;ctx.beginPath();ctx.ellipse(x+16,y+21,8,7,0,0,Math.PI*2);ctx.fill();
+  // Head — large and blocky
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.ellipse(x+16,y+10,11,9,0,0,Math.PI*2);ctx.fill();
+  // Horns
+  ctx.fillStyle='#ccaa00';
+  ctx.beginPath();ctx.moveTo(x+7,y+6);ctx.bezierCurveTo(x+0,y+0,x+2,y-6,x+8,y+2);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(x+25,y+6);ctx.bezierCurveTo(x+32,y+0,x+30,y-6,x+24,y+2);ctx.closePath();ctx.fill();
+  // Horn shine
+  ctx.fillStyle='#ffee88';ctx.beginPath();ctx.ellipse(x+5,y+1,1.5,3,0.4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffee88';ctx.beginPath();ctx.ellipse(x+27,y+1,1.5,3,-0.4,0,Math.PI*2);ctx.fill();
+  // Space helmet ring
+  if(isZeroG){
+    const hg=0.4+Math.sin(fr*0.08)*0.2;
+    ctx.strokeStyle=`rgba(100,200,255,${hg})`;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(x+16,y+10,12,0,Math.PI*2);ctx.stroke();
+  }
+  // Eyes — angry, glowing red
+  const eg=0.6+Math.sin(fr*0.1)*0.35;
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(x+11,y+9,4,3,0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(x+21,y+9,4,3,-0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.ellipse(x+11,y+9,3,2.5,0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.ellipse(x+21,y+9,3,2.5,-0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x+11,y+9,1.5,2,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x+21,y+9,1.5,2,0,0,Math.PI*2);ctx.fill();
+  // Eye glow
+  ctx.globalAlpha=eg*0.4;ctx.fillStyle=eyeCol;
+  ctx.beginPath();ctx.arc(x+11,y+9,7,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(x+21,y+9,7,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+  // Angry eyebrows
+  ctx.strokeStyle='#440000';ctx.lineWidth=2.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x+7,y+5);ctx.lineTo(x+14,y+7);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+25,y+5);ctx.lineTo(x+18,y+7);ctx.stroke();
+  // Nostrils — snorting
+  ctx.fillStyle='#330000';
+  ctx.beginPath();ctx.ellipse(x+13,y+14,2,1.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(x+19,y+14,2,1.5,0,0,Math.PI*2);ctx.fill();
+  // Snort particles
+  const snortA=(fr%40)/40;
+  if(snortA<0.5){
+    ctx.globalAlpha=1-snortA*2;ctx.fillStyle='#aaddff';
+    ctx.beginPath();ctx.arc(x+11,y+12-snortA*8,2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+21,y+12-snortA*8,2,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // Legs — stubby
+  ctx.fillStyle=bodyCol;
+  ctx.fillRect(x+5,y+27,7,6);ctx.fillRect(x+20,y+27,7,6);
+  // Hooves
+  ctx.fillStyle='#333';
+  ctx.fillRect(x+5,y+31,7,3);ctx.fillRect(x+20,y+31,7,3);
+  // Name + HP
+  if(cfg.name){
+    ctx.globalAlpha=0.9;ctx.fillStyle='rgba(0,0,0,0.75)';
+    const tw=ctx.measureText(cfg.name).width+10;
+    ctx.beginPath();ctx.roundRect(x+16-tw/2,y-20,tw,14,4);ctx.fill();
+    ctx.fillStyle=eyeCol;ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
+    ctx.fillText(cfg.name,x+16,y-9);ctx.textAlign='left';ctx.globalAlpha=1;
+  }
+  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);
+  ctx.fillStyle=bodyCol;ctx.fillRect(x,y-8,30*hp,5);
+  ctx.strokeStyle='rgba(255,68,0,0.4)';ctx.lineWidth=1;ctx.strokeRect(x,y-8,30,5);
+  ctx.restore();
+}
+
 // ── Router — picks character type from cfg ──
 function drawAlienIguana(x,y,hp,fr,cfg={}){
   const isZG=isZeroG();
@@ -1400,6 +1476,7 @@ function drawAlienIguana(x,y,hp,fr,cfg={}){
     case 'feline':  drawCharacter_feline(x,y,hp,fr,cfg,isZG); break;
     case 'robot':   drawCharacter_robot(x,y,hp,fr,cfg,isZG);  break;
     case 'spirit':  drawCharacter_spirit(x,y,hp,fr,cfg,isZG); break;
+    case 'bull':    drawCharacter_bull(x,y,hp,fr,cfg,isZG);   break;
     default:        drawCharacter_iguana(x,y,hp,fr,cfg,isZG); break;
   }
 }

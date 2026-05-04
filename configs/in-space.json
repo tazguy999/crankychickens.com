@@ -1,6 +1,6 @@
 {
-  "_version": 9,
-  "_updated": "2026-05-03T23:59:00.000Z",
+  "_version": 10,
+  "_updated": "2026-05-04T00:00:00.000Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -38,6 +38,19 @@
       "tx": 9,
       "ty": 9,
       "characterType": "feline"
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 0,
+      "name": "Space Bull",
+      "characterType": "bull",
+      "color": "#8B0000",
+      "eyeColor": "#FF4400",
+      "spd": 0.6,
+      "pat": "h",
+      "size": 1.1,
+      "tx": 6,
+      "ty": 9
     }
   ],
   "cornPatches": [],
