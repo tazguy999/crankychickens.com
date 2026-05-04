@@ -1,26 +1,42 @@
 {
-  "_version": 3,
-  "_updated": "2026-05-03T23:30:00.000Z",
+  "_version": 4,
+  "_updated": "2026-05-03T23:54:47.030Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
-    { "screenIndex": 0, "name": "Landing Zone", "loreText": "" },
-    { "screenIndex": 1, "name": "Ancient Cat Colony", "loreText": "Mystical feline ruins drift in zero gravity silence" },
-    { "screenIndex": 2, "name": "Moon Base", "loreText": "" },
-    { "screenIndex": 3, "name": "Harvester Core", "loreText": "" }
+    {
+      "screenIndex": 0,
+      "name": "Landing Zone",
+      "loreText": ""
+    },
+    {
+      "screenIndex": 1,
+      "name": "Ancient Cat Colony",
+      "loreText": "Mystical feline ruins drift in zero gravity silence"
+    },
+    {
+      "screenIndex": 2,
+      "name": "Moon Base",
+      "loreText": ""
+    },
+    {
+      "screenIndex": 3,
+      "name": "Harvester Core",
+      "loreText": ""
+    }
   ],
   "enemyVariants": [
     {
       "configType": "enemyVariant",
       "screenIndex": 1,
       "name": "StarCat Guardian",
-      "color": "#d4820a",
-      "eyeColor": "#ffd700",
-      "spd": 0.6,
-      "pat": "h",
-      "size": 1.1,
-      "tx": 9,
-      "ty": 8
+      "color": "#FF8C00",
+      "eyeColor": "#FFD700",
+      "spd": 0.4,
+      "pat": "patrol",
+      "size": 1.2,
+      "tx": 12,
+      "ty": 6
     }
   ],
   "cornPatches": [],
