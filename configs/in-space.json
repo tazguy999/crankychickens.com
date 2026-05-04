@@ -1,6 +1,6 @@
 {
-  "_version": 4,
-  "_updated": "2026-05-03T23:54:47.030Z",
+  "_version": 6,
+  "_updated": "2026-05-03T23:59:00.000Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -11,8 +11,8 @@
     },
     {
       "screenIndex": 1,
-      "name": "Ancient Cat Colony",
-      "loreText": "Mystical feline ruins drift in zero gravity silence"
+      "name": "Quantum Cannon Fields",
+      "loreText": "Ancient chicken cannons drift through the cosmic void"
     },
     {
       "screenIndex": 2,

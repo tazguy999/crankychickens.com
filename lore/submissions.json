@@ -1,5 +1,100 @@
 [
   {
+    "id": 1777853236260,
+    "timestamp": "2026-05-04T00:07:16.260Z",
+    "scribeName": "Unnamed",
+    "description": "*ancient wisdom sparkles in the cosmic void*\n\nBehold, young Dragon Scribe! The Great Chicken Cannon of Quantum Defiance - forged from stolen IECC technology and powered by concentrated chicken fury! When brave hens launch through black holes, they emerge in distant star systems like phoenixes through floo powder, ready to rain feathered justice upon corn thieves.\n\nPerhaps these cannons could be scattered across different planets, each requiring a special key made of crystallized chicken courage to activate? The iguanas would never expect such boldly reckless transportation!\n\nWhat mysteries shall your quill uncover about how the chickens discovered this impossible technology?",
+    "originalSubmission": {
+      "id": 1777853182735,
+      "timestamp": "2026-05-04T00:01:23.735Z",
+      "type": "mechanic",
+      "summary": "There should be a giant cannon that shoots chickens through black holes!",
+      "feature": "A black hole portal mechanic that teleports the player chicken across the map",
+      "forScribe": "The Cannon Master envisions inter-dimensional chicken travel. Lore opportunity: the IECC built the black holes to trap chickens, but the chickens figured out how to use them as shortcuts. The Dragon Scribe could name this mechanic and write its backstory.",
+      "excitement": "BOOM! Black hole cannon idea LOCKED AND LOADED!",
+      "raw": {
+        "type": "text",
+        "text": "There should be a giant cannon that shoots chickens through black holes!"
+      },
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, Dragon Scribe, your brother the Cannon Master has discovered something magnificent! His vision of chickens mastering the very black holes meant to contain them speaks of incredible cunning and cosmic rebellion - what delicious lore awaits your quill!"
+      },
+      {
+        "role": "user",
+        "content": "Do it"
+      },
+      {
+        "role": "assistant",
+        "content": "*ancient wisdom sparkles in the cosmic void*\n\nBehold, young Dragon Scribe! The Great Chicken Cannon of Quantum Defiance - forged from stolen IECC technology and powered by concentrated chicken fury! When brave hens launch through black holes, they emerge in distant star systems like phoenixes through floo powder, ready to rain feathered justice upon corn thieves.\n\nPerhaps these cannons could be scattered across different planets, each requiring a special key made of crystallized chicken courage to activate? The iguanas would never expect such boldly reckless transportation!\n\nWhat mysteries shall your quill uncover about how the chickens discovered this impossible technology?"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "\ud83d\ude80"
+    },
+    "targetZone": {
+      "index": 0,
+      "name": "Landing Zone",
+      "emoji": "\ud83c\udf15"
+    },
+    "spec": {
+      "title": "Quantum Chicken Cannon Transportation System",
+      "devNote": "Implement teleportation mechanic using cannon objects as launch points with black hole visual effects, requiring collectible 'courage keys' to unlock each cannon across different level zones.",
+      "nicksNote": "Nick is probably wondering how we're going to animate chickens getting shot through space without making them dizzy!",
+      "priority": "high"
+    },
+    "configEntry": {
+      "configType": "zoneRename",
+      "screenIndex": 1,
+      "name": "Quantum Cannon Fields",
+      "loreText": "Ancient chicken cannons drift through the cosmic void"
+    }
+  },
+  {
+    "id": 1777849281097,
+    "timestamp": "2026-05-03T23:01:21.097Z",
+    "scribeName": "Unnamed",
+    "description": "A feline warrior spirit called a StarCat \u2014 gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      }
+    ],
+    "status": "deployed",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "\ud83d\ude80"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "StarCat Guardian Enemy Type",
+      "devNote": "New enemy AI with patrol behavior in Crater Fields biome - gold/orange sprite with circular movement pattern around designated guard points.",
+      "nicksNote": "Your mystical StarCat sounds like it'll add some serious feline fury to our space chickens' adventures!",
+      "priority": "medium"
+    },
+    "configEntry": {
+      "configType": "enemyVariant",
+      "screenIndex": 1,
+      "name": "StarCat Guardian",
+      "color": "#FF8C00",
+      "eyeColor": "#FFD700",
+      "spd": 0.4,
+      "pat": "patrol",
+      "size": 1.2,
+      "tx": 12,
+      "ty": 6
+    }
+  },
+  {
     "id": 1777848786298,
     "timestamp": "2026-05-03T22:53:06.298Z",
     "scribeName": "Unnamed",
@@ -19,11 +114,11 @@
         "content": "Ah, young Scribe, I sense the warrior spirit calling to you! Perhaps we could forge a connection between the noble clans and your brave space chickens?\n\nWhat if there were ancient Cat Colonies scattered across the galaxy - feline warriors who once ruled the stars before the IECC's rise? Maybe the chickens could discover abandoned Cat Colony outposts with mystical scratching posts that grant special abilities, or find warrior cat spirits who teach new combat techniques?\n\nWhich clan's wisdom speaks to you - ThunderClan's courage, ShadowClan's cunning, or perhaps a new star-born clan altogether?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "🚀"
+      "emoji": "\ud83d\ude80"
     },
     "targetZone": null,
     "spec": {
@@ -55,7 +150,7 @@
       "feature": "To be determined",
       "type": "mechanic",
       "excitement": "BOOM! Your idea is on its way!",
-      "forScribe": "Raw submission received — needs interpretation.",
+      "forScribe": "Raw submission received \u2014 needs interpretation.",
       "status": "read"
     },
     "chatHistory": [
