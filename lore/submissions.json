@@ -1,5 +1,54 @@
 [
   {
+    "id": 1777945675241,
+    "timestamp": "2026-05-05T01:47:55.241Z",
+    "scribeName": "Unnamed",
+    "description": "By the ancient starfire! Your brother has conjured a most wondrous addition to your cosmic chicken chronicle! Sock Munch sounds like a creature straight from the Department of Mysteries — a galactic duck alien with such peculiar dietary habits!\n\nThis creates fascinating possibilities, young scribe: Will she become an unlikely ally to your cranky chickens, perhaps helping them navigate space in exchange for assistance with her size predicament? Or might the same space wizard who shrunk her be connected to the Interstellar Egg Harvesting Consortium?\n\nPicture the humor when your brave chickens discover this mighty galactic being now pecking around at sock-sized portions, like Hagrid trying to fit through a normal doorway!",
+    "originalSubmission": {
+      "id": 1777943564177,
+      "timestamp": "2026-05-05T01:12:44.177Z",
+      "raw": {
+        "type": "photo",
+        "caption": "His name is sock munch!"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": {
+        "index": 3,
+        "name": "Harvester Core",
+        "emoji": "⚡"
+      },
+      "summary": "Awesome idea received!",
+      "feature": "To be determined",
+      "type": "mechanic",
+      "excitement": "BOOM! Your idea is on its way!",
+      "forScribe": "Raw submission received — needs interpretation.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Greetings, young Dragon Scribe! The cosmic winds have brought us a most intriguing submission from your brother's imagination - a space-bound adventure featuring cranky galactic fowl! Your keen interpretive skills will be essential in unlocking the hidden lore potential within this mysterious 'to be determined' mechanic."
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Sock Munch Galactic Duck Character",
+      "devNote": "New NPC character with shrinking/size mechanics and sock-eating animations. Consider ally/enemy branching dialogue system with potential wizard questline connections.",
+      "nicksNote": "Nick is probably wondering how we're going to animate a galactic duck trying to eat human-sized socks!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1777853236260,
     "timestamp": "2026-05-04T00:07:16.260Z",
     "scribeName": "Unnamed",
