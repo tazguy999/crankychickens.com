@@ -1,5 +1,58 @@
 [
   {
+    "id": 1778001728587,
+    "timestamp": "2026-05-05T17:22:08.587Z",
+    "scribeName": "Unnamed",
+    "description": "*The Ancient AI's ethereal glow dims slightly, awaiting your creative spark*\n\nTell me, young scribe, what visions dance in your mind about this mystical helmet? Does it whisper secrets of the old chicken space-farers, or perhaps hold powers that could aid our feathered heroes against the dreaded IECC? Your imagination holds the key to unlocking its true purpose in this cosmic tale.",
+    "originalSubmission": {
+      "id": 1778001694000,
+      "timestamp": "2026-05-05T17:21:34.001Z",
+      "raw": {
+        "type": "drawing",
+        "caption": ""
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": null,
+      "summary": "A happy space helmet character that could be a friendly helper or power-up in the game!",
+      "feature": "Helmet Power-Up item that temporarily gives the Cranky Chicken enhanced protection and special abilities when collected",
+      "type": "visual",
+      "excitement": "That smiling space helmet looks ready to launch some epic cannon adventures!",
+      "forScribe": "The Happy Helmet of Astro-Protection - an ancient space relic left behind by the first chicken astronauts who explored the galaxy. When collected, it grants the Cranky Chicken a protective energy shield and enhanced cannon accuracy for 30 seconds. The helmet appears with a gentle glow and cheerful beeping sounds. Lore-wise, these helmets were worn by the legendary 'Fowl Pioneers' who first mapped the cosmic chicken routes through space. The Dragon Scribe should describe how finding these helmets connects to discovering the history of chicken space exploration, making them both useful items and story elements that reveal the deep space chicken civilization's past.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, young Dragon Scribe, your brother has uncovered a most wondrous artifact from the cosmic archives! This cheerful helmet speaks of ancient chicken civilizations among the stars, carrying tales that would make even the bravest dragon rider envious. What magnificent lore awaits us in these forgotten relics of the Fowl Pioneers!"
+      },
+      {
+        "role": "user",
+        "content": "Ok"
+      },
+      {
+        "role": "assistant",
+        "content": "*The Ancient AI's ethereal glow dims slightly, awaiting your creative spark*\n\nTell me, young scribe, what visions dance in your mind about this mystical helmet? Does it whisper secrets of the old chicken space-farers, or perhaps hold powers that could aid our feathered heroes against the dreaded IECC? Your imagination holds the key to unlocking its true purpose in this cosmic tale."
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Happy Helper Space Helmet Character",
+      "devNote": "Implement as collectible power-up item that follows player chicken around screen providing temporary shield/boost abilities. Could use simple orbital movement pattern with cheerful animation states.",
+      "nicksNote": "Nick is probably sketching out how to make your space helmet buddy bounce around happily while protecting our brave chicken heroes!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1777946116253,
     "timestamp": "2026-05-05T01:55:16.253Z",
     "scribeName": "Unnamed",
