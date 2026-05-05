@@ -34,7 +34,7 @@
         "content": "Greetings, young Dragon Scribe! The cosmic winds have brought us a most intriguing submission from your brother's imagination - a space-bound adventure featuring cranky galactic fowl! Your keen interpretive skills will be essential in unlocking the hidden lore potential within this mysterious 'to be determined' mechanic."
       }
     ],
-    "status": "pending_review",
+    "status": "approved",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -46,6 +46,24 @@
       "devNote": "New NPC character with shrinking/size mechanics and sock-eating animations. Consider ally/enemy branching dialogue system with potential wizard questline connections.",
       "nicksNote": "Nick is probably wondering how we're going to animate a galactic duck trying to eat human-sized socks!",
       "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "sockduck",
+      "drawFn": "function drawCharacter_sockduck(x, y, hp, fr, cfg = {}, isZeroG = false) {\n  ctx.save();\n  \n  // HP bar\n  ctx.fillStyle = '#111';\n  ctx.fillRect(x, y - 8, 30, 5);\n  ctx.fillStyle = cfg.color || '#4a9eff';\n  ctx.fillRect(x, y - 8, 30 * hp, 5);\n  \n  // Name tag\n  if (cfg.name) {\n    ctx.fillStyle = '#fff';\n    ctx.font = '8px monospace';\n    ctx.textAlign = 'center';\n    ctx.fillText(cfg.name, x + 16, y - 12);\n  }\n  \n  const bobOffset = isZeroG ? Math.sin(frame * 0.1) * 2 : 0;\n  const centerX = x + 16;\n  const centerY = y + 16 + bobOffset;\n  \n  // Duck body (small and compressed)\n  ctx.fillStyle = cfg.color || '#4a9eff';\n  ctx.beginPath();\n  ctx.ellipse(centerX, centerY + 2, 12, 8, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Duck head (proportionally small)\n  ctx.beginPath();\n  ctx.ellipse(centerX, centerY - 6, 8, 6, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Bill (tiny)\n  ctx.fillStyle = '#ffa500';\n  ctx.beginPath();\n  ctx.ellipse(centerX - 8, centerY - 6, 3, 2, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Eyes (looking confused/cranky)\n  ctx.fillStyle = cfg.eyeColor || '#ff4444';\n  ctx.beginPath();\n  ctx.arc(centerX - 3, centerY - 8, 2, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.arc(centerX + 3, centerY - 8, 2, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Eye pupils (angry/confused expression)\n  ctx.fillStyle = '#000';\n  ctx.beginPath();\n  ctx.arc(centerX - 2, centerY - 7, 1, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.arc(centerX + 4, centerY - 7, 1, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Tiny sock pieces around (her snack remnants)\n  const sockBits = Math.floor(frame * 0.05) % 4;\n  for (let i = 0; i < sockBits; i++) {\n    ctx.fillStyle = ['#ff69b4', '#90ee90', '#ffb6c1', '#87ceeb'][i];\n    const angle = (frame * 0.02 + i * Math.PI / 2);\n    const sockX = centerX + Math.cos(angle) * 18;\n    const sockY = centerY + Math.sin(angle) * 15;\n    ctx.fillRect(sockX, sockY, 2, 3);\n  }\n  \n  // Cosmic sparkles (showing her galactic origin despite being shrunk)\n  if (frame % 60 < 30) {\n    ctx.fillStyle = '#ffff88';\n    ctx.beginPath();\n    ctx.arc(centerX - 10, centerY - 12, 1, 0, Math.PI * 2);\n    ctx.fill();\n    ctx.beginPath();\n    ctx.arc(centerX + 12, centerY + 8, 1, 0, Math.PI * 2);\n    ctx.fill();\n  }\n  \n  ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 0,
+        "name": "Sock Munch",
+        "characterType": "sockduck",
+        "color": "#4a9eff",
+        "eyeColor": "#ff4444",
+        "spd": 0.3,
+        "pat": "h",
+        "size": 0.8,
+        "tx": 7,
+        "ty": 8
+      },
+      "commitMessage": "🧦🦆 Add Sock Munch - tiny galactic duck with sock cravings"
     }
   },
   {
