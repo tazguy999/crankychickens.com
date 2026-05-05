@@ -1,6 +1,6 @@
 {
-  "_version": 11,
-  "_updated": "2026-05-05T01:48:25.733Z",
+  "_version": 12,
+  "_updated": "2026-05-05T01:55:46.461Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -64,6 +64,19 @@
       "size": 0.8,
       "tx": 7,
       "ty": 8
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 3,
+      "name": "Cosmic Guardian",
+      "characterType": "spirit",
+      "color": "#7dd3fc",
+      "eyeColor": "#fbbf24",
+      "spd": 0.3,
+      "pat": "h",
+      "size": 1,
+      "tx": 9,
+      "ty": 9
     }
   ],
   "cornPatches": [],

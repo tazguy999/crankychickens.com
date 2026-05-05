@@ -1,5 +1,84 @@
 [
   {
+    "id": 1777946116253,
+    "timestamp": "2026-05-05T01:55:16.253Z",
+    "scribeName": "Unnamed",
+    "description": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization—perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like—wispy and translucent like between-world spirits, or something more solid and alien?",
+    "originalSubmission": {
+      "id": 1777946036923,
+      "timestamp": "2026-05-05T01:53:56.923Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Floaty head guy"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": {
+        "index": 1,
+        "name": "Crater Fields",
+        "emoji": "💥"
+      },
+      "summary": "Your floaty head guy could be a mysterious space creature that drifts around levels!",
+      "feature": "A floating enemy or NPC that moves in smooth, unpredictable patterns across the screen, possibly immune to direct cannon shots but vulnerable to environmental hazards or ricochet attacks.",
+      "type": "enemy",
+      "excitement": "That floaty head is perfect for dodging cannonballs - what a tricky space challenge!",
+      "forScribe": "The Floaty Head Guy could be an ancient space spirit or lost astronaut whose helmet has become a ghostly entity. Lore-wise, these could be remnants of a long-lost civilization that once inhabited the space stations. They drift through walls and obstacles, making them immune to direct attacks but can be defeated by launching objects that ricochet off walls to hit them, or by using environmental traps. They might even help guide players to hidden areas occasionally, adding a mysterious helper element. Consider them as neutral entities that become hostile only when threatened, fitting the space exploration theme.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, young Dragon Scribe, your brother has conjured something truly fascinating from the cosmic depths! These drifting entities whisper of ancient mysteries and lost civilizations among the stars—perfect material for weaving epic tales into your cranky chicken saga."
+      },
+      {
+        "role": "user",
+        "content": "I love it! let's do it"
+      },
+      {
+        "role": "assistant",
+        "content": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization—perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like—wispy and translucent like between-world spirits, or something more solid and alien?"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 3,
+      "name": "Harvester Core",
+      "emoji": "⚡"
+    },
+    "spec": {
+      "title": "Ethereal Space Guardian NPCs",
+      "devNote": "Implement floating AI entities with slow drift movement patterns and proximity-triggered dialogue/hint system for level guidance. Consider translucent shader effects and gentle glow animations.",
+      "nicksNote": "Nick is probably sketching glowing space ghosts right now and muttering about particle effects!",
+      "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "spirit",
+      "drawFn": "function drawCharacter_spirit(x, y, hp, fr, cfg = {}, isZeroG = false) {\n  ctx.save();\n  \n  // HP bar\n  ctx.fillStyle = '#111';\n  ctx.fillRect(x, y - 8, 30, 5);\n  ctx.fillStyle = cfg.color || '#7dd3fc';\n  ctx.fillRect(x, y - 8, 30 * hp, 5);\n  \n  // Name tag\n  if (cfg.name) {\n    ctx.fillStyle = '#fff';\n    ctx.font = '8px monospace';\n    ctx.textAlign = 'center';\n    ctx.fillText(cfg.name, x + 16, y - 12);\n  }\n  \n  // Zero-G floating effect\n  let floatY = y;\n  if (isZeroG) {\n    floatY += Math.sin(frame * 0.05 + x * 0.02) * 3;\n  }\n  \n  // Main ethereal body with cosmic glow\n  const glowPulse = 0.3 + Math.sin(frame * 0.08) * 0.2;\n  ctx.globalAlpha = glowPulse;\n  \n  // Outer glow aura\n  const gradient = ctx.createRadialGradient(x + 16, floatY + 16, 0, x + 16, floatY + 16, 20);\n  gradient.addColorStop(0, cfg.color || '#7dd3fc');\n  gradient.addColorStop(0.5, cfg.color || '#3b82f6');\n  gradient.addColorStop(1, 'transparent');\n  ctx.fillStyle = gradient;\n  ctx.fillRect(x - 4, floatY - 4, 40, 40);\n  \n  // Wispy flowing form\n  ctx.globalAlpha = 0.7;\n  ctx.fillStyle = cfg.color || '#7dd3fc';\n  \n  // Central wispy body\n  const wispOffset = Math.sin(frame * 0.06) * 2;\n  ctx.beginPath();\n  ctx.ellipse(x + 16, floatY + 12, 8 + wispOffset, 12, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Floating spirit trails\n  ctx.globalAlpha = 0.4;\n  for (let i = 0; i < 3; i++) {\n    const trailX = x + 16 + Math.sin(frame * 0.04 + i) * 6;\n    const trailY = floatY + 20 + i * 4;\n    ctx.beginPath();\n    ctx.ellipse(trailX, trailY, 3, 6, Math.PI * 0.3, 0, Math.PI * 2);\n    ctx.fill();\n  }\n  \n  // Ancient cosmic eyes\n  ctx.globalAlpha = 0.9;\n  ctx.fillStyle = cfg.eyeColor || '#fbbf24';\n  const eyeBob = Math.sin(frame * 0.1) * 1;\n  ctx.beginPath();\n  ctx.arc(x + 12, floatY + 10 + eyeBob, 2, 0, Math.PI * 2);\n  ctx.arc(x + 20, floatY + 10 + eyeBob, 2, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Mystical star particles\n  ctx.globalAlpha = 0.6;\n  ctx.fillStyle = '#fff';\n  for (let i = 0; i < 4; i++) {\n    const starX = x + 8 + (i * 6) + Math.sin(frame * 0.03 + i) * 3;\n    const starY = floatY + 5 + Math.cos(frame * 0.04 + i) * 4;\n    ctx.fillRect(starX, starY, 1, 1);\n  }\n  \n  ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 3,
+        "name": "Cosmic Guardian",
+        "characterType": "spirit",
+        "color": "#7dd3fc",
+        "eyeColor": "#fbbf24",
+        "spd": 0.3,
+        "pat": "h",
+        "size": 1,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "✨ Add ethereal Cosmic Guardian spirits to Harvester Core"
+    }
+  },
+  {
     "id": 1777945675241,
     "timestamp": "2026-05-05T01:47:55.241Z",
     "scribeName": "Unnamed",
@@ -34,7 +113,7 @@
         "content": "Greetings, young Dragon Scribe! The cosmic winds have brought us a most intriguing submission from your brother's imagination - a space-bound adventure featuring cranky galactic fowl! Your keen interpretive skills will be essential in unlocking the hidden lore potential within this mysterious 'to be determined' mechanic."
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
