@@ -1,13 +1,13 @@
 {
-  "_version": 12,
-  "_updated": "2026-05-05T01:55:46.461Z",
+  "_version": 14,
+  "_updated": "2026-05-05T17:23:57.283Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
     {
       "screenIndex": 0,
       "name": "Landing Zone",
-      "loreText": ""
+      "loreText": "Ancient chicken pilot helmet glows with cosmic energy"
     },
     {
       "screenIndex": 1,
