@@ -541,71 +541,92 @@ async function applyFullContribution(result, sub){
   const gameSlug = sub.targetGame?.slug||'in-space';
   const gameFile = `games/${gameSlug}.html`;
   const configPath = `configs/${gameSlug}.json`;
+  const steps = [];
+
+  function step(msg){ steps.push(msg); toast('⚙️ '+msg); console.log(msg); }
+  function fail(msg){ steps.push('❌ '+msg); toast('❌ '+msg); throw new Error(msg); }
 
   try{
-    // 1. Read current game file
+    // 1. Read game file
+    step('Reading game file...');
     const gameRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'get_file',path:gameFile,branch:'kids-preview'})});
     const gameData = await gameRes.json();
-    if(!gameData.content) throw new Error('Could not read game file');
+    if(!gameData.content) fail('Could not read game file from kids-preview');
 
-    // 2. Inject new draw function before the router comment
+    // 2. Check injection marker exists
     const INJECTION_MARKER = '// ── Router — picks character type from cfg ──';
-    if(!gameData.content.includes(INJECTION_MARKER)) throw new Error('Injection point not found');
-    const newGameContent = gameData.content.replace(
-      INJECTION_MARKER,
-      `${result.drawFn}\n\n${INJECTION_MARKER}`
-    );
+    if(!gameData.content.includes(INJECTION_MARKER)) fail('Injection marker not found in game file');
 
-    // 3. Save game file
-    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+    // 3. Check router doesn't already have this type
+    const alreadyExists = gameData.content.includes(`case '${result.characterType}'`);
+
+    // 4. Inject draw function
+    step(`Injecting drawCharacter_${result.characterType}...`);
+    let newGameContent = gameData.content;
+    if(!alreadyExists){
+      newGameContent = gameData.content.replace(
+        INJECTION_MARKER,
+        `${result.drawFn}\n\n${INJECTION_MARKER}`
+      );
+      // Also add router case
+      const ROUTER_DEFAULT = `default:        drawCharacter_iguana(x,y,hp,fr,cfg,isZG); break;`;
+      if(newGameContent.includes(ROUTER_DEFAULT)){
+        newGameContent = newGameContent.replace(
+          ROUTER_DEFAULT,
+          `case '${result.characterType}': drawCharacter_${result.characterType}(x,y,hp,fr,cfg,isZG); break;\n    ${ROUTER_DEFAULT}`
+        );
+      }
+    }
+
+    // 5. Save game file
+    step('Saving game file to kids-preview...');
+    const saveGameRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         action:'save_file', path:gameFile, branch:'kids-preview',
         content:newGameContent, sha:gameData.sha,
-        commitMsg:`🎨 New character: ${result.characterType} — ${result.commitMessage||sub.scribeName}`
+        commitMsg:`🎨 Add drawCharacter_${result.characterType}: ${result.commitMessage||sub.scribeName}`
       })
     });
+    const saveGameData = await saveGameRes.json();
+    if(saveGameData.error) fail('Game file save failed: '+saveGameData.error);
 
-    // 4. Update config
+    // 6. Read config
+    step('Reading config...');
     const cfgRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'get_file',path:configPath,branch:'kids-preview'})});
     const cfgData = await cfgRes.json();
     let cfg = cfgData.content ? JSON.parse(cfgData.content) : {zones:[],enemyVariants:[],cornPatches:[],loreEntries:[]};
     cfg.enemyVariants = cfg.enemyVariants||[];
-    cfg.enemyVariants.push(result.configEntry);
+
+    // Avoid duplicates
+    if(!cfg.enemyVariants.find(e=>e.name===result.configEntry.name)){
+      cfg.enemyVariants.push(result.configEntry);
+    }
     cfg._version = (cfg._version||0)+1;
     cfg._updated = new Date().toISOString();
 
-    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+    // 7. Save config
+    step('Saving config...');
+    const saveCfgRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         action:'save_file', path:configPath, branch:'kids-preview',
         content:JSON.stringify(cfg,null,2), sha:cfgData.sha,
-        commitMsg:`🎮 Config: add ${result.configEntry.name} to ${sub.targetZone?.name||'game'}`
+        commitMsg:`🎮 Add ${result.configEntry.name} to ${sub.targetZone?.name||'game'}`
       })
     });
+    const saveCfgData = await saveCfgRes.json();
+    if(saveCfgData.error) fail('Config save failed: '+saveCfgData.error);
 
-    // 5. Update the router in the game file to include new type
-    // Re-read to get updated SHA after step 3
-    const gameRes2 = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'get_file',path:gameFile,branch:'kids-preview'})});
-    const gameData2 = await gameRes2.json();
-    const ROUTER_MARKER = `default:        drawCharacter_iguana(x,y,hp,fr,cfg,isZG); break;`;
-    const newCase = `case '${result.characterType}': drawCharacter_${result.characterType}(x,y,hp,fr,cfg,isZG); break;\n    `;
-    if(gameData2.content && gameData2.content.includes(ROUTER_MARKER) && !gameData2.content.includes(`case '${result.characterType}'`)){
-      const updatedGame = gameData2.content.replace(ROUTER_MARKER, newCase + ROUTER_MARKER);
-      await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          action:'save_file', path:gameFile, branch:'kids-preview',
-          content:updatedGame, sha:gameData2.sha,
-          commitMsg:`🔀 Router: add ${result.characterType} character type`
-        })
-      });
-    }
+    step('✅ All done! '+steps.length+' steps completed.');
+    return true;
 
   }catch(e){
-    console.error('applyFullContribution failed:',e);
-    // Fallback — at least save the config entry
-    await applyToGameConfig(result.configEntry, sub);
+    console.error('applyFullContribution failed at step:', steps[steps.length-1], e);
+    toast('⚠️ Fell back to config-only: '+e.message);
+    // Fallback
+    try{ await applyToGameConfig(result.configEntry, sub); }catch(e2){}
+    return false;
   }
 }
 
