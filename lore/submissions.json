@@ -1,5 +1,66 @@
 [
   {
+    "id": 1777946116253,
+    "timestamp": "2026-05-05T01:55:16.253Z",
+    "scribeName": "Unnamed",
+    "description": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization—perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like—wispy and translucent like between-world spirits, or something more solid and alien?",
+    "originalSubmission": {
+      "id": 1777946036923,
+      "timestamp": "2026-05-05T01:53:56.923Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Floaty head guy"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": {
+        "index": 1,
+        "name": "Crater Fields",
+        "emoji": "💥"
+      },
+      "summary": "Your floaty head guy could be a mysterious space creature that drifts around levels!",
+      "feature": "A floating enemy or NPC that moves in smooth, unpredictable patterns across the screen, possibly immune to direct cannon shots but vulnerable to environmental hazards or ricochet attacks.",
+      "type": "enemy",
+      "excitement": "That floaty head is perfect for dodging cannonballs - what a tricky space challenge!",
+      "forScribe": "The Floaty Head Guy could be an ancient space spirit or lost astronaut whose helmet has become a ghostly entity. Lore-wise, these could be remnants of a long-lost civilization that once inhabited the space stations. They drift through walls and obstacles, making them immune to direct attacks but can be defeated by launching objects that ricochet off walls to hit them, or by using environmental traps. They might even help guide players to hidden areas occasionally, adding a mysterious helper element. Consider them as neutral entities that become hostile only when threatened, fitting the space exploration theme.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, young Dragon Scribe, your brother has conjured something truly fascinating from the cosmic depths! These drifting entities whisper of ancient mysteries and lost civilizations among the stars—perfect material for weaving epic tales into your cranky chicken saga."
+      },
+      {
+        "role": "user",
+        "content": "I love it! let's do it"
+      },
+      {
+        "role": "assistant",
+        "content": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization—perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like—wispy and translucent like between-world spirits, or something more solid and alien?"
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 3,
+      "name": "Harvester Core",
+      "emoji": "⚡"
+    },
+    "spec": {
+      "title": "Ethereal Space Guardian NPCs",
+      "devNote": "Implement floating AI entities with slow drift movement patterns and proximity-triggered dialogue/hint system for level guidance. Consider translucent shader effects and gentle glow animations.",
+      "nicksNote": "Nick is probably sketching glowing space ghosts right now and muttering about particle effects!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1777945675241,
     "timestamp": "2026-05-05T01:47:55.241Z",
     "scribeName": "Unnamed",
