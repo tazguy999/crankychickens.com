@@ -1,6 +1,6 @@
 {
-  "_version": 10,
-  "_updated": "2026-05-04T00:00:00.000Z",
+  "_version": 11,
+  "_updated": "2026-05-05T01:48:25.733Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -34,7 +34,7 @@
       "eyeColor": "#FFD700",
       "spd": 0.5,
       "pat": "h",
-      "size": 1.0,
+      "size": 1,
       "tx": 9,
       "ty": 9,
       "characterType": "feline"
@@ -51,6 +51,19 @@
       "size": 1.1,
       "tx": 6,
       "ty": 9
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 0,
+      "name": "Sock Munch",
+      "characterType": "sockduck",
+      "color": "#4a9eff",
+      "eyeColor": "#ff4444",
+      "spd": 0.3,
+      "pat": "h",
+      "size": 0.8,
+      "tx": 7,
+      "ty": 8
     }
   ],
   "cornPatches": [],
