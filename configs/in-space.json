@@ -1,13 +1,13 @@
 {
-  "_version": 13,
-  "_updated": "2026-05-05T17:23:54.008Z",
+  "_version": 14,
+  "_updated": "2026-05-05T17:23:57.283Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
     {
       "screenIndex": 0,
       "name": "Landing Zone",
-      "loreText": "An ancient artifact glowing with ethereal light, waiting for a brave chicken to unlock its cosmic secrets and aid in the fight against the IECC."
+      "loreText": "Ancient chicken pilot helmet glows with cosmic energy"
     },
     {
       "screenIndex": 1,
