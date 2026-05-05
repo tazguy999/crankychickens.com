@@ -1,5 +1,72 @@
 [
   {
+    "id": 1777945675241,
+    "timestamp": "2026-05-05T01:47:55.241Z",
+    "scribeName": "Unnamed",
+    "description": "By the ancient starfire! Your brother has conjured a most wondrous addition to your cosmic chicken chronicle! Sock Munch sounds like a creature straight from the Department of Mysteries — a galactic duck alien with such peculiar dietary habits!\n\nThis creates fascinating possibilities, young scribe: Will she become an unlikely ally to your cranky chickens, perhaps helping them navigate space in exchange for assistance with her size predicament? Or might the same space wizard who shrunk her be connected to the Interstellar Egg Harvesting Consortium?\n\nPicture the humor when your brave chickens discover this mighty galactic being now pecking around at sock-sized portions, like Hagrid trying to fit through a normal doorway!",
+    "originalSubmission": {
+      "id": 1777943564177,
+      "timestamp": "2026-05-05T01:12:44.177Z",
+      "raw": {
+        "type": "photo",
+        "caption": "His name is sock munch!"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": {
+        "index": 3,
+        "name": "Harvester Core",
+        "emoji": "⚡"
+      },
+      "summary": "Awesome idea received!",
+      "feature": "To be determined",
+      "type": "mechanic",
+      "excitement": "BOOM! Your idea is on its way!",
+      "forScribe": "Raw submission received — needs interpretation.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Greetings, young Dragon Scribe! The cosmic winds have brought us a most intriguing submission from your brother's imagination - a space-bound adventure featuring cranky galactic fowl! Your keen interpretive skills will be essential in unlocking the hidden lore potential within this mysterious 'to be determined' mechanic."
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Sock Munch Galactic Duck Character",
+      "devNote": "New NPC character with shrinking/size mechanics and sock-eating animations. Consider ally/enemy branching dialogue system with potential wizard questline connections.",
+      "nicksNote": "Nick is probably wondering how we're going to animate a galactic duck trying to eat human-sized socks!",
+      "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "sockduck",
+      "drawFn": "function drawCharacter_sockduck(x, y, hp, fr, cfg = {}, isZeroG = false) {\n  ctx.save();\n  \n  // HP bar\n  ctx.fillStyle = '#111';\n  ctx.fillRect(x, y - 8, 30, 5);\n  ctx.fillStyle = cfg.color || '#4a9eff';\n  ctx.fillRect(x, y - 8, 30 * hp, 5);\n  \n  // Name tag\n  if (cfg.name) {\n    ctx.fillStyle = '#fff';\n    ctx.font = '8px monospace';\n    ctx.textAlign = 'center';\n    ctx.fillText(cfg.name, x + 16, y - 12);\n  }\n  \n  const bobOffset = isZeroG ? Math.sin(frame * 0.1) * 2 : 0;\n  const centerX = x + 16;\n  const centerY = y + 16 + bobOffset;\n  \n  // Duck body (small and compressed)\n  ctx.fillStyle = cfg.color || '#4a9eff';\n  ctx.beginPath();\n  ctx.ellipse(centerX, centerY + 2, 12, 8, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Duck head (proportionally small)\n  ctx.beginPath();\n  ctx.ellipse(centerX, centerY - 6, 8, 6, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Bill (tiny)\n  ctx.fillStyle = '#ffa500';\n  ctx.beginPath();\n  ctx.ellipse(centerX - 8, centerY - 6, 3, 2, 0, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Eyes (looking confused/cranky)\n  ctx.fillStyle = cfg.eyeColor || '#ff4444';\n  ctx.beginPath();\n  ctx.arc(centerX - 3, centerY - 8, 2, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.arc(centerX + 3, centerY - 8, 2, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Eye pupils (angry/confused expression)\n  ctx.fillStyle = '#000';\n  ctx.beginPath();\n  ctx.arc(centerX - 2, centerY - 7, 1, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.arc(centerX + 4, centerY - 7, 1, 0, Math.PI * 2);\n  ctx.fill();\n  \n  // Tiny sock pieces around (her snack remnants)\n  const sockBits = Math.floor(frame * 0.05) % 4;\n  for (let i = 0; i < sockBits; i++) {\n    ctx.fillStyle = ['#ff69b4', '#90ee90', '#ffb6c1', '#87ceeb'][i];\n    const angle = (frame * 0.02 + i * Math.PI / 2);\n    const sockX = centerX + Math.cos(angle) * 18;\n    const sockY = centerY + Math.sin(angle) * 15;\n    ctx.fillRect(sockX, sockY, 2, 3);\n  }\n  \n  // Cosmic sparkles (showing her galactic origin despite being shrunk)\n  if (frame % 60 < 30) {\n    ctx.fillStyle = '#ffff88';\n    ctx.beginPath();\n    ctx.arc(centerX - 10, centerY - 12, 1, 0, Math.PI * 2);\n    ctx.fill();\n    ctx.beginPath();\n    ctx.arc(centerX + 12, centerY + 8, 1, 0, Math.PI * 2);\n    ctx.fill();\n  }\n  \n  ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 0,
+        "name": "Sock Munch",
+        "characterType": "sockduck",
+        "color": "#4a9eff",
+        "eyeColor": "#ff4444",
+        "spd": 0.3,
+        "pat": "h",
+        "size": 0.8,
+        "tx": 7,
+        "ty": 8
+      },
+      "commitMessage": "🧦🦆 Add Sock Munch - tiny galactic duck with sock cravings"
+    }
+  },
+  {
     "id": 1777853236260,
     "timestamp": "2026-05-04T00:07:16.260Z",
     "scribeName": "Unnamed",
@@ -32,16 +99,16 @@
         "content": "*ancient wisdom sparkles in the cosmic void*\n\nBehold, young Dragon Scribe! The Great Chicken Cannon of Quantum Defiance - forged from stolen IECC technology and powered by concentrated chicken fury! When brave hens launch through black holes, they emerge in distant star systems like phoenixes through floo powder, ready to rain feathered justice upon corn thieves.\n\nPerhaps these cannons could be scattered across different planets, each requiring a special key made of crystallized chicken courage to activate? The iguanas would never expect such boldly reckless transportation!\n\nWhat mysteries shall your quill uncover about how the chickens discovered this impossible technology?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 0,
       "name": "Landing Zone",
-      "emoji": "\ud83c\udf15"
+      "emoji": "🌕"
     },
     "spec": {
       "title": "Quantum Chicken Cannon Transportation System",
@@ -60,7 +127,7 @@
     "id": 1777849281097,
     "timestamp": "2026-05-03T23:01:21.097Z",
     "scribeName": "Unnamed",
-    "description": "A feline warrior spirit called a StarCat \u2014 gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
+    "description": "A feline warrior spirit called a StarCat — gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
     "originalSubmission": null,
     "chatHistory": [
       {
@@ -72,7 +139,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -118,7 +185,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -150,7 +217,7 @@
       "feature": "To be determined",
       "type": "mechanic",
       "excitement": "BOOM! Your idea is on its way!",
-      "forScribe": "Raw submission received \u2014 needs interpretation.",
+      "forScribe": "Raw submission received — needs interpretation.",
       "status": "read"
     },
     "chatHistory": [
