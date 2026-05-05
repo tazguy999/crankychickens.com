@@ -32,16 +32,16 @@
         "content": "*ancient wisdom sparkles in the cosmic void*\n\nBehold, young Dragon Scribe! The Great Chicken Cannon of Quantum Defiance - forged from stolen IECC technology and powered by concentrated chicken fury! When brave hens launch through black holes, they emerge in distant star systems like phoenixes through floo powder, ready to rain feathered justice upon corn thieves.\n\nPerhaps these cannons could be scattered across different planets, each requiring a special key made of crystallized chicken courage to activate? The iguanas would never expect such boldly reckless transportation!\n\nWhat mysteries shall your quill uncover about how the chickens discovered this impossible technology?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 0,
       "name": "Landing Zone",
-      "emoji": "\ud83c\udf15"
+      "emoji": "🌕"
     },
     "spec": {
       "title": "Quantum Chicken Cannon Transportation System",
@@ -60,7 +60,7 @@
     "id": 1777849281097,
     "timestamp": "2026-05-03T23:01:21.097Z",
     "scribeName": "Unnamed",
-    "description": "A feline warrior spirit called a StarCat \u2014 gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
+    "description": "A feline warrior spirit called a StarCat — gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
     "originalSubmission": null,
     "chatHistory": [
       {
@@ -72,7 +72,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -118,7 +118,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -150,7 +150,7 @@
       "feature": "To be determined",
       "type": "mechanic",
       "excitement": "BOOM! Your idea is on its way!",
-      "forScribe": "Raw submission received \u2014 needs interpretation.",
+      "forScribe": "Raw submission received — needs interpretation.",
       "status": "read"
     },
     "chatHistory": [
