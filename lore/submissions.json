@@ -20,7 +20,7 @@
         "content": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?"
       }
     ],
-    "status": "pending_review",
+    "status": "approved",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -36,6 +36,24 @@
       "devNote": "New level featuring dog bone-shaped station geometry with Space Hound NPC allies, fire hydrant ships as interactive objects, and squeaky toy asteroids as environmental obstacles/collectibles.",
       "nicksNote": "Nick is probably sketching flying fire hydrants right now and grinning about the squeaky toy asteroids!",
       "priority": "high"
+    },
+    "aiResult": {
+      "characterType": "spacehound",
+      "drawFn": "function drawCharacter_spacehound(x,y,hp,fr,cfg={},isZeroG=false){ const bounceY = isZeroG ? Math.sin(fr*0.1)*2 : 0; ctx.save(); ctx.translate(x,y+bounceY); const bodyColor = cfg.color || '#4A90E2'; const eyeColor = cfg.eyeColor || '#FFD700'; const size = cfg.size || 1; ctx.scale(size,size); ctx.fillStyle = bodyColor; ctx.fillRect(-15,-12,30,20); ctx.fillStyle = '#2E5A8A'; ctx.fillRect(-12,-10,24,16); ctx.fillStyle = '#FFD700'; ctx.fillRect(-8,-6,16,8); ctx.beginPath(); ctx.arc(-10,-8,4,0,Math.PI*2); ctx.arc(10,-8,4,0,Math.PI*2); ctx.fill(); ctx.fillStyle = '#1A4480'; ctx.fillRect(-6,-14,12,6); ctx.fillStyle = '#FF6B6B'; ctx.beginPath(); ctx.arc(0,-11,2,0,Math.PI*2); ctx.fill(); ctx.fillStyle = eyeColor; ctx.beginPath(); ctx.arc(-6,-4,3,0,Math.PI*2); ctx.arc(6,-4,3,0,Math.PI*2); ctx.fill(); ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(-6,-4,1.5,0,Math.PI*2); ctx.arc(6,-4,1.5,0,Math.PI*2); ctx.fill(); const jetFlame = Math.sin(fr*0.3)*2+3; ctx.fillStyle = '#FF4444'; ctx.fillRect(-4,8,8,jetFlame); ctx.fillStyle = '#FFAA44'; ctx.fillRect(-2,8,4,jetFlame*0.7); ctx.restore(); ctx.fillStyle='#111'; ctx.fillRect(x-15,y-20,30,5); ctx.fillStyle=cfg.color||'#4A90E2'; ctx.fillRect(x-15,y-20,30*hp,5); if(cfg.name){ ctx.fillStyle='#fff'; ctx.font='8px Arial'; ctx.textAlign='center'; ctx.fillText(cfg.name,x,y-25); } }",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 1,
+        "name": "Space Hound Pilot",
+        "characterType": "spacehound",
+        "color": "#4A90E2",
+        "eyeColor": "#FFD700",
+        "spd": 0.7,
+        "pat": "h",
+        "size": 1.2,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "Added Space Hound Pilot enemy - heroic dog in spacesuit with jetpack"
     }
   },
   {
