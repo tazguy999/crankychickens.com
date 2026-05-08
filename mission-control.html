@@ -698,20 +698,23 @@ async function applyFullContribution(result, sub){
 async function generateConfigEntry(sub){
   const prompt=`You are converting a game lore submission into a structured game config entry for "Cranky Chickens: In Space."
 Submission: Name: "${sub.scribeName||'Unnamed'}" Description: "${sub.description||sub.summary||''}"
+Contrib type: "${sub.contribType||'enemy'}"
 Screens 0-3: Landing Zone, Quantum Cat Colony, Moon Base, Harvester Core. Screens 1&3 are zero-G.
 Target zone: screenIndex ${sub.targetZone?.index??0}
 
-If the description is about a NEW AREA, LEVEL, CAVE, WORLD, PLANET or ZONE — generate a newScreen.
-Otherwise generate an enemyVariant, zoneRename, or cornPatch.
+Based on contrib type, generate ONE of:
 
-For newScreen:
-{"configType":"newScreen","name":"Zone Name","gravity":true,"loreText":"Short atmospheric text (max 55 chars)","enemies":[{"tx":9,"ty":9,"spd":0.5,"pat":"h","name":"Enemy Name","characterType":"iguana","color":"#hex","eyeColor":"#hex"}],"corn":[{"x":5,"y":8}]}
+enemyVariant: {"configType":"enemyVariant","screenIndex":0,"name":"Name","characterType":"iguana","color":"#hex","eyeColor":"#hex","spd":0.5,"pat":"h","size":1.0,"tx":9,"ty":9}
 
-For enemyVariant (include characterType):
-{"configType":"enemyVariant","screenIndex":0,"name":"Name","characterType":"iguana","color":"#hex","eyeColor":"#hex","spd":0.5,"pat":"h","size":1.0,"tx":9,"ty":9}
+zoneRename: {"configType":"zoneRename","screenIndex":0,"name":"New Name","loreText":"Short text max 55 chars"}
 
-For zoneRename:
-{"configType":"zoneRename","screenIndex":0,"name":"New Name","loreText":"Short text max 55 chars"}
+newScreen: {"configType":"newScreen","name":"Zone Name","gravity":true,"loreText":"Short text","enemies":[],"corn":[]}
+
+secret (fake_wall): {"configType":"secret","type":"fake_wall","screenIndex":0,"tx":5,"ty":8,"reveal":[{"tx":6,"ty":8},{"tx":7,"ty":8}],"hint":"What the player notices"}
+
+secret (depth_trap): {"configType":"secret","type":"depth_trap","screenIndex":0,"tx":10,"ty":10,"destRow":1,"destCol":0,"hint":"What the player notices"}
+
+secret (wobble_corn): {"configType":"secret","type":"wobble_corn","screenIndex":0,"tx":5,"ty":8,"doorTiles":[{"tx":15,"ty":8},{"tx":15,"ty":9}],"hint":"What the player notices"}
 
 Respond ONLY with the JSON object.`;
   try{
@@ -761,6 +764,11 @@ async function applyToGameConfig(entry, sub){
       cfg.newScreens=cfg.newScreens||[];
       if(!cfg.newScreens.find(s=>s.name===entry.name)){
         cfg.newScreens.push(entry);
+      }
+    } else if(entry.configType==='secret'){
+      cfg.secrets=cfg.secrets||[];
+      if(!cfg.secrets.find(s=>s.type===entry.type&&s.tx===entry.tx&&s.ty===entry.ty&&s.screenIndex===entry.screenIndex)){
+        cfg.secrets.push(entry);
       }
     }
 

@@ -1,5 +1,5 @@
 {
-  "_version": 17,
+  "_version": 18,
   "_updated": "2026-05-08T02:22:21.876Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
@@ -160,6 +160,34 @@
         }
       ],
       "screenIndex": 1
+    }
+  ],
+  "secrets": [
+    {
+      "type": "fake_wall",
+      "screenIndex": 0,
+      "tx": 17,
+      "ty": 8,
+      "reveal": [
+        {
+          "tx": 18,
+          "ty": 8
+        },
+        {
+          "tx": 19,
+          "ty": 8
+        }
+      ],
+      "hint": "A wall that looks slightly different from the others..."
+    },
+    {
+      "type": "depth_trap",
+      "screenIndex": 2,
+      "tx": 10,
+      "ty": 10,
+      "destRow": 3,
+      "destCol": 0,
+      "hint": "Stand still here long enough and something happens..."
     }
   ]
 }
