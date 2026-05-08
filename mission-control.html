@@ -445,47 +445,47 @@ async function approve(idx){
 
 // ── FULL AI CONTRIBUTION GENERATOR ──
 async function generateFullContribution(sub){
-  // Style reference — feline draw function (compressed)
-  const styleRef = `// Example draw function signature and style:
-function drawCharacter_feline(x,y,hp,fr,cfg={},isZeroG=false){
+  const styleRef = `function drawCharacter_feline(x,y,hp,fr,cfg={},isZeroG=false){
   const bodyCol=cfg.color||'#FF8C00';
   const eyeCol=cfg.eyeColor||'#FFD700';
   ctx.save();
-  // shadow if gravity
   if(!isZeroG){ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x+16,y+30,11,3.5,0,0,Math.PI*2);ctx.fill();}
-  // body, head, features...
-  // HP bar at bottom
-  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);
-  ctx.fillStyle=bodyCol;ctx.fillRect(x,y-8,30*hp,5);
+  // body
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.ellipse(x+17,y+20,11,10,0,0,Math.PI*2);ctx.fill();
+  // head
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.arc(x+17,y+10,9,0,Math.PI*2);ctx.fill();
+  // ears (pointed)
+  ctx.fillStyle=bodyCol;
+  ctx.beginPath();ctx.moveTo(x+10,y+5);ctx.lineTo(x+7,y-4);ctx.lineTo(x+15,y+3);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(x+22,y+4);ctx.lineTo(x+26,y-4);ctx.lineTo(x+28,y+4);ctx.closePath();ctx.fill();
+  // eyes
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.ellipse(x+13,y+10,3,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.ellipse(x+21,y+10,3,3,0,0,Math.PI*2);ctx.fill();
+  // name tag
+  if(cfg.name){ctx.fillStyle='rgba(0,0,0,0.75)';const tw=ctx.measureText(cfg.name).width+10;ctx.fillRect(x+16-tw/2,y-20,tw,14);ctx.fillStyle=eyeCol;ctx.font='bold 9px Fredoka One';ctx.textAlign='center';ctx.fillText(cfg.name,x+16,y-9);ctx.textAlign='left';}
+  // HP bar
+  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);ctx.fillStyle=bodyCol;ctx.fillRect(x,y-8,30*hp,5);
   ctx.restore();
 }`;
 
-  // Behavior reference
-  const behaviorRef = `// Current enemy update (patrol only):
-// enemy._x += enemy._dir * enemy.spd
-// if wall: enemy._dir *= -1
-// New behavior types go in updateEnemies() after patrol logic
-// Access: player.x, player.y, TILE=32, boxWalkable(map,x,y)`;
+  const prompt = `You are an AI game developer. Generate a new enemy character for "Cranky Chickens: In Space" based on this kid's idea.
 
-  const prompt = `You are an AI game developer for "Cranky Chickens: In Space" — a Zelda-style top-down space adventure. Vanilla JS canvas game, no frameworks.
+Kid's idea:
+Name: "${sub.scribeName||sub.spec?.title||'New Enemy'}"  
+Description: "${sub.description||sub.originalSubmission?.content||sub.summary||''}"
+Zone: "${sub.targetZone?.name||'Landing Zone'}" (screenIndex ${sub.targetZone?.index??0})
 
-A kid submitted this idea:
-Name: "${sub.scribeName||sub.spec?.title||'New Enemy'}"
-Description: "${sub.description||sub.summary||''}"
-Target zone: "${sub.targetZone?.name||'Landing Zone'}" (screenIndex ${sub.targetZone?.index??0})
-Game context: ${sub.targetGame?.title||'In Space'}
-
-Generate a complete game contribution as a JSON object with these exact fields:
+You MUST return a JSON object with ALL of these fields. Do not skip drawFn — it is the most important part.
 
 {
-  "characterType": "short_type_name (e.g. bull, fish, ghost)",
-  "drawFn": "complete JS function: drawCharacter_[type](x,y,hp,fr,cfg={},isZeroG=false){ ... }",
+  "characterType": "one word lowercase type name (e.g. fish, snake, crab, mech, plant)",
+  "drawFn": "COMPLETE JavaScript function named drawCharacter_[type] that draws the character on an HTML5 canvas. Use ctx (global), x/y position, hp (0-1), fr (frame counter), cfg object, isZeroG boolean. Must include: ctx.save() at start, ctx.restore() at end, body drawn with canvas shapes, eyes, HP bar (ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);ctx.fillStyle=cfg.color;ctx.fillRect(x,y-8,30*hp,5)), name tag if cfg.name exists. Make it creative and match the kid's description!",
   "configEntry": {
     "configType": "enemyVariant",
     "screenIndex": ${sub.targetZone?.index??0},
-    "name": "Enemy Name",
-    "characterType": "short_type_name",
-    "color": "#hexcolor",
+    "name": "Enemy display name",
+    "characterType": "same as above",
+    "color": "#hexcolor matching the vibe",
     "eyeColor": "#hexcolor",
     "spd": 0.5,
     "pat": "h",
@@ -493,25 +493,18 @@ Generate a complete game contribution as a JSON object with these exact fields:
     "tx": 9,
     "ty": 9
   },
-  "commitMessage": "emoji + short description"
+  "commitMessage": "short description of what was added"
 }
 
-RULES for drawFn:
-- Use ctx (global canvas context), frame global for animation
-- Bounding box: 32x32 at (x,y) — stay within it
-- Always ctx.save() at start, ctx.restore() at end
-- Draw HP bar: ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5); ctx.fillStyle=cfg.color||'#888';ctx.fillRect(x,y-8,30*hp,5);
-- If cfg.name: draw name tag above sprite
-- Make it visually match the kid's description — be creative!
-- isZeroG=true means no floor shadow, add floating effect
-
-Style reference:
+Example draw function for reference (feline type):
 ${styleRef}
 
-Behavior reference (pat field controls movement):
-${behaviorRef}
-
-Respond with ONLY valid JSON. No markdown, no backticks, no explanation.`;
+CRITICAL: 
+- drawFn must be a complete, valid JavaScript function
+- Use only canvas2D API (ctx.fillRect, ctx.arc, ctx.beginPath, ctx.fill, etc.)
+- Stay within 32x32 pixel bounding box at (x,y)
+- No external dependencies
+- Respond with ONLY the JSON object. No markdown, no backticks, no explanation before or after.`;
 
   try{
     const res = await fetch(PROXY,{
@@ -523,15 +516,32 @@ Respond with ONLY valid JSON. No markdown, no backticks, no explanation.`;
       })
     });
     const data = await res.json();
-    if(data.error) throw new Error(data.error);
+    if(data.error) throw new Error('Proxy error: '+data.error);
+
     const text = data.content?.find(b=>b.type==='text')?.text||'';
-    const clean = text.replace(/```json|```/g,'').trim();
-    const result = JSON.parse(clean);
+    console.log('AI response preview:', text.slice(0,200));
+
+    // Strip any markdown fences
+    const clean = text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+
+    let result;
+    try{ result = JSON.parse(clean); }
+    catch(e){ throw new Error('JSON parse failed: '+e.message+' | text: '+clean.slice(0,100)); }
+
     // Validate required fields
-    if(!result.drawFn||!result.configEntry||!result.characterType) throw new Error('Missing required fields');
+    if(!result.drawFn) throw new Error('Missing drawFn in AI response');
+    if(!result.configEntry) throw new Error('Missing configEntry in AI response');
+    if(!result.characterType) throw new Error('Missing characterType in AI response');
+
+    // Make sure characterType matches across fields
+    result.configEntry.characterType = result.characterType;
+
+    toast('🤖 Code generated! Applying to game...');
     return result;
+
   }catch(e){
-    console.error('Full contribution failed:',e);
+    console.error('generateFullContribution failed:',e.message);
+    toast('⚠️ Code gen failed: '+e.message.slice(0,60));
     return null;
   }
 }
