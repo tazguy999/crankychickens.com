@@ -1,5 +1,36 @@
 [
   {
+    "id": 1778206914229,
+    "timestamp": "2026-05-08T02:21:54.229Z",
+    "scribeName": "Canine Nebula",
+    "description": "*The cosmic winds whisper of a distant realm...* Behold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys! What draws you to this doggy space realm, young Scribe?",
+    "contribType": "area",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 1,
+      "name": "Crater Fields",
+      "emoji": "💥"
+    },
+    "spec": {
+      "title": "Canine Nebula Allied Space Station",
+      "devNote": "New level featuring dog bone-shaped station with Space Hound NPCs offering navigation assistance through asteroid mini-games. Requires new character models, ally AI behavior, and squeaky toy asteroid physics.",
+      "nicksNote": "Captain Barkington is ready to help our feathered heroes navigate the cosmos!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1778206539622,
     "timestamp": "2026-05-08T02:15:39.622Z",
     "scribeName": "Canine Nebula",
