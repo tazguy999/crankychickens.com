@@ -1,5 +1,76 @@
 [
   {
+    "id": 1778205603996,
+    "timestamp": "2026-05-08T02:00:03.996Z",
+    "scribeName": "Floaty Head Guy",
+    "description": "Ah, young Dragon Scribe, your brother has uncovered a most intriguing cosmic mystery! These ethereal beings drift through the void like ancient spirits, carrying secrets of forgotten star-civilizations. What magnificent lore we shall weave around these ghostly guardians of space!",
+    "originalSubmission": {
+      "id": 1777946036923,
+      "timestamp": "2026-05-05T01:53:56.923Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Floaty head guy"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": {
+        "index": 1,
+        "name": "Crater Fields",
+        "emoji": "💥"
+      },
+      "summary": "Your floaty head guy could be a mysterious space creature that drifts around levels!",
+      "feature": "A floating enemy or NPC that moves in smooth, unpredictable patterns across the screen, possibly immune to direct cannon shots but vulnerable to environmental hazards or ricochet attacks.",
+      "type": "enemy",
+      "excitement": "That floaty head is perfect for dodging cannonballs - what a tricky space challenge!",
+      "forScribe": "The Floaty Head Guy could be an ancient space spirit or lost astronaut whose helmet has become a ghostly entity. Lore-wise, these could be remnants of a long-lost civilization that once inhabited the space stations. They drift through walls and obstacles, making them immune to direct attacks but can be defeated by launching objects that ricochet off walls to hit them, or by using environmental traps. They might even help guide players to hidden areas occasionally, adding a mysterious helper element. Consider them as neutral entities that become hostile only when threatened, fitting the space exploration theme.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, young Dragon Scribe, your brother has uncovered a most intriguing cosmic mystery! These ethereal beings drift through the void like ancient spirits, carrying secrets of forgotten star-civilizations. What magnificent lore we shall weave around these ghostly guardians of space!"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 3,
+      "name": "Harvester Core",
+      "emoji": "⚡"
+    },
+    "spec": {
+      "title": "Floaty Head Guy Enemy Type",
+      "devNote": "Implement a slow-drifting enemy with sine wave movement pattern and semi-transparent sprite rendering. Should phase through certain terrain but still interact with player projectiles.",
+      "nicksNote": "Nick is probably sketching spooky floating heads in the margins of his code right now!",
+      "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "spirit",
+      "drawFn": "function drawCharacter_spirit(x,y,hp,fr,cfg={},isZeroG=false){\n  const bodyCol=cfg.color||'#9966FF';\n  const eyeCol=cfg.eyeColor||'#FFFFFF';\n  const glowAlpha = 0.3 + 0.2 * Math.sin(fr * 0.1);\n  const floatOffset = 3 * Math.sin(fr * 0.08);\n  const actualY = y + floatOffset;\n  \n  ctx.save();\n  \n  // Ethereal glow effect\n  ctx.shadowColor = bodyCol;\n  ctx.shadowBlur = 15;\n  ctx.globalAlpha = glowAlpha;\n  \n  // Main ghostly body - wispy bottom\n  ctx.fillStyle = bodyCol;\n  ctx.beginPath();\n  ctx.ellipse(x+15, actualY+15, 12, 14, 0, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Wispy tail sections\n  for(let i = 0; i < 3; i++) {\n    const wispY = actualY + 25 + i * 4;\n    const wispSize = 8 - i * 2;\n    const wispOffset = 2 * Math.sin(fr * 0.12 + i);\n    ctx.globalAlpha = glowAlpha - i * 0.1;\n    ctx.beginPath();\n    ctx.ellipse(x+15 + wispOffset, wispY, wispSize, wispSize * 0.6, 0, 0, Math.PI*2);\n    ctx.fill();\n  }\n  \n  ctx.globalAlpha = 1.0;\n  ctx.shadowBlur = 0;\n  \n  // Ancient symbol on forehead\n  ctx.strokeStyle = '#FFD700';\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  ctx.arc(x+15, actualY+8, 3, 0, Math.PI*2);\n  ctx.stroke();\n  ctx.beginPath();\n  ctx.moveTo(x+15, actualY+5);\n  ctx.lineTo(x+15, actualY+11);\n  ctx.moveTo(x+12, actualY+8);\n  ctx.lineTo(x+18, actualY+8);\n  ctx.stroke();\n  \n  // Glowing eyes\n  ctx.fillStyle = eyeCol;\n  ctx.shadowColor = eyeCol;\n  ctx.shadowBlur = 8;\n  ctx.beginPath();\n  ctx.ellipse(x+11, actualY+12, 2, 3, 0, 0, Math.PI*2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.ellipse(x+19, actualY+12, 2, 3, 0, 0, Math.PI*2);\n  ctx.fill();\n  \n  ctx.shadowBlur = 0;\n  \n  // HP bar\n  ctx.fillStyle='#111';\n  ctx.fillRect(x,actualY-8,30,5);\n  ctx.fillStyle=cfg.color||bodyCol;\n  ctx.fillRect(x,actualY-8,30*hp,5);\n  \n  // Name tag\n  if(cfg.name){\n    ctx.fillStyle='#FFF';\n    ctx.font='8px monospace';\n    ctx.textAlign='center';\n    ctx.fillText(cfg.name,x+15,actualY-12);\n  }\n  \n  ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 3,
+        "name": "Floaty Head Guy",
+        "characterType": "spirit",
+        "color": "#9966FF",
+        "eyeColor": "#FFFFFF",
+        "spd": 0.5,
+        "pat": "h",
+        "size": 1,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "Added ethereal Floaty Head Guy spirit enemy with ancient cosmic symbols and ghostly floating animation"
+    }
+  },
+  {
     "id": 1778001728587,
     "timestamp": "2026-05-05T17:22:08.587Z",
     "scribeName": "Unnamed",
