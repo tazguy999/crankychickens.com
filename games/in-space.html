@@ -358,7 +358,12 @@ function getZPal(){ return ZONE_PALETTES[currentZone]||ZONE_PALETTES.space; }
 // T.VOID=0 sky/space, T.FLOOR=1 walkable, T.WALL=2 solid
 // T.CRATER=3, T.CRYSTAL=5, T.DOOR=6, T.VENT=9
 // Exits: E/W at rows 6-8, N/S at cols 8-11
-const WORLD_COLS=2, WORLD_ROWS=2;
+// World size — recalculated after config loads new screens
+let WORLD_COLS=2, WORLD_ROWS=2;
+function updateWorldSize(){
+  WORLD_COLS = Math.max(...SCREENS.map((_,i)=>i%2+1));
+  WORLD_ROWS = Math.ceil(SCREENS.length/WORLD_COLS);
+}
 const SCREENS=[];
 
 (function buildScreens(){
@@ -1779,6 +1784,40 @@ function applyConfig(cfg){
       }
     });
   }
+
+  // Apply new screens from config
+  if(cfg.newScreens && cfg.newScreens.length > 0){
+    cfg.newScreens.forEach(ns=>{
+      if(SCREENS.find(s=>s.name===ns.name)) return; // no duplicates
+      SCREENS.push({
+        name: ns.name||'New Area',
+        gravity: ns.gravity !== false,
+        loreText: ns.loreText||'',
+        map: ns.map||generateDefaultMap(ns.gravity !== false),
+        corn: (ns.corn||[]).map(c=>({...c})),
+        enemies: (ns.enemies||[]).map(e=>({...e})),
+      });
+      dbg('Added screen: '+ns.name);
+    });
+    // Grow cols to 3 first, then add rows
+    const total = SCREENS.length;
+    WORLD_COLS = total <= 2 ? 2 : total <= 6 ? 3 : 4;
+    WORLD_ROWS = Math.ceil(total / WORLD_COLS);
+    dbg('World: '+WORLD_COLS+'x'+WORLD_ROWS);
+  }
+}
+
+function generateDefaultMap(hasGravity){
+  const map=[];
+  for(let r=0;r<15;r++){
+    const row=[];
+    for(let c=0;c<20;c++){
+      row.push(hasGravity?(r<4?0:1):(r<3?0:1));
+    }
+    map.push(row);
+  }
+  for(let c=0;c<20;c++) map[14][c]=2; // south wall
+  return map;
 }
 
 function triggerLoreFlash(sc){
