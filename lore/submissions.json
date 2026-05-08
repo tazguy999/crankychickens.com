@@ -1,5 +1,44 @@
 [
   {
+    "id": 1778206539622,
+    "timestamp": "2026-05-08T02:15:39.622Z",
+    "scribeName": "Canine Nebula",
+    "description": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?",
+    "contribType": "area",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      },
+      {
+        "role": "user",
+        "content": "can you give me a space version of a land inspired by Dogman"
+      },
+      {
+        "role": "assistant",
+        "content": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?"
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 1,
+      "name": "Crater Fields",
+      "emoji": "💥"
+    },
+    "spec": {
+      "title": "Canine Nebula Space Station Level",
+      "devNote": "New level featuring dog bone-shaped station geometry with Space Hound NPC allies, fire hydrant ships as interactive objects, and squeaky toy asteroids as environmental obstacles/collectibles.",
+      "nicksNote": "Nick is probably sketching flying fire hydrants right now and grinning about the squeaky toy asteroids!",
+      "priority": "high"
+    }
+  },
+  {
     "id": 1778205603996,
     "timestamp": "2026-05-08T02:00:03.996Z",
     "scribeName": "Floaty Head Guy",
