@@ -1,6 +1,6 @@
 {
-  "_version": 16,
-  "_updated": "2026-05-08T02:16:05.574Z",
+  "_version": 17,
+  "_updated": "2026-05-08T02:22:21.876Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -106,5 +106,60 @@
     }
   ],
   "cornPatches": [],
-  "loreEntries": []
+  "loreEntries": [],
+  "newScreens": [
+    {
+      "configType": "newScreen",
+      "name": "Canine Nebula",
+      "gravity": false,
+      "loreText": "The Space Hounds' bone-shaped station gleams ahead!",
+      "enemies": [
+        {
+          "tx": 8,
+          "ty": 6,
+          "spd": 0.3,
+          "pat": "h",
+          "name": "Captain Barkington",
+          "characterType": "robot",
+          "color": "#4A90E2",
+          "eyeColor": "#FFD700"
+        },
+        {
+          "tx": 12,
+          "ty": 10,
+          "spd": 0.4,
+          "pat": "v",
+          "name": "Space Hound Alpha",
+          "characterType": "robot",
+          "color": "#6B4423",
+          "eyeColor": "#00FF00"
+        },
+        {
+          "tx": 5,
+          "ty": 14,
+          "spd": 0.35,
+          "pat": "h",
+          "name": "Space Hound Beta",
+          "characterType": "robot",
+          "color": "#8B4513",
+          "eyeColor": "#00BFFF"
+        }
+      ],
+      "corn": [
+        {
+          "x": 7,
+          "y": 4
+        },
+        {
+          "x": 15,
+          "y": 8
+        },
+        {
+          "x": 11,
+          "y": 12
+        }
+      ],
+      "screenIndex": 1
+    }
+  ]
 }
