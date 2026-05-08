@@ -712,35 +712,61 @@ function updatePlayer(){
   if(player.inv>0) player.inv--;
 
   // ── SCREEN TRANSITION ──
-  // Trigger when player center crosses into the edge tile column/row
   if(!isScrolling){
     let ncol=screenCol, nrow=screenRow;
     let npx=player.x, npy=player.y;
-    const cx=player.x+16, cy=player.y+16; // player center
+    let dir='';
+    const cx=player.x+16, cy=player.y+16;
 
-    // North — player center in top tile row
     if(cy < TILE && screenRow>0){
-      ncol=screenCol; nrow=screenRow-1;
+      ncol=screenCol; nrow=screenRow-1; dir='N';
       npx=player.x; npy=GH-TILE*3;
-    }
-    // South — player center in bottom tile row
-    else if(cy > GH-TILE && screenRow<WORLD_ROWS-1){
-      ncol=screenCol; nrow=screenRow+1;
+    } else if(cy > GH-TILE && screenRow<WORLD_ROWS-1){
+      ncol=screenCol; nrow=screenRow+1; dir='S';
       npx=player.x; npy=TILE*2;
-    }
-    // West — player center in left tile column
-    else if(cx < TILE && screenCol>0){
-      ncol=screenCol-1; nrow=screenRow;
+    } else if(cx < TILE && screenCol>0){
+      ncol=screenCol-1; nrow=screenRow; dir='W';
       npx=GW-TILE*3; npy=player.y;
-    }
-    // East — player center in right tile column
-    else if(cx > GW-TILE && screenCol<WORLD_COLS-1){
-      ncol=screenCol+1; nrow=screenRow;
+    } else if(cx > GW-TILE && screenCol<WORLD_COLS-1){
+      ncol=screenCol+1; nrow=screenRow; dir='E';
       npx=TILE*2; npy=player.y;
     }
 
     if(ncol!==screenCol||nrow!==screenRow){
-      player.vx*=0.5; player.vy*=0.5;
+      // Find nearest walkable spawn on entry corridor of destination screen
+      const destSc=SCREENS[screenIndex(ncol,nrow)];
+      if(destSc){
+        const destMap=destSc.map;
+        let found=false;
+        if(dir==='S'){
+          // Entering from north — scan down from row 1 in cols 8-11
+          outer: for(let ty=1;ty<=8;ty++)
+            for(let tc2=8;tc2<=11;tc2++)
+              if(boxWalkable(destMap,tc2*TILE,ty*TILE)){npx=tc2*TILE;npy=ty*TILE;found=true;break outer;}
+        } else if(dir==='N'){
+          // Entering from south — scan up from row 13 in cols 8-11
+          outer: for(let ty=13;ty>=6;ty--)
+            for(let tc2=8;tc2<=11;tc2++)
+              if(boxWalkable(destMap,tc2*TILE,ty*TILE)){npx=tc2*TILE;npy=ty*TILE;found=true;break outer;}
+        } else if(dir==='E'){
+          // Entering from west — scan right from col 1 in rows 6-8
+          outer: for(let tc2=1;tc2<=6;tc2++)
+            for(let tr=6;tr<=8;tr++)
+              if(boxWalkable(destMap,tc2*TILE,tr*TILE)){npx=tc2*TILE;npy=tr*TILE;found=true;break outer;}
+        } else if(dir==='W'){
+          // Entering from east — scan left from col 18 in rows 6-8
+          outer: for(let tc2=18;tc2>=13;tc2--)
+            for(let tr=6;tr<=8;tr++)
+              if(boxWalkable(destMap,tc2*TILE,tr*TILE)){npx=tc2*TILE;npy=tr*TILE;found=true;break outer;}
+        }
+        if(!found){
+          // Fallback — any walkable tile
+          outer2: for(let ty=1;ty<14;ty++)
+            for(let tc2=1;tc2<19;tc2++)
+              if(boxWalkable(destMap,tc2*TILE,ty*TILE)){npx=tc2*TILE;npy=ty*TILE;break outer2;}
+        }
+      }
+      player.vx*=0.3; player.vy*=0.3;
       startScroll(ncol,nrow,npx,npy);
     }
   }
