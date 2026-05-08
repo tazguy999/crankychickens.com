@@ -1,6 +1,6 @@
 {
-  "_version": 14,
-  "_updated": "2026-05-05T17:23:57.283Z",
+  "_version": 15,
+  "_updated": "2026-05-08T02:00:32.655Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -73,6 +73,19 @@
       "color": "#7dd3fc",
       "eyeColor": "#fbbf24",
       "spd": 0.3,
+      "pat": "h",
+      "size": 1,
+      "tx": 9,
+      "ty": 9
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 3,
+      "name": "Floaty Head Guy",
+      "characterType": "spirit",
+      "color": "#9966FF",
+      "eyeColor": "#FFFFFF",
+      "spd": 0.5,
       "pat": "h",
       "size": 1,
       "tx": 9,
