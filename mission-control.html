@@ -416,7 +416,17 @@ async function approve(idx){
     card.innerHTML += `<div style="font-family:'Fredoka One',cursive;color:#ffcc02;padding:12px;font-size:14px">⚙️ Generating game code...</div>`;
   }
 
-  toast('🤖 AI is writing code for this...');
+  // If the scribe explicitly said "new area" — skip full contribution and go straight to newScreen config
+  if(sub.contribType==='area'){
+    toast('🗺️ Generating new level...');
+    const configEntry = await generateNewScreen(sub);
+    if(configEntry) await applyToGameConfig(configEntry, sub);
+    allSubmissions[idx].status='approved';
+    await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
+    toast('🗺️ New area added to kids-preview! Merge to deploy.');
+    renderAll();
+    return;
+  }
 
   // Step 1: Generate full code contribution (sprite + behavior + config)
   const result = await generateFullContribution(sub);
@@ -443,7 +453,52 @@ async function approve(idx){
   renderAll();
 }
 
-// ── FULL AI CONTRIBUTION GENERATOR ──
+async function generateNewScreen(sub){
+  const prompt=`You are generating a new game level for "Cranky Chickens: In Space" based on a kid's description.
+
+Kid's description: "${sub.description||sub.summary||''}"
+Level name: "${sub.scribeName||'New Area'}"
+Connected to zone: "${sub.targetZone?.name||'existing world'}"
+
+Generate a newScreen config entry as JSON:
+{
+  "configType": "newScreen",
+  "name": "Level Name",
+  "gravity": true or false (false = zero-G space, true = has ground),
+  "loreText": "Short atmospheric text shown on entry (max 55 chars)",
+  "enemies": [
+    {"tx": 9, "ty": 9, "spd": 0.5, "pat": "h", "name": "Enemy Name", "characterType": "iguana", "color": "#hexcolor", "eyeColor": "#hexcolor"}
+  ],
+  "corn": [{"x": 5, "y": 8}, {"x": 14, "y": 8}]
+}
+
+Rules:
+- gravity false = space station or floating area (station style)
+- gravity true = planet surface (moon style)
+- Add 2-4 enemies that fit the theme
+- Add 2-4 corn locations (tx/ty between 3-17)
+- Pick colors that match the theme
+- loreText max 55 chars
+- characterType must be one of: iguana, feline, robot, spirit, bull
+
+Respond with ONLY the JSON object. No markdown.`;
+
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claude_complete',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    const text=data.content?.find(b=>b.type==='text')?.text||'{}';
+    const result=JSON.parse(text.replace(/```json|```/g,'').trim());
+    if(!result.configType) result.configType='newScreen';
+    return result;
+  }catch(e){
+    console.error('generateNewScreen failed:',e);
+    toast('⚠️ Level gen failed: '+e.message.slice(0,60));
+    return null;
+  }
+}
+
 async function generateFullContribution(sub){
   const styleRef = `function drawCharacter_feline(x,y,hp,fr,cfg={},isZeroG=false){
   const bodyCol=cfg.color||'#FF8C00';
