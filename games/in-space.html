@@ -275,6 +275,47 @@ document.addEventListener('fullscreenchange',()=>{
 const jZone  = document.getElementById('joystickZone');
 const jThumb = document.getElementById('joystickThumb');
 const atkBtn = document.getElementById('attackBtn');
+const unstuckBtn = document.getElementById('unstuckBtn');
+
+function unstuckPlayer(){
+  if(gameState!=='play') return;
+  const map = currentScreen().map;
+
+  // Priority 1 — tiles near exit corridors
+  const candidates=[];
+  for(let tx=8;tx<=11;tx++) for(let ty=1;ty<=4;ty++) candidates.push({x:tx*TILE,y:ty*TILE});
+  for(let tx=8;tx<=11;tx++) for(let ty=10;ty<=13;ty++) candidates.push({x:tx*TILE,y:ty*TILE});
+  for(let ty=6;ty<=8;ty++) for(let tx=1;tx<=4;tx++) candidates.push({x:tx*TILE,y:ty*TILE});
+  for(let ty=6;ty<=8;ty++) for(let tx=15;tx<=18;tx++) candidates.push({x:tx*TILE,y:ty*TILE});
+  // Center fallback
+  candidates.push({x:9*TILE,y:7*TILE},{x:10*TILE,y:7*TILE},{x:9*TILE,y:8*TILE});
+
+  for(const pt of candidates){
+    if(boxWalkable(map,pt.x,pt.y)){
+      player.x=pt.x; player.y=pt.y;
+      player.vx=0; player.vy=0;
+      player.inv=60;
+      spawnP(player.x+16,player.y+16,'#ffcc02',14);
+      popup={text:'📍 Unstuck!',timer:80};
+      return;
+    }
+  }
+  // Fallback — any walkable tile
+  for(let ty=1;ty<14;ty++) for(let tx=1;tx<19;tx++){
+    const px=tx*TILE,py=ty*TILE;
+    if(boxWalkable(map,px,py)){
+      player.x=px; player.y=py;
+      player.vx=0; player.vy=0;
+      player.inv=60;
+      spawnP(px+16,py+16,'#ffcc02',12);
+      popup={text:'📍 Unstuck!',timer:80};
+      return;
+    }
+  }
+}
+
+unstuckBtn.addEventListener('touchstart',e=>{e.preventDefault();unstuckPlayer();},{passive:false});
+unstuckBtn.addEventListener('click',()=>unstuckPlayer());
 
 let joyActive=false, joyId=null, joyDx=0, joyDy=0;
 const JR=34;
