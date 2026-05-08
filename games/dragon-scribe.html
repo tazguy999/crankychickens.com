@@ -509,7 +509,15 @@ body::before {
         <!-- populated by JS -->
       </div>
 
-      <div class="lore-section-title">✦ Which Zone? <span style="opacity:0.5;font-size:11px">(optional)</span></div>
+      <div class="lore-section-title">✦ What are you adding?</div>
+      <div class="lore-chips" id="contribTypeChips">
+        <div class="lore-chip used" onclick="pickContribType('enemy','👾 New Enemy',this)">👾 New Enemy</div>
+        <div class="lore-chip" onclick="pickContribType('area','🗺️ New Area',this)">🗺️ New Area / Level</div>
+        <div class="lore-chip" onclick="pickContribType('rename','🏷️ Rename Zone',this)">🏷️ Rename a Zone</div>
+        <div class="lore-chip" onclick="pickContribType('lore','📖 Add Lore Text',this)">📖 Lore Text</div>
+      </div>
+
+      <div class="lore-section-title" id="zonePickLabel">✦ Which Zone? <span style="opacity:0.5;font-size:11px">(optional)</span></div>
       <div class="lore-chips" id="zoneChips">
         <!-- populated after game pick -->
       </div>
@@ -586,7 +594,22 @@ body::before {
 // ═══════════════════════════════
 //  GAME & ZONE SELECTION
 // ═══════════════════════════════
-let selectedGame=null, selectedZone=null, gamesManifest=null;
+let selectedContribType='enemy';
+
+function pickContribType(type, label, el){
+  selectedContribType=type;
+  document.querySelectorAll('#contribTypeChips .lore-chip').forEach(c=>c.classList.remove('used'));
+  if(el) el.classList.add('used');
+  // Update zone label based on type
+  const zoneLabel=document.getElementById('zonePickLabel');
+  if(type==='area'){
+    zoneLabel.innerHTML='✦ Connect to which existing zone? <span style="opacity:0.5;font-size:11px">(new area appears next to it)</span>';
+  } else if(type==='rename'){
+    zoneLabel.innerHTML='✦ Which zone to rename? <span style="opacity:0.5;font-size:11px">(required)</span>';
+  } else {
+    zoneLabel.innerHTML='✦ Which Zone? <span style="opacity:0.5;font-size:11px">(optional)</span>';
+  }
+}
 
 async function loadGamesManifest(){
   try{
@@ -927,6 +950,7 @@ async function castSpell(){
     timestamp:new Date().toISOString(),
     scribeName:name||'Unnamed',
     description:desc,
+    contribType:selectedContribType,
     originalSubmission:currentSubmission||null,
     chatHistory:chatHistory.slice(0,6),
     status:'pending_review',
