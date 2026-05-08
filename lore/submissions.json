@@ -1,5 +1,58 @@
 [
   {
+    "id": 1778205603996,
+    "timestamp": "2026-05-08T02:00:03.996Z",
+    "scribeName": "Floaty Head Guy",
+    "description": "Ah, young Dragon Scribe, your brother has uncovered a most intriguing cosmic mystery! These ethereal beings drift through the void like ancient spirits, carrying secrets of forgotten star-civilizations. What magnificent lore we shall weave around these ghostly guardians of space!",
+    "originalSubmission": {
+      "id": 1777946036923,
+      "timestamp": "2026-05-05T01:53:56.923Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Floaty head guy"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": {
+        "index": 1,
+        "name": "Crater Fields",
+        "emoji": "💥"
+      },
+      "summary": "Your floaty head guy could be a mysterious space creature that drifts around levels!",
+      "feature": "A floating enemy or NPC that moves in smooth, unpredictable patterns across the screen, possibly immune to direct cannon shots but vulnerable to environmental hazards or ricochet attacks.",
+      "type": "enemy",
+      "excitement": "That floaty head is perfect for dodging cannonballs - what a tricky space challenge!",
+      "forScribe": "The Floaty Head Guy could be an ancient space spirit or lost astronaut whose helmet has become a ghostly entity. Lore-wise, these could be remnants of a long-lost civilization that once inhabited the space stations. They drift through walls and obstacles, making them immune to direct attacks but can be defeated by launching objects that ricochet off walls to hit them, or by using environmental traps. They might even help guide players to hidden areas occasionally, adding a mysterious helper element. Consider them as neutral entities that become hostile only when threatened, fitting the space exploration theme.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, young Dragon Scribe, your brother has uncovered a most intriguing cosmic mystery! These ethereal beings drift through the void like ancient spirits, carrying secrets of forgotten star-civilizations. What magnificent lore we shall weave around these ghostly guardians of space!"
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 3,
+      "name": "Harvester Core",
+      "emoji": "⚡"
+    },
+    "spec": {
+      "title": "Floaty Head Guy Enemy Type",
+      "devNote": "Implement a slow-drifting enemy with sine wave movement pattern and semi-transparent sprite rendering. Should phase through certain terrain but still interact with player projectiles.",
+      "nicksNote": "Nick is probably sketching spooky floating heads in the margins of his code right now!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1778001728587,
     "timestamp": "2026-05-05T17:22:08.587Z",
     "scribeName": "Unnamed",
