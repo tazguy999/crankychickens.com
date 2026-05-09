@@ -529,25 +529,40 @@ const SCREENS=[];
   });
 
   // ── THE VOID OF UNWRITTEN WORLDS ──
+  // Full walkable space — no damage zone, whimsical, safe
   const voidMap=[];
   for(let r=0;r<15;r++){
     const row=[];
-    for(let c=0;c<20;c++) row.push((r>=6&&r<=8&&c>=4&&c<=15)?1:0);
+    for(let c=0;c<20;c++){
+      // Multiple floating platforms at different heights
+      const onPlatform=
+        (r===7&&c>=1&&c<=6)||    // left platform
+        (r===5&&c>=8&&c<=12)||   // center high platform
+        (r===9&&c>=14&&c<=18)||  // right low platform
+        (r===11&&c>=3&&c<=8)||   // lower left platform
+        (r===6&&c>=15&&c<=18)||  // right upper platform
+        (r===12&&c>=11&&c<=16);  // lower right platform
+      // Edge corridors for transitions
+      const isExit=(r===0&&c>=8&&c<=11)||(r===14&&c>=8&&c<=11)||
+                   (c===0&&r>=6&&r<=8)||(c===19&&r>=6&&r<=8);
+      row.push((onPlatform||isExit)?1:0);
+    }
     voidMap.push(row);
   }
-  for(let c=8;c<=11;c++){voidMap[0][c]=1;voidMap[14][c]=1;}
-  for(let r=6;r<=8;r++){voidMap[r][0]=1;voidMap[r][19]=1;}
   SCREENS.push({
     name:'Void of Unwritten Worlds',
     gravity:false,
     isVoid:true,
+    isSafeZone:true, // no damage taken
     loreText:'You\'ve reached the edge of the known universe.',
     map:voidMap,
-    corn:[{x:10,y:7}],
+    corn:[{x:10,y:5},{x:4,y:7},{x:16,y:6},{x:5,y:11},{x:13,y:12}],
     enemies:[
-      {tx:5,ty:7,spd:0.3,pat:'h',name:'Unnamed',characterType:'amoeba',color:'#667788',eyeColor:'#aabbcc',size:1.0},
-      {tx:14,ty:7,spd:0.2,pat:'h',name:'Also Unnamed',characterType:'amoeba',color:'#556677',eyeColor:'#99aabb',size:0.9},
-      {tx:9,ty:7,spd:0.15,pat:'v',name:'???',characterType:'amoeba',color:'#778899',eyeColor:'#bbccdd',size:1.1},
+      {tx:3,ty:7,spd:0.25,pat:'h',name:'Unnamed',characterType:'amoeba',color:'#667788',eyeColor:'#aabbcc',size:1.0,_loreIdx:0},
+      {tx:10,ty:5,spd:0.2,pat:'h',name:'Also Unnamed',characterType:'amoeba',color:'#556677',eyeColor:'#99aabb',size:1.1,_loreIdx:1},
+      {tx:16,ty:6,spd:0.18,pat:'v',name:'???',characterType:'amoeba',color:'#778899',eyeColor:'#bbccdd',size:0.95,_loreIdx:2},
+      {tx:5,ty:11,spd:0.22,pat:'h',name:'Unnamed',characterType:'amoeba',color:'#889977',eyeColor:'#ccddaa',size:1.05,_loreIdx:3},
+      {tx:13,ty:12,spd:0.15,pat:'h',name:'Possibly Gerald',characterType:'amoeba',color:'#887766',eyeColor:'#ddccbb',size:0.9,_loreIdx:4},
     ],
     secrets:[],
   });
@@ -988,8 +1003,8 @@ function updateEnemies(){
       }
     }
 
-    // Contact damage
-    if(player.inv<=0){
+    // Contact damage — disabled in safe zones
+    if(player.inv<=0 && !currentScreen().isSafeZone){
       const dist=Math.hypot(player.x+16-(e._x+14),player.y+16-(e._y+14));
       if(dist<30){
         player.hp--;
@@ -1291,7 +1306,85 @@ function drawTile(t,sx,sy){
 // ═══════════════════════════════════════════════
 //  SCREEN DRAWING — with style-bible backgrounds
 // ═══════════════════════════════════════════════
-// ── ORBITAL ENTITIES ──
+// ── AMOEBA LORE POOL ──
+const AMOEBA_LORE = [
+  'I was almost a dragon once...',
+  'Someone dreamed of me but forgot to write it down',
+  'Is this a floor? I\'ve never had a floor before',
+  'The Cannon Master will name me soon. I can feel it.',
+  'I contain multitudes. None decided yet.',
+  'What even IS a chicken?',
+  'I tried being a robot but the paperwork was infinite',
+  'The Dragon Scribe speaks and worlds appear. Wild.',
+  'I have seventeen potential personalities. All of them confused.',
+  'Sometimes I think I\'m a space cat. Then I stop thinking.',
+  'My favorite color is: undecided.',
+  'I was going to be a villain but the origin story felt derivative.',
+  'Possibly Gerald.',
+  'If you peck me do I become real? Asking for a friend.',
+  'I dream in polygons I don\'t have yet.',
+  'Nick approved my existence. That\'s something.',
+  'A world without walls is just a very big room.',
+  'I contain the essence of seventeen abandoned game ideas.',
+  'The Stellar Serpent waved at me once. I think.',
+  'Space is mostly empty. I relate to that.',
+];
+
+// Track per-enemy lore display
+const amoebaLoreTimers = {};
+
+function updateAmoebaLore(){
+  if(!currentScreen().isVoid) return;
+  const sc = currentScreen();
+  sc.enemies.forEach((e,i)=>{
+    if(e.characterType!=='amoeba') return;
+    const key=`amoeba_${i}`;
+    if(!amoebaLoreTimers[key]){
+      // Stagger initial display
+      amoebaLoreTimers[key]={next:180+i*240,loreIdx:Math.floor(Math.random()*AMOEBA_LORE.length),show:0};
+    }
+    const t=amoebaLoreTimers[key];
+    t.show=Math.max(0,t.show-1);
+    t.next--;
+    if(t.next<=0){
+      t.loreIdx=(t.loreIdx+1+Math.floor(Math.random()*3))%AMOEBA_LORE.length;
+      t.show=200;
+      t.next=300+Math.floor(Math.random()*420);
+    }
+  });
+}
+
+function drawAmoebaLore(){
+  if(!currentScreen().isVoid) return;
+  const sc=currentScreen();
+  sc.enemies.forEach((e,i)=>{
+    if(e.characterType!=='amoeba'||e._x===undefined) return;
+    const key=`amoeba_${i}`;
+    const t=amoebaLoreTimers[key];
+    if(!t||t.show<=0) return;
+    const alpha=t.show>20?Math.min(1,t.show/30):t.show/20;
+    const text=AMOEBA_LORE[t.loreIdx]||'...';
+    const maxW=120;
+    ctx.save();
+    ctx.globalAlpha=alpha*0.92;
+    ctx.font='italic 8px Fredoka One';
+    const tw=Math.min(ctx.measureText(text).width+10,maxW+10);
+    const bx=e._x+16-tw/2, by=e._y-36;
+    // Speech bubble
+    ctx.fillStyle='rgba(20,10,40,0.85)';
+    ctx.beginPath();
+    ctx.roundRect(bx,by,tw,16,4);
+    ctx.fill();
+    // Bubble tail
+    ctx.beginPath();
+    ctx.moveTo(e._x+12,by+16);ctx.lineTo(e._x+16,by+22);ctx.lineTo(e._x+20,by+16);
+    ctx.closePath();ctx.fill();
+    // Text — wrap if needed
+    ctx.fillStyle='rgba(200,220,255,0.9)';ctx.textAlign='center';
+    ctx.fillText(text.slice(0,28)+(text.length>28?'...':''),bx+tw/2,by+11);
+    ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
+  });
+}
 let orbitals = [];
 function applyOrbitals(cfg){ if(cfg.orbitals) orbitals = cfg.orbitals; }
 
@@ -1364,48 +1457,68 @@ function drawScreen(sc){
 
   // ── VOID OF UNWRITTEN WORLDS — special meta rendering ──
   if(sc.isVoid){
-    // Deep dark void with subtle grid suggesting infinite space
-    ctx.fillStyle='#020408';ctx.fillRect(0,0,GW,GH);
-    // Faint grid
-    ctx.strokeStyle='rgba(100,150,200,0.04)';ctx.lineWidth=1;
-    for(let x=0;x<GW;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,GH);ctx.stroke();}
-    for(let y=0;y<GH;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(GW,y);ctx.stroke();}
-    // Sparse stars — fewer than normal
-    for(let i=0;i<15;i++){
-      const tw=0.2+Math.sin(i*13+frame*0.01)*0.3;
-      ctx.globalAlpha=tw;ctx.fillStyle='#aabbcc';
-      ctx.beginPath();ctx.arc((i*97+3)%GW,(i*61+11)%GH,0.5,0,Math.PI*2);ctx.fill();
+    // Shifting deep void
+    ctx.fillStyle=`hsl(${220+Math.sin(frame*0.008)*30},40%,4%)`;
+    ctx.fillRect(0,0,GW,GH);
+    // Slow nebula clouds
+    [[0.3,0.2,80,'rgba(120,60,200,0.06)'],[0.7,0.6,60,'rgba(60,120,200,0.05)'],[0.5,0.8,50,'rgba(200,60,120,0.04)']].forEach(([rx,ry,r,col],i)=>{
+      const ox=Math.sin(frame*0.005+i)*20, oy=Math.cos(frame*0.004+i)*15;
+      const g=ctx.createRadialGradient(GW*rx+ox,GH*ry+oy,0,GW*rx+ox,GH*ry+oy,r);
+      g.addColorStop(0,col);g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.fillRect(0,0,GW,GH);
+    });
+    // Colorful twinkling stars
+    for(let i=0;i<40;i++){
+      const tw=0.2+Math.sin(i*7+frame*0.015)*0.5;
+      ctx.globalAlpha=tw*0.8;ctx.fillStyle=`hsl(${(i*37+frame*0.02)%360},60%,80%)`;
+      ctx.beginPath();ctx.arc((i*97+3)%GW,(i*61+11)%GH,0.7,0,Math.PI*2);ctx.fill();
     }
     ctx.globalAlpha=1;
-
-    // Construction sign — floating in center top area
-    const signBob=Math.sin(frame*0.02)*4;
-    ctx.save();ctx.translate(GW/2,70+signBob);
-    // Sign post
-    ctx.fillStyle='#445566';ctx.fillRect(-2,0,4,30);
-    // Sign board
-    ctx.fillStyle='#ffcc02';ctx.fillRect(-70,-30,140,34);
-    ctx.fillStyle='#1a0a00';ctx.fillRect(-68,-28,136,30);
-    ctx.fillStyle='#ffcc02';ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
-    ctx.fillText('🚧 WORLD UNDER CONSTRUCTION 🚧',0,-18);
-    ctx.fillStyle='rgba(255,204,2,0.7)';ctx.font='8px Fredoka One';
-    ctx.fillText('Submit ideas to build what comes next',0,-6);
+    // Drifting question marks
+    for(let i=0;i<6;i++){
+      const qx=(i*107+frame*0.3*(i%2?1:-1))%(GW+40)-20;
+      const qy=20+((i*83+frame*0.15)%(GH-60));
+      ctx.globalAlpha=0.06+Math.sin(frame*0.02+i)*0.03;
+      ctx.fillStyle=`hsl(${200+i*30},50%,70%)`;
+      ctx.font=`${14+i*3}px Fredoka One`;ctx.textAlign='center';
+      ctx.fillText('?',qx,qy);
+    }
+    ctx.globalAlpha=1;ctx.textAlign='left';
+    // Floating platforms with dreamy glow
+    for(let ty2=0;ty2<15;ty2++) for(let tx2=0;tx2<20;tx2++){
+      if(sc.map[ty2][tx2]===1){
+        const px2=tx2*TILE,py2=ty2*TILE;
+        const pg=ctx.createLinearGradient(px2,py2,px2,py2+TILE*2);
+        pg.addColorStop(0,'rgba(100,150,255,0.15)');pg.addColorStop(1,'rgba(100,150,255,0)');
+        ctx.fillStyle=pg;ctx.fillRect(px2,py2,TILE,TILE*2);
+        ctx.fillStyle='#1a2035';ctx.fillRect(px2+1,py2+1,TILE-2,TILE-2);
+        ctx.strokeStyle='rgba(100,150,255,0.3)';ctx.lineWidth=1;ctx.strokeRect(px2+1,py2+1,TILE-2,TILE-2);
+        ctx.fillStyle='rgba(150,180,255,0.4)';ctx.fillRect(px2,py2,TILE,2);
+      }
+    }
+    // Construction sign
+    const signBob=Math.sin(frame*0.018)*5;
+    ctx.save();ctx.translate(GW/2,55+signBob);ctx.rotate(Math.sin(frame*0.008)*0.03);
+    ctx.fillStyle='#445566';ctx.fillRect(-2,0,4,26);
+    ctx.globalAlpha=0.15+Math.sin(frame*0.04)*0.08;ctx.fillStyle='#ffcc02';ctx.fillRect(-82,-34,164,38);ctx.globalAlpha=1;
+    ctx.fillStyle='#ffcc02';ctx.fillRect(-80,-32,160,34);
+    ctx.fillStyle='#0a0500';ctx.fillRect(-78,-30,156,30);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 10px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🚧  WORLD UNDER CONSTRUCTION  🚧',0,-20);
+    ctx.fillStyle='rgba(255,204,2,0.75)';ctx.font='8px Fredoka One';
+    ctx.fillText('Dragon Scribe & Cannon Master are waiting',0,-8);
     ctx.restore();
-
-    // QR hint panel — bottom of screen
-    ctx.fillStyle='rgba(0,20,40,0.85)';
-    ctx.fillRect(0,GH-52,GW,52);
-    ctx.fillStyle='rgba(100,180,255,0.3)';
-    ctx.fillRect(0,GH-53,GW,1);
-    ctx.fillStyle='#aaddff';ctx.font='bold 10px Fredoka One';ctx.textAlign='center';
-    ctx.fillText('🐉 Dragon Scribe  ·  💥 Cannon Master',GW/2,GH-34);
-    ctx.fillStyle='rgba(150,200,255,0.6)';ctx.font='8px Fredoka One';
-    ctx.fillText('Visit crankychickens.com to build this world',GW/2,GH-20);
-    ctx.fillText('Your ideas become real game content ✨',GW/2,GH-9);
+    // Bottom panel
+    ctx.fillStyle='rgba(0,10,30,0.9)';ctx.fillRect(0,GH-56,GW,56);
+    const bp=0.4+Math.sin(frame*0.05)*0.3;
+    ctx.strokeStyle=`rgba(100,180,255,${bp})`;ctx.lineWidth=1;ctx.strokeRect(4,GH-52,GW-8,46);
+    ctx.fillStyle='#aaddff';ctx.font='bold 11px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🐉 Dragon Scribe   ·   💥 Cannon Master',GW/2,GH-38);
+    ctx.fillStyle='rgba(150,200,255,0.65)';ctx.font='8px Fredoka One';
+    ctx.fillText('crankychickens.com — build this world',GW/2,GH-24);
+    ctx.fillStyle='rgba(150,200,255,0.45)';
+    ctx.fillText('Your ideas become real game content  ✨',GW/2,GH-12);
     ctx.textAlign='left';
-
-    // Draw tiles (the floating platform)
-    for(let ty=0;ty<15;ty++) for(let tx=0;tx<20;tx++) if(sc.map[ty][tx]===1) drawTile(1,tx*TILE,ty*TILE);
     return;
   }
 
@@ -2141,6 +2254,7 @@ function loop(){
     updateEnemies();
     updateCorn();
     updateSecrets();
+    updateAmoebaLore();
   }
 
   // ── DRAW ──
@@ -2204,9 +2318,8 @@ function loop(){
       ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
     });
     sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame,e); });
+    drawAmoebaLore();
   }
-
-  // Player (flicker when invincible)
   if(player.inv<=0||frame%6<3){
     drawChicken(player.x,player.y,player.dir,player.atk,frame);
   }
