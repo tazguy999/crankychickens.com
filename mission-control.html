@@ -152,8 +152,8 @@ html, body {
 .btn-reject:hover { background:rgba(230,57,70,0.15); }
 .btn-view { background:rgba(100,150,255,0.08);border-color:var(--border);color:#88aaff; }
 .btn-view:hover { background:rgba(100,150,255,0.15); }
-.btn-merge { background:rgba(0,204,102,0.15);border-color:var(--green);color:var(--green);font-size:14px; }
-.btn-merge:hover { background:rgba(0,204,102,0.25); }
+.btn-nqr { background:rgba(255,107,0,0.12);border-color:var(--orange);color:var(--orange);font-size:12px; }
+.btn-nqr:hover { background:rgba(255,107,0,0.25); }
 
 .status-approved {
   display:flex;align-items:center;gap:6px;
@@ -318,6 +318,40 @@ html, body {
     </div>
   </div>
 </div>
+<div id="nqrModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;flex-direction:column;padding:20px;">
+  <div style="background:linear-gradient(135deg,#0d1220,#111827);border:2px solid rgba(255,107,0,0.4);border-radius:20px;padding:20px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px;">
+    <div style="font-family:'Fredoka One',cursive;color:#ff6b00;font-size:18px;text-align:center;">🎯 Not Quite Right</div>
+    <div style="color:rgba(200,220,255,0.6);font-size:12px;text-align:center;letter-spacing:1px;">WHAT WAS OFF? (TAP ALL THAT APPLY)</div>
+    <div id="nqrSubmissionName" style="font-family:'Fredoka One',cursive;color:#ffcc02;font-size:14px;text-align:center;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;" id="nqrReasons">
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.25);background:rgba(255,107,0,0.06);cursor:pointer;">
+        <input type="checkbox" value="wrong_behavior" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>🎯 Wrong behavior</strong><br><span style="font-size:11px;opacity:0.6">Did something different than described</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.25);background:rgba(255,107,0,0.06);cursor:pointer;">
+        <input type="checkbox" value="wrong_look" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>🎨 Wrong look</strong><br><span style="font-size:11px;opacity:0.6">Visual doesn't match the idea</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.25);background:rgba(255,107,0,0.06);cursor:pointer;">
+        <input type="checkbox" value="wrong_placement" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>📍 Wrong placement</strong><br><span style="font-size:11px;opacity:0.6">Spawned in bad location</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.25);background:rgba(255,107,0,0.06);cursor:pointer;">
+        <input type="checkbox" value="fell_back" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>🤖 Fell back to default</strong><br><span style="font-size:11px;opacity:0.6">Got iguana or orbital instead of the real thing</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.25);background:rgba(255,107,0,0.06);cursor:pointer;">
+        <input type="checkbox" value="missed_intent" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>💬 Missed the kid's intent</strong><br><span style="font-size:11px;opacity:0.6">Technically worked but wasn't what they meant</span></span>
+      </label>
+    </div>
+    <textarea id="nqrNote" placeholder="Optional: what would have been better? (helps train the AI)" rows="2" style="background:rgba(0,0,0,0.3);border:1.5px solid rgba(255,107,0,0.25);border-radius:8px;padding:10px;color:#e0e8f0;font-family:'Nunito',sans-serif;font-size:13px;resize:none;"></textarea>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closeNQR()" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 20px;border-radius:16px;border:2px solid rgba(200,80,80,0.5);background:rgba(200,80,80,0.08);color:rgba(255,120,120,0.8);cursor:pointer;">✕ Cancel</button>
+      <button onclick="submitNQR()" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 24px;border-radius:16px;border:2px solid #ff6b00;background:rgba(255,107,0,0.15);color:#ff6b00;cursor:pointer;">📝 Log Intervention</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -441,7 +475,10 @@ function renderCard(s, i){
     </div>`:''}
 
     <div class="card-actions">
-      ${isApproved?`<div class="status-approved">✅ ${s.status==='deployed'?'Deployed to production':'Approved — ready to merge'}</div>`:
+      ${isApproved?`
+        <div class="status-approved">✅ ${s.status==='deployed'?'Deployed to production':s.status==='needs_revision'?'⚠️ Needs revision':'Approved — ready to merge'}</div>
+        ${s.status==='deployed'||s.status==='needs_revision'?`<button class="act-btn btn-nqr" onclick="openNQR(${globalIdx})">🎯 Not quite right</button>`:''}
+      `:
         isRejected?`<div class="status-rejected">✕ Rejected</div>`:`
         <button class="act-btn btn-approve" onclick="openPreview(${globalIdx})">👁️ Preview & Approve</button>
         <button class="act-btn btn-reject" onclick="reject(${globalIdx})">✕ Pass</button>`}
@@ -1288,6 +1325,81 @@ function drawPreviewSecret(ctx, cx, cy, v, fr){
     ctx.fillText('Peck me!',cx,cy+40);
   }
   ctx.textAlign='left';ctx.globalAlpha=1;
+}
+
+// ── NOT QUITE RIGHT — intervention logging ──
+let nqrIdx = null;
+
+function openNQR(idx){
+  nqrIdx = idx;
+  const sub = allSubmissions[idx];
+  document.getElementById('nqrSubmissionName').textContent = sub.scribeName||sub.spec?.title||'Submission';
+  document.getElementById('nqrNote').value = '';
+  document.querySelectorAll('#nqrReasons input').forEach(cb=>cb.checked=false);
+  const modal = document.getElementById('nqrModal');
+  modal.style.display='flex';
+}
+
+function closeNQR(){
+  document.getElementById('nqrModal').style.display='none';
+  nqrIdx = null;
+}
+
+async function submitNQR(){
+  if(nqrIdx===null) return;
+  const sub = allSubmissions[nqrIdx];
+  const reasons = [...document.querySelectorAll('#nqrReasons input:checked')].map(cb=>cb.value);
+  const note = document.getElementById('nqrNote').value.trim();
+
+  if(!reasons.length){ toast('Pick at least one reason'); return; }
+
+  const intervention = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    submissionId: sub.id,
+    submissionName: sub.scribeName||sub.spec?.title||'Unknown',
+    kidName: sub.originalSubmission?'Cannon Master':'Dragon Scribe',
+    reasons,
+    note: note||null,
+    deliveryType: sub.aiResult?.configEntry?'full_code':sub._previewChoice?'config_only':'unknown',
+  };
+
+  // Append to delivery log as an intervention entry
+  try{
+    const getRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
+    const getData = await getRes.json();
+    const log = getData.content ? JSON.parse(getData.content) : [];
+    // Find the original delivery entry and mark it
+    const original = log.find(e=>e.submissionId===sub.id);
+    if(original){
+      original.intervention = intervention;
+      original.deliveryType = 'intervention_required';
+    }
+    // Also add as a separate intervention entry
+    log.unshift({
+      ...intervention,
+      type: 'intervention',
+      delivered: 'Human corrective action required after deployment',
+    });
+    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_file', path:'lore/delivery-log.json', branch:'kids-preview',
+        content:JSON.stringify(log.slice(0,100),null,2), sha:getData.sha,
+        commitMsg:'🎯 Intervention: '+intervention.submissionName+' — '+reasons.join(', ')
+      })
+    });
+    // Mark submission as needing revision
+    allSubmissions[nqrIdx].status = 'needs_revision';
+    allSubmissions[nqrIdx].intervention = intervention;
+    await saveSubmissions('🎯 Intervention logged: '+(sub.scribeName||'submission'));
+    closeNQR();
+    toast('📝 Intervention logged — will inform skill scoring');
+    renderAll();
+  }catch(e){
+    console.error('submitNQR failed:',e);
+    toast('⚠️ Could not save: '+e.message);
+  }
 }
 
 loadSubmissions();
