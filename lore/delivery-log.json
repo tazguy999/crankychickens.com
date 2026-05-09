@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1746835200000,
+    "timestamp": "2026-05-09T20:00:00.000Z",
+    "submissionId": "seed",
+    "kidName": "Dragon Scribe",
+    "contribType": "enemy",
+    "asked": "StarCat Guardian \u2014 gold and orange, moves in patrol, guards the Crater Fields",
+    "askedName": "StarCat Guardian",
+    "targetGame": "In Space",
+    "targetZone": "Quantum Cat Colony",
+    "delivered": "StarCat Guardian deployed as feline characterType to Quantum Cat Colony",
+    "deliveryType": "full_code",
+    "issues": [],
+    "commitSha": null,
+    "dingedSkills": []
+  },
+  {
+    "id": 1746835100000,
+    "timestamp": "2026-05-09T19:00:00.000Z",
+    "submissionId": "seed2",
+    "kidName": "Cannon Master",
+    "contribType": "enemy",
+    "asked": "Space Bull Charging Enemy \u2014 stocky, horns, angry red eyes",
+    "askedName": "Space Bull",
+    "targetGame": "In Space",
+    "targetZone": "Landing Zone",
+    "delivered": "Space Bull deployed as bull characterType to Landing Zone",
+    "deliveryType": "full_code",
+    "issues": [],
+    "commitSha": null,
+    "dingedSkills": []
+  }
+]
