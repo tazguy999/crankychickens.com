@@ -1435,14 +1435,89 @@ const SCORES_PATH = 'services/scores.json';
 
 async function loadAiOps(){
   try{
-    const res = await fetch(PROXY, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({action:'get_file', path:SCORES_PATH, branch:'main'})
-    });
-    const data = await res.json();
-    if(data.error || !data.content) return {skills:[], _updated:null};
-    return JSON.parse(data.content);
+    // Load both scores and delivery log in parallel
+    const [scoresRes, logRes] = await Promise.all([
+      fetch(PROXY, {method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'get_file', path:SCORES_PATH, branch:'main'})}),
+      fetch(PROXY, {method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'get_file', path:'lore/delivery-log.json', branch:'kids-preview'})})
+    ]);
+    const scoresData = await scoresRes.json();
+    const logData = await logRes.json();
+    if(scoresData.error || !scoresData.content) return {skills:[], _updated:null};
+    const scores = JSON.parse(scoresData.content);
+    const log = logData.content ? JSON.parse(logData.content) : [];
+
+    // Compute live stats from delivery log
+    scores.skills = scores.skills.map(skill => computeSkillStats(skill, log));
+    scores._logEntries = log.length;
+    return scores;
   }catch(e){ console.error('loadAiOps failed:', e); return {skills:[], _updated:null}; }
+}
+
+function computeSkillStats(skill, log){
+  // Map delivery log entries to skill runs
+  const DELIVERY_TO_SKILL = {
+    'full_code':   ['sprite-gen', 'feature-build', 'write-spec'],
+    'config_only': ['sprite-gen', 'feature-build'],
+    'orbital':     ['sprite-gen'],
+    'new_screen':  ['feature-build', 'write-spec'],
+    'secret':      ['feature-build'],
+    'failed':      ['sprite-gen', 'feature-build'],
+  };
+
+  // Find all delivery runs that involved this skill
+  const skillRuns = log.filter(e => {
+    if(e.type === 'intervention') return false; // skip raw intervention entries
+    const skills = DELIVERY_TO_SKILL[e.deliveryType] || [];
+    return skills.includes(skill.id);
+  });
+
+  // Find interventions that dinged this skill
+  const interventions = log.filter(e =>
+    e.dingedSkills && e.dingedSkills.includes(skill.id)
+  );
+
+  const runs = skillRuns.length;
+  const interventionRate = runs > 0 ? interventions.length / runs : null;
+  const lastRun = skillRuns[0]?.timestamp || null;
+
+  // Compute live Flock Score from intervention rate
+  let computedFlockScore = skill.flockScore; // keep manual baseline
+  if(runs >= 3){
+    const rate = interventionRate || 0;
+    if(rate === 0 && runs >= 10) computedFlockScore = Math.max(skill.flockScore, 3);
+    else if(rate <= 0.1 && runs >= 5) computedFlockScore = Math.max(skill.flockScore, 2);
+    else if(rate > 0.3) computedFlockScore = Math.min(skill.flockScore, 2);
+    else if(rate > 0.5) computedFlockScore = Math.min(skill.flockScore, 1);
+  }
+
+  // Compute verdict
+  let verdict = 'HOLD';
+  if(runs >= 10 && (interventionRate||0) === 0 && skill.nestScore >= 4) verdict = 'READY';
+  else if(interventions.length > 0 && runs > 0 && (interventionRate||0) > 0.4) verdict = 'REGRESS';
+
+  // Build evidence from real data
+  const flockEvidence = runs === 0
+    ? skill.flockEvidence
+    : `${runs} run${runs!==1?'s':''} · ${interventions.length} intervention${interventions.length!==1?'s':''} (${Math.round((interventionRate||0)*100)}%)`;
+
+  return {
+    ...skill,
+    runs,
+    interventionRate,
+    lastRun,
+    flockScore: computedFlockScore,
+    verdict,
+    flockEvidence,
+    _liveComputed: runs > 0,
+    _interventionCount: interventions.length,
+    _recentInterventions: interventions.slice(0,3).map(i=>({
+      reasons: i.reasons,
+      note: i.note,
+      timestamp: i.timestamp,
+    })),
+  };
 }
 
 async function graduateSkill(skillId){
@@ -1556,17 +1631,26 @@ function renderAiOps(data){
           <div style="font-size:11px;color:rgba(150,170,200,0.5);margin-top:3px">${s.flockEvidence||''}</div>
         </div>
       </div>
-      ${s.runs!==undefined?`<div style="display:flex;gap:16px;flex-wrap:wrap">
-        <span style="font-size:11px;color:rgba(150,170,200,0.5)">📊 ${s.runs||0} runs</span>
-        ${s.interventionRate!==undefined?`<span style="font-size:11px;color:rgba(150,170,200,0.5)">✋ ${Math.round((s.interventionRate||0)*100)}% interventions</span>`:''}
-        ${s.lastRun?`<span style="font-size:11px;color:rgba(150,170,200,0.5)">🕐 last run ${new Date(s.lastRun).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`:''}
+      ${s.runs!==undefined?`<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:11px;color:rgba(150,170,200,0.5)">📊 ${s.runs||0} runs${s._liveComputed?` <span style="color:rgba(0,204,102,0.5);font-size:10px">● live</span>`:' <span style="color:rgba(150,150,150,0.4);font-size:10px">● manual</span>'}</span>
+        ${s.interventionRate!==null&&s.interventionRate!==undefined?`<span style="font-size:11px;color:${s.interventionRate>0.3?'rgba(230,57,70,0.7)':'rgba(150,170,200,0.5)'}">🎯 ${Math.round(s.interventionRate*100)}% interventions</span>`:''}
+        ${s.lastRun?`<span style="font-size:11px;color:rgba(150,170,200,0.5)">🕐 last: ${new Date(s.lastRun).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`:''}
+      </div>
+      ${s._recentInterventions?.length?`<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        ${s._recentInterventions.map(i=>`<div style="font-size:11px;color:rgba(255,150,80,0.8);background:rgba(255,107,0,0.06);border-left:2px solid rgba(255,107,0,0.3);padding:4px 8px;border-radius:0 4px 4px 0">
+          🎯 ${i.reasons?.join(', ')||'unknown'}${i.note?` — "${i.note}"`:''} <span style="opacity:0.5">${i.timestamp?new Date(i.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>
+        </div>`).join('')}
       </div>`:''}
+      `:''}
       ${canGraduate&&s.verdictEvidence?`<div style="margin-top:10px;background:rgba(255,204,2,0.05);border-left:3px solid rgba(255,204,2,0.4);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,220,100,0.8);line-height:1.5">📋 ${s.verdictEvidence}</div>`:''}
     </div>`;
   }
 
   el.innerHTML = `
-    <div style="font-family:'Fredoka One',cursive;font-size:11px;letter-spacing:1px;color:rgba(150,170,200,0.4);margin-bottom:16px">SCORES LAST EVALUATED: ${updated}</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:11px;letter-spacing:1px;color:rgba(150,170,200,0.4);margin-bottom:16px">
+      SCORES LAST EVALUATED: ${updated}
+      ${data._logEntries!==undefined?` · 📋 ${data._logEntries} delivery log entries`:''}
+    </div>
 
     ${fleet.length?`
       <div style="font-family:'Fredoka One',cursive;font-size:12px;letter-spacing:2px;color:rgba(0,204,102,0.6);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(100,150,255,0.1)">🚀 GRADUATED TO FLEET</div>
