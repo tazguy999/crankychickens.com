@@ -1,5 +1,58 @@
 [
   {
+    "id": 1778335494181,
+    "timestamp": "2026-05-09T14:04:54.181Z",
+    "scribeName": "Unnamed",
+    "description": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent — a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?",
+    "contribType": "enemy",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      },
+      {
+        "role": "user",
+        "content": "I want a a giant space dragon that you can see in the background"
+      },
+      {
+        "role": "assistant",
+        "content": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent — a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Stellar Serpent Space Dragon",
+      "devNote": "Large background entity with parallax scrolling, particle effects for debris orbit, and optional interactive 'curiosity gaze' tracking player movement. Could trigger rare Easter egg dialogue when chickens get close.",
+      "nicksNote": "A cosmic dragon floating through space sounds absolutely epic - Nick's going to love reviewing this one!",
+      "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "wyrm",
+      "drawFn": "function drawCharacter_wyrm(x,y,hp,fr,cfg={},isZeroG=false){\n  const bodyCol=cfg.color||'#4B0082';\n  const eyeCol=cfg.eyeColor||'#FFD700';\n  ctx.save();\n  if(!isZeroG){ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(x+2,y+52,80,8);}\n  \n  // Serpentine body with stellar shimmer\n  const segments = 5;\n  for(let i = 0; i < segments; i++) {\n    const segX = x + (i * 12) - Math.sin((fr + i * 20) * 0.1) * 8;\n    const segY = y + 20 + Math.cos((fr + i * 15) * 0.08) * 6;\n    const segSize = 15 - (i * 2);\n    \n    // Body segment with gradient effect\n    const gradient = ctx.createRadialGradient(segX, segY, 0, segX, segY, segSize);\n    gradient.addColorStop(0, bodyCol);\n    gradient.addColorStop(0.7, '#2E0054');\n    gradient.addColorStop(1, '#1A0030');\n    ctx.fillStyle = gradient;\n    ctx.fillRect(segX - segSize/2, segY - segSize/2, segSize, segSize);\n    \n    // Starlight shimmer spots\n    if((fr + i * 10) % 60 < 30) {\n      ctx.fillStyle = '#FFFFFF';\n      ctx.globalAlpha = 0.8;\n      ctx.fillRect(segX - 2, segY - 2, 4, 4);\n      ctx.globalAlpha = 1;\n    }\n  }\n  \n  // Majestic head\n  ctx.fillStyle = bodyCol;\n  ctx.fillRect(x - 8, y + 10, 25, 20);\n  \n  // Cosmic crown/horns\n  ctx.fillStyle = '#FFD700';\n  ctx.fillRect(x - 2, y + 8, 4, 8);\n  ctx.fillRect(x + 6, y + 8, 4, 8);\n  ctx.fillRect(x + 14, y + 8, 4, 8);\n  \n  // Galaxy-sized eyes\n  ctx.fillStyle = '#000';\n  ctx.fillRect(x, y + 15, 6, 6);\n  ctx.fillRect(x + 10, y + 15, 6, 6);\n  ctx.fillStyle = eyeCol;\n  ctx.fillRect(x + 1, y + 16, 4, 4);\n  ctx.fillRect(x + 11, y + 16, 4, 4);\n  \n  // Cosmic energy aura\n  ctx.globalAlpha = 0.3;\n  ctx.fillStyle = '#9370DB';\n  ctx.fillRect(x - 15, y + 5, 45, 30);\n  ctx.globalAlpha = 1;\n  \n  // Orbiting debris\n  for(let i = 0; i < 3; i++) {\n    const orbitX = x + 8 + Math.cos((fr + i * 80) * 0.05) * 25;\n    const orbitY = y + 20 + Math.sin((fr + i * 80) * 0.05) * 15;\n    ctx.fillStyle = '#888';\n    ctx.fillRect(orbitX, orbitY, 2, 2);\n  }\n  \n  // HP bar\n  ctx.fillStyle='#111';\n  ctx.fillRect(x,y-8,30,5);\n  ctx.fillStyle=cfg.color||bodyCol;\n  ctx.fillRect(x,y-8,30*hp,5);\n  \n  // Name tag\n  if(cfg.name){\n    ctx.fillStyle='#FFF';\n    ctx.font='8px Arial';\n    ctx.fillText(cfg.name,x,y-12);\n  }\n  \n  ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 0,
+        "name": "Stellar Serpent",
+        "characterType": "wyrm",
+        "color": "#4B0082",
+        "eyeColor": "#FFD700",
+        "spd": 0.3,
+        "pat": "h",
+        "size": 1.5,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "Added majestic Stellar Serpent cosmic wyrm enemy with starlight shimmer and orbiting debris"
+    }
+  },
+  {
     "id": 1778206914229,
     "timestamp": "2026-05-08T02:21:54.229Z",
     "scribeName": "Canine Nebula",
@@ -12,7 +65,7 @@
         "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -51,7 +104,7 @@
         "content": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -122,7 +175,7 @@
         "content": "Ah, young Dragon Scribe, your brother has uncovered a most intriguing cosmic mystery! These ethereal beings drift through the void like ancient spirits, carrying secrets of forgotten star-civilizations. What magnificent lore we shall weave around these ghostly guardians of space!"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -197,7 +250,7 @@
         "content": "*The Ancient AI's ethereal glow dims slightly, awaiting your creative spark*\n\nTell me, young scribe, what visions dance in your mind about this mystical helmet? Does it whisper secrets of the old chicken space-farers, or perhaps hold powers that could aid our feathered heroes against the dreaded IECC? Your imagination holds the key to unlocking its true purpose in this cosmic tale."
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
