@@ -537,6 +537,7 @@ const SCREENS=[];
       // Multiple floating platforms at different heights
       const onPlatform=
         (r===7&&c>=1&&c<=6)||    // left platform
+        (r===7&&c>=7&&c<=13)||   // CENTER platform — guaranteed landing zone
         (r===5&&c>=8&&c<=12)||   // center high platform
         (r===9&&c>=14&&c<=18)||  // right low platform
         (r===11&&c>=3&&c<=8)||   // lower left platform
@@ -967,7 +968,16 @@ function updateSecrets(){
         spawnP(s.tx*TILE+16,s.ty*TILE,'#ffffff',16);
         popup={text:'🚀 Launching to '+SCREENS[destIdx].name+'!',timer:120};
         player.inv=60;
-        setTimeout(()=>{ startScroll(destCol,destRow,9*TILE,7*TILE); },400);
+        setTimeout(()=>{
+          // Find nearest walkable tile in destination
+          const destSc=SCREENS[destIdx];
+          let lpx=9*TILE,lpy=7*TILE;
+          let found=false;
+          for(let ty=4;ty<12&&!found;ty++)
+            for(let tc=4;tc<16&&!found;tc++)
+              if(destSc.map[ty]&&destSc.map[ty][tc]===1){lpx=tc*TILE;lpy=ty*TILE;found=true;}
+          startScroll(destCol,destRow,lpx,lpy);
+        },400);
       }
     }
     // Show prompt when nearby
@@ -1449,6 +1459,8 @@ function generateVoidRoom(vx,vy){
   }
   for(var c2=8;c2<=11;c2++){map[0][c2]=1;map[14][c2]=1;}
   for(var r2=6;r2<=8;r2++){map[r2][0]=1;map[r2][19]=1;}
+  // Always guarantee a center landing platform
+  for(var cc2=7;cc2<=12;cc2++) map[7][cc2]=1;
   var lorePool=chaos<0.33?VOID_LORE_CALM:chaos<0.66?VOID_LORE_WEIRD:VOID_LORE_UNHINGED;
   var numA=2+Math.floor(seed(20)*3)+Math.floor(chaos*4);
   var enemies=[];
