@@ -1019,10 +1019,26 @@ function updateEnemies(){
   sc.enemies.forEach((e,i)=>{
     if(ss.enemyHps[i]<=0)return;
     // Init position
-    if(e._x===undefined){ e._x=e.tx*TILE; e._y=e.ty*TILE; e._dir=1; e._t=0; }
+    if(e._x===undefined){ e._x=e.tx*TILE; e._y=e.ty*TILE; e._dir=1; e._t=0; e._vx=0; e._vy=0; }
     e._t++;
 
-    // Patrol
+    // Void amoebas drift freely in all directions
+    if(sc.isVoid && e.characterType==='amoeba'){
+      // Gentle random drift — change direction occasionally
+      if(e._t%90===0||(e._vx===0&&e._vy===0)){
+        const angle=Math.random()*Math.PI*2;
+        const spd2=e.spd*(0.5+Math.random()*0.8);
+        e._vx=Math.cos(angle)*spd2;
+        e._vy=Math.sin(angle)*spd2;
+      }
+      e._x+=e._vx;
+      e._y+=e._vy;
+      // Bounce off screen edges
+      if(e._x<0){e._x=0;e._vx*=-1;}
+      if(e._x>GW-TILE){e._x=GW-TILE;e._vx*=-1;}
+      if(e._y<0){e._y=0;e._vy*=-1;}
+      if(e._y>GH-TILE*2){e._y=GH-TILE*2;e._vy*=-1;}
+    } else {
     const spd=e.spd;
     if(e.pat==='h'){
       const nx=e._x+e._dir*spd;
@@ -1033,8 +1049,7 @@ function updateEnemies(){
       if(boxWalkable(map,e._x,ny)) e._y=ny; else e._dir*=-1;
       if(Math.abs(e._y-e.ty*TILE)>TILE*3) e._dir*=-1;
     }
-
-    // Peck hit
+    } // end void/normal patrol else
     if(player.atk>10){
       const dist=Math.hypot(player.x+16-(e._x+14),player.y+16-(e._y+14));
       if(dist<44){
@@ -1401,29 +1416,61 @@ function drawAmoebaLore(){
   const sc=currentScreen();
   sc.enemies.forEach((e,i)=>{
     if(e.characterType!=='amoeba'||e._x===undefined) return;
-    const key=`amoeba_${i}`;
+    const key='amoeba_'+i;
     const t=amoebaLoreTimers[key];
     if(!t||t.show<=0) return;
-    const alpha=t.show>20?Math.min(1,t.show/30):t.show/20;
-    var pool=e._lorePool||VOID_LORE_CALM;var text=pool[t.loreIdx%pool.length]||'...';
-    const maxW=120;
+    const alpha=t.show>30?Math.min(1,t.show/40):t.show/30;
+    var pool=e._lorePool||VOID_LORE_CALM;
+    var fullText=pool[t.loreIdx%pool.length]||'...';
+    const chaos=sc.chaos||0;
+    const fontSize=chaos>0.6?11:10;
     ctx.save();
-    ctx.globalAlpha=alpha*0.92;
-    ctx.font='italic 8px Fredoka One';
-    const tw=Math.min(ctx.measureText(text).width+10,maxW+10);
-    const bx=e._x+16-tw/2, by=e._y-36;
-    // Speech bubble
-    ctx.fillStyle='rgba(20,10,40,0.85)';
-    ctx.beginPath();
-    ctx.roundRect(bx,by,tw,16,4);
-    ctx.fill();
+    ctx.globalAlpha=alpha;
+    ctx.font='bold '+fontSize+'px Fredoka One';
+
+    // Word wrap into lines of max 140px
+    const maxW=150;
+    const words=fullText.split(' ');
+    const lines=[];
+    var line='';
+    words.forEach(w=>{
+      const test=line?line+' '+w:w;
+      if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=w;}
+      else line=test;
+    });
+    if(line) lines.push(line);
+
+    const lineH=fontSize+4;
+    const bubbleW=Math.min(maxW+16, Math.max(...lines.map(l=>ctx.measureText(l).width))+16);
+    const bubbleH=lines.length*lineH+10;
+
+    // Position bubble above amoeba, keep on screen
+    var bx=e._x+16-bubbleW/2;
+    var by=e._y-bubbleH-20;
+    bx=Math.max(4,Math.min(GW-bubbleW-4,bx));
+    by=Math.max(4,by);
+
+    // Bubble background — color matches amoeba
+    const bubbleCol=e.color||'#667788';
+    ctx.fillStyle='rgba(10,5,25,0.88)';
+    ctx.beginPath();ctx.roundRect(bx,by,bubbleW,bubbleH,6);ctx.fill();
+    // Colored border
+    ctx.strokeStyle=bubbleCol;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(bx,by,bubbleW,bubbleH,6);ctx.stroke();
+
     // Bubble tail
-    ctx.beginPath();
-    ctx.moveTo(e._x+12,by+16);ctx.lineTo(e._x+16,by+22);ctx.lineTo(e._x+20,by+16);
-    ctx.closePath();ctx.fill();
-    // Text — wrap if needed
-    ctx.fillStyle='rgba(200,220,255,0.9)';ctx.textAlign='center';
-    ctx.fillText(text.slice(0,28)+(text.length>28?'...':''),bx+tw/2,by+11);
+    const tailX=Math.max(bx+8,Math.min(bx+bubbleW-8,e._x+16));
+    ctx.fillStyle='rgba(10,5,25,0.88)';
+    ctx.beginPath();ctx.moveTo(tailX-6,by+bubbleH);ctx.lineTo(tailX,by+bubbleH+10);ctx.lineTo(tailX+6,by+bubbleH);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=bubbleCol;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(tailX-6,by+bubbleH);ctx.lineTo(tailX,by+bubbleH+10);ctx.lineTo(tailX+6,by+bubbleH);ctx.stroke();
+
+    // Text lines
+    ctx.fillStyle=chaos>0.6?'#ffdddd':'rgba(220,235,255,0.95)';
+    ctx.textAlign='center';
+    lines.forEach((l,li)=>{
+      ctx.fillText(l,bx+bubbleW/2,by+fontSize+4+li*lineH);
+    });
     ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
   });
 }
@@ -1466,7 +1513,7 @@ function generateVoidRoom(vx,vy){
   // Always guarantee a center landing platform
   for(var cc2=7;cc2<=12;cc2++) map[7][cc2]=1;
   var lorePool=chaos<0.33?VOID_LORE_CALM:chaos<0.66?VOID_LORE_WEIRD:VOID_LORE_UNHINGED;
-  var numA=2+Math.floor(seed(20)*3)+Math.floor(chaos*4);
+  var numA=Math.max(3, 2+Math.floor(seed(20)*3)+Math.floor(chaos*4));
   var enemies=[];
   for(var a=0;a<numA;a++){
     var hue=Math.floor(seed(a*7+32)*360);
