@@ -1256,10 +1256,18 @@ function applyOrbitals(cfg){
 function drawOrbitals(){
   const sc = currentScreen();
   const scIdx = screenIndex(screenCol, screenRow);
-  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach(o=>{
-    // Slow orbit — full cycle every 4 minutes at 60fps = 14400 frames
-    const period = (o.period||14400);
-    const t = (frame + (o.offset||0)) / period;
+  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach((o, i)=>{
+    const isNewest = i === orbitals.length - 1;
+    // Newest orbital: start at top-center (offset = period/4), fast entry for first 300 frames
+    const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
+    if(o._entryStart === undefined) o._entryStart = frame;
+    const entryProgress = Math.min(1, entryFrames / 300); // 5 seconds to settle
+    const period = isNewest
+      ? (o.period||14400) * (0.1 + entryProgress * 0.9) // starts 10x faster, slows to normal
+      : (o.period||14400);
+    // Newest starts at top-center (π/2 offset)
+    const startOffset = isNewest ? (o.period||14400) / 4 : 0;
+    const t = (frame + (o.offset||0) + startOffset) / period;
     const angle = t * Math.PI * 2;
 
     // Arc through the sky area (top 40% of screen)
