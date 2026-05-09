@@ -1258,25 +1258,25 @@ function drawOrbitals(){
   const newestName = orbitals.length ? orbitals[orbitals.length-1].name : null;
   orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach((o)=>{
     const isNewest = o.name === newestName;
-    // Newest orbital: start at top-center (offset = period/4), fast entry for first 300 frames
+    // Newest orbital: start exactly where the planet is (top-right) with fast entry
     const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
     if(o._entryStart === undefined) o._entryStart = frame;
-    const entryProgress = Math.min(1, entryFrames / 300); // 5 seconds to settle
+    const entryProgress = Math.min(1, entryFrames / 300);
     const period = isNewest
-      ? (o.period||14400) * (0.1 + entryProgress * 0.9) // starts 10x faster, slows to normal
+      ? (o.period||14400) * (0.1 + entryProgress * 0.9)
       : (o.period||14400);
-    // Newest starts at top-center (π/2 offset)
-    const startOffset = isNewest ? (o.period||14400) / 4 : 0;
-    const t = (frame + (o.offset||0) + startOffset) / period;
+    // Start angle calculated so cx=GW-75, cy=52 at t=0
+    // cx = GW/2 + cos(angle) * GW*0.55 → cos(angle) = (GW-75 - GW/2)/(GW*0.55)
+    // cy = GH*0.18 + sin(angle) * GH*0.12 → sin(angle) = (52 - GH*0.18)/(GH*0.12)
+    const startAngle = isNewest ? Math.atan2(52 - GH*0.18, (GW-75) - GW/2) : 0;
+    const t = (frame / period) + startAngle / (Math.PI*2);
     const angle = t * Math.PI * 2;
 
-    // Arc through the sky area (top 40% of screen)
-    const cx = GW/2 + Math.cos(angle) * (GW*0.55);
-    const cy = GH*0.22 + Math.sin(angle) * (GH*0.14);
+    // Arc through sky — same orbit radius as planet position
+    const cx = GW/2 + Math.cos(angle) * (GW*0.45);
+    const cy = GH*0.18 + Math.sin(angle) * (GH*0.12);
 
-    // Only draw when in sky area (not behind ground tiles)
-    if(cy > GH*0.42) return;
-
+    // Always visible — orbit stays in sky band
     const sz = (o.size||2.5) * TILE;
     const col = o.color||'#aaccff';
     const pulse = 0.6 + Math.sin(frame*0.02 + (o.offset||0))*0.3;
