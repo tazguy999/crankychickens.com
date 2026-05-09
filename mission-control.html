@@ -318,6 +318,57 @@ html, body {
     </div>
   </div>
 </div>
+<div id="passModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(135deg,#0d1220,#111827);border:2px solid rgba(230,57,70,0.35);border-radius:20px;padding:24px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:16px;">
+    <div style="font-family:'Fredoka One',cursive;color:var(--red);font-size:18px;text-align:center;">✕ Pass — Why?</div>
+    <div id="passSubmissionName" style="font-family:'Fredoka One',cursive;color:#ffcc02;font-size:14px;text-align:center;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <div onclick="submitPass('kid')" style="cursor:pointer;padding:16px;border-radius:12px;border:2px solid rgba(100,150,255,0.25);background:rgba(100,150,255,0.06);transition:all 0.15s;" onmouseover="this.style.background='rgba(100,150,255,0.14)'" onmouseout="this.style.background='rgba(100,150,255,0.06)'">
+        <div style="font-family:'Fredoka One',cursive;font-size:15px;color:#aaddff;margin-bottom:4px">🐣 Not ready — kid's idea</div>
+        <div style="font-size:12px;color:rgba(150,180,220,0.6);line-height:1.5">The concept needs more development. Goes back to the kid to rethink and resubmit. No skill ding.</div>
+      </div>
+
+      <div onclick="openAiPassPicker()" style="cursor:pointer;padding:16px;border-radius:12px;border:2px solid rgba(255,107,0,0.25);background:rgba(255,107,0,0.06);transition:all 0.15s;" onmouseover="this.style.background='rgba(255,107,0,0.14)'" onmouseout="this.style.background='rgba(255,107,0,0.06)'">
+        <div style="font-family:'Fredoka One',cursive;font-size:15px;color:#ff9944;margin-bottom:4px">🤖 Bad execution — AI's fault</div>
+        <div style="font-size:12px;color:rgba(220,180,150,0.6);line-height:1.5">The idea was good but the AI got it wrong. Pick what failed — the right skill gets dinged.</div>
+      </div>
+
+    </div>
+    <button onclick="closePassModal()" style="font-family:'Fredoka One',cursive;font-size:13px;padding:8px 20px;border-radius:14px;border:1px solid rgba(150,150,150,0.2);background:transparent;color:rgba(200,220,255,0.4);cursor:pointer;align-self:center;">Cancel</button>
+  </div>
+</div>
+
+<!-- AI Pass reason picker (reuses NQR reasons) -->
+<div id="aiPassModal" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(135deg,#0d1220,#111827);border:2px solid rgba(255,107,0,0.4);border-radius:20px;padding:20px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px;">
+    <div style="font-family:'Fredoka One',cursive;color:#ff6b00;font-size:17px;text-align:center;">🤖 What did the AI get wrong?</div>
+    <div style="display:flex;flex-direction:column;gap:8px;" id="aiPassReasons">
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.2);background:rgba(255,107,0,0.05);cursor:pointer;">
+        <input type="checkbox" value="wrong_behavior" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>🎯 Wrong behavior</strong><br><span style="font-size:11px;opacity:0.6">Did something different than described</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.2);background:rgba(255,107,0,0.05);cursor:pointer;">
+        <input type="checkbox" value="wrong_look" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>🎨 Wrong look</strong><br><span style="font-size:11px;opacity:0.6">Visual doesn't match the idea</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.2);background:rgba(255,107,0,0.05);cursor:pointer;">
+        <input type="checkbox" value="fell_back" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>🤖 Fell back to default</strong><br><span style="font-size:11px;opacity:0.6">Got iguana instead of something real</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,107,0,0.2);background:rgba(255,107,0,0.05);cursor:pointer;">
+        <input type="checkbox" value="missed_intent" style="width:16px;height:16px;accent-color:#ff6b00;">
+        <span><strong>💬 Missed the intent</strong><br><span style="font-size:11px;opacity:0.6">Technically worked but wasn't what the kid meant</span></span>
+      </label>
+    </div>
+    <textarea id="aiPassNote" placeholder="Optional note..." rows="2" style="background:rgba(0,0,0,0.3);border:1.5px solid rgba(255,107,0,0.2);border-radius:8px;padding:10px;color:#e0e8f0;font-family:'Nunito',sans-serif;font-size:13px;resize:none;"></textarea>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closePassModal()" style="font-family:'Fredoka One',cursive;font-size:13px;padding:10px 20px;border-radius:14px;border:1px solid rgba(150,150,150,0.2);background:transparent;color:rgba(200,220,255,0.4);cursor:pointer;">Cancel</button>
+      <button onclick="submitPass('ai')" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 24px;border-radius:16px;border:2px solid #ff6b00;background:rgba(255,107,0,0.15);color:#ff6b00;cursor:pointer;">✕ Pass & Ding AI</button>
+    </div>
+  </div>
+</div>
+
 <div id="nqrModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;flex-direction:column;padding:20px;">
   <div style="background:linear-gradient(135deg,#0d1220,#111827);border:2px solid rgba(255,107,0,0.4);border-radius:20px;padding:20px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px;">
     <div style="font-family:'Fredoka One',cursive;color:#ff6b00;font-size:18px;text-align:center;">🎯 Not Quite Right</div>
@@ -487,7 +538,7 @@ function renderCard(s, i){
       `:
         isRejected?`<div class="status-rejected">✕ Rejected</div>`:`
         <button class="act-btn btn-approve" onclick="openPreview(${globalIdx})">👁️ Preview & Approve</button>
-        <button class="act-btn btn-reject" onclick="reject(${globalIdx})">✕ Pass</button>`}
+        <button class="act-btn btn-reject" onclick="openPassPicker(${globalIdx})">✕ Pass</button>`}
       <a href="https://kids-preview--crankychickens.netlify.app" target="_blank" class="act-btn btn-view">🌐 Preview</a>
     </div>
   </div>`;
@@ -678,8 +729,8 @@ function renderDeliveryLog(log){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
     return;
   }
-  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌'};
-  const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed'};
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖'};
+  const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed',intervention:'Intervention',ai_pass:'AI Pass'};
   el.innerHTML=log.map(e=>`
     <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">
       <div class="card-top">
@@ -1053,11 +1104,92 @@ async function applyToGameConfig(entry, sub){
   }catch(e){ console.error('Config apply failed',e); return null; }
 }
 
-async function reject(idx){
-  allSubmissions[idx].status='rejected';
-  await saveSubmissions('✕ Rejected: '+(allSubmissions[idx].spec?.title||allSubmissions[idx].scribeName));
-  toast('Passed on this one.');
+// ── PASS PICKER ──
+let passIdx = null;
+
+function openPassPicker(idx){
+  passIdx = idx;
+  const sub = allSubmissions[idx];
+  document.getElementById('passSubmissionName').textContent = sub.scribeName||sub.spec?.title||'Submission';
+  document.getElementById('passModal').style.display='flex';
+}
+
+function openAiPassPicker(){
+  document.getElementById('passModal').style.display='none';
+  document.getElementById('aiPassNote').value='';
+  document.querySelectorAll('#aiPassReasons input').forEach(cb=>cb.checked=false);
+  document.getElementById('aiPassModal').style.display='flex';
+}
+
+function closePassModal(){
+  document.getElementById('passModal').style.display='none';
+  document.getElementById('aiPassModal').style.display='none';
+  passIdx=null;
+}
+
+async function submitPass(type){
+  if(passIdx===null) return;
+  const sub = allSubmissions[passIdx];
+
+  if(type==='kid'){
+    // Simple pass — idea not ready, no skill ding
+    allSubmissions[passIdx].status='rejected';
+    allSubmissions[passIdx].passType='kid';
+    await saveSubmissions('🐣 Kid pass: '+(sub.scribeName||'submission'));
+    closePassModal();
+    toast('🐣 Passed — idea goes back to the kid. No skill ding.');
+    renderAll();
+    return;
+  }
+
+  // AI pass — ding the relevant skills
+  const reasons=[...document.querySelectorAll('#aiPassReasons input:checked')].map(cb=>cb.value);
+  const note=document.getElementById('aiPassNote').value.trim();
+  if(!reasons.length){ toast('Pick what the AI got wrong'); return; }
+
+  const REASON_TO_SKILL={
+    'wrong_behavior':'feature-build','wrong_look':'sprite-gen',
+    'fell_back':'sprite-gen','missed_intent':'write-spec',
+  };
+  const dingedSkills=[...new Set(reasons.map(r=>REASON_TO_SKILL[r]).filter(Boolean))];
+
+  // Write to delivery log as a pre-deploy intervention
+  const entry={
+    id:Date.now(), timestamp:new Date().toISOString(),
+    type:'ai_pass',
+    submissionId:sub.id,
+    submissionName:sub.scribeName||sub.spec?.title||'Unknown',
+    kidName:sub.originalSubmission?'Cannon Master':'Dragon Scribe',
+    reasons, dingedSkills, note:note||null,
+    delivered:'Passed before deployment — AI execution rejected',
+    deliveryType:'ai_pass',
+    asked:sub.description||sub.summary||'',
+    askedName:sub.scribeName||'',
+  };
+  try{
+    const getRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
+    const getData=await getRes.json();
+    const log=getData.content?JSON.parse(getData.content):[];
+    log.unshift(entry);
+    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save_file',path:'lore/delivery-log.json',branch:'kids-preview',
+        content:JSON.stringify(log.slice(0,100),null,2),sha:getData.sha,
+        commitMsg:'🤖 AI pass: '+entry.submissionName+' — '+reasons.join(', ')})});
+  }catch(e){ console.error('AI pass log failed:',e); }
+
+  allSubmissions[passIdx].status='rejected';
+  allSubmissions[passIdx].passType='ai';
+  allSubmissions[passIdx].dingedSkills=dingedSkills;
+  await saveSubmissions('🤖 AI pass: '+(sub.scribeName||'submission'));
+  closePassModal();
+  toast('🤖 AI pass logged — ding to: '+dingedSkills.join(', '));
   renderAll();
+}
+
+async function reject(idx){
+  // Legacy — now routes through pass picker
+  openPassPicker(idx);
 }
 
 async function saveSubmissions(commitMsg){
@@ -1473,8 +1605,9 @@ function computeSkillStats(skill, log){
     return skills.includes(skill.id);
   });
 
-  // Find interventions that dinged this skill
+  // Find interventions that dinged this skill (NQR + AI pass)
   const interventions = log.filter(e =>
+    (e.type === 'intervention' || e.type === 'ai_pass') &&
     e.dingedSkills && e.dingedSkills.includes(skill.id)
   );
 
