@@ -1,6 +1,6 @@
 {
-  "_version": 20,
-  "_updated": "2026-05-08T02:22:21.876Z",
+  "_version": 21,
+  "_updated": "2026-05-09T21:21:15.598Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -103,6 +103,19 @@
       "size": 1.2,
       "tx": 9,
       "ty": 9
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 0,
+      "name": "Starlight Unity Drifter",
+      "characterType": "jellyfish",
+      "color": "#9966FF",
+      "eyeColor": "#FFDD88",
+      "spd": 0.5,
+      "pat": "h",
+      "size": 1,
+      "tx": 9,
+      "ty": 9
     }
   ],
   "cornPatches": [],
@@ -196,7 +209,7 @@
       "screenIndex": -1,
       "color": "#aa66ff",
       "eyeColor": "#ffffff",
-      "size": 3.0,
+      "size": 3,
       "period": 14400,
       "offset": 0,
       "debris": true,
