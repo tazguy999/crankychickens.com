@@ -1258,6 +1258,92 @@ function drawOrbitals(){
   const newestName = orbitals.length ? orbitals[orbitals.length-1].name : null;
   orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach((o)=>{
     const isNewest = o.name === newestName;
+    const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
+    if(o._entryStart === undefined) o._entryStart = frame;
+    const entryProgress = Math.min(1, entryFrames / 300);
+    const period = isNewest
+      ? (o.period||14400) * (0.1 + entryProgress * 0.9)
+      : (o.period||14400);
+    const startAngle = isNewest ? Math.atan2(52 - GH*0.18, (GW-75) - GW/2) : 0;
+    const t = (frame / period) + startAngle / (Math.PI*2);
+    const angle = t * Math.PI * 2;
+
+    const cx = GW/2 + Math.cos(angle) * (GW*0.45);
+    const cy = GH*0.18 + Math.sin(angle) * (GH*0.12);
+
+    const col = o.color||'#aa66ff';
+    const pulse = 0.6 + Math.sin(frame*0.03 + (o.offset||0))*0.3;
+    const rot = frame*0.006 + (o.offset||0)*0.001;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot);
+
+    // Outer glow
+    const grd = ctx.createRadialGradient(0,0,4,0,0,44);
+    grd.addColorStop(0,col+'66');
+    grd.addColorStop(1,'transparent');
+    ctx.globalAlpha=pulse*0.5;
+    ctx.fillStyle=grd;
+    ctx.beginPath();ctx.arc(0,0,44,0,Math.PI*2);ctx.fill();
+
+    // Coiled body — 3 spiral rings
+    const sz = (o.size||2.5)*TILE;
+    const r0=sz*0.45, r1=sz*0.7, r2=sz*0.9;
+    [[r0,5,0.9],[r1,3.5,0.7],[r2,2,0.5]].forEach(([r,lw,alpha],ring)=>{
+      const startA = frame*0.008 + ring*(Math.PI*0.7);
+      ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.lineCap='round';
+      ctx.globalAlpha=pulse*alpha;
+      ctx.beginPath();ctx.arc(0,0,r,startA,startA+Math.PI*1.6);ctx.stroke();
+    });
+
+    // Head on innermost ring
+    const headA = frame*0.008;
+    const hx=Math.cos(headA)*r0, hy=Math.sin(headA)*r0;
+    ctx.globalAlpha=pulse;ctx.fillStyle=col;
+    ctx.beginPath();ctx.arc(hx,hy,sz*0.19,0,Math.PI*2);ctx.fill();
+
+    // Eyes
+    const eg=0.6+Math.sin(frame*0.1)*0.35;
+    const ex1=hx+sz*0.07, ey1=hy-sz*0.07;
+    const ex2=hx-sz*0.07, ey2=hy-sz*0.07;
+    ctx.globalAlpha=eg;ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(ex1,ey1,sz*0.07,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(ex2,ey2,sz*0.07,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#000';
+    ctx.beginPath();ctx.arc(ex1,ey1,sz*0.035,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(ex2,ey2,sz*0.035,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=eg*0.4;ctx.fillStyle='#ffcc02';
+    ctx.beginPath();ctx.arc(ex1,ey1,sz*0.14,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(ex2,ey2,sz*0.14,0,Math.PI*2);ctx.fill();
+
+    // Horns
+    ctx.globalAlpha=0.8;ctx.strokeStyle='#ffcc02';ctx.lineWidth=1.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(hx-sz*0.06,hy-sz*0.14);ctx.lineTo(hx-sz*0.16,hy-sz*0.32);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(hx+sz*0.06,hy-sz*0.14);ctx.lineTo(hx+sz*0.16,hy-sz*0.32);ctx.stroke();
+
+    // Debris orbit
+    if(o.debris){
+      for(let d=0;d<4;d++){
+        const da=frame*0.015+d*(Math.PI/2);
+        const dr=r2*1.2;
+        ctx.globalAlpha=0.35;ctx.fillStyle=col;
+        ctx.beginPath();ctx.arc(Math.cos(da)*dr,Math.sin(da)*dr*0.6,sz*0.06,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    // Name tag
+    ctx.globalAlpha=0.75*pulse;
+    ctx.fillStyle='rgba(0,0,0,0.65)';
+    const tw=ctx.measureText(o.name||'').width+12;
+    ctx.beginPath();ctx.roundRect(-tw/2,r2+8,tw,16,4);ctx.fill();
+    ctx.fillStyle=col;ctx.font='bold 10px Fredoka One';ctx.textAlign='center';
+    ctx.fillText(o.name||'',0,r2+19);ctx.textAlign='left';
+
+    ctx.globalAlpha=1;
+    ctx.restore();
+  });
+}
     // Newest orbital: start exactly where the planet is (top-right) with fast entry
     const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
     if(o._entryStart === undefined) o._entryStart = frame;
@@ -2156,9 +2242,12 @@ function applyConfig(cfg){
       });
       dbg('Added screen: '+ns.name);
     });
-    // Grow cols to 3 first, then add rows
+    // Grow cols to 3 first, then add rows — but avoid empty slots
     const total = SCREENS.length;
-    WORLD_COLS = total <= 2 ? 2 : total <= 6 ? 3 : 4;
+    // Try 2 cols first if it divides evenly, otherwise 3
+    if(total % 2 === 0) { WORLD_COLS=2; }
+    else if(total % 3 === 0) { WORLD_COLS=3; }
+    else { WORLD_COLS = total <= 4 ? 2 : 3; } // prefer fewer empties
     WORLD_ROWS = Math.ceil(total / WORLD_COLS);
     dbg('World: '+WORLD_COLS+'x'+WORLD_ROWS);
   }
