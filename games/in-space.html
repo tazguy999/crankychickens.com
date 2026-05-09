@@ -418,7 +418,7 @@ function getZPal(){ return ZONE_PALETTES[currentZone]||ZONE_PALETTES.space; }
 // T.CRATER=3, T.CRYSTAL=5, T.DOOR=6, T.VENT=9
 // Exits: E/W at rows 6-8, N/S at cols 8-11
 // World size — recalculated after config loads new screens
-let WORLD_COLS=2, WORLD_ROWS=2;
+let WORLD_COLS=2, WORLD_ROWS=3; // 5 base screens in 2x3 (last slot empty until config adds more)
 function updateWorldSize(){
   WORLD_COLS = Math.max(...SCREENS.map((_,i)=>i%2+1));
   WORLD_ROWS = Math.ceil(SCREENS.length/WORLD_COLS);
@@ -450,6 +450,7 @@ const SCREENS=[];
     ],
     corn:[{x:8,y:6},{x:11,y:10},{x:4,y:12},{x:15,y:12}],
     enemies:[{tx:9,ty:7,spd:0.5,pat:'h'},{tx:9,ty:11,spd:0.45,pat:'h'}],
+    secrets:[{type:'launch_pad',tx:10,ty:13,destScreen:4,name:'Cosmic Escape Sphere'}],
   });
 
   // ── (1,0) CRATER FIELDS — zero-G ──
@@ -525,6 +526,30 @@ const SCREENS=[];
     ],
     corn:[{x:5,y:5},{x:14,y:5},{x:5,y:12},{x:14,y:12},{x:9,y:7}],
     enemies:[], isBossRoom:true,
+  });
+
+  // ── THE VOID OF UNWRITTEN WORLDS ──
+  const voidMap=[];
+  for(let r=0;r<15;r++){
+    const row=[];
+    for(let c=0;c<20;c++) row.push((r>=6&&r<=8&&c>=4&&c<=15)?1:0);
+    voidMap.push(row);
+  }
+  for(let c=8;c<=11;c++){voidMap[0][c]=1;voidMap[14][c]=1;}
+  for(let r=6;r<=8;r++){voidMap[r][0]=1;voidMap[r][19]=1;}
+  SCREENS.push({
+    name:'Void of Unwritten Worlds',
+    gravity:false,
+    isVoid:true,
+    loreText:'You\'ve reached the edge of the known universe.',
+    map:voidMap,
+    corn:[{x:10,y:7}],
+    enemies:[
+      {tx:5,ty:7,spd:0.3,pat:'h',name:'Unnamed',characterType:'amoeba',color:'#667788',eyeColor:'#aabbcc',size:1.0},
+      {tx:14,ty:7,spd:0.2,pat:'h',name:'Also Unnamed',characterType:'amoeba',color:'#556677',eyeColor:'#99aabb',size:0.9},
+      {tx:9,ty:7,spd:0.15,pat:'v',name:'???',characterType:'amoeba',color:'#778899',eyeColor:'#bbccdd',size:1.1},
+    ],
+    secrets:[],
   });
 })();
 
@@ -887,7 +912,33 @@ function updateSecrets(){
     }
   }
 
-  // ── WOBBLE CORN — peck triggers hidden door ──
+  // ── LAUNCH PAD — peck to launch to destination screen ──
+  secrets.filter(s=>s.type==='launch_pad').forEach(s=>{
+    const dist=Math.hypot((player.x+16)-s.tx*TILE-16,(player.y+16)-s.ty*TILE-16);
+    if(player.atk>0&&player.atk<=2&&dist<TILE*1.8){
+      const destIdx=s.destScreen;
+      if(destIdx<SCREENS.length){
+        const destCol=destIdx%WORLD_COLS;
+        const destRow=Math.floor(destIdx/WORLD_COLS);
+        spawnP(s.tx*TILE+16,s.ty*TILE,'#ffcc02',24);
+        spawnP(s.tx*TILE+16,s.ty*TILE,'#ffffff',16);
+        popup={text:'🚀 Launching to '+SCREENS[destIdx].name+'!',timer:120};
+        player.inv=60;
+        setTimeout(()=>{ startScroll(destCol,destRow,9*TILE,7*TILE); },400);
+      }
+    }
+    // Show prompt when nearby
+    if(dist<TILE*2.5&&gameState==='play'){
+      ctx.save();
+      ctx.fillStyle='rgba(0,0,0,0.7)';
+      const label='PECK to launch 🚀';
+      const tw=ctx.measureText(label).width+12;
+      ctx.fillRect(s.tx*TILE+16-tw/2,s.ty*TILE-22,tw,16);
+      ctx.fillStyle='#ffcc02';ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
+      ctx.fillText(label,s.tx*TILE+16,s.ty*TILE-10);
+      ctx.textAlign='left';ctx.restore();
+    }
+  });
   secrets.filter(s=>s.type==='wobble_corn'&&!secretState[`wc_used_${s.tx}_${s.ty}`]).forEach(s=>{
     const dist=Math.hypot((player.x+16)-s.tx*TILE-8,(player.y+16)-s.ty*TILE-8);
     if(player.atk>0&&player.atk<=2&&dist<TILE*1.5){
@@ -1310,6 +1361,53 @@ function drawOrbitals(){
 
 function drawScreen(sc){
   const isMoon=sc.gravity;
+
+  // ── VOID OF UNWRITTEN WORLDS — special meta rendering ──
+  if(sc.isVoid){
+    // Deep dark void with subtle grid suggesting infinite space
+    ctx.fillStyle='#020408';ctx.fillRect(0,0,GW,GH);
+    // Faint grid
+    ctx.strokeStyle='rgba(100,150,200,0.04)';ctx.lineWidth=1;
+    for(let x=0;x<GW;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,GH);ctx.stroke();}
+    for(let y=0;y<GH;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(GW,y);ctx.stroke();}
+    // Sparse stars — fewer than normal
+    for(let i=0;i<15;i++){
+      const tw=0.2+Math.sin(i*13+frame*0.01)*0.3;
+      ctx.globalAlpha=tw;ctx.fillStyle='#aabbcc';
+      ctx.beginPath();ctx.arc((i*97+3)%GW,(i*61+11)%GH,0.5,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // Construction sign — floating in center top area
+    const signBob=Math.sin(frame*0.02)*4;
+    ctx.save();ctx.translate(GW/2,70+signBob);
+    // Sign post
+    ctx.fillStyle='#445566';ctx.fillRect(-2,0,4,30);
+    // Sign board
+    ctx.fillStyle='#ffcc02';ctx.fillRect(-70,-30,140,34);
+    ctx.fillStyle='#1a0a00';ctx.fillRect(-68,-28,136,30);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🚧 WORLD UNDER CONSTRUCTION 🚧',0,-18);
+    ctx.fillStyle='rgba(255,204,2,0.7)';ctx.font='8px Fredoka One';
+    ctx.fillText('Submit ideas to build what comes next',0,-6);
+    ctx.restore();
+
+    // QR hint panel — bottom of screen
+    ctx.fillStyle='rgba(0,20,40,0.85)';
+    ctx.fillRect(0,GH-52,GW,52);
+    ctx.fillStyle='rgba(100,180,255,0.3)';
+    ctx.fillRect(0,GH-53,GW,1);
+    ctx.fillStyle='#aaddff';ctx.font='bold 10px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('🐉 Dragon Scribe  ·  💥 Cannon Master',GW/2,GH-34);
+    ctx.fillStyle='rgba(150,200,255,0.6)';ctx.font='8px Fredoka One';
+    ctx.fillText('Visit crankychickens.com to build this world',GW/2,GH-20);
+    ctx.fillText('Your ideas become real game content ✨',GW/2,GH-9);
+    ctx.textAlign='left';
+
+    // Draw tiles (the floating platform)
+    for(let ty=0;ty<15;ty++) for(let tx=0;tx<20;tx++) if(sc.map[ty][tx]===1) drawTile(1,tx*TILE,ty*TILE);
+    return;
+  }
 
   drawStarfield(screenCol*60,screenRow*60);
   drawOrbitals();
@@ -1751,6 +1849,98 @@ function drawCharacter_bull(x,y,hp,fr,cfg={},isZeroG=false){
   ctx.restore();
 }
 
+// ── amoeba (void beings — undefined potential) ──
+function drawCharacter_amoeba(x,y,hp,fr,cfg={},isZeroG=false){
+  const baseCol=cfg.color||'#667788';
+  const pulse=0.5+Math.sin(fr*0.04)*0.4;
+  const bob=Math.sin(fr*0.03)*4;
+
+  ctx.save();
+  ctx.translate(x+16, y+18+bob);
+
+  // Occasionally flicker toward a real color then revert
+  const flicker=Math.sin(fr*0.007)*0.5+0.5;
+  const flickerCol=`hsl(${(fr*0.5)%360},60%,55%)`;
+  const bodyCol=flicker>0.92?flickerCol:baseCol;
+
+  // Morphing blob body — sum of sines for wobbly outline
+  ctx.beginPath();
+  const pts=12;
+  for(let i=0;i<=pts;i++){
+    const a=(i/pts)*Math.PI*2;
+    const wobble=
+      Math.sin(a*2+fr*0.05)*4+
+      Math.sin(a*3-fr*0.07)*3+
+      Math.sin(a*1.5+fr*0.03)*2;
+    const r=14+wobble;
+    if(i===0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r*0.75);
+    else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r*0.75);
+  }
+  ctx.closePath();
+
+  // Glow
+  ctx.globalAlpha=pulse*0.3;
+  ctx.fillStyle=bodyCol;
+  ctx.fill();
+  ctx.globalAlpha=pulse*0.7;
+  ctx.fillStyle=bodyCol;
+  ctx.fill();
+
+  // Pseudopods — 2-3 extending blobs
+  [[0.8,fr*0.02],[2.4,-fr*0.015],[4.5,fr*0.018]].forEach(([baseA,t])=>{
+    const a=baseA+Math.sin(t)*0.4;
+    const len=8+Math.sin(t*2)*5;
+    const px=Math.cos(a)*(14+len);
+    const py=Math.sin(a)*(10+len*0.6);
+    ctx.globalAlpha=pulse*0.5;
+    ctx.fillStyle=bodyCol;
+    ctx.beginPath();ctx.ellipse(px,py,5+Math.sin(t)*2,4+Math.sin(t*1.3)*1.5,a,0,Math.PI*2);ctx.fill();
+  });
+
+  // Single confused eye
+  const eyeWobbleX=Math.sin(fr*0.04)*3;
+  const eyeWobbleY=Math.sin(fr*0.033)*2;
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.ellipse(eyeWobbleX,eyeWobbleY-2,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#334';
+  ctx.beginPath();ctx.ellipse(eyeWobbleX+1,eyeWobbleY-2,3,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(eyeWobbleX+2,eyeWobbleY-3,1,0,Math.PI*2);ctx.fill();
+
+  // Occasional "???" thought bubble
+  if(Math.floor(fr/120)%3===0 && fr%120 < 40){
+    const tbAlpha=(fr%120<20)?(fr%120)/20:1-((fr%120-20)/20);
+    ctx.globalAlpha=tbAlpha*0.8;
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath();ctx.ellipse(12,-22,16,10,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#334';ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
+    ctx.fillText('???',12,-19);
+    // Bubble tail
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath();ctx.arc(6,-13,3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(9,-11,2,0,Math.PI*2);ctx.fill();
+  }
+
+  // Name tag — if named, it's starting to become something
+  if(cfg.name && cfg.name!=='Amoeba'){
+    ctx.globalAlpha=0.9;
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    const tw=ctx.measureText(cfg.name).width+10;
+    ctx.fillRect(-tw/2,-30,tw,14);
+    ctx.fillStyle=flickerCol;ctx.font='bold 9px Fredoka One';ctx.textAlign='center';
+    ctx.fillText(cfg.name,0,-19);
+  }
+  ctx.textAlign='left';
+
+  // HP bar
+  ctx.globalAlpha=0.8;
+  ctx.fillStyle='#111';ctx.fillRect(-15,16,30,4);
+  ctx.fillStyle=bodyCol;ctx.fillRect(-15,16,30*hp,4);
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
 // ── Router — picks character type from cfg ──
 function drawAlienIguana(x,y,hp,fr,cfg={}){
   const isZG=isZeroG();
@@ -1760,6 +1950,7 @@ function drawAlienIguana(x,y,hp,fr,cfg={}){
     case 'robot':   drawCharacter_robot(x,y,hp,fr,cfg,isZG);  break;
     case 'spirit':  drawCharacter_spirit(x,y,hp,fr,cfg,isZG); break;
     case 'bull':    drawCharacter_bull(x,y,hp,fr,cfg,isZG);   break;
+    case 'amoeba':  drawCharacter_amoeba(x,y,hp,fr,cfg,isZG); break;
     default:        drawCharacter_iguana(x,y,hp,fr,cfg,isZG); break;
   }
 }
@@ -1980,6 +2171,37 @@ function loop(){
       ctx.save();ctx.translate(wobble,0);
       drawCorn(s.tx*TILE,s.ty*TILE,frame);
       ctx.restore();
+    });
+    // Draw launch pads
+    (sc.secrets||[]).filter(s=>s.type==='launch_pad').forEach(s=>{
+      const px=s.tx*TILE+16, py=s.ty*TILE+8;
+      const pulse=0.6+Math.sin(frame*0.06)*0.35;
+      const spin=frame*0.03;
+      ctx.save();ctx.translate(px,py);
+      // Platform ring
+      ctx.strokeStyle=`rgba(255,204,2,${pulse})`;ctx.lineWidth=3;
+      ctx.beginPath();ctx.ellipse(0,6,14,5,0,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle=`rgba(255,204,2,${pulse*0.4})`;ctx.lineWidth=1;
+      ctx.beginPath();ctx.ellipse(0,6,18,7,0,0,Math.PI*2);ctx.stroke();
+      // Sphere
+      const g=ctx.createRadialGradient(-3,-4,2,0,0,10);
+      g.addColorStop(0,'#ffffff');g.addColorStop(0.4,'#ffcc02');g.addColorStop(1,'#ff8800');
+      ctx.globalAlpha=pulse;ctx.fillStyle=g;
+      ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();
+      // Spin lines
+      ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.ellipse(0,0,10,3,spin,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.ellipse(0,0,10,3,spin+Math.PI/2,0,Math.PI*2);ctx.stroke();
+      // Beam upward
+      ctx.globalAlpha=pulse*0.3;
+      const bGrd=ctx.createLinearGradient(0,0,0,-40);
+      bGrd.addColorStop(0,'#ffcc02');bGrd.addColorStop(1,'transparent');
+      ctx.fillStyle=bGrd;ctx.fillRect(-4,-40,8,40);
+      // Label
+      ctx.globalAlpha=0.8;ctx.fillStyle='#ffcc02';
+      ctx.font='bold 7px Fredoka One';ctx.textAlign='center';
+      ctx.fillText(s.name||'Launch Pad',0,22);
+      ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
     });
     sc.enemies.forEach((e,i)=>{ if(ss.enemyHps[i]>0&&e._x!==undefined) drawAlienIguana(e._x,e._y,ss.enemyHps[i],frame,e); });
   }
