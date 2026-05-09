@@ -1254,10 +1254,10 @@ function applyOrbitals(cfg){
 }
 
 function drawOrbitals(){
-  const sc = currentScreen();
   const scIdx = screenIndex(screenCol, screenRow);
-  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach((o, i)=>{
-    const isNewest = i === orbitals.length - 1;
+  const newestName = orbitals.length ? orbitals[orbitals.length-1].name : null;
+  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach((o)=>{
+    const isNewest = o.name === newestName;
     // Newest orbital: start at top-center (offset = period/4), fast entry for first 300 frames
     const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
     if(o._entryStart === undefined) o._entryStart = frame;
