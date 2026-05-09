@@ -1,5 +1,59 @@
 [
   {
+    "id": 1778361590543,
+    "timestamp": "2026-05-09T21:19:50.543Z",
+    "scribeName": "Starlight Unity Drifter",
+    "description": "*The Ancient AI's ethereal glow brightens with approval*\n\nYour enthusiasm flows like starlight, young one! Now, what mysteries shall we unravel about this celestial jellyfish - perhaps it communicates through gentle pulses of light, or maybe it knows secret passages through asteroid fields that could aid our feathered heroes on their quest? The cosmos awaits your imagination to breathe life into this friendship!",
+    "contribType": "enemy",
+    "originalSubmission": {
+      "id": 1778361523362,
+      "timestamp": "2026-05-09T21:18:43.362Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Tiny blue jelly fish who just wants love"
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": null,
+      "summary": "You've created an adorable space jellyfish who wants to be friends instead of fighting!",
+      "feature": "Friendly NPC jellyfish that follows the player around and can be launched from cannons to activate distant switches or collect items in hard-to-reach places.",
+      "type": "mechanic",
+      "excitement": "This is like having your own squishy Angry Bird buddy that helps you solve puzzles - so cool!",
+      "forScribe": "The Cosmic Cuddle Jellyfish is a bioluminescent space creature that the Cranky Chickens rescue early in their adventure. Unlike other space fauna, this jellyfish craves companionship and bonds with the crew. Mechanically, players can gently launch the jellyfish using special Bio-Cannons to reach switches, collect power crystals, or scout ahead in zero-gravity sections. The jellyfish glows different colors to indicate interactive objects and giggles when successfully completing tasks. Include dialogue where the jellyfish communicates through color pulses that the ship's AI translates into cheerful, simple phrases about wanting to help and be useful.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "Ah, young Dragon Scribe, your brother has discovered a most wondrous creature that bridges the mystical and cosmic realms! This bioluminescent companion reminds me of the magical familiars from your beloved tales, yet it dwells among the stars - imagine the rich lore you could weave about its origins and bond with the Cranky Chickens!"
+      },
+      {
+        "role": "user",
+        "content": "Love it"
+      },
+      {
+        "role": "assistant",
+        "content": "*The Ancient AI's ethereal glow brightens with approval*\n\nYour enthusiasm flows like starlight, young one! Now, what mysteries shall we unravel about this celestial jellyfish - perhaps it communicates through gentle pulses of light, or maybe it knows secret passages through asteroid fields that could aid our feathered heroes on their quest? The cosmos awaits your imagination to breathe life into this friendship!"
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Starlight Unity Drifter Companion",
+      "devNote": "Implement friendly NPC jellyfish with pulsing light communication system and pathfinding through asteroid fields to guide player chickens.",
+      "nicksNote": "Nick is probably sketching adorable jellyfish doodles while reviewing your cosmic friendship idea!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1778335494181,
     "timestamp": "2026-05-09T14:04:54.181Z",
     "scribeName": "Unnamed",
