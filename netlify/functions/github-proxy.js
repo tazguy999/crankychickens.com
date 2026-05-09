@@ -220,14 +220,18 @@ exports.handler = async (event) => {
 // ── PATH ALLOWLIST ──
 const ALLOWED_PATHS = [
   'lore/submissions.json',
+  'lore/delivery-log.json',
   'configs/games.json',
   'configs/in-space.json',
   'configs/tulum-trouble.json',
   'configs/mystery-island.json',
   'configs/original.json',
+  'services/scores.json',
 ];
 function isSafePath(p) {
-  return ALLOWED_PATHS.includes(p) || p.startsWith('configs/') && p.endsWith('.json') && !p.includes('..');
+  return ALLOWED_PATHS.includes(p) ||
+    (p.startsWith('configs/') && p.endsWith('.json') && !p.includes('..')) ||
+    (p.startsWith('services/logs/') && p.endsWith('.json') && !p.includes('..'));
 }
 
 // ── HELPERS ──

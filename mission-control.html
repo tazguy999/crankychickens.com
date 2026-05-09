@@ -699,6 +699,14 @@ function renderDeliveryLog(log){
       </div>
       <div class="card-dev-note">🚀 ${e.delivered||'No delivery info'}</div>
       ${e.issues?.length?`<div style="background:rgba(230,57,70,0.08);border-left:3px solid rgba(230,57,70,0.4);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,100,100,0.8);margin-bottom:8px">⚠️ ${e.issues.join(' · ')}</div>`:''}
+      ${e.intervention?`<div style="background:rgba(255,107,0,0.08);border-left:3px solid rgba(255,107,0,0.5);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,150,80,0.9);margin-bottom:8px">
+        🎯 <strong>Intervention:</strong> ${e.intervention.reasons.join(', ')} → ding to: <strong>${e.intervention.dingedSkills?.join(', ')||'unknown'}</strong>
+        ${e.intervention.note?`<br><span style="opacity:0.7">"${e.intervention.note}"</span>`:''}
+      </div>`:''}
+      ${e.type==='intervention'?`<div style="background:rgba(255,107,0,0.08);border-left:3px solid rgba(255,107,0,0.5);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,150,80,0.9);margin-bottom:8px">
+        🎯 <strong>Intervention logged:</strong> ${e.reasons?.join(', ')} → ding to: <strong>${e.dingedSkills?.join(', ')||'unknown'}</strong>
+        ${e.note?`<br><span style="opacity:0.7">"${e.note}"</span>`:''}
+      </div>`:''}
     </div>`).join('');
 }
 
