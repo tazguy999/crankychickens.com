@@ -1,5 +1,5 @@
 {
-  "_version": 18,
+  "_version": 19,
   "_updated": "2026-05-08T02:22:21.876Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
@@ -188,6 +188,19 @@
       "destRow": 3,
       "destCol": 0,
       "hint": "Stand still here long enough and something happens..."
+    }
+  ],
+  "orbitals": [
+    {
+      "name": "Stellar Serpent",
+      "screenIndex": -1,
+      "color": "#aa66ff",
+      "eyeColor": "#ffffff",
+      "size": 3.0,
+      "period": 18000,
+      "offset": 0,
+      "debris": true,
+      "lore": "A colossal cosmic wyrm drifting between planets like a living constellation. Does it slumber, or does it watch?"
     }
   ]
 }

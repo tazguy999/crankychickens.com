@@ -253,6 +253,7 @@ html, body {
     <div class="tab active" onclick="switchTab('pending',this)">📬 Pending <span class="tab-count" id="tabPendingCount">0</span></div>
     <div class="tab" onclick="switchTab('approved',this)">✅ Approved</div>
     <div class="tab" onclick="switchTab('all',this)">📋 All</div>
+    <div class="tab" onclick="switchTab('log',this)">📊 Delivery Log</div>
   </div>
 
   <!-- Content -->
@@ -319,7 +320,11 @@ function switchTab(tab, el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   currentTab=tab;
-  renderTab(tab);
+  if(tab==='log'){
+    loadDeliveryLog().then(renderDeliveryLog);
+  } else {
+    renderTab(tab);
+  }
 }
 
 function renderTab(tab){
@@ -416,41 +421,185 @@ async function approve(idx){
     card.innerHTML += `<div style="font-family:'Fredoka One',cursive;color:#ffcc02;padding:12px;font-size:14px">⚙️ Generating game code...</div>`;
   }
 
-  // If the scribe explicitly said "new area" — skip full contribution and go straight to newScreen config
+  const log = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    submissionId: sub.id,
+    kidName: sub.originalSubmission ? 'Cannon Master' : 'Dragon Scribe',
+    contribType: sub.contribType||'enemy',
+    asked: sub.description||sub.summary||sub.scribeName||'',
+    askedName: sub.scribeName||sub.spec?.title||'',
+    targetGame: sub.targetGame?.title||'In Space',
+    targetZone: sub.targetZone?.name||null,
+    delivered: null,
+    deliveryType: null,
+    issues: [],
+    commitSha: null,
+  };
+
+  // ── NEW AREA ──
   if(sub.contribType==='area'){
     toast('🗺️ Generating new level...');
     const configEntry = await generateNewScreen(sub);
-    if(configEntry) await applyToGameConfig(configEntry, sub);
+    if(configEntry){
+      await applyToGameConfig(configEntry, sub);
+      log.delivered = `New screen "${configEntry.name}" added to world`;
+      log.deliveryType = 'new_screen';
+    } else {
+      log.delivered = 'Failed to generate new screen';
+      log.deliveryType = 'failed';
+      log.issues.push('generateNewScreen returned null');
+    }
+    await writeDeliveryLog(log);
     allSubmissions[idx].status='approved';
     await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
-    toast('🗺️ New area added to kids-preview! Merge to deploy.');
+    toast('🗺️ New area added to kids-preview!');
     renderAll();
     return;
   }
 
-  // Step 1: Generate full code contribution (sprite + behavior + config)
-  const result = await generateFullContribution(sub);
-
-  // Step 2: Apply everything to kids-preview
-  if(result){
-    await applyFullContribution(result, sub);
-  } else {
-    // Fallback to config-only
+  // ── SECRET ──
+  if(sub.contribType==='secret'){
+    toast('🔐 Generating secret...');
     const configEntry = await generateConfigEntry(sub);
-    if(configEntry) await applyToGameConfig(configEntry, sub);
+    if(configEntry){
+      await applyToGameConfig(configEntry, sub);
+      log.delivered = `Secret ${configEntry.type} placed at (${configEntry.tx},${configEntry.ty}) on screen ${configEntry.screenIndex}`;
+      log.deliveryType = 'secret';
+    } else {
+      log.delivered = 'Failed to generate secret';
+      log.deliveryType = 'failed';
+      log.issues.push('generateConfigEntry returned null');
+    }
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='approved';
+    await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
+    toast('🔐 Secret placed!');
+    renderAll();
+    return;
   }
 
+  // ── ENEMY / FULL CODE ──
+  toast('🤖 AI is writing code for this...');
+  const result = await generateFullContribution(sub);
+
+  if(result){
+    // Full code generation succeeded
+    const success = await applyFullContribution(result, sub);
+    if(success){
+      log.delivered = `New ${result.characterType} character "${result.configEntry?.name}" with custom sprite — deployed to preview`;
+      log.deliveryType = 'full_code';
+    } else {
+      log.delivered = `Character "${result.configEntry?.name}" placed but sprite injection failed — using config only`;
+      log.deliveryType = 'config_only';
+      log.issues.push('applyFullContribution step failed — see step toasts');
+    }
+  } else {
+    // Full code failed — try orbital fallback
+    toast('🌌 Code gen failed — placing as orbital entity...');
+    log.issues.push('generateFullContribution returned null — JSON parse or validation failed');
+
+    const orbitalEntry = await generateOrbitalEntry(sub);
+    if(orbitalEntry){
+      await applyToGameConfig(orbitalEntry, sub);
+      log.delivered = `"${sub.scribeName||sub.spec?.title}" placed as orbital background entity — visible in sky layer, awaiting full implementation`;
+      log.deliveryType = 'orbital';
+      toast('🌌 Placed as orbital entity — will drift through the sky!');
+    } else {
+      // Last resort — config-only iguana
+      const configEntry = await generateConfigEntry(sub);
+      if(configEntry) await applyToGameConfig(configEntry, sub);
+      log.delivered = `"${sub.scribeName||sub.spec?.title}" placed as default enemy (iguana) — full implementation pending`;
+      log.deliveryType = 'config_only';
+      log.issues.push('orbital generation also failed — fell back to iguana');
+      toast('⚠️ Placed as default enemy — full version pending');
+    }
+  }
+
+  await writeDeliveryLog(log);
   allSubmissions[idx].status='approved';
   allSubmissions[idx].aiResult=result;
   await saveSubmissions('✅ Approved: '+(sub.spec?.title||sub.scribeName));
-
-  const game=sub.targetGame?.emoji+' '+(sub.targetGame?.title||'In Space');
-  const zone=sub.targetZone?' → '+sub.targetZone.name:'';
-  toast(result
-    ? `🚀 Code generated & deployed to preview! ${game}${zone}`
-    : `✅ Config updated in ${game}${zone}`
-  );
   renderAll();
+}
+
+// ── GENERATE ORBITAL ENTRY ──
+async function generateOrbitalEntry(sub){
+  const prompt=`Generate an orbital background entity config for "Cranky Chickens: In Space" based on this idea:
+Name: "${sub.scribeName||sub.spec?.title||'Mystery Entity'}"
+Description: "${sub.description||sub.summary||''}"
+
+This entity is too complex to be a floor enemy — it will drift slowly in the sky background.
+Respond with ONLY this JSON:
+{"configType":"orbital","name":"Entity Name","screenIndex":-1,"color":"#hexcolor","eyeColor":"#hexcolor","size":2.5,"period":16000,"offset":${Math.floor(Math.random()*10000)},"debris":true,"lore":"One atmospheric sentence about this entity (max 80 chars)"}
+
+screenIndex -1 means it appears on all screens. Choose vivid colors matching the description.`;
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claude_complete',max_tokens:200,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    const text=data.content?.find(b=>b.type==='text')?.text||'{}';
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){ console.error('generateOrbitalEntry failed:',e); return null; }
+}
+
+// ── DELIVERY LOG ──
+async function writeDeliveryLog(entry){
+  try{
+    const getRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
+    const getData=await getRes.json();
+    const log=getData.content?JSON.parse(getData.content):[];
+    log.unshift(entry);
+    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_file',path:'lore/delivery-log.json',branch:'kids-preview',
+        content:JSON.stringify(log.slice(0,100),null,2),
+        sha:getData.sha,
+        commitMsg:`📋 Delivery log: ${entry.deliveryType} — ${entry.askedName}`
+      })
+    });
+  }catch(e){ console.error('writeDeliveryLog failed:',e); }
+}
+
+async function loadDeliveryLog(){
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
+    const data=await res.json();
+    return data.content?JSON.parse(data.content):[];
+  }catch(e){ return []; }
+}
+
+function renderDeliveryLog(log){
+  const el=document.getElementById('tabContent');
+  if(!log.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
+    return;
+  }
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌'};
+  const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed'};
+  el.innerHTML=log.map(e=>`
+    <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">
+      <div class="card-top">
+        <div class="card-type-icon" style="font-size:24px">${typeIcon[e.deliveryType]||'📋'}</div>
+        <div class="card-header">
+          <div class="card-title">${e.askedName||'Unnamed'}</div>
+          <div class="card-meta">
+            <span class="badge badge-${e.kidName==='Dragon Scribe'?'scribe':'cannon'}">${e.kidName==='Dragon Scribe'?'🐉':'💥'} ${e.kidName}</span>
+            <span class="badge badge-type">${typeLabel[e.deliveryType]||e.deliveryType}</span>
+            <span class="card-time">${formatTime(e.timestamp)}</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin:8px 0">
+        <div style="font-size:11px;color:rgba(150,170,200,0.6);margin-bottom:4px;font-family:'Fredoka One',cursive;letter-spacing:1px">ASKED FOR</div>
+        <div style="font-size:13px;color:rgba(200,220,255,0.8);line-height:1.5">${(e.asked||'').slice(0,200)}${e.asked?.length>200?'...':''}</div>
+      </div>
+      <div class="card-dev-note">🚀 ${e.delivered||'No delivery info'}</div>
+      ${e.issues?.length?`<div style="background:rgba(230,57,70,0.08);border-left:3px solid rgba(230,57,70,0.4);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,100,100,0.8);margin-bottom:8px">⚠️ ${e.issues.join(' · ')}</div>`:''}
+    </div>`).join('');
 }
 
 async function generateNewScreen(sub){
@@ -764,6 +913,11 @@ async function applyToGameConfig(entry, sub){
       cfg.newScreens=cfg.newScreens||[];
       if(!cfg.newScreens.find(s=>s.name===entry.name)){
         cfg.newScreens.push(entry);
+      }
+    } else if(entry.configType==='orbital'){
+      cfg.orbitals=cfg.orbitals||[];
+      if(!cfg.orbitals.find(o=>o.name===entry.name)){
+        cfg.orbitals.push(entry);
       }
     } else if(entry.configType==='secret'){
       cfg.secrets=cfg.secrets||[];

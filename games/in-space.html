@@ -1240,10 +1240,119 @@ function drawTile(t,sx,sy){
 // ═══════════════════════════════════════════════
 //  SCREEN DRAWING — with style-bible backgrounds
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+//  ORBITAL ENTITIES
+//  Background presences — too big/complex for floor enemies
+//  Slow arc across the sky layer, hint at bigger lore
+//  Config: cfg.orbitals = [{name, color, size, speed, offset, screenIndex}]
+// ═══════════════════════════════════════════════
+let orbitals = [];
+
+function applyOrbitals(cfg){
+  if(!cfg.orbitals) return;
+  orbitals = cfg.orbitals;
+}
+
+function drawOrbitals(){
+  const sc = currentScreen();
+  const scIdx = screenIndex(screenCol, screenRow);
+  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach(o=>{
+    // Slow orbit — full cycle every 4 minutes at 60fps = 14400 frames
+    const period = (o.period||14400);
+    const t = (frame + (o.offset||0)) / period;
+    const angle = t * Math.PI * 2;
+
+    // Arc through the sky area (top 40% of screen)
+    const cx = GW/2 + Math.cos(angle) * (GW*0.55);
+    const cy = GH*0.22 + Math.sin(angle) * (GH*0.14);
+
+    // Only draw when in sky area (not behind ground tiles)
+    if(cy > GH*0.42) return;
+
+    const sz = (o.size||2.5) * TILE;
+    const col = o.color||'#aaccff';
+    const pulse = 0.6 + Math.sin(frame*0.02 + (o.offset||0))*0.3;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Outer glow
+    const grd = ctx.createRadialGradient(0,0,sz*0.2,0,0,sz*1.4);
+    grd.addColorStop(0, col+'88');
+    grd.addColorStop(0.5, col+'22');
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = pulse * 0.6;
+    ctx.fillStyle = grd;
+    ctx.beginPath();ctx.arc(0,0,sz*1.4,0,Math.PI*2);ctx.fill();
+
+    // Body — serpentine/wyrm shape using bezier segments
+    ctx.globalAlpha = pulse * 0.85;
+    const bodyLen = sz * 3;
+    const wave = Math.sin(frame*0.015 + (o.offset||0)) * sz * 0.4;
+
+    // Draw body segments
+    ctx.strokeStyle = col;
+    ctx.lineWidth = sz * 0.6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-bodyLen/2, wave);
+    ctx.bezierCurveTo(-bodyLen/4, -wave, bodyLen/4, wave, bodyLen/2, -wave*0.5);
+    ctx.stroke();
+
+    // Scales shimmer overlay
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = sz * 0.3;
+    ctx.stroke();
+
+    // Head
+    ctx.fillStyle = col;
+    ctx.globalAlpha = pulse;
+    ctx.beginPath();ctx.ellipse(bodyLen/2, -wave*0.5, sz*0.5, sz*0.4, Math.atan2(-wave*0.5, bodyLen/2), 0, Math.PI*2);ctx.fill();
+
+    // Eyes — galaxy-sized, watching
+    const eyeGlow = 0.5 + Math.sin(frame*0.04)*0.4;
+    ctx.fillStyle = o.eyeColor||'#ffffff';
+    ctx.globalAlpha = eyeGlow;
+    ctx.beginPath();ctx.arc(bodyLen/2 + sz*0.2, -wave*0.5 - sz*0.15, sz*0.18, 0, Math.PI*2);ctx.fill();
+    ctx.globalAlpha = eyeGlow*0.5;
+    ctx.fillStyle = o.eyeColor||'#ffffff';
+    ctx.beginPath();ctx.arc(bodyLen/2 + sz*0.2, -wave*0.5 - sz*0.15, sz*0.3, 0, Math.PI*2);ctx.fill();
+
+    // Debris orbit
+    if(o.debris){
+      for(let d=0;d<4;d++){
+        const da = angle*3 + d*(Math.PI/2);
+        const dr = sz * (0.8 + d*0.3);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = col;
+        ctx.beginPath();ctx.arc(Math.cos(da)*dr - bodyLen/2, Math.sin(da)*dr*0.4, sz*0.08, 0, Math.PI*2);ctx.fill();
+      }
+    }
+
+    // Name tag — appears when near screen edge player might approach
+    ctx.globalAlpha = 0.7 * pulse;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    const tw = ctx.measureText(o.name||'').width + 12;
+    ctx.beginPath();ctx.roundRect(-tw/2, sz*0.6, tw, 16, 4);ctx.fill();
+    ctx.fillStyle = col;
+    ctx.font = 'bold 10px Fredoka One';
+    ctx.textAlign = 'center';
+    ctx.fillText(o.name||'', 0, sz*0.6+11);
+    ctx.textAlign = 'left';
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+}
+
 function drawScreen(sc){
   const isMoon=sc.gravity;
 
   drawStarfield(screenCol*60,screenRow*60);
+
+  // Orbital background entities — behind tiles, in sky layer
+  drawOrbitals();
 
   if(isMoon){
     // Ground plane starts at tile row 4 (y=128) — matches map VOID/FLOOR split
@@ -2005,6 +2114,9 @@ function applyConfig(cfg){
       }
     });
   }
+
+  // Apply orbital background entities
+  applyOrbitals(cfg);
 
   // Apply secrets
   if(cfg.secrets){
