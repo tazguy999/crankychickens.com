@@ -360,6 +360,7 @@ const PROXY='/.netlify/functions/github-proxy';
 let allSubmissions=[];
 let currentSha=null;
 let currentTab='pending';
+let mostRecentDeployedId=null;
 
 // ── LOAD SUBMISSIONS ──
 async function loadSubmissions(){
@@ -382,6 +383,11 @@ async function loadSubmissions(){
 
 function renderAll(){
   updateStats();
+  // Compute most recently deployed item — only that one gets the NQR button
+  const deployed = allSubmissions.filter(s=>s.status==='deployed'||s.status==='needs_revision');
+  mostRecentDeployedId = deployed.length
+    ? deployed.reduce((a,b)=>(new Date(a.timestamp)>new Date(b.timestamp)?a:b)).id
+    : null;
   renderTab(currentTab);
   // Show merge panel if any approved
   const approved=allSubmissions.filter(s=>s.status==='approved');
@@ -477,7 +483,7 @@ function renderCard(s, i){
     <div class="card-actions">
       ${isApproved?`
         <div class="status-approved">✅ ${s.status==='deployed'?'Deployed to production':s.status==='needs_revision'?'⚠️ Needs revision':'Approved — ready to merge'}</div>
-        ${s.status==='deployed'||s.status==='needs_revision'?`<button class="act-btn btn-nqr" onclick="openNQR(${globalIdx})">🎯 Not quite right</button>`:''}
+        ${(s.status==='deployed'||s.status==='needs_revision')&&s.id===mostRecentDeployedId?`<button class="act-btn btn-nqr" onclick="openNQR(${globalIdx})">🎯 Not quite right</button>`:''}
       `:
         isRejected?`<div class="status-rejected">✕ Rejected</div>`:`
         <button class="act-btn btn-approve" onclick="openPreview(${globalIdx})">👁️ Preview & Approve</button>
