@@ -1921,6 +1921,9 @@ function updateHUD(){
   hudZone=currentScreen?currentScreen().name:'';
 }
 
+// ── BUILD STAMP — updated on every deploy ──
+const BUILD_STAMP = 'v0509-1535';
+
 function drawHUD(){
   // Top-left: hearts
   const heartSize=18;
@@ -1945,6 +1948,12 @@ function drawHUD(){
     ctx.fillStyle='#aacfff';ctx.font='bold 12px Fredoka One';
     ctx.fillText(hudZone,10,GH-10);
   }
+
+  // Bottom-right: build stamp
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.font='9px monospace';ctx.textAlign='right';
+  ctx.fillText(BUILD_STAMP,GW-6,GH-6);
+  ctx.textAlign='left';
 }
 
 function showMsg(txt){
