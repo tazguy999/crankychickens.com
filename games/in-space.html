@@ -1423,10 +1423,61 @@ function drawAmoebaLore(){
     var pool=e._lorePool||VOID_LORE_CALM;
     var fullText=pool[t.loreIdx%pool.length]||'...';
     const chaos=sc.chaos||0;
-    const fontSize=chaos>0.6?11:10;
+    const fontSize=chaos>0.6?16:15; // big enough for 45yo eyes on mobile
     ctx.save();
     ctx.globalAlpha=alpha;
     ctx.font='bold '+fontSize+'px Fredoka One';
+
+    // Word wrap — max 180px wide
+    const maxW=180;
+    const words=fullText.split(' ');
+    const lines=[];
+    var line='';
+    words.forEach(w=>{
+      const test=line?line+' '+w:w;
+      if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=w;}
+      else line=test;
+    });
+    if(line) lines.push(line);
+
+    const lineH=fontSize+5;
+    const bubbleW=Math.min(maxW+20, Math.max(...lines.map(l=>ctx.measureText(l).width))+20);
+    const bubbleH=lines.length*lineH+14;
+    const bubbleCol=e.color||'#667788';
+
+    // Position — above amoeba, keep on screen
+    var bx=e._x+16-bubbleW/2;
+    var by=e._y-bubbleH-22;
+    bx=Math.max(4,Math.min(GW-bubbleW-4,bx));
+    by=Math.max(4,by);
+
+    // Background with glow
+    ctx.shadowColor=bubbleCol;
+    ctx.shadowBlur=8;
+    ctx.fillStyle='rgba(8,4,20,0.92)';
+    ctx.beginPath();ctx.roundRect(bx,by,bubbleW,bubbleH,8);ctx.fill();
+    ctx.shadowBlur=0;
+
+    // Colored border
+    ctx.strokeStyle=bubbleCol;ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(bx,by,bubbleW,bubbleH,8);ctx.stroke();
+
+    // Tail
+    const tailX=Math.max(bx+12,Math.min(bx+bubbleW-12,e._x+16));
+    ctx.fillStyle='rgba(8,4,20,0.92)';
+    ctx.beginPath();ctx.moveTo(tailX-7,by+bubbleH);ctx.lineTo(tailX,by+bubbleH+12);ctx.lineTo(tailX+7,by+bubbleH);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=bubbleCol;ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(tailX-7,by+bubbleH);ctx.lineTo(tailX,by+bubbleH+12);ctx.lineTo(tailX+7,by+bubbleH);ctx.stroke();
+
+    // Text
+    ctx.fillStyle=chaos>0.6?'#ffcccc':'#e8f4ff';
+    ctx.textAlign='center';
+    lines.forEach((l,li)=>{
+      ctx.fillText(l,bx+bubbleW/2,by+fontSize+5+li*lineH);
+    });
+    ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
+  });
+}
 
     // Word wrap into lines of max 140px
     const maxW=150;
@@ -1629,11 +1680,46 @@ function drawScreen(sc){
       g.addColorStop(0,col);g.addColorStop(1,'transparent');
       ctx.fillStyle=g;ctx.fillRect(0,0,GW,GH);
     });
-    // Colorful twinkling stars
+    // Background stars
     for(let i=0;i<40;i++){
       const tw=0.2+Math.sin(i*7+frame*0.015)*0.5;
-      ctx.globalAlpha=tw*0.8;ctx.fillStyle=`hsl(${(i*37+frame*0.02)%360},60%,80%)`;
+      ctx.globalAlpha=tw*0.8;
+      ctx.fillStyle='hsl('+((i*37+frame*0.02)%360)+',60%,80%)';
       ctx.beginPath();ctx.arc((i*97+3)%GW,(i*61+11)%GH,0.7,0,Math.PI*2);ctx.fill();
+    }
+
+    // Rainbow star system explosions
+    const numExplosions=3+Math.floor((sc.chaos||0)*5);
+    for(let ex=0;ex<numExplosions;ex++){
+      const exSeed=ex*137+(sc.bgHue||0)*7;
+      const exX=((exSeed*73+frame*0.06*(ex%2?1:-1)+GW*2)%(GW-40))+20;
+      const exY=20+((exSeed*53+frame*0.04+(GH*2))%(GH-80));
+      const exHue=(exSeed*47+frame*0.08)%360;
+      const exPulse=0.35+Math.sin(frame*0.04+ex*1.7)*0.3;
+      const exSize=10+Math.sin(frame*0.03+ex*2)*5+(sc.chaos||0)*14;
+      // Core glow
+      const burst=ctx.createRadialGradient(exX,exY,0,exX,exY,exSize*2.5);
+      burst.addColorStop(0,'hsla('+exHue+',100%,95%,'+exPulse+')');
+      burst.addColorStop(0.3,'hsla('+(exHue+60)%360+',100%,65%,'+(exPulse*0.6)+')');
+      burst.addColorStop(0.7,'hsla('+(exHue+180)%360+',80%,40%,'+(exPulse*0.2)+')');
+      burst.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.globalAlpha=1;ctx.fillStyle=burst;
+      ctx.beginPath();ctx.arc(exX,exY,exSize*2.5,0,Math.PI*2);ctx.fill();
+      // Rainbow spokes
+      const numSpokes=6+Math.floor((sc.chaos||0)*6);
+      for(let sp=0;sp<numSpokes;sp++){
+        const spokeA=(sp/numSpokes)*Math.PI*2+frame*0.01*(ex%2?1:-1);
+        const spokeLen=exSize*(1.8+Math.sin(frame*0.06+sp)*0.6);
+        const spokeHue=(exHue+sp*(360/numSpokes))%360;
+        ctx.globalAlpha=exPulse*0.7;
+        ctx.strokeStyle='hsl('+spokeHue+',100%,75%)';ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(exX+Math.cos(spokeA)*exSize*0.2,exY+Math.sin(spokeA)*exSize*0.2);
+        ctx.lineTo(exX+Math.cos(spokeA)*spokeLen,exY+Math.sin(spokeA)*spokeLen);
+        ctx.stroke();
+        ctx.globalAlpha=exPulse;ctx.fillStyle='hsl('+spokeHue+',100%,95%)';
+        ctx.beginPath();ctx.arc(exX+Math.cos(spokeA)*spokeLen,exY+Math.sin(spokeA)*spokeLen,2,0,Math.PI*2);ctx.fill();
+      }
     }
     ctx.globalAlpha=1;
     // Drifting question marks
