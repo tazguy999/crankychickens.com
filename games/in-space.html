@@ -376,7 +376,10 @@ function moveJoy(touch){
 
 let touchAtk=false;
 atkBtn.addEventListener('touchstart',e=>{
-  e.preventDefault(); touchAtk=true; atkBtn.classList.add('pressed');
+  e.preventDefault();
+  if(gameState==='lose'){ restartGame(); return; }
+  if(gameState==='title'){ startGame(); return; }
+  touchAtk=true; atkBtn.classList.add('pressed');
 },{passive:false});
 atkBtn.addEventListener('touchend',e=>{
   e.preventDefault(); atkBtn.classList.remove('pressed');
@@ -1068,7 +1071,7 @@ function updateEnemies(){
         screenShake=6;
         spawnP(player.x+16,player.y+16,'#ff3333',10);
         updateHUD();
-        if(player.hp<=0){ gameState='lose'; showMsg('💀 Game Over!\n\nPress R to try again.'); }
+        if(player.hp<=0){ gameState='lose'; showMsg('💀 Game Over!\n\n'+(isMobile?'PECK to try again':'Press R to try again')); }
       }
     }
   });
