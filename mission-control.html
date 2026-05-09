@@ -1359,6 +1359,16 @@ async function submitNQR(){
 
   if(!reasons.length){ toast('Pick at least one reason'); return; }
 
+  const REASON_TO_SKILL = {
+    'wrong_behavior':  'feature-build',
+    'wrong_look':      'sprite-gen',
+    'wrong_placement': 'feature-build',
+    'fell_back':       'sprite-gen',
+    'missed_intent':   'write-spec',
+  };
+
+  const dingedSkills = [...new Set(reasons.map(r=>REASON_TO_SKILL[r]).filter(Boolean))];
+
   const intervention = {
     id: Date.now(),
     timestamp: new Date().toISOString(),
@@ -1366,6 +1376,7 @@ async function submitNQR(){
     submissionName: sub.scribeName||sub.spec?.title||'Unknown',
     kidName: sub.originalSubmission?'Cannon Master':'Dragon Scribe',
     reasons,
+    dingedSkills,
     note: note||null,
     deliveryType: sub.aiResult?.configEntry?'full_code':sub._previewChoice?'config_only':'unknown',
   };
@@ -1400,7 +1411,7 @@ async function submitNQR(){
     allSubmissions[nqrIdx].intervention = intervention;
     await saveSubmissions('🎯 Intervention logged: '+(sub.scribeName||'submission'));
     closeNQR();
-    toast('📝 Intervention logged — will inform skill scoring');
+    toast('📝 Intervention logged — ding to: '+dingedSkills.join(', '));
     renderAll();
   }catch(e){
     console.error('submitNQR failed:',e);
