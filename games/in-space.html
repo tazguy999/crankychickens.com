@@ -667,8 +667,12 @@ function tileAt(map,px,py){
 const SOLID_TILES=new Set([T.VOID,T.WALL,T.CRATER,T.CRYSTAL,T.FAKE_WALL]);
 // Secret state — tracks peck counts, stand timers per tile key "tx,ty"
 const secretState={};
-function walkable(map,px,py){ return !SOLID_TILES.has(tileAt(map,px,py)); }
+function walkable(map,px,py){
+  if(currentScreen().isSafeZone) return true; // void = float everywhere
+  return !SOLID_TILES.has(tileAt(map,px,py));
+}
 function boxWalkable(map,px,py){
+  if(currentScreen().isSafeZone) return true;
   const pad=4;
   return walkable(map,px+pad,py+pad) && walkable(map,px+TILE-pad,py+pad) &&
          walkable(map,px+pad,py+TILE-pad) && walkable(map,px+TILE-pad,py+TILE-pad);
