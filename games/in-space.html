@@ -1924,6 +1924,7 @@ document.addEventListener('keydown',e=>{
 //  MAIN GAME LOOP
 // ═══════════════════════════════════════════════
 function loop(){
+  try{
   frame++;
 
   // Screen shake
@@ -2032,6 +2033,11 @@ function loop(){
   else ctx.restore();
 
   requestAnimationFrame(loop);
+  }catch(e){
+    dbg('LOOP ERROR: '+e.message);
+    console.error('Loop crashed:',e);
+    requestAnimationFrame(loop); // keep going so debug overlay shows
+  }
 }
 
 // ═══════════════════════════════════════════════
