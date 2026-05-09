@@ -778,72 +778,35 @@ function updatePlayer(){
       npx=TILE*2; npy=player.y;
     }
 
-    // ── VOID INFINITE NAVIGATION ──
-    // In the void, hitting any edge generates a new procedural room
+    // VOID INFINITE NAVIGATION
     if(isInVoid()){
-      let dvx=0,dvy=0;
-      if(cy < TILE){ dvy=-1; dir='N'; npx=player.x; npy=GH-TILE*3; }
-      else if(cy > GH-TILE){ dvy=1; dir='S'; npx=player.x; npy=TILE*2; }
-      else if(cx < TILE){ dvx=-1; dir='W'; npx=GW-TILE*3; npy=player.y; }
-      else if(cx > GW-TILE){ dvx=1; dir='E'; npx=TILE*2; npy=player.y; }
-
+      var dvx=0,dvy=0,vdir='';
+      if(cy<TILE){dvy=-1;vdir='N';npx=player.x;npy=GH-TILE*3;}
+      else if(cy>GH-TILE){dvy=1;vdir='S';npx=player.x;npy=TILE*2;}
+      else if(cx<TILE){dvx=-1;vdir='W';npx=GW-TILE*3;npy=player.y;}
+      else if(cx>GW-TILE){dvx=1;vdir='E';npx=TILE*2;npy=player.y;}
       if(dvx!==0||dvy!==0){
-        const nvx=voidX+dvx, nvy=voidY+dvy;
-        const room=generateVoidRoom(nvx,nvy);
-        // Replace the void screen with new room
+        var nvx=voidX+dvx,nvy=voidY+dvy;
+        var room=generateVoidRoom(nvx,nvy);
         SCREENS[VOID_SCREEN_IDX]=room;
-        // Reset screen state for fresh enemies
-        const vk=`${screenCol},${screenRow}`;
+        var vk=screenCol+','+screenRow;
         delete screenState[vk];
-        voidX=nvx; voidY=nvy;
-        // Find walkable spawn
-        let found=false;
-        if(dir==='S'){outer:for(let ty=1;ty<=8;ty++)for(let tc=8;tc<=11;tc++)if(boxWalkable(room.map,tc*TILE,ty*TILE)){npx=tc*TILE;npy=ty*TILE;found=true;break outer;}}
-        else if(dir==='N'){outer:for(let ty=13;ty>=6;ty--)for(let tc=8;tc<=11;tc++)if(boxWalkable(room.map,tc*TILE,ty*TILE)){npx=tc*TILE;npy=ty*TILE;found=true;break outer;}}
-        else if(dir==='E'){outer:for(let tc=1;tc<=6;tc++)for(let tr=6;tr<=8;tr++)if(boxWalkable(room.map,tc*TILE,tr*TILE)){npx=tc*TILE;npy=tr*TILE;found=true;break outer;}}
-        else if(dir==='W'){outer:for(let tc=18;tc>=13;tc--)for(let tr=6;tr<=8;tr++)if(boxWalkable(room.map,tc*TILE,tr*TILE)){npx=tc*TILE;npy=tr*TILE;found=true;break outer;}}
-        if(!found){outer2:for(let ty=1;ty<14;ty++)for(let tc=1;tc<19;tc++)if(boxWalkable(room.map,tc*TILE,ty*TILE)){npx=tc*TILE;npy=ty*TILE;break outer2;}}
-        player.vx*=0.3; player.vy*=0.3;
+        voidX=nvx;voidY=nvy;
+        var found=false;
+        var npx2=npx,npy2=npy;
+        if(vdir==='S'){for(var ty=1;ty<=8&&!found;ty++)for(var tc=8;tc<=11&&!found;tc++)if(boxWalkable(room.map,tc*TILE,ty*TILE)){npx2=tc*TILE;npy2=ty*TILE;found=true;}}
+        else if(vdir==='N'){for(var ty=13;ty>=6&&!found;ty--)for(var tc=8;tc<=11&&!found;tc--)if(boxWalkable(room.map,tc*TILE,ty*TILE)){npx2=tc*TILE;npy2=ty*TILE;found=true;}}
+        else if(vdir==='E'){for(var tc=1;tc<=6&&!found;tc++)for(var tr=6;tr<=8&&!found;tr++)if(boxWalkable(room.map,tc*TILE,tr*TILE)){npx2=tc*TILE;npy2=tr*TILE;found=true;}}
+        else if(vdir==='W'){for(var tc=18;tc>=13&&!found;tc--)for(var tr=6;tr<=8&&!found;tr++)if(boxWalkable(room.map,tc*TILE,tr*TILE)){npx2=tc*TILE;npy2=tr*TILE;found=true;}}
+        if(!found){for(var ty=1;ty<14&&!found;ty++)for(var tc=1;tc<19&&!found;tc++)if(boxWalkable(room.map,tc*TILE,ty*TILE)){npx2=tc*TILE;npy2=ty*TILE;found=true;}}
+        player.vx*=0.3;player.vy*=0.3;
         hudZone=room.name;
-        startScroll(screenCol,screenRow,npx,npy); // same col/row, different room content
+        startScroll(screenCol,screenRow,npx2,npy2);
         return;
       }
     }
 
-    if(ncol!==screenCol||nrow!==screenRow){
-      // Find nearest walkable spawn on entry corridor of destination screen
-      const destSc=SCREENS[screenIndex(ncol,nrow)];
-      if(destSc){
-        const destMap=destSc.map;
-        let found=false;
-        if(dir==='S'){
-          outer: for(let ty=1;ty<=8;ty++)
-            for(let tc2=8;tc2<=11;tc2++)
-              if(boxWalkable(destMap,tc2*TILE,ty*TILE)){npx=tc2*TILE;npy=ty*TILE;found=true;break outer;}
-        } else if(dir==='N'){
-          outer: for(let ty=13;ty>=6;ty--)
-            for(let tc2=8;tc2<=11;tc2++)
-              if(boxWalkable(destMap,tc2*TILE,ty*TILE)){npx=tc2*TILE;npy=ty*TILE;found=true;break outer;}
-        } else if(dir==='E'){
-          outer: for(let tc2=1;tc2<=6;tc2++)
-            for(let tr=6;tr<=8;tr++)
-              if(boxWalkable(destMap,tc2*TILE,tr*TILE)){npx=tc2*TILE;npy=tr*TILE;found=true;break outer;}
-        } else if(dir==='W'){
-          outer: for(let tc2=18;tc2>=13;tc2--)
-            for(let tr=6;tr<=8;tr++)
-              if(boxWalkable(destMap,tc2*TILE,tr*TILE)){npx=tc2*TILE;npy=tr*TILE;found=true;break outer;}
-        }
-        if(!found){
-          outer2: for(let ty=1;ty<14;ty++)
-            for(let tc2=1;tc2<19;tc2++)
-              if(boxWalkable(destMap,tc2*TILE,ty*TILE)){npx=tc2*TILE;npy=ty*TILE;break outer2;}
-        }
-      }
-      player.vx*=0.3; player.vy*=0.3;
-      startScroll(ncol,nrow,npx,npy);
-    }
-  }
-}
+        if(ncol!==screenCol||nrow!==screenRow){
       // Find nearest walkable spawn on entry corridor of destination screen
       const destSc=SCREENS[screenIndex(ncol,nrow)];
       if(destSc){
@@ -1371,114 +1334,6 @@ function drawTile(t,sx,sy){
 // ═══════════════════════════════════════════════
 //  SCREEN DRAWING — with style-bible backgrounds
 // ═══════════════════════════════════════════════
-// ── VOID INFINITE WORLD ──
-let voidX=0, voidY=0;
-let voidRooms={};
-const VOID_SCREEN_IDX=4;
-function isInVoid(){ return screenIndex(screenCol,screenRow)===VOID_SCREEN_IDX; }
-function voidKey(x,y){ return `${x},${y}`; }
-function voidHash(x,y,s=0){
-  let h=((x*2654435761)^(y*2246822519)^(s*374761393))>>>0;
-  h=((h^(h>>>16))*2246822519)>>>0;
-  h=((h^(h>>>13))*3266489917)>>>0;
-  return (h^(h>>>16))/4294967296;
-}
-
-const VOID_LORE_CALM=[
-  'I was almost a dragon once...',
-  'Someone dreamed of me but forgot to write it down',
-  'Is this a floor? I\'ve never had a floor before',
-  'The Cannon Master will name me soon. I can feel it.',
-  'I contain multitudes. None decided yet.',
-  'What even IS a chicken?',
-  'I tried being a robot. Too much paperwork.',
-  'The Dragon Scribe speaks and worlds appear. Wild.',
-  'I have seventeen potential personalities. All confused.',
-  'Possibly Gerald.',
-];
-const VOID_LORE_WEIRD=[
-  'TIME IS A SANDWICH AND I AM THE MUSTARD',
-  'I once was a Tuesday. It was okay.',
-  'My uncle is a concept. We don\'t talk.',
-  'I contain the memory of a smell that hasn\'t happened yet',
-  'CORN? In THIS economy?',
-  'I am 40% decisions that were made and then unmade',
-  'The color blue owes me money',
-  'I dreamed I was a loading screen. It lasted forever.',
-  'My favorite number is the feeling you get on Sundays',
-  'I am fluent in three languages: confused, more confused, jazz',
-];
-const VOID_LORE_UNHINGED=[
-  'THE CONCEPT OF LEFT IS A LIE PERPETUATED BY DOORS',
-  'I HAVE TASTED THE INFINITE AND IT TASTES LIKE WARM CREAM SODA',
-  'EVERY CHICKEN IS JUST A DINOSAUR WHO DECIDED TO CALM DOWN',
-  'I AM SIMULTANEOUSLY ALL POSSIBLE GEROLDS',
-  'THE CANNON MASTER SHOWED ME THINGS I CANNOT UNSEE THE TRAJECTORY',
-  'REALITY IS JUST LORE THAT HASN\'T BEEN APPROVED YET',
-  'I EXIST IN 7 DIMENSIONS BUT ONLY 3 HAVE OPINIONS',
-  'YOUR PECK SPEED IS STATISTICALLY IMPROBABLE AND I RESPECT IT',
-  'I USED TO HAVE A SHAPE. IT WAS FINE. I GAVE IT AWAY.',
-  'THE VOID DOESN\'T HAVE EDGES. I CHECKED. TWICE.',
-];
-
-function generateVoidRoom(vx,vy){
-  const key=voidKey(vx,vy);
-  if(voidRooms[key]) return voidRooms[key];
-  const dist=Math.sqrt(vx*vx+vy*vy);
-  const chaos=Math.min(1,dist/8);
-  const seed=(n)=>voidHash(vx,vy,n);
-  const map=[];
-  for(let r=0;r<15;r++){const row=[];for(let c=0;c<20;c++)row.push(0);map.push(row);}
-  const numP=3+Math.floor(seed(1)*3)+Math.floor(chaos*5);
-  for(let p=0;p<numP;p++){
-    const pr=2+Math.floor(seed(p*10+2)*11);
-    const pc=1+Math.floor(seed(p*10+3)*17);
-    const pw=2+Math.floor(seed(p*10+4)*(4+chaos*6));
-    for(let i=0;i<pw;i++) if(pc+i<19){
-      const wobble=chaos>0.5?Math.floor(seed(p*10+i+5)*3)-1:0;
-      map[Math.max(1,Math.min(13,pr+wobble))][pc+i]=1;
-    }
-  }
-  for(let c=8;c<=11;c++){map[0][c]=1;map[14][c]=1;}
-  for(let r=6;r<=8;r++){map[r][0]=1;map[r][19]=1;}
-  const lorePool=chaos<0.33?VOID_LORE_CALM:chaos<0.66?VOID_LORE_WEIRD:VOID_LORE_UNHINGED;
-  const numA=2+Math.floor(seed(20)*3)+Math.floor(chaos*4);
-  const enemies=[];
-  for(let a=0;a<numA;a++){
-    const hue=Math.floor(seed(a*7+32)*360);
-    const calmNames=['Unnamed','???','Also Unnamed','Possibly Gerald','Undefined','Pending...','NaN'];
-    const chaosNames=['AAAAAAAA','*vibrating*','Gerald Prime','Anti-Gerald','Former Tuesday','Mustard Energy','[object Object]','404 Name Not Found'];
-    const names=chaos>0.6?chaosNames:calmNames;
-    enemies.push({
-      tx:2+Math.floor(seed(a*7+30)*16), ty:3+Math.floor(seed(a*7+31)*10),
-      spd:0.1+seed(a*7+35)*0.3, pat:seed(a*7+36)>0.5?'h':'v',
-      name:names[Math.floor(seed(a*7+34)*names.length)],
-      characterType:'amoeba',
-      color:`hsl(${hue},${30+Math.floor(chaos*40)}%,${45+Math.floor(seed(a*7+37)*20)}%)`,
-      eyeColor:`hsl(${(hue+120)%360},70%,70%)`,
-      size:0.8+seed(a*7+38)*0.5+chaos*0.4,
-      _lorePool:lorePool, _loreIdx:Math.floor(seed(a*7+33)*lorePool.length),
-    });
-  }
-  const corn=[];
-  const numC=Math.max(0,3-Math.floor(chaos*3));
-  for(let c=0;c<numC;c++) corn.push({x:2+Math.floor(seed(c+50)*16),y:3+Math.floor(seed(c+51)*10)});
-  const room={
-    name:vx===0&&vy===0?'Void of Unwritten Worlds':`Void ${vx>=0?'+':''}${vx},${vy>=0?'+':''}${vy}`,
-    gravity:false,isVoid:true,isSafeZone:true,
-    map,enemies,corn,secrets:[],
-    voidX:vx,voidY:vy,chaos,
-    bgHue:Math.floor((vx*47+vy*31+180)%360),
-    bgSat:20+Math.floor(chaos*40),
-    loreText:vx===0&&vy===0?'You\'ve reached the edge of the known universe.':
-             chaos<0.33?'The void stretches on...':
-             chaos<0.66?'Reality is getting a little loose out here.':
-             'EXISTENCE IS OPTIONAL IN THIS SECTOR.',
-  };
-  voidRooms[key]=room;
-  return room;
-}
-
 // ── AMOEBA LORE POOL ──
 const AMOEBA_LORE = [
   'I was almost a dragon once...',
@@ -1536,8 +1391,7 @@ function drawAmoebaLore(){
     const t=amoebaLoreTimers[key];
     if(!t||t.show<=0) return;
     const alpha=t.show>20?Math.min(1,t.show/30):t.show/20;
-    const pool=e._lorePool||VOID_LORE_CALM;
-    const text=pool[t.loreIdx%pool.length]||'...';
+    var pool=e._lorePool||VOID_LORE_CALM;var text=pool[t.loreIdx%pool.length]||'...';
     const maxW=120;
     ctx.save();
     ctx.globalAlpha=alpha*0.92;
@@ -1559,6 +1413,76 @@ function drawAmoebaLore(){
     ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
   });
 }
+// ── VOID INFINITE WORLD ──
+let voidX=0, voidY=0;
+let voidRooms={};
+const VOID_SCREEN_IDX=4;
+function isInVoid(){ return screenIndex(screenCol,screenRow)===VOID_SCREEN_IDX; }
+function voidHash(x,y,s){
+  s=s||0;
+  let h=((x*2654435761)^(y*2246822519)^(s*374761393))>>>0;
+  h=((h^(h>>>16))*2246822519)>>>0;
+  h=((h^(h>>>13))*3266489917)>>>0;
+  return (h^(h>>>16))/4294967296;
+}
+const VOID_LORE_CALM=['I was almost a dragon once...','Someone dreamed of me but forgot','Is this a floor? I have never had one','The Cannon Master will name me soon','I contain multitudes. None decided yet.','What even IS a chicken?','Possibly Gerald.','I tried being a robot. Too much paperwork.','I have seventeen personalities. All confused.','Nick approved my existence. That is something.'];
+const VOID_LORE_WEIRD=['TIME IS A SANDWICH AND I AM THE MUSTARD','I once was a Tuesday. It was okay.','My uncle is a concept. We do not talk.','I contain the memory of a smell that has not happened yet','CORN? In THIS economy?','I am 40% decisions that were made and unmade','The color blue owes me money','I dreamed I was a loading screen. It lasted forever.','My favorite number is the feeling you get on Sundays','I am fluent in three languages: confused, more confused, jazz'];
+const VOID_LORE_UNHINGED=['THE CONCEPT OF LEFT IS A LIE PERPETUATED BY DOORS','I HAVE TASTED THE INFINITE. IT TASTES LIKE WARM CREAM SODA.','EVERY CHICKEN IS JUST A DINOSAUR WHO DECIDED TO CALM DOWN','I AM SIMULTANEOUSLY ALL POSSIBLE GEROLDS','THE CANNON MASTER SHOWED ME THINGS. I CANNOT UNSEE THE TRAJECTORY.','REALITY IS JUST LORE THAT HAS NOT BEEN APPROVED YET','I EXIST IN 7 DIMENSIONS BUT ONLY 3 HAVE OPINIONS','YOUR PECK SPEED IS STATISTICALLY IMPROBABLE AND I RESPECT IT','I USED TO HAVE A SHAPE. I GAVE IT AWAY.','THE VOID DOES NOT HAVE EDGES. I CHECKED. TWICE.'];
+
+function generateVoidRoom(vx,vy){
+  var key=vx+','+vy;
+  if(voidRooms[key]) return voidRooms[key];
+  var dist=Math.sqrt(vx*vx+vy*vy);
+  var chaos=Math.min(1,dist/8);
+  function seed(n){ return voidHash(vx,vy,n); }
+  var map=[];
+  for(var r=0;r<15;r++){var row=[];for(var c=0;c<20;c++)row.push(0);map.push(row);}
+  var numP=3+Math.floor(seed(1)*3)+Math.floor(chaos*5);
+  for(var p=0;p<numP;p++){
+    var pr=2+Math.floor(seed(p*10+2)*11);
+    var pc=1+Math.floor(seed(p*10+3)*17);
+    var pw=2+Math.floor(seed(p*10+4)*(4+chaos*6));
+    for(var i=0;i<pw;i++) if(pc+i<19){
+      var wobble=chaos>0.5?Math.floor(seed(p*10+i+5)*3)-1:0;
+      map[Math.max(1,Math.min(13,pr+wobble))][pc+i]=1;
+    }
+  }
+  for(var c2=8;c2<=11;c2++){map[0][c2]=1;map[14][c2]=1;}
+  for(var r2=6;r2<=8;r2++){map[r2][0]=1;map[r2][19]=1;}
+  var lorePool=chaos<0.33?VOID_LORE_CALM:chaos<0.66?VOID_LORE_WEIRD:VOID_LORE_UNHINGED;
+  var numA=2+Math.floor(seed(20)*3)+Math.floor(chaos*4);
+  var enemies=[];
+  for(var a=0;a<numA;a++){
+    var hue=Math.floor(seed(a*7+32)*360);
+    var calmNames=['Unnamed','???','Also Unnamed','Possibly Gerald','Undefined','Pending...','NaN'];
+    var chaosNames=['AAAAAAAA','vibrating','Gerald Prime','Anti-Gerald','Former Tuesday','Mustard Energy','404 Name Not Found'];
+    var names=chaos>0.6?chaosNames:calmNames;
+    var sat=30+Math.floor(chaos*40);
+    var lit=45+Math.floor(seed(a*7+37)*20);
+    var hue2=(hue+120)%360;
+    enemies.push({
+      tx:2+Math.floor(seed(a*7+30)*16), ty:3+Math.floor(seed(a*7+31)*10),
+      spd:0.1+seed(a*7+35)*0.3, pat:seed(a*7+36)>0.5?'h':'v',
+      name:names[Math.floor(seed(a*7+34)*names.length)],
+      characterType:'amoeba',
+      color:'hsl('+hue+','+sat+'%,'+lit+'%)',
+      eyeColor:'hsl('+hue2+',70%,70%)',
+      size:0.8+seed(a*7+38)*0.5+chaos*0.4,
+      _lorePool:lorePool, _loreIdx:Math.floor(seed(a*7+33)*lorePool.length),
+    });
+  }
+  var corn=[];
+  var numC=Math.max(0,3-Math.floor(chaos*3));
+  for(var cc=0;cc<numC;cc++) corn.push({x:2+Math.floor(seed(cc+50)*16),y:3+Math.floor(seed(cc+51)*10)});
+  var bgHue=Math.floor(((vx*47+vy*31)+180+3600)%360);
+  var bgSat=20+Math.floor(chaos*40);
+  var name2=vx===0&&vy===0?'Void of Unwritten Worlds':'Void '+(vx>=0?'+':'')+vx+','+(vy>=0?'+':'')+vy;
+  var loreText2=vx===0&&vy===0?'You have reached the edge of the known universe.':chaos<0.33?'The void stretches on...':chaos<0.66?'Reality is getting a little loose out here.':'EXISTENCE IS OPTIONAL IN THIS SECTOR.';
+  var room={name:name2,gravity:false,isVoid:true,isSafeZone:true,map:map,enemies:enemies,corn:corn,secrets:[],voidX:vx,voidY:vy,chaos:chaos,bgHue:bgHue,bgSat:bgSat,loreText:loreText2};
+  voidRooms[key]=room;
+  return room;
+}
+
 let orbitals = [];
 function applyOrbitals(cfg){ if(cfg.orbitals) orbitals = cfg.orbitals; }
 
@@ -1631,11 +1555,9 @@ function drawScreen(sc){
 
   // ── VOID OF UNWRITTEN WORLDS — special meta rendering ──
   if(sc.isVoid){
-    const chaos=sc.chaos||0;
-    const bgHue=sc.bgHue||220;
-    const bgSat=sc.bgSat||20;
-    // Background — shifts hue based on location
-    ctx.fillStyle=`hsl(${bgHue+Math.sin(frame*0.008)*20},${bgSat}%,${4+chaos*4}%)`;
+    // Shifting deep void
+    var _chaos=sc.chaos||0;var _bgHue=sc.bgHue||220;var _bgSat=sc.bgSat||20;
+    ctx.fillStyle='hsl('+(_bgHue+Math.sin(frame*0.008)*20)+','+_bgSat+'%,'+(4+_chaos*4)+'%)';
     ctx.fillRect(0,0,GW,GH);
     // Slow nebula clouds
     [[0.3,0.2,80,'rgba(120,60,200,0.06)'],[0.7,0.6,60,'rgba(60,120,200,0.05)'],[0.5,0.8,50,'rgba(200,60,120,0.04)']].forEach(([rx,ry,r,col],i)=>{
@@ -2378,9 +2300,7 @@ function startGame(){
   screenCol=0; screenRow=0;
   score=0; cornCount=0; frame=0;
   currentZone='cornmoon';
-  voidX=0; voidY=0;
-  voidRooms={};
-  // Reset void screen to original
+  voidX=0;voidY=0;voidRooms={};
   SCREENS[VOID_SCREEN_IDX]=generateVoidRoom(0,0);
   hideMsg();
   updateHUD();
