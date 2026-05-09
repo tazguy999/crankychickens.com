@@ -1240,203 +1240,71 @@ function drawTile(t,sx,sy){
 // ═══════════════════════════════════════════════
 //  SCREEN DRAWING — with style-bible backgrounds
 // ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-//  ORBITAL ENTITIES
-//  Background presences — too big/complex for floor enemies
-//  Slow arc across the sky layer, hint at bigger lore
-//  Config: cfg.orbitals = [{name, color, size, speed, offset, screenIndex}]
-// ═══════════════════════════════════════════════
+// ── ORBITAL ENTITIES ──
 let orbitals = [];
-
-function applyOrbitals(cfg){
-  if(!cfg.orbitals) return;
-  orbitals = cfg.orbitals;
-}
+function applyOrbitals(cfg){ if(cfg.orbitals) orbitals = cfg.orbitals; }
 
 function drawOrbitals(){
   const scIdx = screenIndex(screenCol, screenRow);
   const newestName = orbitals.length ? orbitals[orbitals.length-1].name : null;
-  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach((o)=>{
+  orbitals.filter(o => o.screenIndex === scIdx || o.screenIndex === -1).forEach(o=>{
     const isNewest = o.name === newestName;
-    const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
     if(o._entryStart === undefined) o._entryStart = frame;
+    const entryFrames = frame - o._entryStart;
     const entryProgress = Math.min(1, entryFrames / 300);
-    const period = isNewest
-      ? (o.period||14400) * (0.1 + entryProgress * 0.9)
-      : (o.period||14400);
+    const period = isNewest ? (o.period||14400)*(0.1+entryProgress*0.9) : (o.period||14400);
     const startAngle = isNewest ? Math.atan2(52 - GH*0.18, (GW-75) - GW/2) : 0;
     const t = (frame / period) + startAngle / (Math.PI*2);
     const angle = t * Math.PI * 2;
-
-    const cx = GW/2 + Math.cos(angle) * (GW*0.45);
-    const cy = GH*0.18 + Math.sin(angle) * (GH*0.12);
-
+    const cx = GW/2 + Math.cos(angle)*(GW*0.45);
+    const cy = GH*0.18 + Math.sin(angle)*(GH*0.12);
     const col = o.color||'#aa66ff';
-    const pulse = 0.6 + Math.sin(frame*0.03 + (o.offset||0))*0.3;
-    const rot = frame*0.006 + (o.offset||0)*0.001;
+    const pulse = 0.6 + Math.sin(frame*0.03)*0.3;
+    const rot = frame*0.006;
+    const sz = (o.size||2.5)*TILE;
 
     ctx.save();
-    ctx.translate(cx, cy);
+    ctx.translate(cx,cy);
     ctx.rotate(rot);
 
-    // Outer glow
-    const grd = ctx.createRadialGradient(0,0,4,0,0,44);
-    grd.addColorStop(0,col+'66');
-    grd.addColorStop(1,'transparent');
-    ctx.globalAlpha=pulse*0.5;
-    ctx.fillStyle=grd;
-    ctx.beginPath();ctx.arc(0,0,44,0,Math.PI*2);ctx.fill();
+    // Glow
+    const grd = ctx.createRadialGradient(0,0,4,0,0,sz*1.5);
+    grd.addColorStop(0,col+'55'); grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.globalAlpha=pulse*0.5; ctx.fillStyle=grd;
+    ctx.beginPath(); ctx.arc(0,0,sz*1.5,0,Math.PI*2); ctx.fill();
 
-    // Coiled body — 3 spiral rings
-    const sz = (o.size||2.5)*TILE;
-    const r0=sz*0.45, r1=sz*0.7, r2=sz*0.9;
-    [[r0,5,0.9],[r1,3.5,0.7],[r2,2,0.5]].forEach(([r,lw,alpha],ring)=>{
-      const startA = frame*0.008 + ring*(Math.PI*0.7);
-      ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.lineCap='round';
+    // Coiled body
+    [[sz*0.45,5,0.9],[sz*0.7,3.5,0.7],[sz*0.9,2,0.5]].forEach(([r,lw,alpha],ring)=>{
+      ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.lineCap='round';
       ctx.globalAlpha=pulse*alpha;
-      ctx.beginPath();ctx.arc(0,0,r,startA,startA+Math.PI*1.6);ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,0,r,frame*0.008+ring*2.2,frame*0.008+ring*2.2+Math.PI*1.6); ctx.stroke();
     });
 
-    // Head on innermost ring
-    const headA = frame*0.008;
-    const hx=Math.cos(headA)*r0, hy=Math.sin(headA)*r0;
-    ctx.globalAlpha=pulse;ctx.fillStyle=col;
-    ctx.beginPath();ctx.arc(hx,hy,sz*0.19,0,Math.PI*2);ctx.fill();
+    // Head
+    const hx=Math.cos(frame*0.008)*sz*0.45, hy=Math.sin(frame*0.008)*sz*0.45;
+    ctx.globalAlpha=pulse; ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(hx,hy,sz*0.19,0,Math.PI*2); ctx.fill();
 
     // Eyes
+    const eyeCol=o.eyeColor||'#ffcc02';
     const eg=0.6+Math.sin(frame*0.1)*0.35;
-    const ex1=hx+sz*0.07, ey1=hy-sz*0.07;
-    const ex2=hx-sz*0.07, ey2=hy-sz*0.07;
-    ctx.globalAlpha=eg;ctx.fillStyle='#fff';
-    ctx.beginPath();ctx.arc(ex1,ey1,sz*0.07,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(ex2,ey2,sz*0.07,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#000';
-    ctx.beginPath();ctx.arc(ex1,ey1,sz*0.035,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(ex2,ey2,sz*0.035,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=eg*0.4;ctx.fillStyle='#ffcc02';
-    ctx.beginPath();ctx.arc(ex1,ey1,sz*0.14,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(ex2,ey2,sz*0.14,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=eg; ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(hx+sz*0.07,hy-sz*0.07,sz*0.07,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx-sz*0.07,hy-sz*0.07,sz*0.07,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=eg*0.4; ctx.fillStyle=eyeCol;
+    ctx.beginPath(); ctx.arc(hx+sz*0.07,hy-sz*0.07,sz*0.14,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx-sz*0.07,hy-sz*0.07,sz*0.14,0,Math.PI*2); ctx.fill();
 
-    // Horns
-    ctx.globalAlpha=0.8;ctx.strokeStyle='#ffcc02';ctx.lineWidth=1.5;ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(hx-sz*0.06,hy-sz*0.14);ctx.lineTo(hx-sz*0.16,hy-sz*0.32);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(hx+sz*0.06,hy-sz*0.14);ctx.lineTo(hx+sz*0.16,hy-sz*0.32);ctx.stroke();
-
-    // Debris orbit
-    if(o.debris){
-      for(let d=0;d<4;d++){
-        const da=frame*0.015+d*(Math.PI/2);
-        const dr=r2*1.2;
-        ctx.globalAlpha=0.35;ctx.fillStyle=col;
-        ctx.beginPath();ctx.arc(Math.cos(da)*dr,Math.sin(da)*dr*0.6,sz*0.06,0,Math.PI*2);ctx.fill();
-      }
+    // Name
+    if(o.name){
+      ctx.globalAlpha=0.7;
+      ctx.fillStyle='rgba(0,0,0,0.6)';
+      ctx.fillRect(-30,sz+4,60,14);
+      ctx.fillStyle=col; ctx.font='bold 9px Fredoka One'; ctx.textAlign='center';
+      ctx.fillText(o.name,0,sz+14); ctx.textAlign='left';
     }
 
-    // Name tag
-    ctx.globalAlpha=0.75*pulse;
-    ctx.fillStyle='rgba(0,0,0,0.65)';
-    const tw=ctx.measureText(o.name||'').width+12;
-    ctx.beginPath();ctx.roundRect(-tw/2,r2+8,tw,16,4);ctx.fill();
-    ctx.fillStyle=col;ctx.font='bold 10px Fredoka One';ctx.textAlign='center';
-    ctx.fillText(o.name||'',0,r2+19);ctx.textAlign='left';
-
-    ctx.globalAlpha=1;
-    ctx.restore();
-  });
-}
-    // Newest orbital: start exactly where the planet is (top-right) with fast entry
-    const entryFrames = o._entryStart !== undefined ? frame - o._entryStart : 0;
-    if(o._entryStart === undefined) o._entryStart = frame;
-    const entryProgress = Math.min(1, entryFrames / 300);
-    const period = isNewest
-      ? (o.period||14400) * (0.1 + entryProgress * 0.9)
-      : (o.period||14400);
-    // Start angle calculated so cx=GW-75, cy=52 at t=0
-    // cx = GW/2 + cos(angle) * GW*0.55 → cos(angle) = (GW-75 - GW/2)/(GW*0.55)
-    // cy = GH*0.18 + sin(angle) * GH*0.12 → sin(angle) = (52 - GH*0.18)/(GH*0.12)
-    const startAngle = isNewest ? Math.atan2(52 - GH*0.18, (GW-75) - GW/2) : 0;
-    const t = (frame / period) + startAngle / (Math.PI*2);
-    const angle = t * Math.PI * 2;
-
-    // Arc through sky — same orbit radius as planet position
-    const cx = GW/2 + Math.cos(angle) * (GW*0.45);
-    const cy = GH*0.18 + Math.sin(angle) * (GH*0.12);
-
-    // Always visible — orbit stays in sky band
-    const sz = (o.size||2.5) * TILE;
-    const col = o.color||'#aaccff';
-    const pulse = 0.6 + Math.sin(frame*0.02 + (o.offset||0))*0.3;
-
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    // Outer glow
-    const grd = ctx.createRadialGradient(0,0,sz*0.2,0,0,sz*1.4);
-    grd.addColorStop(0, col+'88');
-    grd.addColorStop(0.5, col+'22');
-    grd.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = pulse * 0.6;
-    ctx.fillStyle = grd;
-    ctx.beginPath();ctx.arc(0,0,sz*1.4,0,Math.PI*2);ctx.fill();
-
-    // Body — serpentine/wyrm shape using bezier segments
-    ctx.globalAlpha = pulse * 0.85;
-    const bodyLen = sz * 3;
-    const wave = Math.sin(frame*0.015 + (o.offset||0)) * sz * 0.4;
-
-    // Draw body segments
-    ctx.strokeStyle = col;
-    ctx.lineWidth = sz * 0.6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-bodyLen/2, wave);
-    ctx.bezierCurveTo(-bodyLen/4, -wave, bodyLen/4, wave, bodyLen/2, -wave*0.5);
-    ctx.stroke();
-
-    // Scales shimmer overlay
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = sz * 0.3;
-    ctx.stroke();
-
-    // Head
-    ctx.fillStyle = col;
-    ctx.globalAlpha = pulse;
-    ctx.beginPath();ctx.ellipse(bodyLen/2, -wave*0.5, sz*0.5, sz*0.4, Math.atan2(-wave*0.5, bodyLen/2), 0, Math.PI*2);ctx.fill();
-
-    // Eyes — galaxy-sized, watching
-    const eyeGlow = 0.5 + Math.sin(frame*0.04)*0.4;
-    ctx.fillStyle = o.eyeColor||'#ffffff';
-    ctx.globalAlpha = eyeGlow;
-    ctx.beginPath();ctx.arc(bodyLen/2 + sz*0.2, -wave*0.5 - sz*0.15, sz*0.18, 0, Math.PI*2);ctx.fill();
-    ctx.globalAlpha = eyeGlow*0.5;
-    ctx.fillStyle = o.eyeColor||'#ffffff';
-    ctx.beginPath();ctx.arc(bodyLen/2 + sz*0.2, -wave*0.5 - sz*0.15, sz*0.3, 0, Math.PI*2);ctx.fill();
-
-    // Debris orbit
-    if(o.debris){
-      for(let d=0;d<4;d++){
-        const da = angle*3 + d*(Math.PI/2);
-        const dr = sz * (0.8 + d*0.3);
-        ctx.globalAlpha = 0.3;
-        ctx.fillStyle = col;
-        ctx.beginPath();ctx.arc(Math.cos(da)*dr - bodyLen/2, Math.sin(da)*dr*0.4, sz*0.08, 0, Math.PI*2);ctx.fill();
-      }
-    }
-
-    // Name tag — appears when near screen edge player might approach
-    ctx.globalAlpha = 0.7 * pulse;
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    const tw = ctx.measureText(o.name||'').width + 12;
-    ctx.beginPath();ctx.roundRect(-tw/2, sz*0.6, tw, 16, 4);ctx.fill();
-    ctx.fillStyle = col;
-    ctx.font = 'bold 10px Fredoka One';
-    ctx.textAlign = 'center';
-    ctx.fillText(o.name||'', 0, sz*0.6+11);
-    ctx.textAlign = 'left';
-
-    ctx.globalAlpha = 1;
-    ctx.restore();
+    ctx.globalAlpha=1; ctx.restore();
   });
 }
 
@@ -1444,8 +1312,6 @@ function drawScreen(sc){
   const isMoon=sc.gravity;
 
   drawStarfield(screenCol*60,screenRow*60);
-
-  // Orbital background entities — behind tiles, in sky layer
   drawOrbitals();
 
   if(isMoon){
@@ -1921,24 +1787,6 @@ function updateHUD(){
   hudZone=currentScreen?currentScreen().name:'';
 }
 
-// ── BUILD STAMP — updated on every deploy ──
-const BUILD_STAMP = 'v0509-1600';
-
-// ── roundRect polyfill for older browsers ──
-if(!CanvasRenderingContext2D.prototype.roundRect){
-  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
-    if(typeof r==='number') r={upperLeft:r,upperRight:r,lowerRight:r,lowerLeft:r};
-    const tl=r.upperLeft||0,tr=r.upperRight||0,br=r.lowerRight||0,bl=r.lowerLeft||0;
-    this.beginPath();
-    this.moveTo(x+tl,y);
-    this.lineTo(x+w-tr,y);this.arcTo(x+w,y,x+w,y+tr,tr);
-    this.lineTo(x+w,y+h-br);this.arcTo(x+w,y+h,x+w-br,y+h,br);
-    this.lineTo(x+bl,y+h);this.arcTo(x,y+h,x,y+h-bl,bl);
-    this.lineTo(x,y+tl);this.arcTo(x,y,x+tl,y,tl);
-    this.closePath();
-  };
-}
-
 function drawHUD(){
   // Top-left: hearts
   const heartSize=18;
@@ -1963,12 +1811,10 @@ function drawHUD(){
     ctx.fillStyle='#aacfff';ctx.font='bold 12px Fredoka One';
     ctx.fillText(hudZone,10,GH-10);
   }
-
-  // Bottom-right: build stamp
-  ctx.fillStyle='rgba(255,255,255,0.18)';
+  // Build stamp
+  ctx.fillStyle='rgba(255,255,255,0.2)';
   ctx.font='9px monospace';ctx.textAlign='right';
-  ctx.fillText(BUILD_STAMP,GW-6,GH-6);
-  ctx.textAlign='left';
+  ctx.fillText(BUILD_STAMP,GW-4,GH-4);ctx.textAlign='left';
 }
 
 function showMsg(txt){
@@ -2233,9 +2079,6 @@ function applyConfig(cfg){
     });
   }
 
-  // Apply orbital background entities
-  applyOrbitals(cfg);
-
   // Apply secrets
   if(cfg.secrets){
     cfg.secrets.forEach(s=>{
@@ -2252,6 +2095,8 @@ function applyConfig(cfg){
     });
   }
 
+  applyOrbitals(cfg);
+
   // Apply new screens from config
   if(cfg.newScreens && cfg.newScreens.length > 0){
     cfg.newScreens.forEach(ns=>{
@@ -2266,12 +2111,9 @@ function applyConfig(cfg){
       });
       dbg('Added screen: '+ns.name);
     });
-    // Grow cols to 3 first, then add rows — but avoid empty slots
+    // Grow cols to 3 first, then add rows
     const total = SCREENS.length;
-    // Try 2 cols first if it divides evenly, otherwise 3
-    if(total % 2 === 0) { WORLD_COLS=2; }
-    else if(total % 3 === 0) { WORLD_COLS=3; }
-    else { WORLD_COLS = total <= 4 ? 2 : 3; } // prefer fewer empties
+    WORLD_COLS = total <= 2 ? 2 : total <= 6 ? 3 : 4;
     WORLD_ROWS = Math.ceil(total / WORLD_COLS);
     dbg('World: '+WORLD_COLS+'x'+WORLD_ROWS);
   }
