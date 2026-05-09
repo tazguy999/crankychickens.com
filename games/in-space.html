@@ -293,6 +293,20 @@ const unstuckBtn = document.getElementById('unstuckBtn');
 
 function unstuckPlayer(){
   if(gameState!=='play') return;
+
+  // In the void — go home
+  if(isInVoid()){
+    voidX=0; voidY=0; voidRooms={};
+    SCREENS[VOID_SCREEN_IDX]=generateVoidRoom(0,0);
+    screenCol=0; screenRow=0;
+    player.x=9*TILE; player.y=7*TILE;
+    player.vx=0; player.vy=0; player.inv=60;
+    spawnP(player.x+16,player.y+16,'#ffcc02',20);
+    popup={text:'🏠 Back to Landing Zone!',timer:120};
+    hudZone=SCREENS[0].name;
+    return;
+  }
+
   const map = currentScreen().map;
 
   // Priority 1 — tiles near exit corridors
