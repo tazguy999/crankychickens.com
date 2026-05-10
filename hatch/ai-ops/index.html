@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- FRAMEWORK_VERSION: 1.0 UPDATED: 2026-05-10 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Control · Cranky Chickens AI Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a08;
+    --surface: #111110;
+    --surface2: #181816;
+    --border: #242420;
+    --yolk: #f5c842;
+    --yolk-dim: rgba(245,200,66,0.15);
+    --yolk-border: rgba(245,200,66,0.25);
+    --shell: #e8e0cc;
+    --shell-dim: #6b6454;
+    --red: #f05050;
+    --green: #60d080;
+    --blue: #60b8f0;
+    --purple: #a080f0;
+    --text: #e0d8c8;
+    --text-dim: #7a7060;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 3rem 1.5rem 5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  * { position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--yolk);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 7vw, 4rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+
+  h1 span { color: var(--yolk); }
+
+  .subtitle {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--shell-dim);
+    line-height: 1.65;
+    max-width: 580px;
+  }
+
+  /* Intro callout */
+  .intro-box {
+    background: var(--yolk-dim);
+    border: 1px solid var(--yolk-border);
+    border-radius: 8px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 3rem;
+  }
+
+  .intro-box p {
+    font-size: 0.98rem;
+    line-height: 1.75;
+    color: #d8c888;
+    font-weight: 400;
+  }
+
+  .intro-box p strong { color: var(--yolk); font-weight: 700; }
+
+  /* How to read */
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .legend-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+  }
+
+  .legend-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    color: var(--shell-dim);
+  }
+
+  .legend-title.process { color: var(--green); }
+  .legend-title.auto { color: var(--blue); }
+
+  .legend-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .legend-eggs {
+    font-size: 0.78rem;
+    white-space: nowrap;
+    min-width: 3.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  .legend-desc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  /* Section headers */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--shell-dim);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-wrap { margin-bottom: 2.5rem; }
+
+  /* Skill card */
+  .skill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    transition: border-color 0.15s;
+  }
+
+  .skill-card:hover { border-color: #363630; }
+
+  .skill-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .skill-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--yolk);
+    font-weight: 500;
+  }
+
+  .skill-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tag-done { background: rgba(96,208,128,0.1); color: var(--green); border: 1px solid rgba(96,208,128,0.2); }
+  .tag-progress { background: rgba(245,200,66,0.1); color: var(--yolk); border: 1px solid rgba(245,200,66,0.2); }
+  .tag-fleet { background: rgba(160,128,240,0.1); color: var(--purple); border: 1px solid rgba(160,128,240,0.2); }
+
+  .skill-desc {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin-bottom: 0.85rem;
+  }
+
+  .skill-bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .bar-group {}
+
+  .bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+  }
+
+  .bar-label.process { color: var(--green); opacity: 0.7; }
+  .bar-label.auto { color: var(--blue); opacity: 0.7; }
+
+  .eggs {
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* Pipeline section */
+  .pipeline-card {
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    opacity: 0.7;
+  }
+
+  /* Fleet section */
+  .fleet-empty {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .fleet-empty-egg { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+  .fleet-empty p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* Maturity note */
+  .maturity-note {
+    margin-top: 3rem;
+    padding: 1.5rem 1.75rem;
+    background: var(--surface);
+    border-left: 3px solid var(--yolk);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .maturity-note p {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text-dim);
+  }
+
+  .maturity-note p strong { color: var(--text); font-weight: 700; }
+  .maturity-note p em { color: var(--yolk); font-style: normal; }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 520px) {
+    .legend { grid-template-columns: 1fr; }
+    .skill-bars { grid-template-columns: 1fr; gap: 0.4rem; }
+    .skill-top { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">🐔 Clucker Entertainment · Mission Control</div>
+  <h1>The Flock's<br><span>AI Ops Board</span></h1>
+  <p class="subtitle">Every AI operation the flock has hatched, where it stands, and how close it is to flying on its own. Two bars per skill — both matter.</p>
+</header>
+
+<div class="intro-box">
+  <p>AI can help build the game — but only if the team knows <strong>what the AI should do, how ready the process is, and how much a chicken still needs to be in the loop</strong>. This board tracks every AI operation in the Cranky Chickens studio. Two bars per skill — both matter. 🥚 → 🐣 → 🐔 → 🚀</p>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-card">
+    <div class="legend-title process">🥚 Nest Score — Is the process ready?</div>
+    <div class="legend-row">
+      <div class="legend-eggs">🥚</div>
+      <div class="legend-desc">We know something is annoying and slow</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🥚🥚</div>
+      <div class="legend-desc">We know exactly what goes in and what should come out</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🥚🥚🥚</div>
+      <div class="legend-desc">We've done it the same way twice — another chicken could follow it</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🥚🥚🥚🥚</div>
+      <div class="legend-desc">Every step is confirmed — ready to hand to an AI</div>
+    </div>
+  </div>
+  <div class="legend-card">
+    <div class="legend-title auto">🐔 Flock Score — How much chicken is still needed?</div>
+    <div class="legend-row">
+      <div class="legend-eggs">🐔</div>
+      <div class="legend-desc">AI can do it — but a chicken triggers and checks every run</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🐔🐔</div>
+      <div class="legend-desc">It works reliably enough to trust</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🐔🐔🐔</div>
+      <div class="legend-desc">Runs on a schedule — one chicken owns it, not in the critical path</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🐔🐔🐔🐔</div>
+      <div class="legend-desc">Triggers automatically when something happens in the game</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-eggs">🐔🐔🐔🐔🐔</div>
+      <div class="legend-desc">Full autopilot — chickens only hear about exceptions</div>
+    </div>
+  </div>
+</div>
+
+<!-- Dragon Scribe -->
+<div class="section-wrap">
+  <div class="section-label">🐉 Dragon Scribe — Story & Design</div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/write-spec</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Dragon Scribe describes a new game rule in plain English. AI turns it into a named spec, confirms it back in plain English, and flags if anything is ambiguous before any code is written.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔🐔⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/lore-check</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Scans all existing story notes and world rules for contradictions before a new scene gets written. Flags any lore conflicts so Dragon Scribe can decide before committing.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔🐔🐔⬜⬜</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cannon Master -->
+<div class="section-wrap">
+  <div class="section-label">💥 Cannon Master — Sprites & Assets</div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/sprite-gen</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Cannon Master describes a new character or object. AI generates a sprite to the game's pixel art spec, commits it to the preview branch, and posts a preview link for approval before it goes into the game.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔🐔⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/animation-check</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">After a new sprite is committed, AI checks it against the animation spec — frame count, dimensions, palette — and flags anything that would break the game engine before it's ever loaded.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚⬜</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Build -->
+<div class="section-wrap">
+  <div class="section-label">⚙️ Build — Code & Features</div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/feature-build</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Takes a written spec and builds the feature — writes the code, runs it against the spec, and only marks done when the test passes. Never guesses what "done" means; the spec decides.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/world-scan</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Before touching a part of the game world, scans what's already been built there — existing rules, tile configs, connected zones — so the builder doesn't accidentally break something two rooms away.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚⬜</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/bug-hunt</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Scans the bug board for untriaged issues, auto-triages by severity, opens a branch, writes a failing test that reproduces the bug, and posts a fix attempt for review — end to end.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔🐔⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/release-check</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Before a new version ships to the website, checks all open feature branches, confirms every spec has a passing test, and flags anything that would send a broken game to players.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QA -->
+<div class="section-wrap">
+  <div class="section-label">🎮 Playtesting & QA</div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/playtest-run</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Runs the full playtest checklist for the current build — walks through every game scenario, checks gravity switching, collision rules, cannon behavior, and zero-G sections — and reports anything that doesn't match the spec.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/spec-explainer</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Reads any existing test in the codebase and translates it back into plain English — what rule it's checking, what would make it fail, and whether that matches what the team actually intended.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔🐔⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Observability -->
+<div class="section-wrap">
+  <div class="section-label">👁️ Mission Control — Logs & Pulse</div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/dev-journal</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Weekly digest of what got built, what specs were written, what bugs were found, and what the AI got wrong. Helps the team spot patterns and avoid making the same mistakes next sprint.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-top">
+      <div class="skill-name">/standup</div>
+      <div class="skill-tag tag-done">✓ Hatched</div>
+    </div>
+    <div class="skill-desc">Daily briefing for the team — what each contributor committed to, what actually got done, and any blockers. Pulled from branch activity and spec status, not from anyone having to write it manually.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚🥚🥚</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">🐔🐔⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pipeline -->
+<div class="section-wrap">
+  <div class="section-label">🔜 In the Pipeline — Eggs Still Incubating</div>
+
+  <div class="pipeline-card">
+    <div class="skill-top">
+      <div class="skill-name">Sound Check</div>
+      <div class="skill-tag tag-progress">Incubating</div>
+    </div>
+    <div class="skill-desc">Validates new chiptune tracks against the game's audio spec — tempo, loop points, channel limits — before they're wired into a level.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚🥚⬜⬜</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">⬜⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-card">
+    <div class="skill-top">
+      <div class="skill-name">Player Feedback Monitor</div>
+      <div class="skill-tag tag-progress">Incubating</div>
+    </div>
+    <div class="skill-desc">Watches for repeated player reports about a specific level or mechanic and surfaces them as a potential bug or design issue before the team even notices.</div>
+    <div class="skill-bars">
+      <div class="bar-group">
+        <div class="bar-label process">Nest Score</div>
+        <div class="eggs">🥚⬜⬜⬜</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label auto">Flock Score</div>
+        <div class="eggs">⬜⬜⬜⬜⬜</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fleet -->
+<div class="section-wrap">
+  <div class="section-label">🚀 Graduated to Fleet — Flying Solo</div>
+  <div class="fleet-empty">
+    <div class="fleet-empty-egg">🥚</div>
+    <p>First graduation incoming.<br>The flock is getting ready.</p>
+  </div>
+</div>
+
+<div class="maturity-note">
+  <p>The goal isn't to replace the chickens. It's to <strong>free them up for the stuff only chickens can do</strong> — deciding what the game should feel like, writing the rules, approving the art. Every operation that graduates to fleet is one less thing <em>Dragon Scribe and Cannon Master</em> have to think about. That's the whole point.</p>
+</div>
+
+<footer>cranky chickens · mission control &nbsp;·&nbsp; ai ops board &nbsp;·&nbsp; hatch.crankychickens.com</footer>
+
+</body>
+</html>

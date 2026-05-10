@@ -15,3 +15,9 @@
   for = "/configs/*"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Hatch framework site — never cache
+[[headers]]
+  for = "/hatch/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

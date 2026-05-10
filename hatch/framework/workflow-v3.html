@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cranky Chickens — AI Pipeline Workflows v3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f7f6f2; font-family: 'Inter', sans-serif; color: #1a1a1a; padding: 40px 24px 80px; }
+
+  .page-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #bbb; margin-bottom: 6px; }
+  .page-heading { font-size: 28px; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #888; margin-bottom: 52px; }
+
+  .section { margin-bottom: 56px; }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #bbb; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #e8e8e4; display: flex; align-items: center; gap: 10px; }
+  .section-new { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: #fdf4ff; border: 1px solid #e879f9; color: #86198f; letter-spacing: 0.1em; }
+  .section-updated { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; letter-spacing: 0.1em; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .chip-actor  { background: #1a1a1a; color: #f7f6f2; }
+  .chip-ai     { background: #2563eb; color: #fff; }
+  .chip-data   { background: #fff; border: 1.5px solid #d4d4cc; color: #333; }
+  .chip-ok     { background: #dcfce7; border: 1.5px solid #86efac; color: #166534; }
+  .chip-warn   { background: #fef3c7; border: 1.5px solid #fcd34d; color: #92400e; }
+  .chip-bad    { background: #fee2e2; border: 1.5px solid #fca5a5; color: #991b1b; }
+  .chip-log    { background: #f0f4ff; border: 1.5px solid #bfdbfe; color: #1e40af; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .chip-new    { background: #fdf4ff; border: 1.5px solid #e879f9; color: #86198f; }
+  .chip-preview { background: #f0fdf4; border: 1.5px solid #86efac; color: #166534; }
+
+  .arrow-r { flex-shrink: 0; display: flex; align-items: center; width: 28px; position: relative; }
+  .arrow-r::after { content: ''; position: absolute; left: 0; right: 7px; height: 1.5px; background: #ccc; }
+  .arrow-r::before { content: '▶'; position: absolute; right: 0; font-size: 7px; color: #aaa; top: 50%; transform: translateY(-50%); }
+
+  .arrow-d-wrap { height: 22px; padding-left: 16px; display: flex; }
+  .arrow-d { width: 1.5px; background: #ccc; position: relative; flex-shrink: 0; }
+  .arrow-d::after { content: '▼'; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-size: 7px; color: #aaa; }
+
+  .pipeline { display: flex; flex-direction: column; gap: 0; }
+  .step-num-col { display: flex; flex-direction: column; align-items: center; width: 36px; flex-shrink: 0; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; }
+  .step-vline { width: 1.5px; flex: 1; background: #d4d4cc; margin: 4px 0; min-height: 20px; }
+  .step-vline-new { width: 1.5px; flex: 1; background: #e879f9; margin: 4px 0; min-height: 20px; opacity: 0.4; }
+  .step-vline-preview { width: 1.5px; flex: 1; background: #22c55e; margin: 4px 0; min-height: 20px; opacity: 0.4; }
+  .step-content { flex: 1; padding: 0 0 24px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .step-row { display: flex; gap: 0; }
+  .step-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 28px; }
+  .step-name { font-size: 13px; font-weight: 600; }
+  .step-badge { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 99px; }
+  .badge-new { background: #fdf4ff; border: 1px solid #e879f9; color: #86198f; }
+  .badge-updated { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+  .badge-preview { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+
+  .skill-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 99px; }
+  .t-write-spec    { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .t-type-res      { background: #fdf4ff; color: #86198f; border: 1px solid #e879f9; }
+  .t-sprite-gen    { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+  .t-feature-build { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .t-release-check { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .t-live-preview  { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+
+  .step-desc { font-size: 11px; color: #666; line-height: 1.6; }
+
+  .branch-row { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: #555; margin-bottom: 5px; }
+  .branch-tag { font-family: 'JetBrains Mono', monospace; font-size: 8px; padding: 1px 5px; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+  .bt-yes    { background: #dcfce7; color: #166534; }
+  .bt-no     { background: #fee2e2; color: #991b1b; }
+  .bt-new    { background: #fdf4ff; color: #86198f; border: 1px solid #e879f9; }
+  .bt-skip   { background: #f7f6f2; color: #999; }
+
+  .decision { background: #fff; border: 1.5px dashed #d4d4cc; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .decision.purple { border-color: #e879f9; }
+  .decision.green { border-color: #86efac; }
+  .decision-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.1em; color: #aaa; }
+  .decision-label.purple { color: #86198f; }
+  .decision-label.green { color: #166534; }
+
+  .fail-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #666; flex-wrap: wrap; padding: 6px 10px; background: #fff8f8; border: 1px solid #fca5a5; border-radius: 6px; }
+  .fail-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; color: #ef4444; }
+
+  .ding { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 99px; white-space: nowrap; }
+  .d-pink   { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+  .d-purple { background: #fdf4ff; color: #86198f; border: 1px solid #e879f9; }
+  .d-amber  { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .d-blue   { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+
+  .log-preview { background: #0f172a; border-radius: 8px; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.8; color: #94a3b8; }
+  .lk { color: #7dd3fc; }
+  .lv-g { color: #86efac; }
+  .lv-r { color: #fca5a5; }
+  .lv-y { color: #fcd34d; }
+  .lv-p { color: #e879f9; }
+  .lv-s { color: #475569; }
+
+  .callout { border-radius: 8px; padding: 10px 14px; font-size: 11px; line-height: 1.6; }
+  .c-purple { background: #fdf4ff; border: 1.5px solid #e879f9; }
+  .c-green  { background: #f0fdf4; border: 1.5px solid #86efac; }
+  .c-amber  { background: #fefce8; border: 1.5px solid #fde047; }
+  .c-blue   { background: #eff6ff; border: 1.5px solid #93c5fd; }
+
+  .pass-card { border-radius: 10px; padding: 12px 14px; border: 1.5px solid #d4d4cc; background: #fff; display: flex; flex-direction: column; gap: 6px; }
+  .pass-name { font-size: 13px; font-weight: 600; }
+  .pass-sub { font-size: 11px; color: #666; }
+
+  .fallback-chain { display: flex; flex-direction: column; gap: 5px; }
+  .fallback-row { display: flex; align-items: center; gap: 10px; }
+  .fallback-arrow { font-size: 10px; color: #bbb; padding-left: 20px; }
+
+  .nqr-flow { display: flex; flex-direction: column; gap: 4px; }
+  .nqr-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .score-card { background: #fff; border: 1.5px solid #d4d4cc; border-radius: 10px; padding: 12px 14px; }
+  .score-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; color: #aaa; margin-bottom: 6px; letter-spacing: 0.1em; }
+  .score-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #555; margin-bottom: 3px; }
+  .sdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .formula { background: #1a1a1a; color: #f7f6f2; border-radius: 8px; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.9; }
+  .f-comment { color: #6b7280; }
+  .f-var { color: #93c5fd; }
+  .f-op { color: #fcd34d; }
+  .f-val { color: #86efac; }
+
+  .footnote { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #ccc; margin-top: 52px; text-align: center; }
+
+  hr { border: none; border-top: 1px solid #e8e8e4; margin: 8px 0 16px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Cranky Chickens — AI Pipeline</div>
+<div class="page-heading">Workflow Reference v3</div>
+<div class="page-sub">May 2026 — live sprite preview, type resolution, decomposed steps</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- WF1: SUBMISSION → LIVE PREVIEW → DEPLOY -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Workflow 1 — Submission to Deployment <span class="section-updated">UPDATED</span></div>
+
+  <div class="pipeline">
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#1a1a1a">👧</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Kid submits idea</div></div>
+        <div class="step-desc">Dragon Scribe (text/lore) or Cannon Master (drawing + description) submits via their portal.</div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#166534">👁️</div><div class="step-vline-preview"></div></div>
+      <div class="step-content">
+        <div class="step-header">
+          <div class="step-name">Preview & Approve</div>
+          <span class="step-badge badge-updated">UPDATED</span>
+          <span class="skill-tag t-live-preview">live sprite</span>
+        </div>
+        <div class="step-desc">Tapping this now auto-runs steps 1–3 and renders the actual sprite on canvas before any approval. Nick sees the real character.</div>
+        <div class="decision green">
+          <div class="decision-label green">WHAT RUNS IN PREVIEW</div>
+          <div class="branch-row"><span class="branch-tag bt-yes">1</span>interpretIntent — reads idea, proposes spec</div>
+          <div class="branch-row"><span class="branch-tag bt-yes">2</span>resolveType — new vs existing type</div>
+          <div class="branch-row"><span class="branch-tag bt-yes">3</span>generateSprite — draws actual character</div>
+          <div class="branch-row"><span class="branch-tag bt-skip">—</span>Steps 4–5 skipped until Approve</div>
+        </div>
+        <div class="decision green" style="margin-top:6px">
+          <div class="decision-label green">NICK'S OPTIONS</div>
+          <div class="branch-row"><span class="branch-tag bt-yes">✅</span>Approve This — runs steps 4–5 with cached sprite</div>
+          <div class="branch-row"><span class="branch-tag bt-no">🔄</span>Regenerate — re-runs step 3 only, new sprite roll</div>
+          <div class="branch-row"><span class="branch-tag bt-no">✕</span>Cancel — nothing committed</div>
+          <div class="branch-row"><span class="branch-tag bt-no">✕ Pass</span>Opens pass picker (see WF3)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#2563eb">🤖</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Steps 4–5 run on Approve</div></div>
+        <div class="step-desc">Config placed, sprite + router injected into game file, committed to kids-preview. Nick merges to make it live.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="chip chip-ok" style="font-size:11px;padding:5px 10px">✅ full_code — sprite in game</div>
+          <div class="chip chip-warn" style="font-size:11px;padding:5px 10px">🌌 orbital — sprite failed</div>
+          <div class="chip chip-bad" style="font-size:11px;padding:5px 10px">⚠️ iguana — last resort</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#16a34a">🚀</div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Merge → crankychickens.com</div></div>
+        <div class="step-desc">Nick merges kids-preview → main. Netlify deploys. Merge panel auto-hides when branches are identical.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- WF2: FIVE-STEP PIPELINE              -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Workflow 2 — Five-Step Pipeline <span class="section-updated">UPDATED</span></div>
+
+  <div class="pipeline">
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#2563eb">1</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">interpretIntent</div><span class="skill-tag t-write-spec">/write-spec</span></div>
+        <div class="step-desc">Reads the submission. Returns structured spec: characterType, color, eyeColor, behavior, plainEnglish confirm. Runs in preview AND approve.</div>
+        <div class="fail-row"><span class="fail-label">FAIL</span>Returns {_failed:true}<span class="ding d-blue">write-spec ding</span></div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#86198f">2</div><div class="step-vline-new"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">resolveType</div><span class="skill-tag t-type-res">/type-resolution</span><span class="step-badge badge-new">NEW</span></div>
+        <div class="step-desc">Checks if drawCharacter_[type] exists. If not, LLM decides: map to existing type or generate new. Runs in preview.</div>
+        <div class="decision purple">
+          <div class="decision-label purple">TYPE OUTCOMES</div>
+          <div class="branch-row"><span class="branch-tag bt-yes">EXISTS</span>Skip step 3 entirely. Use existing function.</div>
+          <div class="branch-row"><span class="branch-tag bt-no">MAPPED</span>Use existing type, update spec. Skip step 3.</div>
+          <div class="branch-row"><span class="branch-tag bt-new">NEW</span>Proceed to step 3 with blank-slate prompt.</div>
+        </div>
+        <div class="fail-row"><span class="fail-label">FAIL</span>Default to iguana<span class="ding d-purple">type-resolution ding</span></div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#9d174d">3</div><div class="step-vline-preview"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">generateSprite</div><span class="skill-tag t-sprite-gen">/sprite-gen</span><span class="step-badge badge-updated">UPDATED</span></div>
+        <div class="step-desc">Two modes. Runs in preview — result cached and reused on Approve.</div>
+        <div class="decision green">
+          <div class="decision-label green">TWO PROMPTS</div>
+          <div class="branch-row"><span class="branch-tag bt-skip">STD</span>Reference examples, existing style. For mapped/known types.</div>
+          <div class="branch-row"><span class="branch-tag bt-new">NEW</span>No examples, blank slate, kid's raw description. For new types.</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;font-size:11px;color:#555;margin-top:4px">
+          <span>🔄 Regenerate button</span><span style="color:#bbb">re-runs this step only from preview modal</span>
+        </div>
+        <div class="fail-row"><span class="fail-label">FAIL</span>→ orbital fallback → iguana<span class="ding d-pink">sprite-gen ding</span></div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#d97706">4</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">generateConfig</div><span class="skill-tag t-feature-build">/feature-build</span></div>
+        <div class="step-desc">Deterministic — no AI call. Assembles config entry from spec: screenIndex, tx, ty, spd, pat, characterType. Runs on Approve only.</div>
+        <div class="fail-row"><span class="fail-label">FAIL</span>Hard stop<span class="ding d-amber">feature-build ding</span></div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#16a34a">5</div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">validate + inject</div><span class="skill-tag t-release-check">/release-check</span></div>
+        <div class="step-desc">Injects drawFn + router case into game file. Writes config. Commits to kids-preview. New types wait here until Nick merges.</div>
+        <div style="font-size:11px;color:#555;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:6px 10px">Game file read ONCE in preview, SHA passed through — no stale SHA conflicts.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- WF3: PASS PICKER                     -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Workflow 3 — Pass Decision</div>
+
+  <div class="pipeline">
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#1a1a1a">👤</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Nick taps ✕ Pass</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-left:36px;flex-wrap:wrap">
+
+      <div class="pass-card" style="border-color:#93c5fd;flex:1;min-width:140px">
+        <div class="pass-name" style="color:#1e40af">🐣 Kid's idea</div>
+        <div class="pass-sub">Not ready — concept needs work. No skill ding. Goes back to kid.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#aaa">status → rejected</div>
+      </div>
+
+      <div class="pass-card" style="border-color:#fca5a5;flex:1;min-width:140px">
+        <div class="pass-name" style="color:#991b1b">🤖 AI's fault</div>
+        <div class="pass-sub">Pick reason → skill gets dinged.</div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
+          <div style="font-size:10px;color:#555;display:flex;gap:6px;align-items:center">🎨 Wrong look <span class="ding d-pink">sprite-gen</span></div>
+          <div style="font-size:10px;color:#555;display:flex;gap:6px;align-items:center">🎯 Wrong behavior <span class="ding d-amber">feature-build</span></div>
+          <div style="font-size:10px;color:#555;display:flex;gap:6px;align-items:center">💬 Missed intent <span class="ding d-blue">write-spec</span></div>
+          <div style="font-size:10px;color:#555;display:flex;gap:6px;align-items:center">🤖 Fell back <span class="ding d-pink">sprite-gen</span></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#aaa;margin-top:4px">logs ai_pass entry → skill scores</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- WF4: NQR POST-DEPLOY                 -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Workflow 4 — Not Quite Right (Post-Deploy) <span class="section-updated">UPDATED</span></div>
+
+  <div class="pipeline">
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#1a1a1a">👤</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Nick play-tests</div></div>
+        <div class="step-desc">Only the most recently deployed item shows the 🎯 Not quite right button.</div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#d97706">🎯</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Pick reason + action</div><span class="step-badge badge-updated">UPDATED</span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div class="pass-card" style="flex:1;min-width:120px;border-color:#fca5a5">
+            <div class="pass-name" style="font-size:12px;color:#991b1b">📝 Log Only</div>
+            <div class="pass-sub">Dings skill. Marks needs_revision. Done.</div>
+          </div>
+          <div class="pass-card" style="flex:1;min-width:120px;border-color:#86efac">
+            <div class="pass-name" style="font-size:12px;color:#166534">🔄 Log & Retry</div>
+            <div class="pass-sub">Logs ding, resets to pending, immediately re-runs full pipeline.</div>
+          </div>
+        </div>
+        <div class="callout c-amber" style="margin-top:6px">
+          <strong>Reason → skill mapping:</strong> Wrong look → sprite-gen · Wrong behavior → feature-build · Missed intent → write-spec · Fell back → sprite-gen
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#16a34a">📋</div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Delivery log entry written</div></div>
+        <div class="step-desc">intervention type logged with dingedSkills array. AI Ops reads this to compute per-skill intervention rates automatically.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- WF5: SCORE COMPUTATION               -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Workflow 5 — AI Ops Score Computation</div>
+
+  <div class="score-grid">
+    <div class="score-card">
+      <div class="score-label">🥚 NEST SCORE — repeatability</div>
+      <div class="score-item"><div class="sdot" style="background:#3b82f6"></div>Any runs → 1</div>
+      <div class="score-item"><div class="sdot" style="background:#3b82f6"></div>I/O defined → 2</div>
+      <div class="score-item"><div class="sdot" style="background:#3b82f6"></div>3+ consistent → 3</div>
+      <div class="score-item"><div class="sdot" style="background:#3b82f6"></div>10+ consistent → 4</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">🐔 FLOCK SCORE — reliability</div>
+      <div class="score-item"><div class="sdot" style="background:#22c55e"></div>rate &lt; 50% → 1</div>
+      <div class="score-item"><div class="sdot" style="background:#22c55e"></div>rate &lt; 20% → 2</div>
+      <div class="score-item"><div class="sdot" style="background:#22c55e"></div>rate &lt; 5% → 3</div>
+      <div class="score-item"><div class="sdot" style="background:#22c55e"></div>event-driven → 4</div>
+      <div class="score-item"><div class="sdot" style="background:#22c55e"></div>0% · 20 runs → 5</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px">
+    <div class="formula">
+<span class="f-comment">// signals that count as runs per skill</span>
+<span class="f-var">full_code</span>  <span class="f-op">→</span> write-spec, type-resolution, sprite-gen, feature-build
+<span class="f-var">orbital</span>    <span class="f-op">→</span> sprite-gen, type-resolution
+<span class="f-var">config_only</span><span class="f-op">→</span> sprite-gen, feature-build, type-resolution
+
+<span class="f-comment">// dings from delivery log dingedSkills[]</span>
+<span class="f-var">intervention_rate</span> <span class="f-op">=</span> dings <span class="f-op">/</span> total_runs
+
+<span class="f-comment">// auto-computed verdicts</span>
+<span class="f-var">READY</span>   <span class="f-op">:</span> runs <span class="f-op">≥</span> <span class="f-val">10</span> <span class="f-op">AND</span> rate <span class="f-op">==</span> <span class="f-val">0</span> <span class="f-op">AND</span> nest <span class="f-op">≥</span> <span class="f-val">4</span>
+<span class="f-var">REGRESS</span> <span class="f-op">:</span> rate <span class="f-op">&gt;</span> <span class="f-val">0.4</span>
+<span class="f-var">HOLD</span>    <span class="f-op">:</span> everything else
+    </div>
+  </div>
+
+  <div style="margin-top:14px">
+    <div style="font-size:11px;color:#888;margin-bottom:8px;font-family:'JetBrains Mono',monospace">ACTIVE SKILLS</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <span class="skill-tag t-write-spec">/write-spec</span>
+      <span class="skill-tag t-type-res">/type-resolution</span>
+      <span class="skill-tag t-sprite-gen">/sprite-gen</span>
+      <span class="skill-tag t-feature-build">/feature-build</span>
+      <span class="skill-tag t-release-check">/release-check</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- WF6: GRADUATION                      -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Workflow 6 — Graduation Event</div>
+
+  <div class="pipeline">
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#1e40af">📊</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">AI Ops evaluator</div></div>
+        <div class="step-desc">Reads delivery-log.json + scores.json. Computes live runs, intervention rates, auto-adjusts flock score. Shows ● live when data-driven.</div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#16a34a">🟢</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">READY verdict surfaces</div></div>
+        <div class="step-desc">10+ runs, 0% intervention rate, nestScore ≥ 4. Graduation card appears in AI Ops tab.</div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#1a1a1a">👤</div><div class="step-vline"></div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Nick approves graduation</div></div>
+        <div class="step-desc">Writes to scores.json. flockScore → 5. status → fleet. Trigger mechanism noted as event-driven.</div>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num-col"><div class="step-num" style="background:#7c3aed">🚀</div></div>
+      <div class="step-content">
+        <div class="step-header"><div class="step-name">Graduated to Fleet</div></div>
+        <div class="step-desc">Skill moves to Fleet section in AI Ops. Runs without babysitting.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- FALLBACK CHAIN                       -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Complete Fallback Chain</div>
+  <div class="fallback-chain">
+    <div class="fallback-row"><div class="chip chip-new" style="font-size:11px;padding:5px 10px">✨ New type generated</div><span style="font-size:11px;color:#aaa">best — brand new creature in the game</span></div>
+    <div class="fallback-arrow">↓ sprite fails</div>
+    <div class="fallback-row"><div class="chip chip-ok" style="font-size:11px;padding:5px 10px">✅ Existing type used</div><span style="font-size:11px;color:#aaa">type-resolution mapped or type existed</span></div>
+    <div class="fallback-arrow">↓ type-resolution fails</div>
+    <div class="fallback-row"><div class="chip chip-warn" style="font-size:11px;padding:5px 10px">🌌 Orbital entity</div><span style="font-size:11px;color:#aaa">visible in sky, not playable</span><span class="ding d-pink" style="margin-left:4px">sprite-gen</span></div>
+    <div class="fallback-arrow">↓ orbital fails</div>
+    <div class="fallback-row"><div class="chip chip-bad" style="font-size:11px;padding:5px 10px">⚠️ Iguana</div><span style="font-size:11px;color:#aaa">absolute last resort</span><span class="ding d-pink" style="margin-left:4px">sprite-gen</span><span class="ding d-purple" style="margin-left:4px">type-res</span></div>
+  </div>
+</div>
+
+
+<!-- LEGEND -->
+<div class="section">
+  <div class="section-label">Legend</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#1a1a1a"></div>Human actor</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#2563eb"></div>AI action</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#dcfce7;border:1px solid #86efac"></div>Success / live preview</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#fdf4ff;border:1px solid #e879f9"></div>New capability</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#fef3c7;border:1px solid #fcd34d"></div>Updated</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#fee2e2;border:1px solid #fca5a5"></div>Failure / fallback</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:24px;height:12px;border-radius:3px;background:#f0f4ff;border:1px solid #bfdbfe"></div>Log / data store</div>
+  </div>
+</div>
+
+<div class="footnote">cranky chickens ai pipeline v3 — may 2026</div>
+
+</body>
+</html>

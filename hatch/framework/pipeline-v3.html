@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline v3 — Decomposed with Live Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f7f6f2; font-family: 'Inter', sans-serif; color: #1a1a1a; padding: 40px 24px 80px; }
+
+  .page-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #bbb; margin-bottom: 6px; }
+  .page-heading { font-size: 26px; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #888; margin-bottom: 48px; }
+
+  .section { margin-bottom: 48px; }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #bbb; margin-bottom: 18px; padding-bottom: 8px; border-bottom: 1px solid #e8e8e4; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 7px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .c-actor  { background: #1a1a1a; color: #f7f6f2; }
+  .c-ai     { background: #2563eb; color: #fff; }
+  .c-ok     { background: #dcfce7; border: 1.5px solid #86efac; color: #166534; }
+  .c-warn   { background: #fef3c7; border: 1.5px solid #fcd34d; color: #92400e; }
+  .c-bad    { background: #fee2e2; border: 1.5px solid #fca5a5; color: #991b1b; }
+  .c-new    { background: #fdf4ff; border: 1.5px solid #e879f9; color: #86198f; }
+  .c-prev   { background: #f0fdf4; border: 1.5px solid #86efac; color: #166534; }
+  .c-skip   { background: #f7f6f2; border: 1.5px dashed #ccc; color: #999; font-style: italic; font-size: 10px; }
+
+  .ar { flex-shrink:0;display:flex;align-items:center;width:24px;position:relative; }
+  .ar::after { content:'';position:absolute;left:0;right:6px;height:1.5px;background:#ccc; }
+  .ar::before { content:'▶';position:absolute;right:0;font-size:7px;color:#aaa;top:50%;transform:translateY(-50%); }
+
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step-num-col { display: flex; flex-direction: column; align-items: center; width: 34px; flex-shrink: 0; }
+  .sn { width: 26px; height: 26px; border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  .sv { width: 1.5px; flex: 1; min-height: 18px; margin: 3px 0; }
+  .sv-std  { background: #d4d4cc; }
+  .sv-new  { background: #e879f9; opacity: 0.35; }
+  .sv-prev { background: #22c55e; opacity: 0.35; }
+  .sv-dash { background: repeating-linear-gradient(to bottom, #d4d4cc 0px, #d4d4cc 4px, transparent 4px, transparent 8px); }
+
+  .sc { flex: 1; padding: 0 0 22px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .sr { display: flex; gap: 0; }
+
+  .sh { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 26px; }
+  .sname { font-size: 13px; font-weight: 600; }
+  .sbadge { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 99px; }
+  .b-new  { background: #fdf4ff; border: 1px solid #e879f9; color: #86198f; }
+  .b-upd  { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+  .b-prev { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+
+  .stag { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 99px; }
+  .t-ws { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .t-tr { background: #fdf4ff; color: #86198f; border: 1px solid #e879f9; }
+  .t-sg { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+  .t-fb { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .t-rc { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .t-lp { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+
+  .sdesc { font-size: 11px; color: #666; line-height: 1.6; }
+
+  .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .io-box { background: #fff; border: 1.5px solid #e8e8e4; border-radius: 7px; padding: 8px 10px; }
+  .io-box.hi { border-color: #86efac; background: #f0fdf4; }
+  .io-box.purple { border-color: #e879f9; background: #fdf4ff; }
+  .io-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-bottom: 5px; }
+  .io-item { font-size: 10px; color: #555; display: flex; align-items: flex-start; gap: 5px; margin-bottom: 2px; line-height: 1.4; }
+  .io-dot { color: #ccc; flex-shrink: 0; }
+
+  .dec { background: #fff; border: 1.5px dashed #d4d4cc; border-radius: 7px; padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; }
+  .dec.p { border-color: #e879f9; }
+  .dec.g { border-color: #86efac; }
+  .dlabel { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.1em; color: #aaa; }
+  .dlabel.p { color: #86198f; }
+  .dlabel.g { color: #166534; }
+  .dbr { display: flex; align-items: flex-start; gap: 6px; font-size: 10px; color: #555; }
+  .dt { font-family: 'JetBrains Mono', monospace; font-size: 8px; padding: 1px 4px; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+  .dt-y { background: #dcfce7; color: #166534; }
+  .dt-n { background: #fee2e2; color: #991b1b; }
+  .dt-p { background: #fdf4ff; color: #86198f; border: 1px solid #e879f9; }
+  .dt-s { background: #f7f6f2; color: #999; }
+
+  .fail { background: #fff8f8; border: 1.5px solid #fca5a5; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 10px; color: #666; }
+  .fl { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; color: #ef4444; }
+  .ding { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; padding: 2px 5px; border-radius: 99px; white-space: nowrap; }
+  .d-p { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+  .d-pu { background: #fdf4ff; color: #86198f; border: 1px solid #e879f9; }
+  .d-a { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .d-b { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+
+  .log { background: #0f172a; border-radius: 8px; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.9; color: #94a3b8; }
+  .lk { color: #7dd3fc; }
+  .lg { color: #86efac; }
+  .lr { color: #fca5a5; }
+  .ly { color: #fcd34d; }
+  .lp { color: #e879f9; }
+  .ls { color: #475569; }
+  .la { color: #f0abfc; }
+
+  .phase-bar { display: flex; gap: 0; margin: 8px 0 4px; border-radius: 6px; overflow: hidden; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; }
+  .phase-seg { padding: 5px 10px; text-align: center; flex: 1; }
+  .ps-prev { background: #166534; color: #fff; }
+  .ps-approve { background: #1e40af; color: #fff; }
+
+  .footnote { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #ccc; margin-top: 48px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Cranky Chickens — Pipeline Architecture</div>
+<div class="page-heading">Five Steps + Live Preview</div>
+<div class="page-sub">v3 — type resolution, new creature mode, sprite preview before approve</div>
+
+
+<!-- PHASE BAR -->
+<div class="section">
+  <div class="section-label">When Each Step Runs</div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="phase-bar">
+      <div class="phase-seg ps-prev">PREVIEW PHASE — steps 1 2 3</div>
+      <div class="phase-seg ps-approve">APPROVE PHASE — steps 4 5</div>
+    </div>
+    <div style="display:flex;gap:0">
+      <div style="flex:1;font-size:10px;color:#166534;padding:4px 8px">Nick sees live sprite. Can regenerate step 3. Approves or cancels.</div>
+      <div style="flex:1;font-size:10px;color:#1e40af;padding:4px 8px">Config placed. Sprite injected. Committed to kids-preview.</div>
+    </div>
+    <div style="font-size:10px;color:#888;padding:4px 0">SHA read once in preview, passed through to inject — no stale SHA conflicts.</div>
+  </div>
+</div>
+
+
+<!-- INPUT -->
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-left:34px">
+  <div class="chip c-actor">🐉 Kid submission</div>
+  <div class="ar"></div>
+  <div class="chip" style="background:#fff;border:1.5px solid #d4d4cc;color:#333;font-size:11px">raw description + drawing caption</div>
+</div>
+
+
+<!-- STEP 1 -->
+<div class="section">
+<div class="steps">
+<div class="sr">
+  <div class="step-num-col"><div class="sn" style="background:#2563eb">1</div><div class="sv sv-std"></div></div>
+  <div class="sc">
+    <div class="sh">
+      <div class="sname">interpretIntent</div>
+      <span class="stag t-ws">/write-spec</span>
+      <span style="font-size:10px;color:#aaa">preview + approve</span>
+    </div>
+    <div class="sdesc">Small Claude call. Reads the submission. Proposes characterType, colors, behavior notes, plain English confirm.</div>
+    <div class="io-grid">
+      <div class="io-box">
+        <div class="io-label">Input</div>
+        <div class="io-item"><span class="io-dot">→</span>scribeName, description</div>
+        <div class="io-item"><span class="io-dot">→</span>drawing caption (Cannon Master)</div>
+        <div class="io-item"><span class="io-dot">→</span>targetZone, style choice</div>
+      </div>
+      <div class="io-box hi">
+        <div class="io-label">Output</div>
+        <div class="io-item"><span class="io-dot">→</span>characterType: "turkey"</div>
+        <div class="io-item"><span class="io-dot">→</span>color, eyeColor, size</div>
+        <div class="io-item"><span class="io-dot">→</span>behaviorNotes, plainEnglish</div>
+      </div>
+    </div>
+    <div class="fail"><span class="fl">FAIL</span>Hard stop — nothing committed<span class="ding d-b">write-spec ding</span></div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sr">
+  <div class="step-num-col"><div class="sn" style="background:#86198f">2</div><div class="sv sv-new"></div></div>
+  <div class="sc">
+    <div class="sh">
+      <div class="sname">resolveType</div>
+      <span class="stag t-tr">/type-resolution</span>
+      <span class="sbadge b-new">NEW</span>
+      <span style="font-size:10px;color:#aaa">preview + approve</span>
+    </div>
+    <div class="sdesc">Checks game file for existing drawCharacter_[type]. If missing, LLM decides: map to known type or genuinely new.</div>
+    <div class="dec p">
+      <div class="dlabel p">DECISION TREE</div>
+      <div class="dbr"><span class="dt dt-y">EXISTS</span>drawCharacter_turkey found in file → skip step 3</div>
+      <div class="dbr"><span class="dt dt-y">MAPPED</span>LLM: turkey ≈ spirit → use spirit, skip step 3</div>
+      <div class="dbr"><span class="dt dt-p">NEW</span>LLM: genuinely different → proceed to step 3</div>
+    </div>
+    <div class="fail"><span class="fl">FAIL</span>Default to iguana<span class="ding d-pu">type-resolution ding</span></div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sr">
+  <div class="step-num-col"><div class="sn" style="background:#9d174d">3</div><div class="sv sv-prev"></div></div>
+  <div class="sc">
+    <div class="sh">
+      <div class="sname">generateSprite</div>
+      <span class="stag t-sg">/sprite-gen</span>
+      <span class="sbadge b-upd">UPDATED</span>
+      <span class="sbadge b-prev">PREVIEW</span>
+      <span style="font-size:10px;color:#aaa">conditional on step 2</span>
+    </div>
+    <div class="sdesc">Skipped entirely if type exists or was mapped. Two distinct prompts for new vs existing types.</div>
+    <div class="io-grid">
+      <div class="io-box">
+        <div class="io-label">Existing type mode</div>
+        <div class="io-item"><span class="io-dot">→</span>reference example provided</div>
+        <div class="io-item"><span class="io-dot">→</span>stay in style</div>
+        <div class="io-item"><span class="io-dot">→</span>max 1200 tokens</div>
+      </div>
+      <div class="io-box purple">
+        <div class="io-label">New creature mode ✨</div>
+        <div class="io-item"><span class="io-dot">→</span>NO reference examples</div>
+        <div class="io-item"><span class="io-dot">→</span>kid's drawing caption</div>
+        <div class="io-item"><span class="io-dot">→</span>"invent something new"</div>
+        <div class="io-item"><span class="io-dot">→</span>max 1500 tokens</div>
+      </div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:6px 10px;font-size:10px;color:#166534">
+      🔄 <strong>Regenerate button</strong> in preview modal re-runs only this step. Fast, cheap, new roll.
+    </div>
+    <div class="fail"><span class="fl">FAIL</span>→ orbital → iguana<span class="ding d-p">sprite-gen ding</span></div>
+  </div>
+</div>
+
+<!-- PREVIEW BOUNDARY -->
+<div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px;padding-left:34px">
+  <div style="flex:1;height:1.5px;background:repeating-linear-gradient(to right,#22c55e 0px,#22c55e 6px,transparent 6px,transparent 12px)"></div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#166534;font-weight:700;white-space:nowrap;padding:3px 8px;background:#f0fdf4;border:1px solid #86efac;border-radius:99px">Nick sees sprite here — Approve or Regenerate</div>
+  <div style="flex:1;height:1.5px;background:repeating-linear-gradient(to right,#22c55e 0px,#22c55e 6px,transparent 6px,transparent 12px)"></div>
+</div>
+
+<!-- STEP 4 -->
+<div class="sr">
+  <div class="step-num-col"><div class="sn" style="background:#d97706">4</div><div class="sv sv-std"></div></div>
+  <div class="sc">
+    <div class="sh">
+      <div class="sname">generateConfig</div>
+      <span class="stag t-fb">/feature-build</span>
+      <span style="font-size:10px;color:#aaa">approve only</span>
+    </div>
+    <div class="sdesc">Deterministic — no AI. Assembles config entry from resolved spec. Runs after Nick approves.</div>
+    <div class="io-grid">
+      <div class="io-box">
+        <div class="io-label">Config entry</div>
+        <div class="io-item"><span class="io-dot">→</span>screenIndex, tx, ty</div>
+        <div class="io-item"><span class="io-dot">→</span>spd, pat, size</div>
+        <div class="io-item"><span class="io-dot">→</span>characterType (resolved)</div>
+      </div>
+      <div class="io-box">
+        <div class="io-label">Provenance flags</div>
+        <div class="io-item"><span class="io-dot">→</span>isNewType: true/false</div>
+        <div class="io-item"><span class="io-dot">→</span>mappedFrom: "turkey"</div>
+      </div>
+    </div>
+    <div class="fail"><span class="fl">FAIL</span>Hard stop<span class="ding d-a">feature-build ding</span></div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="sr">
+  <div class="step-num-col"><div class="sn" style="background:#16a34a">5</div></div>
+  <div class="sc">
+    <div class="sh">
+      <div class="sname">validate + inject</div>
+      <span class="stag t-rc">/release-check</span>
+      <span style="font-size:10px;color:#aaa">approve only</span>
+    </div>
+    <div class="sdesc">Injects drawFn before router marker. Adds router case. Writes config. Commits. Uses SHA from preview read — no second fetch.</div>
+    <div class="dec g">
+      <div class="dlabel g">NEW TYPE vs EXISTING</div>
+      <div class="dbr"><span class="dt dt-s">EXIST</span>Config only. No router change.</div>
+      <div class="dbr"><span class="dt dt-p">NEW</span>drawCharacter_turkey + router case injected. Stays on kids-preview until Nick merges to make permanent.</div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+
+<!-- OUTPUT EXAMPLES -->
+<div class="section">
+  <div class="section-label">Delivery Log Examples</div>
+
+  <div style="margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#bbb">NEW TYPE — space turkey swarm</div>
+  <div class="log">
+{
+  <span class="lk">"deliveryType"</span>: <span class="lg">"full_code"</span>,
+  <span class="lk">"isNewType"</span>: <span class="lp">true</span>,
+  <span class="lk">"steps"</span>: {
+    <span class="lk">"write-spec"</span>:      <span class="lg">✅ turkey — menacing flock, jet-powered tail feathers</span>,
+    <span class="lk">"type-resolution"</span>: <span class="lp">✨ genuinely new — no existing type matches</span>,
+    <span class="lk">"sprite-gen"</span>:      <span class="lg">✅ drawCharacter_turkey generated (new creature mode)</span>,
+    <span class="lk">"feature-build"</span>:   <span class="lg">✅ placed at Landing Zone tx:9 ty:9</span>,
+    <span class="lk">"release-check"</span>:   <span class="lg">✅ committed — awaiting Nick's merge to make permanent</span>
+  },
+  <span class="lk">"dingedSkills"</span>: <span class="lg">[]</span>
+}
+  </div>
+
+  <div style="margin:14px 0 10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#bbb">MAPPED TYPE — "ghost cat" → feline</div>
+  <div class="log">
+{
+  <span class="lk">"deliveryType"</span>: <span class="lg">"full_code"</span>,
+  <span class="lk">"isNewType"</span>: <span class="ly">false</span>,
+  <span class="lk">"mappedFrom"</span>: <span class="ly">"ghostcat"</span>,
+  <span class="lk">"steps"</span>: {
+    <span class="lk">"write-spec"</span>:      <span class="lg">✅ cat — ghostly, phases through walls</span>,
+    <span class="lk">"type-resolution"</span>: <span class="ly">✅ mapped "ghostcat" → "feline"</span>,
+    <span class="lk">"sprite-gen"</span>:      <span class="ls">⏭ skipped — using existing feline draw function</span>,
+    <span class="lk">"feature-build"</span>:   <span class="lg">✅ placed at Quantum Cat Colony</span>,
+    <span class="lk">"release-check"</span>:   <span class="lg">✅ committed</span>
+  },
+  <span class="lk">"dingedSkills"</span>: <span class="lg">[]</span>
+}
+  </div>
+
+  <div style="margin:14px 0 10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#bbb">SPRITE FAIL — auto-ding, no NQR needed</div>
+  <div class="log">
+{
+  <span class="lk">"deliveryType"</span>: <span class="ly">"orbital"</span>,
+  <span class="lk">"steps"</span>: {
+    <span class="lk">"write-spec"</span>:      <span class="lg">✅ jellyfish warrior — spiky, aggressive</span>,
+    <span class="lk">"type-resolution"</span>: <span class="lp">✨ new type "jellyfish"</span>,
+    <span class="lk">"sprite-gen"</span>:      <span class="lr">❌ brace imbalance: 14 open vs 11 close</span>,
+    <span class="lk">"feature-build"</span>:   <span class="lg">✅ placed as orbital fallback</span>,
+    <span class="lk">"release-check"</span>:   <span class="lg">✅ committed</span>
+  },
+  <span class="lk">"dingedSkills"</span>: <span class="lr">["sprite-gen"]</span>
+}
+  </div>
+</div>
+
+
+<!-- TRADEOFFS v3 -->
+<div class="section">
+  <div class="section-label">v1 → v2 → v3 Tradeoffs</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+
+    <div style="background:#fff;border:1.5px solid #d4d4cc;border-radius:10px;padding:12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:#991b1b;margin-bottom:8px">v1 — BLACK BOX</div>
+      <div style="font-size:10px;color:#555;line-height:1.7">1 call<br>Blind approve<br>0 skill signals<br>Guess at failure</div>
+    </div>
+
+    <div style="background:#fff;border:1.5px solid #d4d4cc;border-radius:10px;padding:12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:#92400e;margin-bottom:8px">v2 — DECOMPOSED</div>
+      <div style="font-size:10px;color:#555;line-height:1.7">4 calls<br>Blind approve<br>4 skill signals<br>Auto-ding precise</div>
+    </div>
+
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:#166534;margin-bottom:8px">v3 — LIVE PREVIEW</div>
+      <div style="font-size:10px;color:#166534;line-height:1.7">3+2 calls*<br>See before approve<br>5 skill signals<br>Regenerate before commit</div>
+    </div>
+
+  </div>
+  <div style="font-size:10px;color:#aaa;margin-top:8px">* Steps 1-3 run in preview. Steps 4-5 run on approve. Regenerate only re-runs step 3. Net cost similar to v2.</div>
+</div>
+
+<div class="footnote">cranky chickens — pipeline v3 — may 2026</div>
+</body>
+</html>
