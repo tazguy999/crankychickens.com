@@ -87,7 +87,23 @@ def score_to_label_flock(flock_str):
     return labels[min(count, 5)]
 
 # ── UPDATE HATCH INDEX ──
-def update_hatch_index(fw):
+def ensure_nav(content, active_page):
+    """Inject nav if not already present"""
+    if 'site-nav' in content or 'hatch-nav' in content:
+        return content  # already has nav
+    nav = f'''<nav class="site-nav">
+  <a href="/" class="nav-brand">🐔 Hatch</a>
+  <ul class="nav-links">
+    <li><a href="/" {"class='active'" if active_page=='framework' else ''}>Framework</a></li>
+    <li><a href="/ai-ops/" {"class='active'" if active_page=='aiops' else ''}>AI Ops</a></li>
+    <li><a href="/framework/nick-ng.html">Nick × Ng</a></li>
+    <li><a href="/framework/pipeline-v3.html">Pipeline</a></li>
+  </ul>
+</nav>
+'''
+    return content.replace('<body>\n\n<header>', '<body>\n\n' + nav + '\n<header>', 1)
+
+
     section('📄 Updating hatch/index.html')
     if not os.path.exists(HATCH_INDEX):
         fail('hatch/index.html not found')
