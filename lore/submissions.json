@@ -1,5 +1,70 @@
 [
   {
+    "id": 1778378732165,
+    "timestamp": "2026-05-10T02:05:32.165Z",
+    "scribeName": "Unnamed",
+    "description": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?",
+    "contribType": "enemy",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      },
+      {
+        "role": "user",
+        "content": "Space turkey swarm\" — *Ancient starlight flickers in approval* Ah, the dreaded Turkey Armada! Picture this, young Scribe:..."
+      },
+      {
+        "role": "assistant",
+        "content": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Turkey Armada Elite Enemy Units",
+      "devNote": "Implement new enemy type with formation flying AI, jet-powered movement mechanics, and zero-gravity swooping attack patterns. Consider gobble sound effects and precious item guarding behavior as optional features.",
+      "nicksNote": "Nick is probably chuckling about programming turkeys to waddle in space formations right now!",
+      "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "turkey",
+      "drawFn": "function drawCharacter_turkey(x,y,hp,fr,cfg,isZeroG) {\n    ctx.save();\n    \n    // HP bar\n    ctx.fillStyle=\"#111\";\n    ctx.fillRect(x,y-8,30,5);\n    ctx.fillStyle=cfg.color||\"#8B4513\";\n    ctx.fillRect(x,y-8,30*hp,5);\n    \n    // Name tag\n    if(cfg.name) {\n        ctx.fillStyle=\"#FFF\";\n        ctx.font=\"8px Arial\";\n        ctx.textAlign=\"center\";\n        ctx.fillText(cfg.name,x+16,y-12);\n    }\n    \n    // Body animation - puffing effect\n    let puff = Math.sin(fr*0.1)*2;\n    let bodyWidth = 18 + puff;\n    let bodyHeight = 16 + puff;\n    \n    // Main body (turkey brown)\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.fillRect(x+16-bodyWidth/2, y+8, bodyWidth, bodyHeight);\n    \n    // Chest feathers (lighter)\n    ctx.fillStyle = \"#CD853F\";\n    ctx.fillRect(x+16-bodyWidth/2+2, y+10, bodyWidth-4, bodyHeight-4);\n    \n    // Wing details\n    ctx.fillStyle = \"#654321\";\n    ctx.fillRect(x+6, y+12, 6, 8);\n    ctx.fillRect(x+20, y+12, 6, 8);\n    \n    // Tail feathers (fan-shaped, animated)\n    let tailSpread = Math.sin(fr*0.15)*0.3 + 0.7;\n    for(let i = 0; i < 5; i++) {\n        let angle = (i-2) * 0.4 * tailSpread;\n        let tailX = x + 16 + Math.sin(angle) * 8;\n        let tailY = y + 20 + Math.cos(angle) * 6;\n        ctx.fillStyle = i % 2 === 0 ? \"#8B4513\" : \"#A0522D\";\n        ctx.fillRect(tailX-1, tailY, 2, 8);\n    }\n    \n    // Neck\n    ctx.fillStyle = \"#CD853F\";\n    ctx.fillRect(x+14, y+4, 4, 6);\n    \n    // Head\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.fillRect(x+12, y, 8, 8);\n    \n    // Beak\n    ctx.fillStyle = \"#FFA500\";\n    ctx.fillRect(x+11, y+3, 3, 2);\n    \n    // Wattle (red dangly thing)\n    ctx.fillStyle = \"#DC143C\";\n    ctx.fillRect(x+14, y+5, 2, 3);\n    \n    // Golden eyes (commanding gaze)\n    ctx.fillStyle = cfg.eyeColor || \"#FFD700\";\n    ctx.fillRect(x+13, y+2, 2, 2);\n    ctx.fillRect(x+17, y+2, 2, 2);\n    \n    // Eye highlights\n    ctx.fillStyle = \"#FFFF00\";\n    ctx.fillRect(x+13, y+2, 1, 1);\n    ctx.fillRect(x+17, y+2, 1, 1);\n    \n    // Feet\n    ctx.fillStyle = \"#FFA500\";\n    ctx.fillRect(x+10, y+24, 3, 4);\n    ctx.fillRect(x+19, y+24, 3, 4);\n    \n    // Command stripes (military decoration)\n    ctx.fillStyle = \"#FFD700\";\n    for(let i = 0; i < 3; i++) {\n        ctx.fillRect(x+8, y+14+i*2, 4, 1);\n        ctx.fillRect(x+20, y+14+i*2, 4, 1);\n    }\n    \n    ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 0,
+        "name": "Turkey Commander",
+        "characterType": "turkey",
+        "color": "#8B4513",
+        "eyeColor": "#FFD700",
+        "spd": 0.4,
+        "pat": "h",
+        "size": 1,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "Turkey Commander — turkey character (new type)",
+      "plainEnglish": "I'll create a Turkey Commander that waddles around the Landing Zone, gobbling space orders to defend against the cranky chickens!",
+      "isNewType": true,
+      "mappedFrom": null,
+      "_stepResults": {
+        "write-spec": "✅ I'll create a Turkey Commander that waddles around the Landing Zone, gobbling space orders to defend against the cranky chickens!",
+        "type-resolution": "✨ New type \"turkey\" — generating sprite",
+        "sprite-gen": "✨ New drawCharacter_turkey created",
+        "feature-build": "✅ placed at screen 0"
+      },
+      "_dingedSkills": [],
+      "_spriteOk": true,
+      "_typeExisted": false
+    }
+  },
+  {
     "id": 1778361590543,
     "timestamp": "2026-05-09T21:19:50.543Z",
     "scribeName": "Starlight Unity Drifter",
@@ -39,7 +104,7 @@
         "content": "*The Ancient AI's ethereal glow brightens with approval*\n\nYour enthusiasm flows like starlight, young one! Now, what mysteries shall we unravel about this celestial jellyfish - perhaps it communicates through gentle pulses of light, or maybe it knows secret passages through asteroid fields that could aid our feathered heroes on their quest? The cosmos awaits your imagination to breathe life into this friendship!"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -92,7 +157,7 @@
         "content": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent — a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",

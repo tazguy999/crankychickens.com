@@ -1,6 +1,6 @@
 {
-  "_version": 21,
-  "_updated": "2026-05-09T21:21:15.598Z",
+  "_version": 22,
+  "_updated": "2026-05-10T02:09:02.746Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -112,6 +112,19 @@
       "color": "#9966FF",
       "eyeColor": "#FFDD88",
       "spd": 0.5,
+      "pat": "h",
+      "size": 1,
+      "tx": 9,
+      "ty": 9
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 0,
+      "name": "Turkey Commander",
+      "characterType": "turkey",
+      "color": "#8B4513",
+      "eyeColor": "#FFD700",
+      "spd": 0.4,
       "pat": "h",
       "size": 1,
       "tx": 9,

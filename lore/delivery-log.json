@@ -1,25 +1,50 @@
 [
   {
+    "id": 1778378917623,
+    "timestamp": "2026-05-10T02:08:37.623Z",
+    "submissionId": 1778378732165,
+    "kidName": "Dragon Scribe",
+    "contribType": "enemy",
+    "asked": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?",
+    "askedName": "Unnamed",
+    "targetGame": "In Space",
+    "targetZone": null,
+    "delivered": "\"Turkey Commander\" placed but sprite injection failed — config only",
+    "deliveryType": "config_only",
+    "issues": [
+      "applyFullContribution injection step failed"
+    ],
+    "commitSha": null,
+    "dingedSkills": [],
+    "stepResults": {
+      "write-spec": "✅ I'll create a Turkey Commander that waddles around the Landing Zone, gobbling space orders to defend against the cranky chickens!",
+      "type-resolution": "✨ New type \"turkey\" — generating sprite",
+      "sprite-gen": "✨ New drawCharacter_turkey created",
+      "feature-build": "✅ placed at screen 0"
+    },
+    "isNewType": true
+  },
+  {
     "id": 1778361590543,
     "timestamp": "2026-05-09T21:19:50.543Z",
     "submissionId": 1778361590543,
     "kidName": "Cannon Master",
     "contribType": "enemy",
-    "asked": "Tiny blue jellyfish who just wants love \u2014 friendly NPC with pulsing light communication",
+    "asked": "Tiny blue jellyfish who just wants love — friendly NPC with pulsing light communication",
     "askedName": "Starlight Unity Drifter",
     "targetGame": "In Space",
     "targetZone": "Landing Zone",
-    "delivered": "drawCharacter_jellyfish injected \u2014 pulsing bell, flowing tentacles, bioluminescent spots",
+    "delivered": "drawCharacter_jellyfish injected — pulsing bell, flowing tentacles, bioluminescent spots",
     "deliveryType": "full_code",
     "stepResults": {
-      "write-spec": "\u2705 jellyfish \u2014 bioluminescent, friendly NPC companion",
-      "sprite-gen": "\u2705 drawCharacter_jellyfish generated \u2014 glow, pulsing tentacles, light spots",
-      "feature-build": "\u2705 placed at Landing Zone screenIndex:0 tx:9 ty:9",
-      "release-check": "\u2705 committed to kids-preview (backfilled)"
+      "write-spec": "✅ jellyfish — bioluminescent, friendly NPC companion",
+      "sprite-gen": "✅ drawCharacter_jellyfish generated — glow, pulsing tentacles, light spots",
+      "feature-build": "✅ placed at Landing Zone screenIndex:0 tx:9 ty:9",
+      "release-check": "✅ committed to kids-preview (backfilled)"
     },
     "issues": [],
     "dingedSkills": [],
-    "_note": "Backfilled \u2014 delivery log write failed at time of approval due to sha conflict bug (now fixed)"
+    "_note": "Backfilled — delivery log write failed at time of approval due to sha conflict bug (now fixed)"
   },
   {
     "id": 1746835200001,
@@ -27,17 +52,17 @@
     "submissionId": "seed",
     "kidName": "Dragon Scribe",
     "contribType": "enemy",
-    "asked": "StarCat Guardian \u2014 gold and orange, moves in patrol, guards the Crater Fields",
+    "asked": "StarCat Guardian — gold and orange, moves in patrol, guards the Crater Fields",
     "askedName": "StarCat Guardian",
     "targetGame": "In Space",
     "targetZone": "Quantum Cat Colony",
     "delivered": "StarCat Guardian deployed as feline characterType to Quantum Cat Colony",
     "deliveryType": "full_code",
     "stepResults": {
-      "write-spec": "\u2705 feline \u2014 gold, patrol, guardian",
-      "sprite-gen": "\u2705 drawCharacter_feline generated",
-      "feature-build": "\u2705 placed at Quantum Cat Colony",
-      "release-check": "\u2705 committed"
+      "write-spec": "✅ feline — gold, patrol, guardian",
+      "sprite-gen": "✅ drawCharacter_feline generated",
+      "feature-build": "✅ placed at Quantum Cat Colony",
+      "release-check": "✅ committed"
     },
     "issues": [],
     "dingedSkills": []
@@ -48,17 +73,17 @@
     "submissionId": "seed2",
     "kidName": "Cannon Master",
     "contribType": "enemy",
-    "asked": "Space Bull Charging Enemy \u2014 stocky, horns, angry red eyes",
+    "asked": "Space Bull Charging Enemy — stocky, horns, angry red eyes",
     "askedName": "Space Bull",
     "targetGame": "In Space",
     "targetZone": "Landing Zone",
     "delivered": "Space Bull deployed as bull characterType to Landing Zone",
     "deliveryType": "full_code",
     "stepResults": {
-      "write-spec": "\u2705 bull \u2014 stocky, horns, red eyes, charging",
-      "sprite-gen": "\u2705 drawCharacter_bull generated",
-      "feature-build": "\u2705 placed at Landing Zone",
-      "release-check": "\u2705 committed"
+      "write-spec": "✅ bull — stocky, horns, red eyes, charging",
+      "sprite-gen": "✅ drawCharacter_bull generated",
+      "feature-build": "✅ placed at Landing Zone",
+      "release-check": "✅ committed"
     },
     "issues": [],
     "dingedSkills": []
