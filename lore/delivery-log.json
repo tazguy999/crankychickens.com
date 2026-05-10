@@ -1,5 +1,23 @@
 [
   {
+    "id": 1778380810856,
+    "timestamp": "2026-05-10T02:40:10.856Z",
+    "submissionId": 1778378732165,
+    "submissionName": "Unnamed",
+    "kidName": "Dragon Scribe",
+    "reasons": [
+      "fell_back"
+    ],
+    "dingedSkills": [
+      "sprite-gen"
+    ],
+    "note": null,
+    "deliveryType": "full_code",
+    "retried": true,
+    "type": "intervention",
+    "delivered": "Human corrective action required after deployment"
+  },
+  {
     "id": 1778378917623,
     "timestamp": "2026-05-10T02:08:37.623Z",
     "submissionId": 1778378732165,
@@ -10,7 +28,7 @@
     "targetGame": "In Space",
     "targetZone": null,
     "delivered": "\"Turkey Commander\" placed but sprite injection failed — config only",
-    "deliveryType": "config_only",
+    "deliveryType": "intervention_required",
     "issues": [
       "applyFullContribution injection step failed"
     ],
@@ -22,7 +40,23 @@
       "sprite-gen": "✨ New drawCharacter_turkey created",
       "feature-build": "✅ placed at screen 0"
     },
-    "isNewType": true
+    "isNewType": true,
+    "intervention": {
+      "id": 1778380810856,
+      "timestamp": "2026-05-10T02:40:10.856Z",
+      "submissionId": 1778378732165,
+      "submissionName": "Unnamed",
+      "kidName": "Dragon Scribe",
+      "reasons": [
+        "fell_back"
+      ],
+      "dingedSkills": [
+        "sprite-gen"
+      ],
+      "note": null,
+      "deliveryType": "full_code",
+      "retried": true
+    }
   },
   {
     "id": 1778361590543,
