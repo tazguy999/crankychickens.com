@@ -305,7 +305,40 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     </div>
   </div>
 
-  <!-- GAME 5.5: AUNT BARB'S RESCUE RANCH -->\n  <div class=\"card\" data-tag=\"COMING SOON™\" id=\"cardB\">\n    <div class=\"screen-wrap\">\n      <canvas class=\"screen-canvas\" id=\"cB\" width=\"640\" height=\"200\"></canvas>\n      <div class=\"screen-tag\">FARMYARD ZONE — LOU'S LIVING ROOM</div>\n      <button class=\"play-hint\" onclick=\"playTrailer('barb')\"><span>▶ WATCH TRAILER</span></button>\n    </div>\n    <div class=\"card-body\">\n      <div class=\"game-num\">CRANKY CHICKENS V.5</div>\n      <div class=\"game-title\">AUNT BARB'S RESCUE RANCH</div>\n      <div class=\"game-sub\">\"Just This Once.\" — Aunt Barb, 47 Times</div>\n      <p class=\"game-desc\">Aunt Barb has a gift. A calling. An unstoppable compulsion to rescue every dog she has ever seen. Uncle Lou has a newspaper, a recliner, and a rapidly diminishing will to live. When Barb returns from the shelter with Dog Number 47 — a satellite-eared Australian Shepherd mix named Archie — something in Lou finally snaps. In a good way. Eventually.<br><br>\n      <strong style=\"color:#ffcc02\">New mechanic:</strong> The Negotiation System™ — convince Lou using a combination of puppy eyes, selective truth-telling, and strategic deployment of the phrase \"he was the last one.\" He was not the last one.</p>\n      <div class=\"quotes\">\n        <div class=\"quote\">\"Archie stood on his hind legs and waved at us. We were legally required to take him home.\"<span>— AUNT BARB, shelter intake form, field: 'reason for adoption'</span></div>\n        <div class=\"quote\">\"I said no. I have always said no. The dog has his own chair now.\"<span>— UNCLE LOU, currently watching TV with Archie</span></div>\n      </div>\n      <div class=\"tags\">\n        <span class=\"tag\">🐶 47 RESCUABLE DOGS</span>\n        <span class=\"tag\">📰 LOU'S NEWSPAPER HEALTH BAR</span>\n        <span class=\"tag\">🏡 NEGOTIATION SYSTEM™</span>\n        <span class=\"tag\">🐔 DOG ADOPTION: NOW THE WHOLE POINT</span>\n      </div>\n      <div class=\"rating-row\">\n        <div class=\"esrb\">E</div>\n        <div class=\"rating-txt\">Extremely Mild Domestic Negotiation · One Very Good Boy · Several More Good Boys<br>Lou Will Be Fine · The Ears On Archie · We're All Crying</div>\n      </div>\n      <button class=\"wishlist\" onclick=\"cluck('🐾 ARCHIE ADOPTED')\">+ WISHLIST</button>\n    </div>\n  </div>
+  <!-- GAME 5.5: AUNT BARB'S RESCUE RANCH -->
+  <div class="card" data-tag="COMING SOON™" id="cardB">
+    <div class="screen-wrap">
+      <canvas class="screen-canvas" id="cB" width="640" height="200"></canvas>
+      <div class="screen-tag">FARMYARD ZONE — LOU'S LIVING ROOM</div>
+      <button class="play-hint" onclick="playTrailer('barb')"><span>▶ WATCH TRAILER</span></button>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS V.5</div>
+      <div class="game-title">AUNT BARB'S RESCUE RANCH</div>
+      <div class="game-sub">"Just This Once." — Aunt Barb, 47 Times</div>
+      <p class="game-desc">Aunt Barb has a gift. A calling. An unstoppable compulsion to rescue every dog she has ever seen. Uncle Lou has a newspaper, a recliner, and a rapidly diminishing will to live. When Barb returns from the shelter with Dog Number 47 — a satellite-eared Australian Shepherd mix named Archie — something in Lou finally snaps. In a good way. Eventually.<br><br>
+      <strong style="color:#ffcc02">New mechanic:</strong> The Negotiation System™ — convince Lou using a combination of puppy eyes, selective truth-telling, and strategic deployment of the phrase "he was the last one." He was not the last one.</p>
+      <div class="quotes">
+        <div class="quote">"Archie stood on his hind legs and waved at us. We were legally required to take him home."<span>— AUNT BARB, shelter intake form, field: 'reason for adoption'</span></div>
+        <div class="quote">"I said no. I have always said no. The dog has his own chair now."<span>— UNCLE LOU, currently watching TV with Archie</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">🐶 47 RESCUABLE DOGS</span>
+        <span class="tag">📰 LOU'S NEWSPAPER HEALTH BAR</span>
+        <span class="tag">🏡 NEGOTIATION SYSTEM™</span>
+        <span class="tag">🐔 DOG ADOPTION: NOW THE WHOLE POINT</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E</div>
+        <div class="rating-txt">Extremely Mild Domestic Negotiation · One Very Good Boy · Several More Good Boys<br>Lou Will Be Fine · The Ears On Archie · We're All Crying</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="wishlist" onclick="cluck('🐾 ARCHIE ADOPTED')">+ WISHLIST</button>
+        <button class="wishlist" style="background:transparent;border-color:rgba(255,136,204,0.5);color:#ff88cc;" onclick="shareCard('cardB','Aunt Barb's Rescue Ranch')">🔗 SHARE</button>
+        <a href="/games/rescue-ranch.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,136,204,0.3);color:#ff88cc;">↗ FULL PAGE</a>
+      </div>
+    </div>
+  </div>
 
   <!-- GAME 6: MEDIEVAL MOLT -->
   <div class="card" data-tag="COMING SOON™" id="card6">
@@ -4351,10 +4384,33 @@ const BAWKS=['🐔 BAWK!','🥚 EGG ACQUIRED','🐔 CLUCK YEAH!','🌽 +1 CORN',
 let bIdx=0;
 function cluck(msg){
   const p=document.getElementById('popup');
-  p.textContent=msg||BAWKS[bIdx++%BAWKS.length];
-  p.classList.remove('show');void p.offsetWidth;p.classList.add('show');
-  setTimeout(()=>p.classList.remove('show'),1950);
-}
+// ── DEEP LINK: scroll to card on hash load ──
+(function(){
+  function highlightCard(id){
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.style.transition='box-shadow 0.3s';
+    el.style.boxShadow='0 0 0 3px #ffcc02, 0 0 40px rgba(255,204,2,0.4)';
+    setTimeout(()=>{ el.style.boxShadow=''; },2400);
+  }
+  function checkHash(){
+    const hash=window.location.hash.slice(1);
+    if(hash) setTimeout(()=>highlightCard(hash),200);
+  }
+  window.addEventListener('load', checkHash);
+  window.addEventListener('hashchange', ()=>highlightCard(window.location.hash.slice(1)));
+
+  // Share button — copies URL with card hash to clipboard
+  window.shareCard=function(cardId,title){
+    const url=window.location.origin+'/#'+cardId;
+    if(navigator.share){
+      navigator.share({title:'Cranky Chickens — '+title,url}).catch(()=>{});
+    } else {
+      navigator.clipboard.writeText(url).then(()=>cluck('🔗 Link copied!'));
+    }
+  };
+})();
 </script>
 </body>
 </html>

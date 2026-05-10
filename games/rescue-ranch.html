@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- OG / Social preview -->
+<title>Aunt Barb's Rescue Ranch — Cranky Chickens V.5</title>
+<meta name="description" content='"Just This Once." — Aunt Barb, 47 times. A Cranky Chickens game about love, dogs, and a man named Lou who has given up entirely.'>
+<meta property="og:title" content="Aunt Barb's Rescue Ranch — Cranky Chickens V.5">
+<meta property="og:description" content='"Just This Once." — Aunt Barb, 47 times. Coming whenever Lou gives up.'>
+<meta property="og:image" content="https://crankychickens.com/images/rescue-ranch-og.png">
+<meta property="og:url" content="https://crankychickens.com/games/rescue-ranch.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Aunt Barb's Rescue Ranch — Cranky Chickens V.5">
+<meta name="twitter:description" content='"Just This Once." — Aunt Barb, 47 times.'>
+<meta name="twitter:image" content="https://crankychickens.com/images/rescue-ranch-og.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:#0d0208;color:#fff;font-family:'Nunito',sans-serif;min-height:100vh;}
+
+  .page{max-width:700px;margin:0 auto;padding:24px 16px 60px;}
+
+  /* ── NAV ── */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:0 0 20px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:28px;}
+  .nav-brand{font-family:'Fredoka One',cursive;font-size:18px;color:#ffcc02;text-decoration:none;}
+  .nav-back{font-family:'Fredoka One',cursive;font-size:13px;color:rgba(255,136,204,0.7);text-decoration:none;}
+  .nav-back:hover{color:#ff88cc;}
+
+  /* ── TRAILER CANVAS ── */
+  .trailer-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;margin-bottom:28px;border:1.5px solid rgba(255,136,204,0.2);}
+  canvas{display:block;width:100%;image-rendering:pixelated;}
+  .trailer-tag{position:absolute;bottom:10px;left:12px;font-family:'Fredoka One',cursive;font-size:11px;color:rgba(200,180,220,0.7);letter-spacing:0.06em;}
+
+  /* ── HEADER ── */
+  .game-num{font-family:'Fredoka One',cursive;font-size:13px;color:rgba(255,136,204,0.7);letter-spacing:0.1em;margin-bottom:6px;}
+  .game-title{font-family:'Fredoka One',cursive;font-size:clamp(28px,8vw,48px);color:#fff;line-height:1.1;margin-bottom:8px;text-shadow:0 0 40px rgba(255,136,204,0.3);}
+  .game-sub{font-size:15px;color:rgba(255,136,204,0.8);font-style:italic;margin-bottom:20px;}
+
+  /* ── DESC ── */
+  .desc{font-size:15px;line-height:1.7;color:rgba(255,255,255,0.85);margin-bottom:24px;}
+  .desc strong{color:#ffcc02;}
+
+  /* ── QUOTES ── */
+  .quotes{display:flex;flex-direction:column;gap:12px;margin-bottom:24px;}
+  .quote{border-left:2px solid rgba(255,136,204,0.4);padding:8px 14px;font-size:13px;color:rgba(255,255,255,0.7);font-style:italic;line-height:1.5;}
+  .quote span{display:block;font-size:11px;color:rgba(255,136,204,0.6);font-style:normal;margin-top:4px;font-family:'Fredoka One',cursive;letter-spacing:0.06em;}
+
+  /* ── TAGS ── */
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+  .tag{border:1px solid rgba(255,136,204,0.3);color:rgba(255,200,220,0.8);font-family:'Fredoka One',cursive;font-size:12px;padding:4px 12px;border-radius:99px;}
+
+  /* ── RATING ── */
+  .rating-row{display:flex;align-items:flex-start;gap:14px;margin-bottom:28px;padding:14px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.07);}
+  .esrb{width:38px;height:38px;border:2px solid rgba(255,255,255,0.5);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:18px;flex-shrink:0;color:#fff;}
+  .rating-txt{font-size:11px;color:rgba(255,255,255,0.5);line-height:1.6;}
+
+  /* ── ACTIONS ── */
+  .actions{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn{font-family:'Fredoka One',cursive;font-size:16px;padding:12px 24px;border-radius:12px;border:2px solid;cursor:pointer;text-decoration:none;display:inline-block;text-align:center;transition:opacity 0.15s;}
+  .btn:hover{opacity:0.85;}
+  .btn-wishlist{background:#ffcc02;border-color:#ffcc02;color:#1a0a2e;}
+  .btn-share{background:transparent;border-color:rgba(255,136,204,0.5);color:#ff88cc;}
+  .btn-back{background:transparent;border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);font-size:14px;}
+
+  /* ── DIVIDER ── */
+  .divider{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:32px 0;}
+
+  /* ── FRANCHISE STRIP ── */
+  .franchise{text-align:center;}
+  .franchise-label{font-family:'Fredoka One',cursive;font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;margin-bottom:14px;}
+  .franchise-link{display:inline-block;font-family:'Fredoka One',cursive;font-size:14px;color:#ffcc02;text-decoration:none;border:1px solid rgba(255,204,2,0.3);padding:8px 20px;border-radius:99px;}
+  .franchise-link:hover{background:rgba(255,204,2,0.1);}
+
+  /* ── FOOTER ── */
+  footer{text-align:center;font-family:'Fredoka One',cursive;font-size:11px;color:rgba(255,255,255,0.2);margin-top:40px;letter-spacing:0.06em;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <nav class="nav">
+    <a href="/" class="nav-brand">🐔 Cranky Chickens</a>
+    <a href="/#cardB" class="nav-back">← Back to Franchise</a>
+  </nav>
+
+  <!-- TRAILER -->
+  <div class="trailer-wrap">
+    <canvas id="cB" width="640" height="200"></canvas>
+    <div class="trailer-tag">FARMYARD ZONE — LOU'S LIVING ROOM</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="game-num">CRANKY CHICKENS V.5</div>
+  <h1 class="game-title">Aunt Barb's<br>Rescue Ranch</h1>
+  <div class="game-sub">"Just This Once." — Aunt Barb, 47 Times</div>
+
+  <!-- DESC -->
+  <p class="desc">Aunt Barb has a gift. A calling. An unstoppable compulsion to rescue every dog she has ever seen. Uncle Lou has a newspaper, a recliner, and a rapidly diminishing will to live. When Barb returns from the shelter with Dog Number 47 — a satellite-eared Australian Shepherd mix named Archie — something in Lou finally snaps. In a good way. Eventually.<br><br>
+  <strong>New mechanic:</strong> The Negotiation System™ — convince Lou using a combination of puppy eyes, selective truth-telling, and strategic deployment of the phrase "he was the last one." He was not the last one.</p>
+
+  <!-- QUOTES -->
+  <div class="quotes">
+    <div class="quote">"Archie stood on his hind legs and waved at us. We were legally required to take him home."<span>— AUNT BARB, shelter intake form, field: 'reason for adoption'</span></div>
+    <div class="quote">"I said no. I have always said no. The dog has his own chair now."<span>— UNCLE LOU, currently watching TV with Archie</span></div>
+  </div>
+
+  <!-- TAGS -->
+  <div class="tags">
+    <span class="tag">🐶 47 RESCUABLE DOGS</span>
+    <span class="tag">📰 LOU'S NEWSPAPER HEALTH BAR</span>
+    <span class="tag">🏡 NEGOTIATION SYSTEM™</span>
+    <span class="tag">🐔 DOG ADOPTION: NOW THE WHOLE POINT</span>
+  </div>
+
+  <!-- RATING -->
+  <div class="rating-row">
+    <div class="esrb">E</div>
+    <div class="rating-txt">Extremely Mild Domestic Negotiation · One Very Good Boy · Several More Good Boys<br>Lou Will Be Fine · The Ears On Archie · We're All Crying</div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn btn-wishlist" onclick="wishlist()">+ WISHLIST</button>
+    <button class="btn btn-share" onclick="share()">🔗 SHARE</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- FRANCHISE LINK -->
+  <div class="franchise">
+    <div class="franchise-label">PART OF THE CRANKY CHICKENS UNIVERSE</div>
+    <a href="/" class="franchise-link">🐔 See All Games →</a>
+  </div>
+
+  <footer>cranky chickens v.5 · aunt barb's rescue ranch · coming whenever lou gives up</footer>
+
+</div>
+
+<script>
+// ── TRAILER (same code as index) ──
+(function(){
+  const canvas=document.getElementById('cB');
+  const ctx=canvas.getContext('2d');
+  let fr=0;
+  const W=640,H=200;
+  const STARS=Array.from({length:60},()=>({x:Math.random()*W,y:Math.random()*80,r:Math.random()<0.3?1.5:0.8,spd:0.3+Math.random()*0.7,off:Math.random()*Math.PI*2}));
+
+  function drawChickenMini(x,y,scale){
+    ctx.save(); ctx.translate(x+14,y+14); ctx.scale(scale,scale); ctx.translate(-14,-14);
+    ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(14,28,11,3,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ff9f1c'; ctx.beginPath(); ctx.ellipse(14,18,12,11,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffcc6e'; ctx.beginPath(); ctx.ellipse(14,20,8,7,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ff9f1c'; ctx.beginPath(); ctx.arc(14,8,9,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ff3333'; ctx.beginPath(); ctx.moveTo(9,1);ctx.lineTo(7,-5);ctx.lineTo(12,-2);ctx.lineTo(14,-7);ctx.lineTo(16,-2);ctx.lineTo(20,-5);ctx.lineTo(18,1); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='white'; ctx.beginPath(); ctx.ellipse(12,7,4,5,-0.3,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(19,7,4,5,0.3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1a2e'; ctx.beginPath(); ctx.arc(13,8,2.5,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(20,8,2.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ff6b00'; ctx.beginPath(); ctx.moveTo(11,12);ctx.lineTo(17,12);ctx.lineTo(14,16); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#e08010'; ctx.beginPath(); ctx.ellipse(3,18,4,8,0.4,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(25,18,4,8,-0.4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawDogMini(x,y,scale,happy){
+    ctx.save(); ctx.translate(x+14,y+16); ctx.scale(scale,scale); ctx.translate(-14,-16);
+    ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(14,30,12,3,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#c8882a'; ctx.beginPath(); ctx.ellipse(14,20,11,10,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.ellipse(10,17,7,7,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#c8882a'; ctx.beginPath(); ctx.arc(14,7,10,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4,3,5,12,-0.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(24,3,5,12,0.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e8a84a'; ctx.beginPath(); ctx.ellipse(4,3,3,9,-0.5,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(24,3,3,9,0.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e8b87a'; ctx.beginPath(); ctx.ellipse(16,8,5,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.ellipse(17,5,2.5,1.8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3a2210'; ctx.beginPath(); ctx.arc(10,6,2.5,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(18,6,2.5,0,Math.PI*2); ctx.fill();
+    if(happy>0){
+      ctx.globalAlpha=happy; ctx.fillStyle='#ff6688';
+      ctx.beginPath(); ctx.ellipse(17,13,3,4,0.3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+      const wv=Math.sin(fr*0.15)*10;
+      ctx.fillStyle='#c8882a'; ctx.beginPath(); ctx.ellipse(26,-2+wv,4,3,0.5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function loop(){
+    fr++;
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#1a0a2e'); sky.addColorStop(0.4,'#2d1044'); sky.addColorStop(1,'#3d1a0a');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+    STARS.forEach(s=>{
+      const tw=0.3+Math.sin(fr*s.spd+s.off)*0.7;
+      ctx.globalAlpha=tw*0.8; ctx.fillStyle='#c8d8ff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#2a1a0a'; ctx.fillRect(0,H*0.68,W,H*0.32);
+    ctx.fillStyle='#3a2a14'; ctx.fillRect(0,H*0.68,W,4);
+    ctx.fillStyle='#8b2222'; ctx.fillRect(460,55,140,H*0.5);
+    ctx.fillStyle='#6b1a1a'; ctx.beginPath(); ctx.moveTo(448,55); ctx.lineTo(530,18); ctx.lineTo(612,55); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#3a1a1a'; ctx.fillRect(500,100,30,36);
+    ctx.globalAlpha=0.4+Math.sin(fr*0.04)*0.2;
+    ctx.fillStyle='#ffcc02'; ctx.fillRect(476,66,22,16); ctx.fillRect(554,66,22,16);
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#5a3a1a'; ctx.fillRect(28,88,120,80);
+    ctx.fillStyle='#7a5a2a'; ctx.beginPath(); ctx.moveTo(18,88); ctx.lineTo(88,52); ctx.lineTo(158,88); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=0.7+Math.sin(fr*0.05)*0.2;
+    ctx.fillStyle='#ffeeaa'; ctx.fillRect(38,98,28,20); ctx.fillRect(108,98,28,20);
+    ctx.globalAlpha=1;
+    ctx.strokeStyle='#8b6a30'; ctx.lineWidth=2; ctx.strokeRect(38,98,28,20); ctx.strokeRect(108,98,28,20);
+    const carX=100+Math.min(fr*1.6,180);
+    ctx.fillStyle='#dd4488'; ctx.beginPath(); ctx.roundRect(carX,124,80,28,5); ctx.fill();
+    ctx.fillStyle='#ee88bb'; ctx.beginPath(); ctx.roundRect(carX+8,114,64,18,4); ctx.fill();
+    ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(carX+16,152,9,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(carX+60,152,9,0,Math.PI*2); ctx.fill();
+    if(fr>60) drawChickenMini(carX+52,108+Math.sin(fr*0.1)*3,1.1);
+    const numDogs=Math.min(Math.floor((fr-40)/18),5);
+    for(let d=0;d<numDogs;d++) drawDogMini(carX-42-d*34+Math.sin(fr*0.08+d)*4,116+Math.sin(fr*0.06+d*1.3)*5,0.75+d*0.05,d===0?0.9:0.4);
+    [200,242,292,344].forEach((cx,i)=>drawChickenMini(cx,128+Math.sin(fr*0.05+i)*3,0.7));
+    const paperDrop=Math.max(0,Math.min(30,(fr-80)*0.4));
+    ctx.fillStyle='rgba(20,8,0,0.9)'; ctx.fillRect(48,100,8,14); ctx.fillRect(52,100-paperDrop*0.4,22,10);
+    ctx.fillStyle='rgba(0,0,0,0.78)'; ctx.fillRect(0,0,W,22);
+    ctx.font='bold 12px Fredoka One'; ctx.textAlign='center';
+    ctx.fillStyle='#ff88cc'; ctx.shadowColor='#ff44aa'; ctx.shadowBlur=8;
+    ctx.fillText('🐾 CRANKY CHICKENS V.5: AUNT BARB\'S RESCUE RANCH',W/2,15);
+    ctx.shadowBlur=0;
+    const pulse=0.6+Math.sin(fr*0.08)*0.4;
+    ctx.globalAlpha=pulse; ctx.fillStyle='rgba(255,200,220,0.8)'; ctx.font='bold 10px Fredoka One';
+    ctx.fillText('"He was the last one." — Aunt Barb',W/2,H-6);
+    ctx.textAlign='left'; ctx.globalAlpha=1;
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── ACTIONS ──
+function wishlist(){
+  const btn=document.querySelector('.btn-wishlist');
+  btn.textContent='🐾 WISHLISTED';
+  btn.style.background='#ff88cc';
+  btn.style.borderColor='#ff88cc';
+}
+
+function share(){
+  const url='https://crankychickens.com/games/rescue-ranch.html';
+  const title="Aunt Barb's Rescue Ranch — Cranky Chickens V.5";
+  const text='"Just This Once." — Aunt Barb, 47 times. A Cranky Chickens game about love, dogs, and a man named Lou who has given up entirely.';
+  if(navigator.share){
+    navigator.share({title,text,url}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(url).then(()=>{
+      const btn=document.querySelector('.btn-share');
+      btn.textContent='✅ LINK COPIED';
+      setTimeout(()=>btn.textContent='🔗 SHARE',2000);
+    });
+  }
+}
+</script>
+</body>
+</html>
