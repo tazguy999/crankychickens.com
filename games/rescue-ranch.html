@@ -233,6 +233,7 @@ function startTrailer(){
   }
 
   function loop(){
+    if(!trailerStarted) { requestAnimationFrame(loop); return; }
     fr++;
     const sky=ctx.createLinearGradient(0,0,0,H);
     sky.addColorStop(0,'#1a0a2e'); sky.addColorStop(0.4,'#2d1044'); sky.addColorStop(1,'#3d1a0a');
