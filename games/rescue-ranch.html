@@ -154,6 +154,8 @@ function startTrailer(){
   const overlay = document.getElementById('countdown-overlay');
   if(overlay) overlay.remove();
   trailerStarted = true;
+  // Launch the full cinematic trailer on the main site
+  window.location.href = '/?play=barb#cardB';
 }
 
 (function runCountdown(){

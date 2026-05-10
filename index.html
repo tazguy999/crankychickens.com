@@ -4580,7 +4580,18 @@ function cluck(msg){
     const hash=window.location.hash.slice(1);
     if(hash) setTimeout(()=>highlightCard(hash),200);
   }
-  window.addEventListener('load', checkHash);
+  // Auto-play trailer if ?play= param present
+  const playParam = new URLSearchParams(window.location.search).get('play');
+  if(playParam){
+    window.addEventListener('load', ()=>{
+      setTimeout(()=>{
+        checkHash();
+        setTimeout(()=>playTrailer(playParam), 400);
+      }, 300);
+    });
+  } else {
+    window.addEventListener('load', checkHash);
+  }
   window.addEventListener('hashchange', ()=>highlightCard(window.location.hash.slice(1)));
   window.shareCard=function(cardId,title){
     const url=window.location.origin+'/#'+cardId;
