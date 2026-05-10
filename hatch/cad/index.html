@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- FRAMEWORK_VERSION: 1.0 UPDATED: 2026-05-10 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controlled AI Development · Hatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --border: #222;
+    --accent: #c8f060;
+    --accent2: #60c8f0;
+    --muted: #555;
+    --text: #e8e8e0;
+    --text-dim: #888;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+    padding: 0 1.5rem 4rem;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* ── NAV ── */
+  .site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .site-nav .nav-brand {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .site-nav .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+  .site-nav .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .site-nav .nav-links a:hover,
+  .site-nav .nav-links a.active { color: var(--accent); }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  h1 em { font-style: italic; color: var(--accent); }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    font-weight: 300;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-top: 1.2rem;
+    text-transform: uppercase;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 3.5rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  h2 em { font-style: italic; color: var(--accent); }
+
+  h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  p {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text);
+    margin-bottom: 1rem;
+    font-weight: 300;
+  }
+
+  strong { font-weight: 700; color: var(--text); }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 2px solid var(--accent);
+    padding: 0.9rem 1.2rem;
+    margin: 1.5rem 0;
+    background: rgba(200, 240, 96, 0.04);
+  }
+  .callout p { font-style: italic; color: var(--text-dim); margin: 0; font-size: 0.95rem; }
+  .callout strong { color: var(--accent); }
+
+  /* ── GATE ── */
+  .gate {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+  .gate-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #0d0d0d;
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .gate-text {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    background: var(--surface);
+  }
+
+  /* ── SETUP ── */
+  .setup {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+  .setup-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--accent2);
+    color: #0d0d0d;
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .setup-text {
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    background: var(--surface);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── LIST ── */
+  .principle-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 1rem 0;
+  }
+  .principle-list li {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text);
+    font-weight: 300;
+    padding-left: 1.2rem;
+    position: relative;
+  }
+  .principle-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+  }
+  .principle-list li strong { color: var(--text); }
+
+  /* ── FELLOWSHIP ── */
+  .fellowship {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+  .fellowship-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .fellowship-row:last-child { border-bottom: none; }
+  .fellowship-phase {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 0.9rem 1rem;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    border-right: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .fellowship-desc {
+    padding: 0.9rem 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .fellowship-desc strong { color: var(--text); }
+
+  /* ── EVAL LOOP ── */
+  .eval-loop {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .eval-step {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    white-space: nowrap;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .eval-arrow {
+    color: var(--muted);
+    font-size: 0.7rem;
+    padding: 0 0.4rem;
+    flex-shrink: 0;
+  }
+
+  /* ── PORTABILITY ── */
+  .travels { border-left: 2px solid var(--accent); }
+  .stays { border-left: 2px solid var(--border); }
+
+  /* ── STANDARD ── */
+  .standards {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+  }
+  .standard-item {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+  .standard-rule {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .standard-note {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="nav-brand">🐔 Hatch</a>
+  <ul class="nav-links">
+    <li><a href="/">Framework</a></li>
+    <li><a href="/cad/" class="active">CAD</a></li>
+    <li><a href="/ai-ops/">AI Ops</a></li>
+    <li><a href="/framework/nick-ng.html">Nick × Ng</a></li>
+  </ul>
+</nav>
+
+<header>
+  <div class="eyebrow">Engineering Methodology</div>
+  <h1>Controlled <em>AI</em> Development</h1>
+  <p class="subtitle">A portable framework for engineering teams building with AI-assisted development.</p>
+  <div class="meta">Nick Weber &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; <a href="/ai-ops/" style="color:var(--muted);text-decoration:none">See it in operation →</a></div>
+</header>
+
+
+<!-- ── 1. THE PROBLEM ── -->
+<div class="section">
+  <h2>1. The <em>Problem</em></h2>
+
+  <p>AI coding tools compress the easy 80% of any feature dramatically. A scaffold, a component, a CRUD endpoint — <strong>done in minutes instead of hours.</strong> Stakeholders see this happen and permanently recalibrate their expectations. Every future estimate gets divided by 10 in their head.</p>
+
+  <p>Then you hit the hard 20%. Race conditions. Edge cases. Domain-specific constraints that AI doesn't have access to. <strong>The gap isn't a conversation anymore — it's a credibility crisis.</strong> AI didn't compress the hard part. It just made the contrast more violent.</p>
+
+  <div class="callout">
+    <p>The 80/20 Trap: AI unlocks the easy part first. Always. The danger isn't slow delivery — it's that speed on the easy 80% creates expectations that the hard 20% can never meet.</p>
+  </div>
+
+  <p>A second problem compounds this: AI tools generate <strong>plausible-looking output</strong> that optimizes for immediate functionality over coherent architecture. Code that works today but accumulates what we call <strong>vibe debt</strong> — a growing gap between what the codebase appears to be and what it actually is. Vibe debt is invisible until it becomes a crisis.</p>
+
+  <p>The root cause of both problems is the same: <strong>development driven by vibes instead of specifications.</strong> A developer changes a prompt, tests a few inputs, and if it looks good to them (LGTM), they ship. This is guesswork dressed up as engineering.</p>
+</div>
+
+
+<!-- ── 2. THE FRAMEWORK ── -->
+<div class="section">
+  <h2>2. The <em>Framework</em></h2>
+
+  <p>Controlled AI Development treats AI-assisted engineering the way lean manufacturing treats a production line: <strong>instrument the process, establish a baseline, introduce controlled changes, measure outcomes objectively.</strong> Not vibes. Not LGTM. Not guesswork.</p>
+
+  <h3>2.1 · Acceptance Criteria as Specification</h3>
+  <p>No code is written until testable acceptance criteria exist and are approved. A ticket description is intent. Acceptance criteria are <strong>verification conditions.</strong> The distinction matters because AI will make decisions about every ambiguity silently.</p>
+
+  <ul class="principle-list">
+    <li><strong>Testable:</strong> each item is either pass or fail, not a matter of judgment</li>
+    <li><strong>Explicit about scope:</strong> what is out of scope is as important as what is in scope</li>
+    <li><strong>Approved before development starts:</strong> AC written after the fact is not AC, it's documentation</li>
+  </ul>
+
+  <div class="gate">
+    <div class="gate-label">Gate</div>
+    <div class="gate-text">Ticket status is not Ready until AC exists and is approved. AC lives on the ticket as a versioned comment, not in a chat message.</div>
+  </div>
+
+  <h3>2.2 · Prompts as Source Artifacts</h3>
+  <p>If the prompt is the specification that drives AI output, <strong>the prompt is source code.</strong> It deserves the same treatment: version control, review, and ownership. Reviewing only the generated output without reviewing the prompt is like reviewing a compiled binary without access to the source.</p>
+
+  <ul class="principle-list">
+    <li><strong>Prompts are tracked:</strong> session telemetry captures what was sent, not just what was received</li>
+    <li><strong>Patterns are reviewable:</strong> engineering lead can see prompt sequences, not just PR diffs</li>
+    <li><strong>Changes are deliberate:</strong> prompt modifications are treated as interventions with measurable outcomes</li>
+  </ul>
+
+  <div class="callout">
+    <p>The most important review a lead can do is not the code review. It is the prompt review — the review of the specification that generated the code.</p>
+  </div>
+
+  <h3>2.3 · Sessions as Observable Pipelines</h3>
+  <p>An AI coding session is a black box unless instrumented. Claude Code exposes native OpenTelemetry support that, with a single environment variable, streams session data to any observability backend.</p>
+
+  <p>What telemetry captures per session: every prompt and its character count, token usage, tool calls made, cache hit ratio (a proxy for prompt structure quality), model and estimated cost.</p>
+
+  <p>The key diagnostic signal is the <strong>beast mode flag</strong> — a single massive prompt that attempts diagnosis and resolution simultaneously, with no checkpoint between them. AI confidently resolves the wrong thing because it diagnosed wrong inside a single context window. Telemetry makes this pattern visible without watching the developer work.</p>
+
+  <div class="setup">
+    <div class="setup-label">Setup</div>
+    <div class="setup-text">CLAUDE_CODE_ENABLE_TELEMETRY=1<br>OTEL_LOG_USER_PROMPTS=1<br><span style="color:var(--muted)">// one-time shell profile config, zero ongoing friction</span></div>
+  </div>
+
+  <h3>2.4 · Goldilocks Fixtures as the Regression Gate</h3>
+  <p>A Goldilocks fixture set is a curated collection of input/output pairs that define ground truth. Not too broad, not too narrow — <strong>just right</strong> for the specific thing being tested. Derived directly from approved acceptance criteria. Gates the PR.</p>
+
+  <ul class="principle-list">
+    <li><strong>Objective fixtures:</strong> deterministic assertions. Run on every commit. Fast and cheap.</li>
+    <li><strong>Rubric fixtures:</strong> binary pass/fail on subjective outputs, scored against explicit criteria. Run on PR.</li>
+  </ul>
+
+  <p>The critical distinction from traditional tests: Goldilocks fixtures test <strong>the pipeline</strong> (ticket → prompts → output), not just the code. A prompt change that regresses fixture performance is caught before it reaches review.</p>
+
+  <div class="gate">
+    <div class="gate-label">Gate</div>
+    <div class="gate-text">PR cannot merge if Goldilocks assertions fail. Fixture failures communicate "this isn't done yet" in objective terms — no conversation required.</div>
+  </div>
+
+  <h3>2.5 · The Eval Loop</h3>
+  <p>The mechanism that transforms observation into improvement. The scientific method applied to prompt engineering.</p>
+
+  <div class="eval-loop">
+    <div class="eval-step">Baseline</div>
+    <div class="eval-arrow">→</div>
+    <div class="eval-step">Identify pattern</div>
+    <div class="eval-arrow">→</div>
+    <div class="eval-step">Hypothesis</div>
+    <div class="eval-arrow">→</div>
+    <div class="eval-step">Intervene</div>
+    <div class="eval-arrow">→</div>
+    <div class="eval-step">Measure</div>
+    <div class="eval-arrow">→</div>
+    <div class="eval-step">Decide</div>
+  </div>
+
+  <p>The outcome is objective. Not "this looks better." Not "I think this is an improvement." <strong>Demonstrably better or demonstrably not.</strong></p>
+</div>
+
+
+<!-- ── 3. FELLOWSHIP MODEL ── -->
+<div class="section">
+  <h2>3. The <em>Fellowship</em> Model</h2>
+
+  <p>The TDD discipline that governs how tests are written within this framework. It exists because AI agents, left to their own devices, will delete tests to make them pass. The Fellowship Model makes the test the <strong>specification</strong>, not an afterthought.</p>
+
+  <div class="fellowship">
+    <div class="fellowship-row">
+      <div class="fellowship-phase">Gather the Party</div>
+      <div class="fellowship-desc"><strong>Arrange</strong> — define all inputs and dependencies, create mocks and stubs as needed</div>
+    </div>
+    <div class="fellowship-row">
+      <div class="fellowship-phase">Do Adventure</div>
+      <div class="fellowship-desc"><strong>Act (Black Box)</strong> — call the public method only. Do not implement internals. The test must fail initially.</div>
+    </div>
+    <div class="fellowship-row">
+      <div class="fellowship-phase">Claim the Treasure</div>
+      <div class="fellowship-desc"><strong>Assert</strong> — verify expected output and interactions with dependencies</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>If we defeat the dragon on the first move, we skipped the story. The red phase is not a formality. It is proof that the test is testing something real.</p>
+  </div>
+</div>
+
+
+<!-- ── 4. PORTABILITY ── -->
+<div class="section">
+  <h2>4. <em>Portability</em></h2>
+
+  <p>This framework was developed in the context of a B2B SaaS engineering team. The specific tooling — ADO for tickets, App Insights for telemetry, Claude Code for AI assistance — is not what travels. <strong>The discipline travels.</strong></p>
+
+  <h3>What travels to any team, any domain</h3>
+  <div class="callout travels">
+    <ul class="principle-list">
+      <li><strong>The AC gate:</strong> ticket isn't ready without testable acceptance criteria. No tooling required.</li>
+      <li><strong>The Goldilocks habit:</strong> fixtures change with the domain, but the discipline of maintaining ground truth is universal.</li>
+      <li><strong>The eval loop:</strong> baseline → intervention → measure is scientific method. Works on any prompt, any model.</li>
+      <li><strong>The beast mode flag:</strong> a human judgment call about prompt structure. Domain-agnostic.</li>
+      <li><strong>The Fellowship Model:</strong> TDD discipline that pre-dates AI and becomes more important as AI generates more code.</li>
+    </ul>
+  </div>
+
+  <h3>What stays with the originating team</h3>
+  <div class="callout stays">
+    <ul class="principle-list">
+      <li>The specific Goldilocks fixture sets — they encode domain knowledge</li>
+      <li>The slash commands and ops automation — wired to specific ADO and Notion structures</li>
+      <li>The two-lane product strategy — the moat analysis is domain-specific</li>
+    </ul>
+  </div>
+
+  <p>What an engineering leader brings to a new context is not tooling. It is this document — the reasoning behind each gate, the failure mode each component addresses, and the implementation pattern that works at small team scale. <strong>The new team builds their own fixtures. The skeleton is reusable.</strong></p>
+</div>
+
+
+<!-- ── 5. THE STANDARD ── -->
+<div class="section">
+  <h2>5. The <em>Standard</em> We Hold</h2>
+
+  <div class="standards">
+    <div class="standard-item">
+      <div class="standard-rule">Done means transferable.</div>
+      <div class="standard-note">Any teammate should be able to understand, debug, and extend the work without the author in the room.</div>
+    </div>
+    <div class="standard-item">
+      <div class="standard-rule">QA catches what you didn't anticipate.</div>
+      <div class="standard-note">You own what you could have.</div>
+    </div>
+    <div class="standard-item">
+      <div class="standard-rule">Prompts are source.</div>
+      <div class="standard-note">If you can't show the prompt, you can't explain the output.</div>
+    </div>
+    <div class="standard-item">
+      <div class="standard-rule">Measurement over vibes.</div>
+      <div class="standard-note">An improvement that can't be measured isn't an improvement — it's a preference.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>This is an aspirational standard. The methodology itself is under continuous improvement using the same eval loop it prescribes. The goal is not perfection. The goal is a repeatable process for getting demonstrably better.</p>
+  </div>
+</div>
+
+
+<footer>
+  <span>Controlled AI Development &nbsp;·&nbsp; Nick Weber &nbsp;·&nbsp; v1.0</span>
+  <span><a href="/ai-ops/">See it in operation →</a></span>
+</footer>
+
+</body>
+</html>
