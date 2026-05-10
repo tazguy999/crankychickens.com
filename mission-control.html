@@ -397,9 +397,10 @@ html, body {
       </label>
     </div>
     <textarea id="nqrNote" placeholder="Optional: what would have been better? (helps train the AI)" rows="2" style="background:rgba(0,0,0,0.3);border:1.5px solid rgba(255,107,0,0.25);border-radius:8px;padding:10px;color:#e0e8f0;font-family:'Nunito',sans-serif;font-size:13px;resize:none;"></textarea>
-    <div style="display:flex;gap:10px;justify-content:center;">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <button onclick="closeNQR()" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 20px;border-radius:16px;border:2px solid rgba(200,80,80,0.5);background:rgba(200,80,80,0.08);color:rgba(255,120,120,0.8);cursor:pointer;">✕ Cancel</button>
-      <button onclick="submitNQR()" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 24px;border-radius:16px;border:2px solid #ff6b00;background:rgba(255,107,0,0.15);color:#ff6b00;cursor:pointer;">📝 Log Intervention</button>
+      <button onclick="submitNQR(false)" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 24px;border-radius:16px;border:2px solid #ff6b00;background:rgba(255,107,0,0.15);color:#ff6b00;cursor:pointer;">📝 Log Only</button>
+      <button onclick="submitNQR(true)" style="font-family:'Fredoka One',cursive;font-size:14px;padding:10px 24px;border-radius:16px;border:2px solid #00cc66;background:rgba(0,204,102,0.15);color:#00cc66;cursor:pointer;">🔄 Log & Retry</button>
     </div>
   </div>
 </div>
@@ -1760,7 +1761,7 @@ function closeNQR(){
   nqrIdx = null;
 }
 
-async function submitNQR(){
+async function submitNQR(andRetry=false){
   if(nqrIdx===null) return;
   const sub = allSubmissions[nqrIdx];
   const reasons = [...document.querySelectorAll('#nqrReasons input:checked')].map(cb=>cb.value);
@@ -1788,6 +1789,7 @@ async function submitNQR(){
     dingedSkills,
     note: note||null,
     deliveryType: sub.aiResult?.configEntry?'full_code':sub._previewChoice?'config_only':'unknown',
+    retried: andRetry,
   };
 
   // Append to delivery log as an intervention entry
@@ -1801,7 +1803,7 @@ async function submitNQR(){
     log.unshift({...intervention, type:'intervention', delivered:'Human corrective action required after deployment'});
     const saveBody={action:'save_file',path:'lore/delivery-log.json',branch:'kids-preview',
       content:JSON.stringify(log.slice(0,200),null,2),
-      commitMsg:'🎯 Intervention: '+intervention.submissionName+' — '+reasons.join(', ')};
+      commitMsg:'🎯 Intervention: '+intervention.submissionName+' — '+reasons.join(', ')+(andRetry?' (retrying)':'')};
     if(getData.sha) saveBody.sha=getData.sha;
     const saveRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(saveBody)});
     const saveData=await saveRes.json();
@@ -1809,13 +1811,24 @@ async function submitNQR(){
       const retryBody={...saveBody}; delete retryBody.sha;
       await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(retryBody)});
     }
-    // Mark submission as needing revision
-    allSubmissions[nqrIdx].status = 'needs_revision';
-    allSubmissions[nqrIdx].intervention = intervention;
-    await saveSubmissions('🎯 Intervention logged: '+(sub.scribeName||'submission'));
+
+    // Mark submission back to pending so pipeline re-runs
+    const retryIdx = nqrIdx;
+    allSubmissions[retryIdx].status = andRetry ? 'pending_review' : 'needs_revision';
+    allSubmissions[retryIdx].intervention = intervention;
+    await saveSubmissions((andRetry?'🔄 NQR retry: ':'🎯 Intervention logged: ')+(sub.scribeName||'submission'));
     closeNQR();
-    toast('📝 Intervention logged — ding to: '+dingedSkills.join(', '));
-    renderAll();
+
+    if(andRetry){
+      toast('🔄 Logged ding — re-running pipeline now...');
+      renderAll();
+      // Small delay so UI updates before pipeline starts
+      await new Promise(r=>setTimeout(r,600));
+      await approve(retryIdx);
+    } else {
+      toast('📝 Intervention logged — ding to: '+dingedSkills.join(', '));
+      renderAll();
+    }
   }catch(e){
     console.error('submitNQR failed:',e);
     toast('⚠️ Could not save: '+e.message);
