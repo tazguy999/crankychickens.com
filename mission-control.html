@@ -434,21 +434,47 @@ async function loadSubmissions(){
 
 function renderAll(){
   updateStats();
-  // Compute most recently deployed item — only that one gets the NQR button
   const deployed = allSubmissions.filter(s=>s.status==='deployed'||s.status==='needs_revision');
   mostRecentDeployedId = deployed.length
     ? deployed.reduce((a,b)=>(new Date(a.timestamp)>new Date(b.timestamp)?a:b)).id
     : null;
   renderTab(currentTab);
-  // Show merge panel if any approved
   const approved=allSubmissions.filter(s=>s.status==='approved');
   const mergePanel=document.getElementById('mergePanel');
   if(approved.length>0){
     mergePanel.classList.add('active');
     document.getElementById('mergeSub').textContent=
       `${approved.length} approved submission${approved.length>1?'s':''} ready to deploy to crankychickens.com`;
+    // Check branch parity — if identical, ghosts exist, clean them up
+    checkBranchParity();
   } else {
     mergePanel.classList.remove('active');
+  }
+}
+
+async function checkBranchParity(){
+  try{
+    const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'compare_branches'})});
+    const data = await res.json();
+    if(data.identical){
+      // Branches are the same — approved submissions are already live, mark them deployed
+      const ghosts = allSubmissions.filter(s=>s.status==='approved');
+      if(ghosts.length>0){
+        ghosts.forEach(s=>s.status='deployed');
+        await saveSubmissions('Auto-mark deployed: branches are identical');
+        document.getElementById('mergePanel').classList.remove('active');
+        updateStats();
+        renderTab(currentTab);
+        toast('✅ Branches identical — marked '+ghosts.length+' submission'+(ghosts.length>1?'s':'')+' as deployed');
+      } else {
+        // No approvals, just hide the panel
+        document.getElementById('mergePanel').classList.remove('active');
+      }
+    }
+  }catch(e){
+    // Parity check failed silently — don't block the UI
+    console.warn('Branch parity check failed:', e.message);
   }
 }
 

@@ -214,6 +214,16 @@ exports.handler = async (event) => {
     } catch (e) { return err(CORS, e.message); }
   }
 
+  // ── COMPARE BRANCHES ──
+  if (action === 'compare_branches') {
+    try {
+      const res = await ghFetch(`/repos/${REPO}/compare/main...${BRANCH}`, TOKEN);
+      const data = await res.json();
+      const identical = data.status === 'identical' || data.ahead_by === 0;
+      return ok(CORS, { identical, status: data.status, ahead_by: data.ahead_by, behind_by: data.behind_by });
+    } catch (e) { return err(CORS, e.message); }
+  }
+
   return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: `Unknown action: ${action}` }) };
 };
 
