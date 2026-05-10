@@ -20,7 +20,7 @@
         "content": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?"
       }
     ],
-    "status": "deployed",
+    "status": "pending_review",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -62,6 +62,22 @@
       "_dingedSkills": [],
       "_spriteOk": true,
       "_typeExisted": false
+    },
+    "intervention": {
+      "id": 1778380810856,
+      "timestamp": "2026-05-10T02:40:10.856Z",
+      "submissionId": 1778378732165,
+      "submissionName": "Unnamed",
+      "kidName": "Dragon Scribe",
+      "reasons": [
+        "fell_back"
+      ],
+      "dingedSkills": [
+        "sprite-gen"
+      ],
+      "note": null,
+      "deliveryType": "full_code",
+      "retried": true
     }
   },
   {
