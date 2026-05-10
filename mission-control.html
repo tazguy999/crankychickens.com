@@ -698,20 +698,35 @@ screenIndex -1 means it appears on all screens. Choose vivid colors matching the
 // ── DELIVERY LOG ──
 async function writeDeliveryLog(entry){
   try{
+    // Get current file + sha
     const getRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
     const getData=await getRes.json();
     const log=getData.content?JSON.parse(getData.content):[];
     log.unshift(entry);
-    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        action:'save_file',path:'lore/delivery-log.json',branch:'kids-preview',
-        content:JSON.stringify(log.slice(0,100),null,2),
-        sha:getData.sha,
-        commitMsg:`📋 Delivery log: ${entry.deliveryType} — ${entry.askedName}`
-      })
-    });
-  }catch(e){ console.error('writeDeliveryLog failed:',e); }
+    // Save — pass sha only if we got one (new file = no sha needed)
+    const saveBody={
+      action:'save_file', path:'lore/delivery-log.json', branch:'kids-preview',
+      content:JSON.stringify(log.slice(0,200),null,2),
+      commitMsg:'📋 Delivery: '+entry.deliveryType+' — '+(entry.askedName||'unknown'),
+    };
+    if(getData.sha) saveBody.sha=getData.sha;
+    const saveRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(saveBody)});
+    const saveData=await saveRes.json();
+    if(saveData.error){
+      // SHA conflict — retry once without sha (force overwrite)
+      console.warn('Delivery log sha conflict, retrying without sha...');
+      const retryBody={...saveBody}; delete retryBody.sha;
+      const retryRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(retryBody)});
+      const retryData=await retryRes.json();
+      if(retryData.error) throw new Error('Save failed: '+retryData.error);
+    }
+  }catch(e){
+    console.error('writeDeliveryLog failed:',e);
+    toast('⚠️ Delivery log write failed: '+e.message);
+  }
 }
 
 async function loadDeliveryLog(){
@@ -1167,15 +1182,7 @@ async function submitPass(type){
     askedName:sub.scribeName||'',
   };
   try{
-    const getRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
-    const getData=await getRes.json();
-    const log=getData.content?JSON.parse(getData.content):[];
-    log.unshift(entry);
-    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'save_file',path:'lore/delivery-log.json',branch:'kids-preview',
-        content:JSON.stringify(log.slice(0,100),null,2),sha:getData.sha,
-        commitMsg:'🤖 AI pass: '+entry.submissionName+' — '+reasons.join(', ')})});
+    await appendToDeliveryLog(entry, '🤖 AI pass: '+entry.submissionName+' — '+reasons.join(', '));
   }catch(e){ console.error('AI pass log failed:',e); }
 
   allSubmissions[passIdx].status='rejected';
@@ -1527,25 +1534,19 @@ async function submitNQR(){
       body:JSON.stringify({action:'get_file',path:'lore/delivery-log.json',branch:'kids-preview'})});
     const getData = await getRes.json();
     const log = getData.content ? JSON.parse(getData.content) : [];
-    // Find the original delivery entry and mark it
     const original = log.find(e=>e.submissionId===sub.id);
-    if(original){
-      original.intervention = intervention;
-      original.deliveryType = 'intervention_required';
+    if(original){ original.intervention=intervention; original.deliveryType='intervention_required'; }
+    log.unshift({...intervention, type:'intervention', delivered:'Human corrective action required after deployment'});
+    const saveBody={action:'save_file',path:'lore/delivery-log.json',branch:'kids-preview',
+      content:JSON.stringify(log.slice(0,200),null,2),
+      commitMsg:'🎯 Intervention: '+intervention.submissionName+' — '+reasons.join(', ')};
+    if(getData.sha) saveBody.sha=getData.sha;
+    const saveRes=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(saveBody)});
+    const saveData=await saveRes.json();
+    if(saveData.error){
+      const retryBody={...saveBody}; delete retryBody.sha;
+      await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(retryBody)});
     }
-    // Also add as a separate intervention entry
-    log.unshift({
-      ...intervention,
-      type: 'intervention',
-      delivered: 'Human corrective action required after deployment',
-    });
-    await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        action:'save_file', path:'lore/delivery-log.json', branch:'kids-preview',
-        content:JSON.stringify(log.slice(0,100),null,2), sha:getData.sha,
-        commitMsg:'🎯 Intervention: '+intervention.submissionName+' — '+reasons.join(', ')
-      })
-    });
     // Mark submission as needing revision
     allSubmissions[nqrIdx].status = 'needs_revision';
     allSubmissions[nqrIdx].intervention = intervention;
