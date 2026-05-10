@@ -702,7 +702,7 @@ async function approve(idx){
   }
 
   // All steps succeeded — inject sprite + config
-  const success = await applyFullContribution(result, sub);
+  const success = await applyFullContribution(result, sub, preloadedGameData);
   if(success){
     log.delivered = 'New '+result.characterType+' "'+result.configEntry?.name+'" — sprite injected, config placed. '+result.plainEnglish;
     log.deliveryType = 'full_code';
@@ -1122,13 +1122,14 @@ async function generateFullContribution(sub){
   if(!s1.ok) return {_failed:true, _dingedSkills:[s1.dingedSkill], _stepResults:stepResults};
   const spec = s1.spec;
 
-  // Read game file once — needed for type resolution check
+  // Read game file once — used for both type resolution AND injection
   let gameFileContent = '';
+  let preloadedGameData = null;
   try{
     const gfRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'get_file',path:'games/'+(sub.targetGame?.slug||'in-space')+'.html',branch:'kids-preview'})});
-    const gfData = await gfRes.json();
-    gameFileContent = gfData.content||'';
+    preloadedGameData = await gfRes.json();
+    gameFileContent = preloadedGameData.content||'';
   }catch(e){ console.warn('Could not pre-read game file for type check'); }
 
   // Step 2 — resolve type
@@ -1183,7 +1184,7 @@ async function generateFullContribution(sub){
 }
 
 // ── APPLY FULL CONTRIBUTION TO KIDS-PREVIEW ──
-async function applyFullContribution(result, sub){
+async function applyFullContribution(result, sub, preloadedGameData){
   const gameSlug = sub.targetGame?.slug||'in-space';
   const gameFile = `games/${gameSlug}.html`;
   const configPath = `configs/${gameSlug}.json`;
@@ -1193,11 +1194,14 @@ async function applyFullContribution(result, sub){
   function fail(msg){ steps.push('❌ '+msg); toast('❌ '+msg); throw new Error(msg); }
 
   try{
-    // 1. Read game file
+    // 1. Use preloaded game file if available, otherwise fetch fresh
     step('Reading game file...');
-    const gameRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'get_file',path:gameFile,branch:'kids-preview'})});
-    const gameData = await gameRes.json();
+    let gameData = preloadedGameData;
+    if(!gameData||!gameData.content){
+      const gameRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'get_file',path:gameFile,branch:'kids-preview'})});
+      gameData = await gameRes.json();
+    }
     if(!gameData.content) fail('Could not read game file from kids-preview');
 
     // 2. Check injection marker exists
