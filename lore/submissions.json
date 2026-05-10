@@ -1,5 +1,40 @@
 [
   {
+    "id": 1778378732165,
+    "timestamp": "2026-05-10T02:05:32.165Z",
+    "scribeName": "Unnamed",
+    "description": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?",
+    "contribType": "enemy",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      },
+      {
+        "role": "user",
+        "content": "Space turkey swarm\" — *Ancient starlight flickers in approval* Ah, the dreaded Turkey Armada! Picture this, young Scribe:..."
+      },
+      {
+        "role": "assistant",
+        "content": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?"
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Turkey Armada Elite Enemy Units",
+      "devNote": "Implement new enemy type with formation flying AI, jet-powered movement mechanics, and zero-gravity swooping attack patterns. Consider gobble sound effects and precious item guarding behavior as optional features.",
+      "nicksNote": "Nick is probably chuckling about programming turkeys to waddle in space formations right now!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1778361590543,
     "timestamp": "2026-05-09T21:19:50.543Z",
     "scribeName": "Starlight Unity Drifter",
