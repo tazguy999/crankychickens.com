@@ -1,5 +1,49 @@
 [
   {
+    "id": 1778381410072,
+    "timestamp": "2026-05-10T02:50:10.073Z",
+    "submissionId": 1778381319471,
+    "kidName": "Dragon Scribe",
+    "contribType": "enemy",
+    "asked": "Ah, a most curious vision comes to me! *mystical swirling*\n\nPerhaps this is Sixtyseven, the ancient Binary Oracle - a thin, wispy alien who speaks only in numbers because they've spent eons calculating hyperspace coordinates. The chickens find them floating near a broken satellite, endlessly muttering \"6... 7... 6... 7...\" \n\nMaybe they're trying to warn about something important, but the chickens have to solve the riddle of what \"67\" means - coordinates to a secret corn cache? The number of iguana ships approaching? \n\nWhat do you think this mysterious stick-being is trying to tell our feathered heroes?",
+    "askedName": "Six seven",
+    "targetGame": "In Space",
+    "targetZone": "Crater Fields",
+    "delivered": "\"Sixtyseven the Binary Oracle\" placed but sprite injection failed — config only",
+    "deliveryType": "config_only",
+    "issues": [
+      "applyFullContribution injection step failed"
+    ],
+    "commitSha": null,
+    "dingedSkills": [],
+    "stepResults": {
+      "write-spec": "✅ I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
+      "type-resolution": "✅ mapped to spirit",
+      "sprite-gen": "✅ regenerated in preview",
+      "feature-build": "✅ placed at screen 1"
+    },
+    "isNewType": false,
+    "mappedFrom": "alien"
+  },
+  {
+    "id": 1778380810856,
+    "timestamp": "2026-05-10T02:40:10.856Z",
+    "submissionId": 1778378732165,
+    "submissionName": "Unnamed",
+    "kidName": "Dragon Scribe",
+    "reasons": [
+      "fell_back"
+    ],
+    "dingedSkills": [
+      "sprite-gen"
+    ],
+    "note": null,
+    "deliveryType": "full_code",
+    "retried": true,
+    "type": "intervention",
+    "delivered": "Human corrective action required after deployment"
+  },
+  {
     "id": 1778378917623,
     "timestamp": "2026-05-10T02:08:37.623Z",
     "submissionId": 1778378732165,
@@ -10,7 +54,7 @@
     "targetGame": "In Space",
     "targetZone": null,
     "delivered": "\"Turkey Commander\" placed but sprite injection failed — config only",
-    "deliveryType": "config_only",
+    "deliveryType": "intervention_required",
     "issues": [
       "applyFullContribution injection step failed"
     ],
@@ -22,7 +66,23 @@
       "sprite-gen": "✨ New drawCharacter_turkey created",
       "feature-build": "✅ placed at screen 0"
     },
-    "isNewType": true
+    "isNewType": true,
+    "intervention": {
+      "id": 1778380810856,
+      "timestamp": "2026-05-10T02:40:10.856Z",
+      "submissionId": 1778378732165,
+      "submissionName": "Unnamed",
+      "kidName": "Dragon Scribe",
+      "reasons": [
+        "fell_back"
+      ],
+      "dingedSkills": [
+        "sprite-gen"
+      ],
+      "note": null,
+      "deliveryType": "full_code",
+      "retried": true
+    }
   },
   {
     "id": 1778361590543,

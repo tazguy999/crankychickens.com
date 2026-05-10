@@ -1,5 +1,111 @@
 [
   {
+    "id": 1778381319471,
+    "timestamp": "2026-05-10T02:48:39.471Z",
+    "scribeName": "Six seven",
+    "description": "Ah, a most curious vision comes to me! *mystical swirling*\n\nPerhaps this is Sixtyseven, the ancient Binary Oracle - a thin, wispy alien who speaks only in numbers because they've spent eons calculating hyperspace coordinates. The chickens find them floating near a broken satellite, endlessly muttering \"6... 7... 6... 7...\" \n\nMaybe they're trying to warn about something important, but the chickens have to solve the riddle of what \"67\" means - coordinates to a secret corn cache? The number of iguana ships approaching? \n\nWhat do you think this mysterious stick-being is trying to tell our feathered heroes?",
+    "contribType": "enemy",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      },
+      {
+        "role": "user",
+        "content": "A funny character that looks like a stick figure that just says 6 7"
+      },
+      {
+        "role": "assistant",
+        "content": "Ah, a most curious vision comes to me! *mystical swirling*\n\nPerhaps this is Sixtyseven, the ancient Binary Oracle - a thin, wispy alien who speaks only in numbers because they've spent eons calculating hyperspace coordinates. The chickens find them floating near a broken satellite, endlessly muttering \"6... 7... 6... 7...\" \n\nMaybe they're trying to warn about something important, but the chickens have to solve the riddle of what \"67\" means - coordinates to a secret corn cache? The number of iguana ships approaching? \n\nWhat do you think this mysterious stick-being is trying to tell our feathered heroes?"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": {
+      "index": 1,
+      "name": "Crater Fields",
+      "emoji": "💥"
+    },
+    "spec": {
+      "title": "Sixtyseven Binary Oracle NPC",
+      "devNote": "Create floating NPC with number-speech dialogue system and riddle-solving minigame mechanic that unlocks story progression or hidden cache locations.",
+      "nicksNote": "Your mysterious number-whispering alien sounds like it could make for a really cool puzzle encounter!",
+      "priority": "medium"
+    },
+    "_previewResult": {
+      "spec": {
+        "name": "Sixtyseven the Binary Oracle",
+        "characterType": "spirit",
+        "color": "#E8E8FF",
+        "eyeColor": "#4040FF",
+        "size": 1,
+        "spd": 0.4,
+        "pat": "h",
+        "screenIndex": 1,
+        "tx": 9,
+        "ty": 9,
+        "behaviorNotes": "A thin, wispy alien that floats gently and occasionally flickers with binary code patterns across its translucent body.",
+        "plainEnglish": "I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!"
+      },
+      "drawFn": "function drawCharacter_spirit(x,y,hp,fr,cfg,isZeroG){\n  var bodyCol=cfg.color||\"#E8E8FF\";\n  var eyeCol=cfg.eyeColor||\"#4040FF\";\n  ctx.save();\n  \n  // Shadow (if not in zero gravity)\n  if(!isZeroG){\n    ctx.fillStyle=\"rgba(0,0,0,0.1)\";\n    ctx.beginPath();\n    ctx.ellipse(x+16,y+30,8,2,0,0,Math.PI*2);\n    ctx.fill();\n  }\n  \n  // Floating animation offset\n  var floatY = Math.sin(fr * 0.1) * 2;\n  \n  // Main wispy body - translucent and thin\n  ctx.globalAlpha = 0.7;\n  ctx.fillStyle = bodyCol;\n  ctx.beginPath();\n  ctx.ellipse(x+16, y+20+floatY, 6, 12, 0, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Upper body part - slightly wider\n  ctx.beginPath();\n  ctx.ellipse(x+16, y+12+floatY, 8, 8, 0, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Wispy tendrils at bottom\n  ctx.beginPath();\n  ctx.ellipse(x+12, y+28+floatY, 3, 6, 0.3, 0, Math.PI*2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.ellipse(x+20, y+26+floatY, 3, 5, -0.2, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Binary code flickering effect\n  if(Math.random() < 0.3){\n    ctx.globalAlpha = 0.4;\n    ctx.fillStyle = \"#8080FF\";\n    ctx.font = \"6px monospace\";\n    ctx.textAlign = \"center\";\n    var binaryText = Math.random() > 0.5 ? \"101\" : \"010\";\n    ctx.fillText(binaryText, x+16, y+16+floatY);\n  }\n  \n  ctx.globalAlpha = 1.0;\n  \n  // Eyes - glowing\n  ctx.fillStyle = eyeCol;\n  ctx.shadowColor = eyeCol;\n  ctx.shadowBlur = 4;\n  ctx.beginPath();\n  ctx.arc(x+12, y+10+floatY, 2, 0, Math.PI*2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.arc(x+20, y+10+floatY, 2, 0, Math.PI*2);\n  ctx.fill();\n  ctx.shadowBlur = 0;\n  \n  // HP bar\n  ctx.fillStyle=\"#111\";\n  ctx.fillRect(x,y-8,30,5);\n  ctx.fillStyle=cfg.color||\"#E8E8FF\";\n  ctx.fillRect(x,y-8,30*hp,5);\n  \n  // Name tag\n  if(cfg.name){\n    ctx.fillStyle=\"rgba(0,0,0,0.75)\";\n    var tw=ctx.measureText(cfg.name).width+10;\n    ctx.fillRect(x+16-tw/2,y-20,tw,14);\n    ctx.fillStyle=eyeCol;\n    ctx.font=\"bold 9px Fredoka One\";\n    ctx.textAlign=\"center\";\n    ctx.fillText(cfg.name,x+16,y-9);\n    ctx.textAlign=\"left\";\n  }\n  \n  ctx.restore();\n}",
+      "s2": {
+        "ok": true,
+        "isNewType": false,
+        "isExisting": false,
+        "resolvedType": "spirit",
+        "mappedFrom": "alien",
+        "reason": "The thin, wispy, translucent, floating nature with flickering patterns closely matches the ethereal characteristics of a spirit type.",
+        "dingedSkill": null
+      },
+      "_preloadedGameData": {
+        "error": "Path not allowed"
+      },
+      "_stepResults": {
+        "write-spec": "✅ I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
+        "type-resolution": "✅ mapped to spirit",
+        "sprite-gen": "✅ regenerated in preview"
+      }
+    },
+    "aiResult": {
+      "characterType": "spirit",
+      "drawFn": "function drawCharacter_spirit(x,y,hp,fr,cfg,isZeroG){\n  var bodyCol=cfg.color||\"#E8E8FF\";\n  var eyeCol=cfg.eyeColor||\"#4040FF\";\n  ctx.save();\n  \n  // Shadow (if not in zero gravity)\n  if(!isZeroG){\n    ctx.fillStyle=\"rgba(0,0,0,0.1)\";\n    ctx.beginPath();\n    ctx.ellipse(x+16,y+30,8,2,0,0,Math.PI*2);\n    ctx.fill();\n  }\n  \n  // Floating animation offset\n  var floatY = Math.sin(fr * 0.1) * 2;\n  \n  // Main wispy body - translucent and thin\n  ctx.globalAlpha = 0.7;\n  ctx.fillStyle = bodyCol;\n  ctx.beginPath();\n  ctx.ellipse(x+16, y+20+floatY, 6, 12, 0, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Upper body part - slightly wider\n  ctx.beginPath();\n  ctx.ellipse(x+16, y+12+floatY, 8, 8, 0, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Wispy tendrils at bottom\n  ctx.beginPath();\n  ctx.ellipse(x+12, y+28+floatY, 3, 6, 0.3, 0, Math.PI*2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.ellipse(x+20, y+26+floatY, 3, 5, -0.2, 0, Math.PI*2);\n  ctx.fill();\n  \n  // Binary code flickering effect\n  if(Math.random() < 0.3){\n    ctx.globalAlpha = 0.4;\n    ctx.fillStyle = \"#8080FF\";\n    ctx.font = \"6px monospace\";\n    ctx.textAlign = \"center\";\n    var binaryText = Math.random() > 0.5 ? \"101\" : \"010\";\n    ctx.fillText(binaryText, x+16, y+16+floatY);\n  }\n  \n  ctx.globalAlpha = 1.0;\n  \n  // Eyes - glowing\n  ctx.fillStyle = eyeCol;\n  ctx.shadowColor = eyeCol;\n  ctx.shadowBlur = 4;\n  ctx.beginPath();\n  ctx.arc(x+12, y+10+floatY, 2, 0, Math.PI*2);\n  ctx.fill();\n  ctx.beginPath();\n  ctx.arc(x+20, y+10+floatY, 2, 0, Math.PI*2);\n  ctx.fill();\n  ctx.shadowBlur = 0;\n  \n  // HP bar\n  ctx.fillStyle=\"#111\";\n  ctx.fillRect(x,y-8,30,5);\n  ctx.fillStyle=cfg.color||\"#E8E8FF\";\n  ctx.fillRect(x,y-8,30*hp,5);\n  \n  // Name tag\n  if(cfg.name){\n    ctx.fillStyle=\"rgba(0,0,0,0.75)\";\n    var tw=ctx.measureText(cfg.name).width+10;\n    ctx.fillRect(x+16-tw/2,y-20,tw,14);\n    ctx.fillStyle=eyeCol;\n    ctx.font=\"bold 9px Fredoka One\";\n    ctx.textAlign=\"center\";\n    ctx.fillText(cfg.name,x+16,y-9);\n    ctx.textAlign=\"left\";\n  }\n  \n  ctx.restore();\n}",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 1,
+        "name": "Sixtyseven the Binary Oracle",
+        "characterType": "spirit",
+        "color": "#E8E8FF",
+        "eyeColor": "#4040FF",
+        "spd": 0.4,
+        "pat": "h",
+        "size": 1,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "Sixtyseven the Binary Oracle — spirit",
+      "plainEnglish": "I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
+      "isNewType": false,
+      "mappedFrom": "alien",
+      "_stepResults": {
+        "write-spec": "✅ I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
+        "type-resolution": "✅ mapped to spirit",
+        "sprite-gen": "✅ regenerated in preview",
+        "feature-build": "✅ placed at screen 1"
+      },
+      "_dingedSkills": [],
+      "_spriteOk": true,
+      "_typeExisted": false,
+      "_preloadedGameData": {
+        "error": "Path not allowed"
+      }
+    }
+  },
+  {
     "id": 1778378732165,
     "timestamp": "2026-05-10T02:05:32.165Z",
     "scribeName": "Unnamed",
@@ -20,7 +126,7 @@
         "content": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?"
       }
     ],
-    "status": "approved",
+    "status": "pending_review",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -62,6 +168,22 @@
       "_dingedSkills": [],
       "_spriteOk": true,
       "_typeExisted": false
+    },
+    "intervention": {
+      "id": 1778380810856,
+      "timestamp": "2026-05-10T02:40:10.856Z",
+      "submissionId": 1778378732165,
+      "submissionName": "Unnamed",
+      "kidName": "Dragon Scribe",
+      "reasons": [
+        "fell_back"
+      ],
+      "dingedSkills": [
+        "sprite-gen"
+      ],
+      "note": null,
+      "deliveryType": "full_code",
+      "retried": true
     }
   },
   {
