@@ -1,6 +1,28 @@
 [
   {
-    "id": 1746835200000,
+    "id": 1778361590543,
+    "timestamp": "2026-05-09T21:19:50.543Z",
+    "submissionId": 1778361590543,
+    "kidName": "Cannon Master",
+    "contribType": "enemy",
+    "asked": "Tiny blue jellyfish who just wants love \u2014 friendly NPC with pulsing light communication",
+    "askedName": "Starlight Unity Drifter",
+    "targetGame": "In Space",
+    "targetZone": "Landing Zone",
+    "delivered": "drawCharacter_jellyfish injected \u2014 pulsing bell, flowing tentacles, bioluminescent spots",
+    "deliveryType": "full_code",
+    "stepResults": {
+      "write-spec": "\u2705 jellyfish \u2014 bioluminescent, friendly NPC companion",
+      "sprite-gen": "\u2705 drawCharacter_jellyfish generated \u2014 glow, pulsing tentacles, light spots",
+      "feature-build": "\u2705 placed at Landing Zone screenIndex:0 tx:9 ty:9",
+      "release-check": "\u2705 committed to kids-preview (backfilled)"
+    },
+    "issues": [],
+    "dingedSkills": [],
+    "_note": "Backfilled \u2014 delivery log write failed at time of approval due to sha conflict bug (now fixed)"
+  },
+  {
+    "id": 1746835200001,
     "timestamp": "2026-05-09T20:00:00.000Z",
     "submissionId": "seed",
     "kidName": "Dragon Scribe",
@@ -11,12 +33,17 @@
     "targetZone": "Quantum Cat Colony",
     "delivered": "StarCat Guardian deployed as feline characterType to Quantum Cat Colony",
     "deliveryType": "full_code",
+    "stepResults": {
+      "write-spec": "\u2705 feline \u2014 gold, patrol, guardian",
+      "sprite-gen": "\u2705 drawCharacter_feline generated",
+      "feature-build": "\u2705 placed at Quantum Cat Colony",
+      "release-check": "\u2705 committed"
+    },
     "issues": [],
-    "commitSha": null,
     "dingedSkills": []
   },
   {
-    "id": 1746835100000,
+    "id": 1746835100001,
     "timestamp": "2026-05-09T19:00:00.000Z",
     "submissionId": "seed2",
     "kidName": "Cannon Master",
@@ -27,8 +54,13 @@
     "targetZone": "Landing Zone",
     "delivered": "Space Bull deployed as bull characterType to Landing Zone",
     "deliveryType": "full_code",
+    "stepResults": {
+      "write-spec": "\u2705 bull \u2014 stocky, horns, red eyes, charging",
+      "sprite-gen": "\u2705 drawCharacter_bull generated",
+      "feature-build": "\u2705 placed at Landing Zone",
+      "release-check": "\u2705 committed"
+    },
     "issues": [],
-    "commitSha": null,
     "dingedSkills": []
   }
 ]
