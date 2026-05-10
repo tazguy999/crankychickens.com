@@ -630,42 +630,64 @@ async function approve(idx){
     return;
   }
 
-  // ── ENEMY / FULL CODE ──
-  toast('🤖 AI is writing code for this...');
+  // ── ENEMY / FULL CODE — decomposed pipeline ──
+  toast('🤖 Starting 4-step pipeline...');
   const result = await generateFullContribution(sub);
 
-  if(result){
-    // Full code generation succeeded
-    const success = await applyFullContribution(result, sub);
-    if(success){
-      log.delivered = `New ${result.characterType} character "${result.configEntry?.name}" with custom sprite — deployed to preview`;
-      log.deliveryType = 'full_code';
-    } else {
-      log.delivered = `Character "${result.configEntry?.name}" placed but sprite injection failed — using config only`;
-      log.deliveryType = 'config_only';
-      log.issues.push('applyFullContribution step failed — see step toasts');
-    }
-  } else {
-    // Full code failed — try orbital fallback
-    toast('🌌 Code gen failed — placing as orbital entity...');
-    log.issues.push('generateFullContribution returned null — JSON parse or validation failed');
+  // Handle hard failure (write-spec or feature-build failed)
+  if(result._failed){
+    log.issues.push('Pipeline failed at step with dings: '+(result._dingedSkills||[]).join(', '));
+    log.stepResults = result._stepResults;
+    log.dingedSkills = result._dingedSkills||[];
+    log.delivered = 'Pipeline failed — '+Object.entries(result._stepResults||{}).map(([k,v])=>k+': '+v).join(' | ');
+    log.deliveryType = 'failed';
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='approved';
+    await saveSubmissions('⚠️ Pipeline failed: '+(sub.spec?.title||sub.scribeName));
+    toast('❌ Pipeline failed — see delivery log for which step');
+    renderAll();
+    return;
+  }
 
+  // Sprite failed — go orbital but config is fine
+  if(!result._spriteOk){
+    log.issues.push('sprite-gen failed: '+(result._stepResults?.['sprite-gen']||''));
+    log.dingedSkills = ['sprite-gen'];
+    toast('🌌 Sprite failed — placing as orbital...');
     const orbitalEntry = await generateOrbitalEntry(sub);
     if(orbitalEntry){
       await applyToGameConfig(orbitalEntry, sub);
-      log.delivered = `"${sub.scribeName||sub.spec?.title}" placed as orbital background entity — visible in sky layer, awaiting full implementation`;
+      log.delivered = '"'+( sub.scribeName||sub.spec?.title)+'" placed as orbital — sprite-gen failed, config ok';
       log.deliveryType = 'orbital';
-      toast('🌌 Placed as orbital entity — will drift through the sky!');
+      toast('🌌 Placed as orbital entity!');
     } else {
-      // Last resort — config-only iguana
-      const configEntry = await generateConfigEntry(sub);
-      if(configEntry) await applyToGameConfig(configEntry, sub);
-      log.delivered = `"${sub.scribeName||sub.spec?.title}" placed as default enemy (iguana) — full implementation pending`;
+      await applyToGameConfig(result.configEntry, sub);
+      log.delivered = '"'+(sub.scribeName||sub.spec?.title)+'" placed as iguana fallback — sprite-gen and orbital both failed';
       log.deliveryType = 'config_only';
-      log.issues.push('orbital generation also failed — fell back to iguana');
-      toast('⚠️ Placed as default enemy — full version pending');
+      log.issues.push('orbital fallback also failed');
     }
+    log.stepResults = result._stepResults;
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='approved';
+    allSubmissions[idx].aiResult=result;
+    await saveSubmissions('✅ Approved (orbital): '+(sub.spec?.title||sub.scribeName));
+    renderAll();
+    return;
   }
+
+  // All steps succeeded — inject sprite + config
+  const success = await applyFullContribution(result, sub);
+  if(success){
+    log.delivered = 'New '+result.characterType+' "'+result.configEntry?.name+'" — sprite injected, config placed. '+result.plainEnglish;
+    log.deliveryType = 'full_code';
+  } else {
+    log.delivered = '"'+result.configEntry?.name+'" placed but sprite injection failed — config only';
+    log.deliveryType = 'config_only';
+    log.issues.push('applyFullContribution injection step failed');
+    log.dingedSkills = (log.dingedSkills||[]).concat(['sprite-gen']);
+  }
+  log.stepResults = result._stepResults;
+  log.dingedSkills = result._dingedSkills||[];
 
   await writeDeliveryLog(log);
   allSubmissions[idx].status='approved';
@@ -764,13 +786,20 @@ function renderDeliveryLog(log){
         <div style="font-size:13px;color:rgba(200,220,255,0.8);line-height:1.5">${(e.asked||'').slice(0,200)}${e.asked?.length>200?'...':''}</div>
       </div>
       <div class="card-dev-note">🚀 ${e.delivered||'No delivery info'}</div>
+      ${e.stepResults?`<div style="display:flex;flex-direction:column;gap:3px;margin:6px 0 8px">
+        ${Object.entries(e.stepResults).map(([skill,result])=>`<div style="font-size:11px;font-family:'JetBrains Mono',monospace;display:flex;gap:8px">
+          <span style="opacity:0.4;flex-shrink:0;width:88px">${skill}</span>
+          <span style="color:${result.startsWith('✅')?'rgba(0,200,100,0.8)':'rgba(255,100,100,0.8)'}">${result}</span>
+        </div>`).join('')}
+      </div>`:''}
+      ${e.dingedSkills?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${e.dingedSkills.map(s=>`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.3);color:rgba(255,120,120,0.9)">ding: ${s}</span>`).join('')}</div>`:''}
       ${e.issues?.length?`<div style="background:rgba(230,57,70,0.08);border-left:3px solid rgba(230,57,70,0.4);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,100,100,0.8);margin-bottom:8px">⚠️ ${e.issues.join(' · ')}</div>`:''}
       ${e.intervention?`<div style="background:rgba(255,107,0,0.08);border-left:3px solid rgba(255,107,0,0.5);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,150,80,0.9);margin-bottom:8px">
         🎯 <strong>Intervention:</strong> ${e.intervention.reasons.join(', ')} → ding to: <strong>${e.intervention.dingedSkills?.join(', ')||'unknown'}</strong>
         ${e.intervention.note?`<br><span style="opacity:0.7">"${e.intervention.note}"</span>`:''}
       </div>`:''}
-      ${e.type==='intervention'?`<div style="background:rgba(255,107,0,0.08);border-left:3px solid rgba(255,107,0,0.5);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,150,80,0.9);margin-bottom:8px">
-        🎯 <strong>Intervention logged:</strong> ${e.reasons?.join(', ')} → ding to: <strong>${e.dingedSkills?.join(', ')||'unknown'}</strong>
+      ${e.type==='intervention'||e.type==='ai_pass'?`<div style="background:rgba(255,107,0,0.08);border-left:3px solid rgba(255,107,0,0.5);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:rgba(255,150,80,0.9);margin-bottom:8px">
+        ${e.type==='ai_pass'?'🤖':'🎯'} <strong>${e.type==='ai_pass'?'AI Pass':'Intervention'}:</strong> ${e.reasons?.join(', ')} → ding to: <strong>${e.dingedSkills?.join(', ')||'unknown'}</strong>
         ${e.note?`<br><span style="opacity:0.7">"${e.note}"</span>`:''}
       </div>`:''}
     </div>`).join('');
@@ -822,8 +851,191 @@ Respond with ONLY the JSON object. No markdown.`;
   }
 }
 
+// ══════════════════════════════════════════════════════
+//  DECOMPOSED PIPELINE — 4 observable steps
+//  Each step: own Claude call, own skill signal, own log
+// ══════════════════════════════════════════════════════
+
+const STYLE_REF = `function drawCharacter_feline(x,y,hp,fr,cfg={},isZeroG=false){
+  const bodyCol=cfg.color||'#FF8C00';
+  const eyeCol=cfg.eyeColor||'#FFD700';
+  ctx.save();
+  if(!isZeroG){ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x+16,y+30,11,3.5,0,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.ellipse(x+17,y+20,11,10,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=bodyCol;ctx.beginPath();ctx.arc(x+17,y+10,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=bodyCol;
+  ctx.beginPath();ctx.moveTo(x+10,y+5);ctx.lineTo(x+7,y-4);ctx.lineTo(x+15,y+3);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(x+22,y+4);ctx.lineTo(x+26,y-4);ctx.lineTo(x+28,y+4);ctx.closePath();ctx.fill();
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.ellipse(x+13,y+10,3,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eyeCol;ctx.beginPath();ctx.ellipse(x+21,y+10,3,3,0,0,Math.PI*2);ctx.fill();
+  if(cfg.name){ctx.fillStyle='rgba(0,0,0,0.75)';const tw=ctx.measureText(cfg.name).width+10;ctx.fillRect(x+16-tw/2,y-20,tw,14);ctx.fillStyle=eyeCol;ctx.font='bold 9px Fredoka One';ctx.textAlign='center';ctx.fillText(cfg.name,x+16,y-9);ctx.textAlign='left';}
+  ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);ctx.fillStyle=bodyCol;ctx.fillRect(x,y-8,30*hp,5);
+  ctx.restore();
+}`;
+
+// ── STEP 1: interpretIntent → /write-spec ──
+async function interpretIntent(sub){
+  toast('📝 Step 1: Reading the idea...');
+  const prompt = `You are interpreting a kid's game idea for "Cranky Chickens: In Space".
+Read their description and return a structured spec.
+
+Kid's name: "${sub.scribeName||sub.spec?.title||'New Enemy'}"
+Description: "${sub.description||sub.originalSubmission?.content||sub.summary||''}"
+Target zone: "${sub.targetZone?.name||'Landing Zone'}" (screenIndex ${sub.targetZone?.index??0})
+Style choice: "${sub._previewChoice?.label||'Classic Iguana'}"
+
+Return ONLY this JSON:
+{
+  "name": "display name for the character",
+  "characterType": "one lowercase word (fish, snake, jellyfish, crab, mech, plant, etc)",
+  "color": "#hexcolor — main body color matching the vibe",
+  "eyeColor": "#hexcolor — eye/accent color",
+  "size": 1.0,
+  "spd": 0.4,
+  "pat": "h",
+  "screenIndex": ${sub.targetZone?.index??0},
+  "tx": 9,
+  "ty": 9,
+  "behaviorNotes": "1-2 sentences describing how it should look and move",
+  "plainEnglish": "One sentence confirming what will be built, written for a kid to read"
+}`;
+
+  try{
+    const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claude_complete',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    const text = data.content?.find(b=>b.type==='text')?.text||'';
+    const spec = JSON.parse(text.replace(/```json|```/g,'').trim());
+    if(!spec.characterType||!spec.color) throw new Error('Missing required spec fields');
+    toast('✅ Step 1: "'+spec.plainEnglish+'"');
+    return {ok:true, spec};
+  }catch(e){
+    toast('❌ Step 1 failed: '+e.message.slice(0,60));
+    return {ok:false, error:e.message, dingedSkill:'write-spec'};
+  }
+}
+
+// ── STEP 2: generateSprite → /sprite-gen ──
+async function generateSprite(spec, sub){
+  toast('🎨 Step 2: Drawing the character...');
+  const prompt = `You are a game artist. Write a JavaScript canvas draw function for this character.
+
+Character spec:
+- Name: "${spec.name}"
+- Type: "${spec.characterType}"
+- Color: "${spec.color}"
+- Eye color: "${spec.eyeColor}"
+- Behavior notes: "${spec.behaviorNotes||''}"
+
+Write a complete function named exactly: drawCharacter_${spec.characterType}
+
+Rules:
+- Signature: function drawCharacter_${spec.characterType}(x,y,hp,fr,cfg={},isZeroG=false)
+- Use ctx (global canvas context), x/y for position, hp (0-1), fr (frame counter)
+- Must start with ctx.save() and end with ctx.restore()
+- Draw body, eyes, HP bar, name tag (if cfg.name exists)
+- HP bar: ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);ctx.fillStyle=cfg.color||'${spec.color}';ctx.fillRect(x,y-8,30*hp,5);
+- Stay within 32x32 bounding box at (x,y)
+- Use canvas2D only — no external libraries
+- Make it creative and match the character's personality!
+
+Reference example:
+${STYLE_REF}
+
+Respond with ONLY the JavaScript function. No JSON, no markdown, no explanation.`;
+
+  try{
+    const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claude_complete',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    let fn = data.content?.find(b=>b.type==='text')?.text||'';
+    fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+
+    // Validate it's a real function
+    if(!fn.includes('function drawCharacter_')) throw new Error('Response is not a draw function');
+    if(!fn.includes('ctx.save()')) throw new Error('Missing ctx.save()');
+    if(!fn.includes('ctx.restore()')) throw new Error('Missing ctx.restore()');
+
+    // Brace balance check
+    const opens = (fn.match(/{/g)||[]).length;
+    const closes = (fn.match(/}/g)||[]).length;
+    if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' open vs '+closes+' close');
+
+    toast('✅ Step 2: Sprite generated for '+spec.characterType);
+    return {ok:true, drawFn:fn};
+  }catch(e){
+    toast('⚠️ Step 2 failed: '+e.message.slice(0,60)+' — will use orbital');
+    return {ok:false, error:e.message, dingedSkill:'sprite-gen'};
+  }
+}
+
+// ── STEP 3: generateConfig → /feature-build ──
+async function generateConfig(spec){
+  toast('⚙️ Step 3: Placing in the world...');
+  // Config is now deterministic from spec — no AI call needed
+  // This is the feature-build step: take the spec, produce the config entry
+  try{
+    const configEntry = {
+      configType: 'enemyVariant',
+      screenIndex: spec.screenIndex??0,
+      name: spec.name,
+      characterType: spec.characterType,
+      color: spec.color,
+      eyeColor: spec.eyeColor,
+      spd: spec.spd||0.4,
+      pat: spec.pat||'h',
+      size: spec.size||1.0,
+      tx: spec.tx||9,
+      ty: spec.ty||9,
+    };
+    toast('✅ Step 3: Placed in '+(configEntry.screenIndex===0?'Landing Zone':configEntry.screenIndex===1?'Quantum Cat Colony':configEntry.screenIndex===2?'Moon Base':'Harvester Core'));
+    return {ok:true, configEntry};
+  }catch(e){
+    toast('❌ Step 3 failed: '+e.message.slice(0,60));
+    return {ok:false, error:e.message, dingedSkill:'feature-build'};
+  }
+}
+
+// ── STEP 4: validate + inject → /release-check ──
+// (handled by existing applyFullContribution — logs sha)
+
+// ── ORCHESTRATOR — replaces old generateFullContribution ──
 async function generateFullContribution(sub){
-  const styleRef = `function drawCharacter_feline(x,y,hp,fr,cfg={},isZeroG=false){
+  const stepResults = {};
+
+  // Step 1 — interpret intent
+  const s1 = await interpretIntent(sub);
+  stepResults['write-spec'] = s1.ok ? '✅ '+s1.spec?.plainEnglish : '❌ '+s1.error;
+  if(!s1.ok) return {_failed:true, _dingedSkills:[s1.dingedSkill], _stepResults:stepResults};
+
+  const spec = s1.spec;
+
+  // Step 2 — generate sprite
+  const s2 = await generateSprite(spec, sub);
+  stepResults['sprite-gen'] = s2.ok ? '✅ drawCharacter_'+spec.characterType+' generated' : '❌ '+s2.error;
+
+  // Step 3 — generate config (always runs, independent of sprite)
+  const s3 = await generateConfig(spec);
+  stepResults['feature-build'] = s3.ok ? '✅ placed at screen '+spec.screenIndex : '❌ '+s3.error;
+  if(!s3.ok) return {_failed:true, _dingedSkills:[s3.dingedSkill], _stepResults:stepResults};
+
+  // Assemble result in format applyFullContribution expects
+  const dingedSkills = [];
+  if(!s2.ok) dingedSkills.push('sprite-gen');
+
+  return {
+    characterType: spec.characterType,
+    drawFn: s2.ok ? s2.drawFn : null, // null = will fall to orbital in apply step
+    configEntry: s3.configEntry,
+    commitMessage: spec.name+' — '+spec.characterType+' character',
+    plainEnglish: spec.plainEnglish,
+    _stepResults: stepResults,
+    _dingedSkills: dingedSkills,
+    _spriteOk: s2.ok,
+  };
+}
   const bodyCol=cfg.color||'#FF8C00';
   const eyeCol=cfg.eyeColor||'#FFD700';
   ctx.save();
