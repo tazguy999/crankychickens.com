@@ -90,6 +90,12 @@
   <!-- TRAILER -->
   <div class="trailer-wrap">
     <canvas id="cB" width="640" height="200"></canvas>
+    <div id="countdown-overlay" style="position:absolute;inset:0;background:rgba(13,2,8,0.92);display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;" onclick="startTrailer()">
+      <div style="text-align:center;">
+        <div id="countdown-num" style="font-family:'Fredoka One',cursive;font-size:clamp(60px,20vw,100px);color:#ffcc02;text-shadow:0 0 40px rgba(255,204,2,0.5);line-height:1;">3</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:14px;color:rgba(255,136,204,0.7);margin-top:8px;letter-spacing:0.1em;">TAP TO SKIP</div>
+      </div>
+    </div>
     <div class="trailer-tag">FARMYARD ZONE — LOU'S LIVING ROOM</div>
   </div>
 
@@ -141,7 +147,49 @@
 </div>
 
 <script>
-// ── TRAILER (same code as index) ──
+// ── COUNTDOWN THEN TRAILER ──
+let trailerStarted = false;
+
+function startTrailer(){
+  const overlay = document.getElementById('countdown-overlay');
+  if(overlay) overlay.remove();
+  trailerStarted = true;
+}
+
+(function runCountdown(){
+  const overlay = document.getElementById('countdown-overlay');
+  const numEl = document.getElementById('countdown-num');
+  if(!overlay || !numEl) return;
+  let count = 3;
+  let start = null;
+
+  function tick(ts){
+    if(!start) start = ts;
+    if(trailerStarted) return;
+    const elapsed = ts - start;
+    const remaining = Math.ceil(3 - elapsed/1000);
+
+    if(remaining !== count){
+      count = remaining;
+      if(count <= 0){
+        startTrailer();
+        return;
+      }
+      numEl.textContent = count;
+      // pulse animation
+      numEl.style.transform = 'scale(1.3)';
+      numEl.style.transition = 'none';
+      requestAnimationFrame(()=>{
+        numEl.style.transition = 'transform 0.8s ease-out';
+        numEl.style.transform = 'scale(1)';
+      });
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ── TRAILER ──
 (function(){
   const canvas=document.getElementById('cB');
   const ctx=canvas.getContext('2d');
