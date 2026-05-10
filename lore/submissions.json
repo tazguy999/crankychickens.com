@@ -39,7 +39,7 @@
         "content": "*The Ancient AI's ethereal glow brightens with approval*\n\nYour enthusiasm flows like starlight, young one! Now, what mysteries shall we unravel about this celestial jellyfish - perhaps it communicates through gentle pulses of light, or maybe it knows secret passages through asteroid fields that could aid our feathered heroes on their quest? The cosmos awaits your imagination to breathe life into this friendship!"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -92,7 +92,7 @@
         "content": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent — a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
