@@ -308,13 +308,13 @@ html, body {
 <div id="previewModal">
   <div class="preview-box">
     <div class="preview-title" id="previewTitle">Preview</div>
-    <div class="preview-sub">CHOOSE A STYLE — THEN CONFIRM</div>
+    <div class="preview-sub" id="previewSub">GENERATING SPRITE — PLEASE WAIT</div>
     <canvas id="previewCanvas" width="460" height="180"></canvas>
-    <div class="preview-variants" id="previewVariants"></div>
+    <div id="previewVariants" class="preview-variants"></div>
     <div id="previewDesc" style="font-size:12px;color:rgba(200,220,255,0.6);text-align:center;line-height:1.5;min-height:36px"></div>
-    <div class="preview-actions">
+    <div id="previewSteps" style="display:flex;flex-direction:column;gap:3px;margin:4px 0;font-family:'JetBrains Mono',monospace;font-size:10px;"></div>
+    <div class="preview-actions" id="previewActions">
       <button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>
-      <button class="preview-confirm" onclick="confirmPreview()">✅ Approve This</button>
     </div>
   </div>
 </div>
@@ -703,7 +703,7 @@ async function approve(idx){
   }
 
   // All steps succeeded — inject sprite + config
-  const success = await applyFullContribution(result, sub, preloadedGameData);
+  const success = await applyFullContribution(result, sub, result._preloadedGameData||preloadedGameData);
   if(success){
     log.delivered = 'New '+result.characterType+' "'+result.configEntry?.name+'" — sprite injected, config placed. '+result.plainEnglish;
     log.deliveryType = 'full_code';
@@ -1117,6 +1117,36 @@ async function generateConfig(spec){
 async function generateFullContribution(sub){
   const stepResults = {};
 
+  // If preview already ran steps 1-3, skip them and use cached result
+  if(sub._previewResult){
+    const pr = sub._previewResult;
+    const spec = pr.spec;
+    Object.assign(stepResults, pr._stepResults||{});
+    toast('⚡ Using preview result — skipping to config + inject...');
+
+    const s4 = await generateConfig(spec);
+    stepResults['feature-build'] = s4.ok ? '✅ placed at screen '+spec.screenIndex : '❌ '+s4.error;
+    if(!s4.ok) return {_failed:true, _dingedSkills:['feature-build'], _stepResults:stepResults};
+
+    const dingedSkills = [];
+    if(!pr.drawFn && !pr.s2?.isExisting) dingedSkills.push('sprite-gen');
+
+    return {
+      characterType: spec.characterType,
+      drawFn: pr.drawFn||null,
+      configEntry: s4.configEntry,
+      commitMessage: spec.name+' — '+spec.characterType+(pr.s2?.isNewType?' (new type)':''),
+      plainEnglish: spec.plainEnglish||spec.name,
+      isNewType: pr.s2?.isNewType||false,
+      mappedFrom: pr.s2?.mappedFrom||null,
+      _stepResults: stepResults,
+      _dingedSkills: dingedSkills,
+      _spriteOk: !!pr.drawFn||!!pr.s2?.isExisting,
+      _typeExisted: pr.s2?.isExisting||false,
+      _preloadedGameData: pr._preloadedGameData||null,
+    };
+  }
+
   // Step 1 — interpret intent
   const s1 = await interpretIntent(sub);
   stepResults['write-spec'] = s1.ok ? '✅ '+s1.spec?.plainEnglish : '❌ '+s1.error;
@@ -1507,11 +1537,6 @@ function toast(msg){
 
 // ── INIT ──
 // ── PREVIEW MODAL ──
-let previewIdx = null;
-let previewFrame = 0;
-let previewRAF = null;
-let previewVariant = 0;
-
 const PREVIEW_VARIANTS = {
   enemy: [
     {label:'🌀 Coiled Dragon', color:'#aa66ff', eyeColor:'#ffcc02', desc:'Circular coil, majestic — drifts as orbital if code gen fails'},
@@ -1541,24 +1566,258 @@ const PREVIEW_VARIANTS = {
   ]
 };
 
+// ── PREVIEW STATE ──
+let previewIdx = null;
+let previewFrame = 0;
+let previewRAF = null;
+let previewVariant = 0;
+let previewResult = null; // stores steps 1-3 result for approve to use
+
 function openPreview(idx){
   previewIdx = idx;
-  previewVariant = 0;
+  previewResult = null;
   const sub = allSubmissions[idx];
   const type = sub.contribType||'enemy';
 
-  document.getElementById('previewTitle').textContent =
-    `👁️ ${sub.scribeName||sub.spec?.title||'Preview'}`;
+  document.getElementById('previewTitle').textContent = sub.scribeName||sub.spec?.title||'Preview';
   document.getElementById('previewModal').classList.add('open');
+  document.getElementById('previewVariants').innerHTML = '';
+  document.getElementById('previewSteps').innerHTML = '';
+  document.getElementById('previewDesc').textContent = '';
+  document.getElementById('previewActions').innerHTML =
+    '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>';
 
-  const variants = PREVIEW_VARIANTS[type]||PREVIEW_VARIANTS.default;
-  const vEl = document.getElementById('previewVariants');
-  vEl.innerHTML = variants.map((v,i)=>
-    `<div class="variant-chip${i===0?' active':''}" onclick="pickVariant(${i},this)">${v.label}</div>`
-  ).join('');
-  document.getElementById('previewDesc').textContent = variants[0]?.desc||'';
+  if(type === 'enemy'){
+    // Auto-run live sprite generation
+    document.getElementById('previewSub').textContent = 'GENERATING LIVE SPRITE — PLEASE WAIT';
+    runPreviewPipeline(idx);
+  } else {
+    // Non-enemy: fall back to static style picker
+    document.getElementById('previewSub').textContent = 'CHOOSE A STYLE — THEN CONFIRM';
+    const variants = PREVIEW_VARIANTS[type]||PREVIEW_VARIANTS.default;
+    const vEl = document.getElementById('previewVariants');
+    vEl.innerHTML = variants.map((v,i)=>
+      `<div class="variant-chip${i===0?' active':''}" onclick="pickVariant(${i},this)">${v.label}</div>`
+    ).join('');
+    document.getElementById('previewDesc').textContent = variants[0]?.desc||'';
+    document.getElementById('previewActions').innerHTML =
+      '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+      '<button class="preview-confirm" onclick="confirmPreview()">✅ Approve This</button>';
+    startPreviewCanvas(sub, type, variants);
+  }
+}
 
-  startPreviewCanvas(sub, type, variants);
+async function runPreviewPipeline(idx){
+  const sub = allSubmissions[idx];
+  const stepsEl = document.getElementById('previewSteps');
+  const actionsEl = document.getElementById('previewActions');
+
+  function logStep(text, color){
+    const div = document.createElement('div');
+    div.style.cssText = 'color:'+color+';padding:2px 0;';
+    div.textContent = text;
+    stepsEl.appendChild(div);
+  }
+
+  // Show loading animation on canvas
+  const cnv = document.getElementById('previewCanvas');
+  const pctx = cnv.getContext('2d');
+  if(previewRAF) cancelAnimationFrame(previewRAF);
+  let loadFrame = 0;
+  function loadLoop(){
+    loadFrame++;
+    pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
+    // Pulsing dots
+    pctx.fillStyle='rgba(100,150,255,0.6)';
+    pctx.font='bold 14px Fredoka One'; pctx.textAlign='center';
+    pctx.fillText('Generating sprite' + '.'.repeat((Math.floor(loadFrame/20)%3)+1), cnv.width/2, cnv.height/2);
+    pctx.textAlign='left';
+    previewRAF = requestAnimationFrame(loadLoop);
+  }
+  loadLoop();
+
+  // Step 1
+  logStep('📝 Reading the idea...', 'rgba(150,180,255,0.7)');
+  const s1 = await interpretIntent(sub);
+  if(!s1.ok){
+    logStep('❌ Failed to read idea: '+s1.error, 'rgba(255,100,100,0.8)');
+    cancelAnimationFrame(previewRAF);
+    showPreviewError('Could not interpret submission. Try approving directly.');
+    return;
+  }
+  logStep('✅ '+s1.spec.plainEnglish, 'rgba(100,220,100,0.8)');
+  const spec = s1.spec;
+
+  // Step 2 — type resolution (read game file)
+  logStep('🔍 Checking character type...', 'rgba(150,180,255,0.7)');
+  let gameFileContent = '';
+  try{
+    const gfRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'games/'+(sub.targetGame?.slug||'in-space')+'.html',branch:'kids-preview'})});
+    const gfData = await gfRes.json();
+    gameFileContent = gfData.content||'';
+    previewResult = previewResult||{};
+    previewResult._preloadedGameData = gfData; // save for approve step
+  }catch(e){}
+
+  const s2 = await resolveType(spec, gameFileContent);
+  const resolvedSpec = {...spec, characterType: s2.resolvedType||spec.characterType};
+  if(s2.isExisting){
+    logStep('⏭ Type "'+resolvedSpec.characterType+'" exists', 'rgba(255,200,80,0.8)');
+  } else if(s2.isNewType){
+    logStep('✨ New type! Inventing "'+resolvedSpec.characterType+'"', 'rgba(200,100,255,0.9)');
+  } else {
+    logStep('✅ Mapped to "'+resolvedSpec.characterType+'"'+(s2.reason?' — '+s2.reason:''), 'rgba(100,220,100,0.8)');
+  }
+
+  // Step 3 — generate sprite (skip if existing)
+  let drawFn = null;
+  if(s2.isExisting){
+    logStep('⏭ Using existing draw function', 'rgba(255,200,80,0.8)');
+  } else {
+    logStep((s2.isNewType?'✨':'🎨')+' Generating sprite...', 'rgba(150,180,255,0.7)');
+    const s3 = await generateSprite(resolvedSpec, sub, s2.isNewType);
+    if(s3.ok){
+      drawFn = s3.drawFn;
+      logStep('✅ Sprite ready!', 'rgba(100,220,100,0.8)');
+    } else {
+      logStep('⚠️ Sprite failed — will use orbital fallback', 'rgba(255,180,80,0.8)');
+    }
+  }
+
+  // Store result for approve to use (skip steps 1-3, go straight to 4-5)
+  previewResult = {
+    spec: resolvedSpec,
+    drawFn,
+    s2,
+    _preloadedGameData: previewResult?._preloadedGameData||null,
+    _stepResults: {
+      'write-spec': s1.ok ? '✅ '+s1.spec.plainEnglish : '❌ '+s1.error,
+      'type-resolution': s2.isExisting ? '⏭ exists' : s2.isNewType ? '✨ new type' : '✅ mapped to '+resolvedSpec.characterType,
+      'sprite-gen': drawFn ? '✅ generated in preview' : s2.isExisting ? '⏭ skipped' : '⚠️ failed',
+    },
+  };
+
+  // Render the actual sprite on canvas
+  cancelAnimationFrame(previewRAF);
+  if(drawFn){
+    renderLiveSprite(drawFn, resolvedSpec, cnv, pctx);
+    document.getElementById('previewSub').textContent = 'LIVE SPRITE PREVIEW';
+    document.getElementById('previewDesc').textContent =
+      resolvedSpec.name + ' — ' + resolvedSpec.characterType +
+      (s2.isNewType ? ' (new type ✨)' : s2.mappedFrom ? ' (mapped from '+s2.mappedFrom+')' : '');
+  } else {
+    // No sprite — show placeholder
+    pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
+    pctx.fillStyle='rgba(200,220,255,0.5)'; pctx.font='bold 13px Fredoka One'; pctx.textAlign='center';
+    pctx.fillText('Sprite failed — will deploy as orbital', cnv.width/2, cnv.height/2);
+    pctx.textAlign='left';
+    document.getElementById('previewSub').textContent = 'ORBITAL FALLBACK';
+  }
+
+  // Show action buttons
+  actionsEl.innerHTML =
+    '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+    (drawFn ? '<button class="preview-cancel" style="border-color:rgba(180,100,255,0.5);color:rgba(200,140,255,0.8)" onclick="regenPreviewSprite()">🔄 Regenerate</button>' : '') +
+    '<button class="preview-confirm" onclick="confirmPreview()">✅ Approve This</button>';
+}
+
+function renderLiveSprite(drawFnStr, spec, cnv, pctx){
+  if(previewRAF) cancelAnimationFrame(previewRAF);
+
+  // Safely evaluate the draw function in a sandboxed scope
+  let drawFn;
+  try{
+    // Build a function that takes ctx and calls the draw function
+    const wrapped = '(function(ctx, x, y, hp, fr, cfg, isZeroG){\n' +
+      drawFnStr + '\n' +
+      'drawCharacter_'+spec.characterType+'(x, y, hp, fr, cfg, isZeroG);\n' +
+      '})';
+    drawFn = eval(wrapped);
+  }catch(e){
+    console.error('Preview eval failed:', e);
+    pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
+    pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='12px Fredoka One'; pctx.textAlign='center';
+    pctx.fillText('Could not render sprite preview', cnv.width/2, cnv.height/2);
+    pctx.textAlign='left';
+    return;
+  }
+
+  previewFrame = 0;
+  const cx = cnv.width/2 - 16;
+  const cy = cnv.height/2 - 16;
+
+  function loop(){
+    previewFrame++;
+    pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
+
+    // Stars
+    for(let i=0;i<25;i++){
+      pctx.globalAlpha=0.3+Math.sin(i*7+previewFrame*0.02)*0.3;
+      pctx.fillStyle='#c8d8ff';
+      pctx.beginPath();pctx.arc((i*73+11)%cnv.width,(i*47+7)%60,0.6,0,Math.PI*2);pctx.fill();
+    }
+    pctx.globalAlpha=1;
+
+    // Draw the actual generated sprite
+    try{
+      const hp = 0.7 + Math.sin(previewFrame*0.03)*0.3;
+      drawFn(pctx, cx, cy, hp, previewFrame, {color:spec.color, eyeColor:spec.eyeColor, name:spec.name}, false);
+    }catch(e){
+      pctx.fillStyle='rgba(255,100,100,0.5)'; pctx.font='10px monospace'; pctx.textAlign='center';
+      pctx.fillText('Render error: '+e.message.slice(0,40), cnv.width/2, cnv.height-10);
+      pctx.textAlign='left';
+    }
+    pctx.globalAlpha=1;
+
+    previewRAF = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+async function regenPreviewSprite(){
+  if(previewIdx===null||!previewResult) return;
+  document.getElementById('previewSub').textContent = 'REGENERATING SPRITE...';
+  document.getElementById('previewActions').innerHTML =
+    '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>';
+
+  const sub = allSubmissions[previewIdx];
+  const spec = previewResult.spec;
+  const s3 = await generateSprite(spec, sub, previewResult.s2?.isNewType||false);
+
+  const cnv = document.getElementById('previewCanvas');
+  const pctx = cnv.getContext('2d');
+
+  if(s3.ok){
+    previewResult.drawFn = s3.drawFn;
+    previewResult._stepResults['sprite-gen'] = '✅ regenerated in preview';
+    renderLiveSprite(s3.drawFn, spec, cnv, pctx);
+    document.getElementById('previewSub').textContent = 'LIVE SPRITE PREVIEW';
+    document.getElementById('previewDesc').textContent = spec.name + ' — regenerated';
+  } else {
+    document.getElementById('previewSub').textContent = 'REGENERATION FAILED';
+  }
+
+  document.getElementById('previewActions').innerHTML =
+    '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+    (s3.ok ? '<button class="preview-cancel" style="border-color:rgba(180,100,255,0.5);color:rgba(200,140,255,0.8)" onclick="regenPreviewSprite()">🔄 Regenerate</button>' : '') +
+    '<button class="preview-confirm" onclick="confirmPreview()">✅ Approve This</button>';
+}
+
+function showPreviewError(msg){
+  cancelAnimationFrame(previewRAF);
+  document.getElementById('previewSub').textContent = 'ERROR';
+  document.getElementById('previewDesc').textContent = msg;
+  document.getElementById('previewActions').innerHTML =
+    '<button class="preview-cancel" onclick="closePreview()">✕ Close</button>' +
+    '<button class="preview-confirm" onclick="confirmPreviewDirect()">✅ Approve Anyway</button>';
+}
+
+function confirmPreviewDirect(){
+  // Approve without preview result — runs full pipeline
+  const idx = previewIdx;
+  closePreview();
+  approve(idx);
 }
 
 function pickVariant(i, el){
@@ -1575,16 +1834,23 @@ function closePreview(){
   document.getElementById('previewModal').classList.remove('open');
   if(previewRAF) cancelAnimationFrame(previewRAF);
   previewIdx = null;
+  previewResult = null;
 }
 
 function confirmPreview(){
   const idx = previewIdx;
   const sub = allSubmissions[idx];
   const type = sub.contribType||'enemy';
-  const variants = PREVIEW_VARIANTS[type]||PREVIEW_VARIANTS.default;
-  const chosen = variants[previewVariant]||variants[0];
-  // Inject chosen variant into submission
-  allSubmissions[idx]._previewChoice = chosen;
+
+  if(type === 'enemy' && previewResult){
+    // Enemy with previewResult — skip steps 1-3, pass result straight to approve
+    allSubmissions[idx]._previewResult = previewResult;
+  } else {
+    // Non-enemy — inject style choice as before
+    const variants = PREVIEW_VARIANTS[type]||PREVIEW_VARIANTS.default;
+    const chosen = variants[previewVariant]||variants[0];
+    allSubmissions[idx]._previewChoice = chosen;
+  }
   closePreview();
   approve(idx);
 }
