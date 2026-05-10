@@ -714,6 +714,8 @@ async function approve(idx){
   }
   log.stepResults = result._stepResults;
   log.dingedSkills = result._dingedSkills||[];
+  log.isNewType = result.isNewType||false;
+  if(result.mappedFrom) log.mappedFrom = result.mappedFrom;
 
   await writeDeliveryLog(log);
   allSubmissions[idx].status='approved';
@@ -946,67 +948,146 @@ Return ONLY this JSON:
   }
 }
 
-// ── STEP 2: generateSprite → /sprite-gen ──
-async function generateSprite(spec, sub){
-  toast('🎨 Step 2: Drawing the character...');
-  const prompt = `You are a game artist. Write a JavaScript canvas draw function for this character.
+// ── STEP 2: resolveType → /type-resolution ──
+const KNOWN_TYPES = ['iguana','feline','robot','spirit','bull','amoeba','jellyfish'];
 
-Character spec:
-- Name: "${spec.name}"
-- Type: "${spec.characterType}"
-- Color: "${spec.color}"
-- Eye color: "${spec.eyeColor}"
-- Behavior notes: "${spec.behaviorNotes||''}"
+async function resolveType(spec, gameFileContent){
+  toast('🔍 Step 2: Checking character type...');
 
-Write a complete function named exactly: drawCharacter_${spec.characterType}
+  // Check if type already has a draw function in the game file
+  const fnName = 'function drawCharacter_'+spec.characterType;
+  if(gameFileContent && gameFileContent.includes(fnName)){
+    toast('✅ Step 2: Type "'+spec.characterType+'" already exists — skipping sprite gen');
+    return {ok:true, isNewType:false, isExisting:true, resolvedType:spec.characterType, dingedSkill:null};
+  }
 
-Rules:
-- Signature: function drawCharacter_${spec.characterType}(x,y,hp,fr,cfg={},isZeroG=false)
-- Use ctx (global canvas context), x/y for position, hp (0-1), fr (frame counter)
-- Must start with ctx.save() and end with ctx.restore()
-- Draw body, eyes, HP bar, name tag (if cfg.name exists)
-- HP bar: ctx.fillStyle='#111';ctx.fillRect(x,y-8,30,5);ctx.fillStyle=cfg.color||'${spec.color}';ctx.fillRect(x,y-8,30*hp,5);
-- Stay within 32x32 bounding box at (x,y)
-- Use canvas2D only — no external libraries
-- Make it creative and match the character's personality!
-
-Reference example:
-${STYLE_REF}
-
-Respond with ONLY the JavaScript function. No JSON, no markdown, no explanation.`;
+  // Ask LLM: map to existing or genuinely new?
+  const prompt = 'A kid described a game creature called "'+spec.characterType+'". '+
+    'Description: "'+spec.behaviorNotes+'".\n'+
+    'Existing character types in the game: '+KNOWN_TYPES.join(', ')+'.\n\n'+
+    'Does "'+spec.characterType+'" map closely to one of these existing types, or is it genuinely different?\n\n'+
+    'Return ONLY this JSON:\n'+
+    '{"decision":"map"|"new","mappedTo":"existing_type_or_null","reason":"one sentence"}';
 
   try{
     const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'claude_complete',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+      body:JSON.stringify({action:'claude_complete',max_tokens:120,messages:[{role:'user',content:prompt}]})});
     const data = await res.json();
     if(data.error) throw new Error(data.error);
-    let fn = data.content?.find(b=>b.type==='text')?.text||'';
-    fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+    const text = data.content?.find(b=>b.type==='text')?.text||'';
+    const result = JSON.parse(text.replace(/```json|```/g,'').trim());
 
-    // Validate it's a real function
-    if(!fn.includes('function drawCharacter_')) throw new Error('Response is not a draw function');
-    if(!fn.includes('ctx.save()')) throw new Error('Missing ctx.save()');
-    if(!fn.includes('ctx.restore()')) throw new Error('Missing ctx.restore()');
-
-    // Brace balance check
-    const opens = (fn.match(/{/g)||[]).length;
-    const closes = (fn.match(/}/g)||[]).length;
-    if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' open vs '+closes+' close');
-
-    toast('✅ Step 2: Sprite generated for '+spec.characterType);
-    return {ok:true, drawFn:fn};
+    if(result.decision==='map' && result.mappedTo && KNOWN_TYPES.includes(result.mappedTo)){
+      toast('✅ Step 2: "'+spec.characterType+'" mapped to existing "'+result.mappedTo+'"');
+      return {ok:true, isNewType:false, isExisting:false, resolvedType:result.mappedTo, mappedFrom:spec.characterType, reason:result.reason, dingedSkill:null};
+    } else {
+      toast('✨ Step 2: "'+spec.characterType+'" is a new type — will generate sprite!');
+      return {ok:true, isNewType:true, isExisting:false, resolvedType:spec.characterType, reason:result.reason, dingedSkill:null};
+    }
   }catch(e){
-    toast('⚠️ Step 2 failed: '+e.message.slice(0,60)+' — will use orbital');
-    return {ok:false, error:e.message, dingedSkill:'sprite-gen'};
+    // Fallback — default to iguana but ding type-resolution
+    toast('⚠️ Step 2 type-resolution failed — defaulting to iguana');
+    return {ok:false, isNewType:false, isExisting:false, resolvedType:'iguana', error:e.message, dingedSkill:'type-resolution'};
   }
 }
 
-// ── STEP 3: generateConfig → /feature-build ──
+// ── STEP 3: generateSprite → /sprite-gen ──
+// Two modes: existing type (reference examples) or new creature (blank slate)
+async function generateSprite(spec, sub, isNewType){
+  const typeName = spec.characterType;
+
+  if(isNewType){
+    toast('✨ Step 3: Inventing new creature "'+typeName+'"...');
+    // New creature prompt — blank slate, kid's raw description, no reference examples
+    const rawDesc = sub.originalSubmission?.raw?.caption||sub.originalSubmission?.feature||sub.description||'';
+    const prompt = 'You are inventing a brand new game creature for "Cranky Chickens: In Space".\n'+
+      'This creature has never existed in the game before. Use your imagination.\n\n'+
+      'Creature name: "'+spec.name+'"\n'+
+      'Type word: "'+typeName+'"\n'+
+      'Kid described it as: "'+rawDesc+'"\n'+
+      'Behavior notes: "'+spec.behaviorNotes+'"\n'+
+      'Main color: '+spec.color+'\n'+
+      'Eye color: '+spec.eyeColor+'\n\n'+
+      'Write a complete JavaScript canvas draw function named exactly: drawCharacter_'+typeName+'\n\n'+
+      'Rules:\n'+
+      '- Signature: function drawCharacter_'+typeName+'(x,y,hp,fr,cfg,isZeroG)\n'+
+      '- Use ctx (global canvas 2D context)\n'+
+      '- Must start with ctx.save() and end with ctx.restore()\n'+
+      '- Draw a creative creature that matches the description — invent new shapes, animations, features\n'+
+      '- Include: body, eyes, HP bar, name tag if cfg.name exists\n'+
+      '- HP bar: ctx.fillStyle="#111";ctx.fillRect(x,y-8,30,5);ctx.fillStyle=cfg.color||"'+spec.color+'";ctx.fillRect(x,y-8,30*hp,5);\n'+
+      '- Stay within 32x32 bounding box at position (x,y)\n'+
+      '- canvas2D only — no external libraries\n'+
+      '- Be creative! This is a new species.\n\n'+
+      'Respond with ONLY the JavaScript function. No markdown.';
+
+    try{
+      const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'claude_complete',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
+      const data = await res.json();
+      if(data.error) throw new Error(data.error);
+      let fn = data.content?.find(b=>b.type==='text')?.text||'';
+      fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+      if(!fn.includes('function drawCharacter_')) throw new Error('Response is not a draw function');
+      if(!fn.includes('ctx.save()')) throw new Error('Missing ctx.save()');
+      if(!fn.includes('ctx.restore()')) throw new Error('Missing ctx.restore()');
+      const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
+      if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' vs '+closes);
+      toast('✅ Step 3: New creature "'+typeName+'" drawn!');
+      return {ok:true, drawFn:fn, isNewType:true};
+    }catch(e){
+      toast('⚠️ Step 3 new creature failed: '+e.message.slice(0,50));
+      return {ok:false, error:e.message, dingedSkill:'sprite-gen'};
+    }
+
+  } else {
+    toast('🎨 Step 3: Drawing the character...');
+    // Existing type — use reference examples
+    const prompt = 'You are a game artist. Write a JavaScript canvas draw function for this character.\n\n'+
+      'Character spec:\n'+
+      '- Name: "'+spec.name+'"\n'+
+      '- Type: "'+typeName+'"\n'+
+      '- Color: "'+spec.color+'"\n'+
+      '- Eye color: "'+spec.eyeColor+'"\n'+
+      '- Behavior notes: "'+(spec.behaviorNotes||'')+'"\n\n'+
+      'Write a complete function named exactly: drawCharacter_'+typeName+'\n\n'+
+      'Rules:\n'+
+      '- Signature: function drawCharacter_'+typeName+'(x,y,hp,fr,cfg,isZeroG)\n'+
+      '- Use ctx (global canvas context), x/y for position, hp (0-1), fr (frame counter)\n'+
+      '- Must start with ctx.save() and end with ctx.restore()\n'+
+      '- Draw body, eyes, HP bar, name tag (if cfg.name exists)\n'+
+      '- HP bar: ctx.fillStyle="#111";ctx.fillRect(x,y-8,30,5);ctx.fillStyle=cfg.color||"'+spec.color+'";ctx.fillRect(x,y-8,30*hp,5);\n'+
+      '- Stay within 32x32 bounding box at (x,y)\n'+
+      '- canvas2D only\n\n'+
+      'Reference example:\n'+STYLE_REF+'\n\n'+
+      'Respond with ONLY the JavaScript function.';
+
+    try{
+      const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'claude_complete',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+      const data = await res.json();
+      if(data.error) throw new Error(data.error);
+      let fn = data.content?.find(b=>b.type==='text')?.text||'';
+      fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+      if(!fn.includes('function drawCharacter_')) throw new Error('Response is not a draw function');
+      if(!fn.includes('ctx.save()')) throw new Error('Missing ctx.save()');
+      if(!fn.includes('ctx.restore()')) throw new Error('Missing ctx.restore()');
+      const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
+      if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' vs '+closes);
+      toast('✅ Step 3: Sprite generated for '+typeName);
+      return {ok:true, drawFn:fn, isNewType:false};
+    }catch(e){
+      toast('⚠️ Step 3 failed: '+e.message.slice(0,60)+' — will use orbital');
+      return {ok:false, error:e.message, dingedSkill:'sprite-gen'};
+    }
+  }
+}
+
+// ── STEP 4: generateConfig → /feature-build ──
 async function generateConfig(spec){
-  toast('⚙️ Step 3: Placing in the world...');
-  // Config is now deterministic from spec — no AI call needed
-  // This is the feature-build step: take the spec, produce the config entry
+  toast('⚙️ Step 4: Placing in the world...');
   try{
+    const zones=['Landing Zone','Quantum Cat Colony','Moon Base','Harvester Core'];
     const configEntry = {
       configType: 'enemyVariant',
       screenIndex: spec.screenIndex??0,
@@ -1020,18 +1101,18 @@ async function generateConfig(spec){
       tx: spec.tx||9,
       ty: spec.ty||9,
     };
-    toast('✅ Step 3: Placed in '+(configEntry.screenIndex===0?'Landing Zone':configEntry.screenIndex===1?'Quantum Cat Colony':configEntry.screenIndex===2?'Moon Base':'Harvester Core'));
+    toast('✅ Step 4: Placed in '+(zones[configEntry.screenIndex]||'zone '+configEntry.screenIndex));
     return {ok:true, configEntry};
   }catch(e){
-    toast('❌ Step 3 failed: '+e.message.slice(0,60));
+    toast('❌ Step 4 failed: '+e.message.slice(0,60));
     return {ok:false, error:e.message, dingedSkill:'feature-build'};
   }
 }
 
-// ── STEP 4: validate + inject → /release-check ──
+// ── STEP 5: validate + inject → /release-check ──
 // (handled by existing applyFullContribution — logs sha)
 
-// ── ORCHESTRATOR — replaces old generateFullContribution ──
+// ── ORCHESTRATOR v2 — 5 observable steps ──
 async function generateFullContribution(sub){
   const stepResults = {};
 
@@ -1039,31 +1120,65 @@ async function generateFullContribution(sub){
   const s1 = await interpretIntent(sub);
   stepResults['write-spec'] = s1.ok ? '✅ '+s1.spec?.plainEnglish : '❌ '+s1.error;
   if(!s1.ok) return {_failed:true, _dingedSkills:[s1.dingedSkill], _stepResults:stepResults};
-
   const spec = s1.spec;
 
-  // Step 2 — generate sprite
-  const s2 = await generateSprite(spec, sub);
-  stepResults['sprite-gen'] = s2.ok ? '✅ drawCharacter_'+spec.characterType+' generated' : '❌ '+s2.error;
+  // Read game file once — needed for type resolution check
+  let gameFileContent = '';
+  try{
+    const gfRes = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path:'games/'+(sub.targetGame?.slug||'in-space')+'.html',branch:'kids-preview'})});
+    const gfData = await gfRes.json();
+    gameFileContent = gfData.content||'';
+  }catch(e){ console.warn('Could not pre-read game file for type check'); }
 
-  // Step 3 — generate config (always runs, independent of sprite)
-  const s3 = await generateConfig(spec);
-  stepResults['feature-build'] = s3.ok ? '✅ placed at screen '+spec.screenIndex : '❌ '+s3.error;
-  if(!s3.ok) return {_failed:true, _dingedSkills:[s3.dingedSkill], _stepResults:stepResults};
+  // Step 2 — resolve type
+  const s2 = await resolveType(spec, gameFileContent);
+  if(!s2.ok){
+    stepResults['type-resolution'] = '⚠️ Failed — defaulted to iguana: '+(s2.error||'');
+  } else if(s2.isExisting){
+    stepResults['type-resolution'] = '⏭ Type "'+s2.resolvedType+'" already exists — skipped sprite gen';
+  } else if(s2.isNewType){
+    stepResults['type-resolution'] = '✨ New type "'+s2.resolvedType+'" — generating sprite';
+  } else {
+    stepResults['type-resolution'] = '✅ "'+s2.mappedFrom+'" → mapped to "'+s2.resolvedType+'"'+(s2.reason?' ('+s2.reason+')':'');
+  }
 
-  // Assemble result in format applyFullContribution expects
+  // Update spec with resolved type
+  const resolvedSpec = {...spec, characterType: s2.resolvedType||spec.characterType};
+
+  // Step 3 — generate sprite (skip if existing type)
+  let s3 = {ok:true, drawFn:null, isNewType:false};
+  if(s2.isExisting){
+    stepResults['sprite-gen'] = '⏭ Skipped — type already has draw function';
+  } else {
+    s3 = await generateSprite(resolvedSpec, sub, s2.isNewType);
+    stepResults['sprite-gen'] = s3.ok
+      ? (s2.isNewType ? '✨ New drawCharacter_'+resolvedSpec.characterType+' created' : '✅ drawCharacter_'+resolvedSpec.characterType+' generated')
+      : '❌ '+s3.error;
+  }
+
+  // Step 4 — generate config (always runs)
+  const s4 = await generateConfig(resolvedSpec);
+  stepResults['feature-build'] = s4.ok ? '✅ placed at screen '+resolvedSpec.screenIndex : '❌ '+s4.error;
+  if(!s4.ok) return {_failed:true, _dingedSkills:[s4.dingedSkill], _stepResults:stepResults};
+
+  // Collect dings
   const dingedSkills = [];
-  if(!s2.ok) dingedSkills.push('sprite-gen');
+  if(!s2.ok) dingedSkills.push('type-resolution');
+  if(!s3.ok) dingedSkills.push('sprite-gen');
 
   return {
-    characterType: spec.characterType,
-    drawFn: s2.ok ? s2.drawFn : null, // null = will fall to orbital in apply step
-    configEntry: s3.configEntry,
-    commitMessage: spec.name+' — '+spec.characterType+' character',
+    characterType: resolvedSpec.characterType,
+    drawFn: s3.drawFn||null,
+    configEntry: s4.configEntry,
+    commitMessage: resolvedSpec.name+' — '+resolvedSpec.characterType+' character'+(s2.isNewType?' (new type)':''),
     plainEnglish: spec.plainEnglish,
+    isNewType: s2.isNewType||false,
+    mappedFrom: s2.mappedFrom||null,
     _stepResults: stepResults,
     _dingedSkills: dingedSkills,
-    _spriteOk: s2.ok,
+    _spriteOk: s3.ok,
+    _typeExisted: s2.isExisting,
   };
 }
 
@@ -1734,12 +1849,13 @@ async function loadAiOps(){
 function computeSkillStats(skill, log){
   // Map delivery log entries to skill runs
   const DELIVERY_TO_SKILL = {
-    'full_code':   ['sprite-gen', 'feature-build', 'write-spec'],
-    'config_only': ['sprite-gen', 'feature-build'],
-    'orbital':     ['sprite-gen'],
+    'full_code':   ['sprite-gen', 'feature-build', 'write-spec', 'type-resolution'],
+    'config_only': ['sprite-gen', 'feature-build', 'type-resolution'],
+    'orbital':     ['sprite-gen', 'type-resolution'],
     'new_screen':  ['feature-build', 'write-spec'],
     'secret':      ['feature-build'],
-    'failed':      ['sprite-gen', 'feature-build'],
+    'failed':      ['sprite-gen', 'feature-build', 'write-spec'],
+    'ai_pass':     [],
   };
 
   // Find all delivery runs that involved this skill
