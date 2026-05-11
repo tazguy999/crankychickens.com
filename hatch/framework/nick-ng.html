@@ -3,621 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nick × Ng — Merged Framework</title>
+<title>Nick × Ng — Merged Framework · Hatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f7f6f2; font-family: 'Inter', sans-serif; color: #1a1a1a; padding: 40px 24px 80px; }
-
-  .page-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #bbb; margin-bottom: 6px; }
-  .page-heading { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
-  .page-sub { font-size: 13px; color: #888; margin-bottom: 48px; line-height: 1.6; }
-
-  .section { margin-bottom: 56px; }
-  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #bbb; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #e8e8e4; }
-
-  /* ── NG SPECTRUM ── */
-  .ng-spectrum {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    border: 1.5px solid #d4d4cc;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .ng-row {
-    display: grid;
-    grid-template-columns: 32px 100px 1fr auto;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-bottom: 1px solid #f0f0ec;
-    font-size: 12px;
-  }
-  .ng-row:last-child { border-bottom: none; }
-  .ng-level {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    color: #bbb;
-  }
-  .ng-name { font-weight: 600; font-size: 12px; }
-  .ng-desc { color: #666; font-size: 11px; line-height: 1.5; }
-  .ng-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 99px;
-    white-space: nowrap;
-  }
-
-  /* ── NICK'S TWO AXES ── */
-  .axes-wrap {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .axis-card {
-    border: 1.5px solid #d4d4cc;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .axis-header {
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    border-bottom: 1px solid #e8e8e4;
-  }
-  .axis-row {
-    display: grid;
-    grid-template-columns: 56px 80px 1fr;
-    gap: 8px;
-    align-items: center;
-    padding: 7px 14px;
-    border-bottom: 1px solid #f7f7f5;
-    font-size: 11px;
-  }
-  .axis-row:last-child { border-bottom: none; }
-  .dots { letter-spacing: -1px; }
-  .axis-stage { font-weight: 600; font-size: 11px; }
-  .axis-cleared { color: #666; font-size: 10px; line-height: 1.4; }
-
-  /* ── MERGE DIAGRAM — THE KEY INSIGHT ── */
-  .merge-container {
-    position: relative;
-    background: #fff;
-    border: 1.5px solid #d4d4cc;
-    border-radius: 12px;
-    padding: 24px;
-  }
-
-  .merge-insight {
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 14px 18px;
-    color: #f7f6f2;
-    font-size: 12px;
-    line-height: 1.7;
-    margin-bottom: 24px;
-  }
-  .mi-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; color: #6b7280; letter-spacing: 0.1em; margin-bottom: 6px; }
-
-  /* 2D grid */
-  .grid-2d {
-    position: relative;
-    width: 100%;
-  }
-  .grid-2d-inner {
-    display: grid;
-    grid-template-columns: 60px 1fr 1fr 1fr 1fr;
-    grid-template-rows: auto 80px 80px 80px 80px;
-    gap: 3px;
-  }
-  .g-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #aaa;
-    padding: 6px 4px;
-    text-align: center;
-  }
-  .g-row-label {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
-    font-weight: 700;
-    color: #aaa;
-    padding-right: 8px;
-    text-align: right;
-    line-height: 1.3;
-  }
-  .g-cell {
-    border-radius: 6px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    position: relative;
-    min-height: 70px;
-  }
-  /* Color zones */
-  .zone-impossible { background: #fef2f2; border: 1px dashed #fca5a5; }
-  .zone-stuck      { background: #fefce8; border: 1px solid #fde047; }
-  .zone-right      { background: #f0fdf4; border: 1px solid #86efac; }
-  .zone-sweet      { background: #eff6ff; border: 1px solid #93c5fd; }
-  .zone-aspirational { background: #faf5ff; border: 1px dashed #d8b4fe; }
-  .zone-empty      { background: #f9f9f7; border: 1px dashed #e0e0dc; }
-
-  .zone-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 7px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    opacity: 0.6;
-  }
-  .skill-chip {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
-    font-weight: 600;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background: rgba(0,0,0,0.06);
-    color: #333;
-    width: fit-content;
-  }
-  .skill-chip.cs { background: #fce7f3; color: #9d174d; }
-  .skill-chip.eng { background: #dbeafe; color: #1e40af; }
-  .skill-chip.ops { background: #dcfce7; color: #166534; }
-  .skill-chip.prod { background: #fef3c7; color: #92400e; }
-  .skill-chip.cc { background: #fdf4ff; color: #86198f; }
-
-  /* ── AXIS LABELS ── */
-  .axis-label-x {
-    text-align: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #666;
-    margin-top: 10px;
-  }
-  .axis-label-y-wrap {
-    position: absolute;
-    left: -32px;
-    top: 50%;
-    transform: translateY(-50%) rotate(-90deg);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #666;
-    white-space: nowrap;
-  }
-
-  /* ── WHERE EACH MAPS ── */
-  .mapping-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    border: 1.5px solid #d4d4cc;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .mapping-row {
-    display: grid;
-    grid-template-columns: 140px 1fr 80px 80px 100px;
-    gap: 12px;
-    align-items: center;
-    padding: 9px 14px;
-    border-bottom: 1px solid #f0f0ec;
-    font-size: 11px;
-  }
-  .mapping-row:last-child { border-bottom: none; }
-  .mapping-row.header {
-    background: #f7f6f2;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    color: #aaa;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .m-skill { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; }
-  .m-desc { color: #555; font-size: 10px; line-height: 1.4; }
-  .m-process { text-align: center; }
-  .m-auto { text-align: center; }
-  .m-verdict {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 99px;
-    text-align: center;
-  }
-  .v-right   { background: #dcfce7; color: #166534; }
-  .v-stuck   { background: #fefce8; color: #854d0e; }
-  .v-impos   { background: #fee2e2; color: #991b1b; }
-  .v-aspire  { background: #faf5ff; color: #6b21a8; }
-
-  /* ── KEY INSIGHT BOX ── */
-  .insight-box {
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin-bottom: 16px;
-  }
-  .ib-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
-  .ib-text { font-size: 12px; line-height: 1.7; }
-
-  .footnote { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #ccc; margin-top: 48px; text-align: center; }
+:root{--bg:#0d0d0d;--surface:#141414;--border:#222;--accent:#c8f060;--accent2:#60c8f0;--accent3:#f060c8;--muted:#555;--text:#e8e8e0;--text-dim:#888;--red:#ff6b6b;--amber:#f0a060;--blue:#60a8f0;--green:#60f0a8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:'Fraunces',Georgia,serif;min-height:100vh;}
+body{padding:0 1.25rem 5rem;max-width:800px;margin:0 auto;}
+.site-nav{display:flex;flex-direction:column;gap:.75rem;padding:1rem 0 1.25rem;margin-bottom:2rem;border-bottom:1px solid var(--border);}
+.site-nav .nav-brand{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);text-decoration:none;}
+.site-nav .nav-links{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;}
+.site-nav .nav-links a{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;transition:color .15s;padding:.2rem 0;}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--accent);}
+.eyebrow{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem;}
+h1{font-size:clamp(1.8rem,6vw,2.8rem);font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-bottom:.75rem;}
+h1 em{font-style:italic;color:var(--accent);}
+.subtitle{color:var(--text-dim);font-size:1rem;font-weight:300;line-height:1.6;font-style:italic;margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+.section{margin-bottom:3rem;}
+.section-label{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:1.2rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);}
+.callout{border-radius:6px;padding:1rem 1.1rem;margin-bottom:1rem;}
+.callout-key{background:#111;border:1px solid #333;}
+.callout-green{background:rgba(96,240,168,.05);border-left:2px solid var(--green);}
+.callout-amber{background:rgba(240,160,96,.05);border-left:2px solid var(--amber);}
+.callout-blue{background:rgba(96,168,240,.05);border-left:2px solid var(--blue);}
+.callout-purple{background:rgba(192,96,240,.05);border-left:2px solid #b060f0;}
+.callout-label{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;}
+.callout-text{font-size:.9rem;line-height:1.7;color:var(--text-dim);}
+.callout-text strong{color:var(--text);}
+.spectrum{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.spec-row{display:grid;grid-template-columns:2.5rem 5.5rem 1fr;gap:.75rem;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border);}
+.spec-row:last-child{border-bottom:none;}
+.spec-level{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;color:var(--muted);}
+.spec-name{font-family:'DM Mono',monospace;font-size:.7rem;font-weight:600;color:var(--text);}
+.spec-desc{font-size:.8rem;color:var(--text-dim);line-height:1.5;}
+.spec-tag{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;}
+.tag-manual{background:rgba(255,255,255,.05);border:1px solid #333;color:var(--muted);}
+.tag-scripted{background:rgba(240,160,96,.12);border:1px solid var(--amber);color:var(--amber);}
+.tag-agentic{background:rgba(96,240,168,.1);border:1px solid var(--green);color:var(--green);}
+.tag-frontier{background:rgba(192,96,240,.1);border:1px solid #b060f0;color:#b060f0;}
+.axes-grid{display:grid;grid-template-columns:1fr;gap:1rem;}
+@media(min-width:600px){.axes-grid{grid-template-columns:1fr 1fr;}}
+.axis-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.axis-head{background:var(--surface);padding:.75rem 1rem;font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.axis-row{display:grid;grid-template-columns:3.5rem 1fr;gap:.5rem;align-items:start;padding:.6rem 1rem;border-bottom:1px solid var(--border);}
+.axis-row:last-child{border-bottom:none;}
+.axis-dots{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--accent);letter-spacing:-2px;}
+.axis-stage{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;color:var(--text);margin-bottom:.15rem;}
+.axis-when{font-size:.75rem;color:var(--text-dim);line-height:1.4;}
+.grid-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.5rem;}
+.grid-outer::-webkit-scrollbar{height:4px;}
+.grid-outer::-webkit-scrollbar-track{background:var(--surface);}
+.grid-outer::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.grid-scroll-hint{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);text-align:right;margin-bottom:.5rem;}
+.grid-2d{display:grid;grid-template-columns:4.5rem repeat(4,minmax(110px,1fr));gap:3px;min-width:580px;}
+.g-hdr{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:.5rem .4rem;text-align:center;}
+.g-row-lbl{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:.6rem;text-align:right;line-height:1.3;}
+.g-cell{border-radius:5px;padding:.5rem .6rem;display:flex;flex-direction:column;gap:3px;min-height:72px;}
+.z-danger{background:rgba(255,107,107,.08);border:1px dashed rgba(255,107,107,.4);}
+.z-risky{background:rgba(240,160,96,.07);border:1px solid rgba(240,160,96,.35);}
+.z-good{background:rgba(96,240,168,.06);border:1px solid rgba(96,240,168,.25);}
+.z-advance{background:rgba(96,168,240,.07);border:1px solid rgba(96,168,240,.3);}
+.z-zone-label{font-family:'DM Mono',monospace;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.z-danger .z-zone-label{color:var(--red);}
+.z-risky .z-zone-label{color:var(--amber);}
+.z-good .z-zone-label{color:var(--green);}
+.z-advance .z-zone-label{color:var(--blue);}
+.z-note{font-size:.65rem;line-height:1.4;}
+.z-danger .z-note{color:rgba(255,107,107,.7);}
+.z-risky .z-note{color:rgba(240,160,96,.7);}
+.z-good .z-note{color:rgba(96,240,168,.65);}
+.z-advance .z-note{color:rgba(96,168,240,.7);}
+.chip{font-family:'DM Mono',monospace;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;width:fit-content;margin-top:2px;}
+.chip-cs{background:rgba(240,96,200,.15);color:var(--accent3);}
+.chip-eng{background:rgba(96,168,240,.15);color:var(--blue);}
+.chip-ops{background:rgba(96,240,168,.15);color:var(--green);}
+.chip-prod{background:rgba(240,160,96,.15);color:var(--amber);}
+.chip-cc{background:rgba(200,240,96,.15);color:var(--accent);}
+.axis-x-label{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:.75rem;}
+.legend{display:flex;flex-wrap:wrap;gap:.6rem 1.2rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--text-dim);}
+.legend-swatch{width:14px;height:10px;border-radius:2px;flex-shrink:0;}
+.order-table{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.order-row{display:grid;grid-template-columns:2rem 1fr;gap:.75rem;align-items:start;padding:.8rem 1rem;border-bottom:1px solid var(--border);}
+.order-row:last-child{border-bottom:none;}
+.order-row.ng-step{background:rgba(96,192,240,.04);}
+.order-num{font-family:'DM Mono',monospace;font-size:.75rem;font-weight:700;color:var(--muted);padding-top:2px;}
+.order-num.ng{color:var(--blue);}
+.order-content{display:flex;flex-direction:column;gap:.25rem;}
+.order-name{font-family:'DM Mono',monospace;font-size:.75rem;font-weight:700;color:var(--text);}
+.order-desc{font-size:.8rem;color:var(--text-dim);line-height:1.5;}
+.order-tag{font-family:'DM Mono',monospace;font-size:.55rem;font-weight:700;padding:2px 6px;border-radius:99px;width:fit-content;}
+.order-tag-ng{background:rgba(96,168,240,.12);border:1px solid var(--blue);color:var(--blue);}
+.order-tag-nick{background:rgba(200,240,96,.1);border:1px solid var(--accent);color:var(--accent);}
+footer{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#333;text-align:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);}
 </style>
 </head>
 <body>
-<style>
-.hatch-nav { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:#0d0d0d; border-bottom:1px solid #222; font-family:'JetBrains Mono',monospace; position:sticky; top:0; z-index:100; }
-.hatch-nav a { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; text-decoration:none; color:#555; transition:color 0.15s; }
-.hatch-nav a:hover, .hatch-nav a.active { color:#c8f060; }
-.hatch-nav .brand { color:#c8f060; font-weight:700; }
-.hatch-nav .links { display:flex; gap:20px; }
-</style>
-<nav class="hatch-nav">
-  <a href="/" class="brand">🐔 Hatch</a>
-  <div class="links">
-    <a href="/">Framework</a>
-    <a href="/ai-ops/">AI Ops</a>
-    <a href="/framework/nick-ng.html" class="active">Nick × Ng</a>
-    <a href="/framework/pipeline-v3.html">Pipeline</a>
-    <a href="/framework/workflow-v3.html">Workflows</a>
-  </div>
+<nav class="site-nav">
+  <a href="/" class="nav-brand">🐔 Hatch</a>
+  <ul class="nav-links">
+    <li><a href="/">Framework</a></li>
+    <li><a href="/cad/">CAD</a></li>
+    <li><a href="/ai-ops/">AI Ops</a></li>
+    <li><a href="/framework/nick-ng.html" class="active">Nick × Ng</a></li>
+    <li><a href="/framework/pipeline-v3.html">Pipeline</a></li>
+    <li><a href="/framework/workflow-v3.html">Workflows</a></li>
+  </ul>
 </nav>
 
+<div class="eyebrow">Framework Synthesis</div>
+<h1>Nick <em>×</em> Ng</h1>
+<p class="subtitle">Ng gives you a spectrum of autonomy. Nick adds a second axis — whether the work is understood well enough to automate. You can't move right until you've moved up.</p>
 
-<div class="page-title">Framework Synthesis</div>
-<div class="page-heading">Nick × Ng</div>
-<div class="page-sub">Ng gives you a spectrum of autonomy.<br>Nick adds a second axis — whether the work is understood well enough to automate.<br>The merge: you can't move right on Ng's spectrum until you've moved up on Nick's.</div>
-
-
-<!-- ══════════════════════ -->
-<!-- NG'S SPECTRUM         -->
-<!-- ══════════════════════ -->
 <div class="section">
   <div class="section-label">Ng's Framework — One Axis</div>
-  <div class="ng-spectrum">
-    <div class="ng-row" style="background:#fafafa">
-      <div class="ng-level">L0</div>
-      <div class="ng-name">Single prompt</div>
-      <div class="ng-desc">One input, one output. No memory, no tools.</div>
-      <div class="ng-tag" style="background:#f7f6f2;border:1px solid #ccc;color:#666">manual</div>
-    </div>
-    <div class="ng-row">
-      <div class="ng-level">L1</div>
-      <div class="ng-name">Chain</div>
-      <div class="ng-desc">Fixed sequence of prompts. Output feeds next input.</div>
-      <div class="ng-tag" style="background:#fefce8;border:1px solid #fde047;color:#854d0e">scripted</div>
-    </div>
-    <div class="ng-row">
-      <div class="ng-level">L2</div>
-      <div class="ng-name">Branching</div>
-      <div class="ng-desc">If/else routing based on LLM output. Deterministic orchestrator.</div>
-      <div class="ng-tag" style="background:#fefce8;border:1px solid #fde047;color:#854d0e">scripted</div>
-    </div>
-    <div class="ng-row" style="background:#f0fdf4">
-      <div class="ng-level">L3</div>
-      <div class="ng-name">Tool use</div>
-      <div class="ng-desc">LLM calls external systems. Real state changes. Cranky Chickens pipeline.</div>
-      <div class="ng-tag" style="background:#dcfce7;border:1px solid #86efac;color:#166534">agentic</div>
-    </div>
-    <div class="ng-row" style="background:#eff6ff">
-      <div class="ng-level">L4</div>
-      <div class="ng-name">LLM orchestrator</div>
-      <div class="ng-desc">LLM decides what to call next. hoppy-iterate. Error compounding risk.</div>
-      <div class="ng-tag" style="background:#dbeafe;border:1px solid #93c5fd;color:#1e40af">agentic</div>
-    </div>
-    <div class="ng-row">
-      <div class="ng-level">L5</div>
-      <div class="ng-name">Multi-agent</div>
-      <div class="ng-desc">LLMs orchestrate LLMs. Long-horizon. Self-directed.</div>
-      <div class="ng-tag" style="background:#fdf4ff;border:1px solid #d8b4fe;color:#6b21a8">frontier</div>
-    </div>
+  <div class="spectrum">
+    <div class="spec-row" style="background:var(--surface)"><div class="spec-level">L0</div><div class="spec-name">Single prompt</div><div class="spec-desc">One input, one output. No memory, no tools. <span class="spec-tag tag-manual">manual</span></div></div>
+    <div class="spec-row"><div class="spec-level">L1</div><div class="spec-name">Chain</div><div class="spec-desc">Fixed sequence. Output feeds next input. <span class="spec-tag tag-scripted">scripted</span></div></div>
+    <div class="spec-row"><div class="spec-level">L2</div><div class="spec-name">Branching</div><div class="spec-desc">If/else routing from LLM output. Deterministic orchestrator. <span class="spec-tag tag-scripted">scripted</span></div></div>
+    <div class="spec-row" style="background:rgba(96,240,168,.03)"><div class="spec-level">L3</div><div class="spec-name">Tool use</div><div class="spec-desc">LLM calls external systems. Real state changes. Cranky Chickens pipeline. <span class="spec-tag tag-agentic">agentic</span></div></div>
+    <div class="spec-row" style="background:rgba(96,168,240,.03)"><div class="spec-level">L4</div><div class="spec-name">LLM orchestrator</div><div class="spec-desc">LLM decides what to call next. hoppy-iterate. Error compounding risk. <span class="spec-tag tag-agentic">agentic</span></div></div>
+    <div class="spec-row"><div class="spec-level">L5</div><div class="spec-name">Multi-agent</div><div class="spec-desc">LLMs orchestrate LLMs. Long-horizon. Self-directed. <span class="spec-tag tag-frontier">frontier</span></div></div>
   </div>
-  <div style="margin-top:10px;font-size:11px;color:#888;font-style:italic">Ng's gap: this spectrum assumes the work is already understood. It skips the question of whether it should be automated at all.</div>
+  <p style="font-size:.75rem;color:var(--muted);font-style:italic;margin-top:.75rem">Ng's gap: assumes the work is already understood. Skips whether it should be automated at all.</p>
 </div>
 
-
-<!-- ══════════════════════ -->
-<!-- NICK'S TWO AXES       -->
-<!-- ══════════════════════ -->
 <div class="section">
   <div class="section-label">Nick's Framework — Two Axes</div>
-  <div class="axes-wrap">
+  <div class="axes-grid">
     <div class="axis-card">
-      <div class="axis-header" style="background:#f7f6f2">Process — is the work understood?</div>
-      <div class="axis-row">
-        <div class="dots" style="color:#1a1a1a">●○○○</div>
-        <div class="axis-stage">Observed</div>
-        <div class="axis-cleared">Pain is named and felt</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#1a1a1a">●●○○</div>
-        <div class="axis-stage">Defined</div>
-        <div class="axis-cleared">Inputs, outputs, systems identified</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#1a1a1a">●●●○</div>
-        <div class="axis-stage">Standardized</div>
-        <div class="axis-cleared">Another person could follow it</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#1a1a1a">●●●●</div>
-        <div class="axis-stage">Verified</div>
-        <div class="axis-cleared">Every step confirmed programmatically — a skill is possible</div>
-      </div>
+      <div class="axis-head" style="color:var(--accent)">Process — is it understood?</div>
+      <div class="axis-row"><div class="axis-dots">●○○○</div><div><div class="axis-stage">Observed</div><div class="axis-when">Pain is named and felt</div></div></div>
+      <div class="axis-row"><div class="axis-dots">●●○○</div><div><div class="axis-stage">Defined</div><div class="axis-when">Inputs, outputs, systems identified</div></div></div>
+      <div class="axis-row"><div class="axis-dots">●●●○</div><div><div class="axis-stage">Standardized</div><div class="axis-when">Another person could follow it</div></div></div>
+      <div class="axis-row"><div class="axis-dots">●●●●</div><div><div class="axis-stage">Verified</div><div class="axis-when">Every step confirmed programmatically</div></div></div>
     </div>
     <div class="axis-card">
-      <div class="axis-header" style="background:#f7f6f2">Automation — how much human touch?</div>
-      <div class="axis-row">
-        <div class="dots" style="color:#2563eb">●○○○○</div>
-        <div class="axis-stage">Human-directed</div>
-        <div class="axis-cleared">Human triggers and reviews every run</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#2563eb">●●○○○</div>
-        <div class="axis-stage">Reliable</div>
-        <div class="axis-cleared">Error rate below threshold area owner defined</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#2563eb">●●●○○</div>
-        <div class="axis-stage">Scheduled ← handoff</div>
-        <div class="axis-cleared">Runs automatically, dept director owns it</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#2563eb">●●●●○</div>
-        <div class="axis-stage">Event-driven</div>
-        <div class="axis-cleared">Triggers on real prod signals — no human awareness needed</div>
-      </div>
-      <div class="axis-row">
-        <div class="dots" style="color:#2563eb">●●●●●</div>
-        <div class="axis-stage">Fleet tool ← graduated</div>
-        <div class="axis-cleared">Runs as fleet agent — human director gets exceptions only</div>
-      </div>
+      <div class="axis-head" style="color:var(--blue)">Automation — human touch?</div>
+      <div class="axis-row"><div class="axis-dots" style="color:var(--blue)">●○○○○</div><div><div class="axis-stage">Human-directed</div><div class="axis-when">Human triggers and reviews every run</div></div></div>
+      <div class="axis-row"><div class="axis-dots" style="color:var(--blue)">●●○○○</div><div><div class="axis-stage">Reliable</div><div class="axis-when">Error rate below owner-defined threshold</div></div></div>
+      <div class="axis-row"><div class="axis-dots" style="color:var(--blue)">●●●○○</div><div><div class="axis-stage">Scheduled</div><div class="axis-when">Runs automatically, director owns it</div></div></div>
+      <div class="axis-row"><div class="axis-dots" style="color:var(--blue)">●●●●○</div><div><div class="axis-stage">Event-driven</div><div class="axis-when">Triggers on real prod signals</div></div></div>
+      <div class="axis-row"><div class="axis-dots" style="color:var(--blue)">●●●●●</div><div><div class="axis-stage">Fleet ← graduated</div><div class="axis-when">Director gets exceptions only</div></div></div>
     </div>
   </div>
-  <div style="margin-top:10px;font-size:11px;color:#888;font-style:italic">Nick's addition: Automation score is meaningless without a Process score. A skill at Automation ●●●●● with Process ●○○○ is an uncontrolled process running fast.</div>
 </div>
 
-
-<!-- ══════════════════════ -->
-<!-- THE MERGE: 2D GRID    -->
-<!-- ══════════════════════ -->
 <div class="section">
   <div class="section-label">The Merge — Why Two Axes Changes Everything</div>
-
-  <div class="insight-box" style="background:#1a1a1a;color:#f7f6f2">
-    <div class="ib-label" style="color:#6b7280">THE KEY INSIGHT</div>
-    <div class="ib-text">Ng's spectrum is a single axis: autonomy. You can slide right anytime. Nick's framework adds a gate: you can only move right on autonomy after you've moved up on process understanding. The 2D grid shows what happens when skills are in the wrong zone.</div>
+  <div class="callout callout-key" style="margin-bottom:1.25rem">
+    <div class="callout-label" style="color:var(--muted)">The key insight</div>
+    <div class="callout-text">Ng's spectrum is a single axis: autonomy. You can slide right anytime. Nick's framework adds a gate: you can only move right on autonomy after you've moved up on process understanding. The 2D grid shows what happens when skills are in the wrong zone.</div>
   </div>
+  <p class="grid-scroll-hint">← scroll to see full grid →</p>
+  <div class="grid-outer">
+    <div class="grid-2d">
+      <div class="g-hdr"></div>
+      <div class="g-hdr">Observed<br><span style="opacity:.5">●○○○</span></div>
+      <div class="g-hdr">Defined<br><span style="opacity:.5">●●○○</span></div>
+      <div class="g-hdr">Standardized<br><span style="opacity:.5">●●●○</span></div>
+      <div class="g-hdr">Verified<br><span style="opacity:.5">●●●●</span></div>
 
-  <div class="merge-container">
-    <div style="position:relative;padding-left:40px">
+      <div class="g-row-lbl">Fleet<br><span style="color:var(--blue)">●●●●●</span></div>
+      <div class="g-cell z-danger"><div class="z-zone-label">impossible</div><div class="z-note">Fast wrong answer. Process not understood.</div></div>
+      <div class="g-cell z-danger"><div class="z-zone-label">dangerous</div><div class="z-note">Automated chaos. Blast radius unknown.</div></div>
+      <div class="g-cell z-risky"><div class="z-zone-label">premature</div><div class="z-note">Can another person describe what it does?</div></div>
+      <div class="g-cell z-good"><div class="z-zone-label">graduation zone</div><div class="z-note">Process verified + fleet = Ng's L4-5</div><div class="chip chip-ops">/standup (target)</div></div>
 
-      <div class="axis-label-y-wrap">AUTOMATION →</div>
+      <div class="g-row-lbl">Scheduled<br><span style="color:var(--blue)">●●●○○</span></div>
+      <div class="g-cell z-danger"><div class="z-zone-label">impossible</div></div>
+      <div class="g-cell z-risky"><div class="z-zone-label">risky</div><div class="z-note">Runs without review. Process not repeatable yet.</div></div>
+      <div class="g-cell z-good"><div class="z-zone-label">sweet spot</div><div class="z-note">Ng's L3. Scheduled, owned, monitored.</div><div class="chip chip-cs">/hoppy-iterate</div><div class="chip chip-eng">/pod-next</div></div>
+      <div class="g-cell z-advance"><div class="z-zone-label">ready to advance</div><div class="z-note">Process verified. Remove human from path.</div><div class="chip chip-cs">/bug-scan</div></div>
 
-      <div class="grid-2d-inner">
+      <div class="g-row-lbl">Reliable<br><span style="color:var(--blue)">●●○○○</span></div>
+      <div class="g-cell z-risky"><div class="z-zone-label">illusion</div><div class="z-note">Works until it doesn't. No understanding of why.</div></div>
+      <div class="g-cell z-good"><div class="z-zone-label">healthy</div><div class="z-note">Known I/O + measurable error rate.</div><div class="chip chip-prod">/ticket-grooming</div><div class="chip chip-eng">/review-prs</div></div>
+      <div class="g-cell z-good"><div class="z-zone-label">healthy</div><div class="z-note">Well understood, running cleanly.</div><div class="chip chip-cc">sprite-gen</div><div class="chip chip-cc">write-spec</div></div>
+      <div class="g-cell z-advance"><div class="z-zone-label">advance automation</div><div class="z-note">Process solid. Automation is the bottleneck.</div></div>
 
-        <!-- Column headers -->
-        <div class="g-header"></div>
-        <div class="g-header">Observed<br>●○○○</div>
-        <div class="g-header">Defined<br>●●○○</div>
-        <div class="g-header">Standardized<br>●●●○</div>
-        <div class="g-header">Verified<br>●●●●</div>
-
-        <!-- Row 4: Fleet/Event-driven -->
-        <div class="g-row-label">Fleet<br>●●●●●</div>
-        <div class="g-cell zone-impossible">
-          <div class="zone-label" style="color:#991b1b">impossible</div>
-          <div style="font-size:9px;color:#991b1b;line-height:1.4">Fast wrong answer. Process not understood.</div>
-        </div>
-        <div class="g-cell zone-impossible">
-          <div class="zone-label" style="color:#991b1b">dangerous</div>
-          <div style="font-size:9px;color:#991b1b;line-height:1.4">Automated chaos. Blast radius unknown.</div>
-        </div>
-        <div class="g-cell zone-stuck">
-          <div class="zone-label" style="color:#854d0e">premature</div>
-          <div style="font-size:9px;color:#666;line-height:1.4">Almost — but can another person describe what it does?</div>
-        </div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">graduation zone</div>
-          <div style="font-size:9px;color:#166534;line-height:1.4">Process verified + fleet automation = Ng's L4-5</div>
-          <div class="skill-chip ops">/standup (target)</div>
-        </div>
-
-        <!-- Row 3: Scheduled -->
-        <div class="g-row-label">Scheduled<br>●●●○○</div>
-        <div class="g-cell zone-impossible">
-          <div class="zone-label" style="color:#991b1b">impossible</div>
-        </div>
-        <div class="g-cell zone-stuck">
-          <div class="zone-label" style="color:#854d0e">risky</div>
-          <div style="font-size:9px;color:#666;line-height:1.4">Runs without review. Process not repeatable yet.</div>
-        </div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">sweet spot</div>
-          <div style="font-size:9px;color:#166534;line-height:1.4">Ng's L3. Scheduled, owned, monitored.</div>
-          <div class="skill-chip cs">/hoppy-iterate</div>
-          <div class="skill-chip eng">/pod-next</div>
-        </div>
-        <div class="g-cell zone-sweet">
-          <div class="zone-label" style="color:#1e40af">ready to advance</div>
-          <div style="font-size:9px;color:#1e40af;line-height:1.4">Process verified. Next: remove human from critical path.</div>
-          <div class="skill-chip cs">/bug-scan</div>
-        </div>
-
-        <!-- Row 2: Reliable -->
-        <div class="g-row-label">Reliable<br>●●○○○</div>
-        <div class="g-cell zone-stuck">
-          <div class="zone-label" style="color:#854d0e">illusion</div>
-          <div style="font-size:9px;color:#666;line-height:1.4">Works until it doesn't. No understanding of why.</div>
-        </div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">healthy</div>
-          <div style="font-size:9px;color:#166534;line-height:1.4">Known inputs/outputs + measurable error rate.</div>
-          <div class="skill-chip prod">/ticket-grooming</div>
-          <div class="skill-chip eng">/review-prs</div>
-        </div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">healthy</div>
-          <div style="font-size:9px;color:#166534;line-height:1.4">Well understood, running cleanly.</div>
-          <div class="skill-chip cc">sprite-gen</div>
-          <div class="skill-chip cc">write-spec</div>
-        </div>
-        <div class="g-cell zone-sweet">
-          <div class="zone-label" style="color:#1e40af">advance automation</div>
-          <div style="font-size:9px;color:#1e40af;line-height:1.4">Process solid. Automation is the bottleneck now.</div>
-        </div>
-
-        <!-- Row 1: Human-directed -->
-        <div class="g-row-label">Human-<br>directed<br>●○○○○</div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">correct start</div>
-          <div style="font-size:9px;color:#166534;line-height:1.4">Ng's step 0. Doing it manually. Building understanding.</div>
-          <div class="skill-chip ops">/venue-dedupe</div>
-          <div class="skill-chip eng">/domain-survey</div>
-        </div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">correct</div>
-          <div style="font-size:9px;color:#166534;line-height:1.4">Defined process, human reviewing. Normal early state.</div>
-          <div class="skill-chip prod">/pm-prs</div>
-          <div class="skill-chip eng">/release-check</div>
-        </div>
-        <div class="g-cell zone-right">
-          <div class="zone-label" style="color:#166534">correct</div>
-          <div style="font-size:9px;color:#666;line-height:1.4">Ready to reduce human touch. Instrument first.</div>
-          <div class="skill-chip eng">/qa-local</div>
-        </div>
-        <div class="g-cell zone-sweet">
-          <div class="zone-label" style="color:#1e40af">underutilized</div>
-          <div style="font-size:9px;color:#1e40af;line-height:1.4">Fully verified process but still manual. Why?</div>
-        </div>
-
-      </div>
-
-      <div class="axis-label-x">PROCESS MATURITY →</div>
+      <div class="g-row-lbl">Human-<br>directed<br><span style="color:var(--blue)">●○○○○</span></div>
+      <div class="g-cell z-good"><div class="z-zone-label">correct start</div><div class="z-note">Ng's step 0. Doing it manually.</div><div class="chip chip-ops">/venue-dedupe</div><div class="chip chip-eng">/domain-survey</div></div>
+      <div class="g-cell z-good"><div class="z-zone-label">correct</div><div class="z-note">Defined process, human reviewing.</div><div class="chip chip-prod">/pm-prs</div><div class="chip chip-eng">/release-check</div></div>
+      <div class="g-cell z-good"><div class="z-zone-label">correct</div><div class="z-note">Ready to reduce human touch. Instrument first.</div><div class="chip chip-eng">/qa-local</div></div>
+      <div class="g-cell z-advance"><div class="z-zone-label">underutilized</div><div class="z-note">Fully verified but still manual. Why?</div></div>
     </div>
-
-    <!-- Legend -->
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e8e8e4">
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:16px;height:12px;border-radius:3px;background:#f0fdf4;border:1px solid #86efac"></div>Correct zone</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:16px;height:12px;border-radius:3px;background:#eff6ff;border:1px solid #93c5fd"></div>Ready to advance</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:16px;height:12px;border-radius:3px;background:#fefce8;border:1px solid #fde047"></div>Premature / risky</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px"><div style="width:16px;height:12px;border-radius:3px;background:#fef2f2;border:1px dashed #fca5a5"></div>Dangerous</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'JetBrains Mono',monospace"><span class="skill-chip cs">/cs</span>CS Lead</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'JetBrains Mono',monospace"><span class="skill-chip eng">/eng</span>Engineering</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'JetBrains Mono',monospace"><span class="skill-chip ops">/ops</span>Operations</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'JetBrains Mono',monospace"><span class="skill-chip prod">/prod</span>Product</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'JetBrains Mono',monospace"><span class="skill-chip cc">/cc</span>Cranky Chickens</div>
-    </div>
+    <div class="axis-x-label" style="min-width:580px">← process maturity →</div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(96,240,168,.12);border:1px solid rgba(96,240,168,.3)"></div>Correct zone</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(96,168,240,.12);border:1px solid rgba(96,168,240,.3)"></div>Ready to advance</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(240,160,96,.12);border:1px solid rgba(240,160,96,.35)"></div>Premature / risky</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(255,107,107,.12);border:1px dashed rgba(255,107,107,.4)"></div>Dangerous</div>
+    <div class="legend-item"><span class="chip chip-cs">/cs</span> CS Lead</div>
+    <div class="legend-item"><span class="chip chip-eng">/eng</span> Engineering</div>
+    <div class="legend-item"><span class="chip chip-ops">/ops</span> Operations</div>
+    <div class="legend-item"><span class="chip chip-prod">/prod</span> Product</div>
+    <div class="legend-item"><span class="chip chip-cc">/cc</span> Cranky Chickens</div>
   </div>
 </div>
 
-
-<!-- ══════════════════════ -->
-<!-- HOW THEY CONNECT      -->
-<!-- ══════════════════════ -->
 <div class="section">
   <div class="section-label">How They Connect</div>
-
-  <div style="display:flex;flex-direction:column;gap:10px">
-
-    <div class="insight-box" style="background:#f0fdf4;border:1.5px solid #86efac">
-      <div class="ib-label" style="color:#166534">Ng's L3 = Nick's Verified Process + Reliable Automation</div>
-      <div class="ib-text" style="color:#555">You can't get to L3 without hitting ●●●● on Process first. Most teams try to jump straight from L1 to L3 and wonder why their automation breaks in production. Nick's framework explains why: they skipped Standardized.</div>
-    </div>
-
-    <div class="insight-box" style="background:#fef3c7;border:1.5px solid #fcd34d">
-      <div class="ib-label" style="color:#92400e">hoppy-iterate is Ng's L4 with Process ●●●○</div>
-      <div class="ib-text" style="color:#555">LLM as orchestrator, hitting ADO + GH + Notion. That's impressive technically. But the SOP lives in your head, not in documentation. Standardized but not Verified. The 2D grid says: reduce automation until process is fully verified, or accept the risk explicitly.</div>
-    </div>
-
-    <div class="insight-box" style="background:#eff6ff;border:1.5px solid #93c5fd">
-      <div class="ib-label" style="color:#1e40af">The graduation event is movement on BOTH axes simultaneously</div>
-      <div class="ib-text" style="color:#555">Hatch's graduation system — nest score + flock score — is exactly this. Nest score = Process maturity. Flock score = Automation reliability. Graduation requires both bars full. Ng never says this explicitly. Nick built it into the system.</div>
-    </div>
-
-    <div class="insight-box" style="background:#faf5ff;border:1.5px solid #d8b4fe">
-      <div class="ib-label" style="color:#6b21a8">Nick's step 0 is the missing prerequisite to Ng's entire framework</div>
-      <div class="ib-text" style="color:#555">Ng starts at L0. Nick starts earlier — at "do it manually until the pattern is visible." Without that, L0 is just guessing what to automate. With it, every subsequent level has a real SOP underneath it. That's the merge. Nick's step 0 is the foundation Ng's pyramid sits on.</div>
-    </div>
-
+  <div style="display:flex;flex-direction:column;gap:.75rem">
+    <div class="callout callout-green"><div class="callout-label" style="color:var(--green)">Ng's L3 = Nick's Verified Process + Reliable Automation</div><div class="callout-text">You can't reach L3 without hitting ●●●● on Process first. Most teams jump L1 to L3 and wonder why automation breaks. They skipped Standardized.</div></div>
+    <div class="callout callout-amber"><div class="callout-label" style="color:var(--amber)">hoppy-iterate is Ng's L4 with Process ●●●○</div><div class="callout-text">LLM orchestrator hitting ADO + GH + Notion. Impressive technically. But the SOP lives in your head. Standardized, not Verified. The grid says: reduce automation or accept the risk explicitly.</div></div>
+    <div class="callout callout-blue"><div class="callout-label" style="color:var(--blue)">Graduation = movement on both axes simultaneously</div><div class="callout-text">Nest score = Process maturity. Flock score = Automation reliability. Graduation requires both bars full. Ng never says this. Nick built it into the system.</div></div>
+    <div class="callout callout-purple"><div class="callout-label" style="color:#b060f0">Nick's step 0 is the missing prerequisite to Ng's entire framework</div><div class="callout-text">Ng starts at L0. Nick starts earlier — do it manually until the pattern is visible. Without that, L0 is just guessing what to automate. Nick's step 0 is the foundation Ng's pyramid sits on.</div></div>
   </div>
 </div>
 
-
-<!-- ══════════════════════ -->
-<!-- COMPLETE ORDER        -->
-<!-- ══════════════════════ -->
 <div class="section">
   <div class="section-label">The Complete Order of Operations</div>
-
-  <div style="display:flex;flex-direction:column;gap:0;border:1.5px solid #d4d4cc;border-radius:10px;overflow:hidden">
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;padding:8px 14px;background:#f7f6f2;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:#aaa;letter-spacing:0.08em;text-transform:uppercase">
-      <div></div><div>Step</div><div>What happens</div><div>Who</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#bbb">−1</div>
-      <div style="font-weight:600">Do it manually</div>
-      <div style="color:#666">Run the workflow by hand. Observe what's hard, what varies, what fails. This is Nick's step 0. Ng skips it.</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">Nick</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#bbb">0</div>
-      <div style="font-weight:600">Write the SOP</div>
-      <div style="color:#666">Document what you actually did. Not what you thought you'd do. Could Shunfeng follow it without watching you?</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">Nick</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px;background:#f0fdf4">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb">1</div>
-      <div style="font-weight:600">Make it work</div>
-      <div style="color:#666">Automate the SOP. Ng's L1-L2. Single prompt or chain. Human still reviews every run.</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2563eb">Ng L1-2</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb">2</div>
-      <div style="font-weight:600">Make it observable</div>
-      <div style="color:#666">Add a log entry after every run. Input state, what Claude decided, what changed. Run it 10 times with the log.</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">Nick</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px;background:#f0fdf4">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb">3</div>
-      <div style="font-weight:600">Add tools</div>
-      <div style="color:#666">External state changes. GitHub, ADO, Notion. Real system integration. Blast radius now real — gates matter.</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2563eb">Ng L3</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb">4</div>
-      <div style="font-weight:600">Score it</div>
-      <div style="color:#666">Nick's nest + flock scores from the log. Process maturity × automation reliability. Both axes on one card.</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">Nick</div>
-    </div>
-    <div style="display:grid;grid-template-columns:28px 110px 1fr 80px;gap:12px;align-items:center;padding:9px 14px;border-top:1px solid #f0f0ec;font-size:11px;background:#f0fdf4">
-      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb">5</div>
-      <div style="font-weight:600">Graduate it</div>
-      <div style="color:#666">Both bars full. Human removed from critical path. Fleet agent. Ng's L4-5. Earned, not assumed.</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2563eb">Ng L4-5</div>
-    </div>
+  <div class="order-table">
+    <div class="order-row"><div class="order-num">−1</div><div class="order-content"><div class="order-name">Do it manually</div><div class="order-desc">Run the workflow by hand. Observe what's hard, what varies, what fails. Ng skips this entirely.</div><span class="order-tag order-tag-nick">Nick</span></div></div>
+    <div class="order-row"><div class="order-num">0</div><div class="order-content"><div class="order-name">Write the SOP</div><div class="order-desc">Document what you actually did. Could someone else follow it without watching you?</div><span class="order-tag order-tag-nick">Nick</span></div></div>
+    <div class="order-row ng-step"><div class="order-num ng">1</div><div class="order-content"><div class="order-name">Make it work</div><div class="order-desc">Automate the SOP. Human still reviews every run.</div><span class="order-tag order-tag-ng">Ng L1–2</span></div></div>
+    <div class="order-row"><div class="order-num">2</div><div class="order-content"><div class="order-name">Make it observable</div><div class="order-desc">Log every run. Input state, decisions, what changed. Run it 10 times with the log.</div><span class="order-tag order-tag-nick">Nick</span></div></div>
+    <div class="order-row ng-step"><div class="order-num ng">3</div><div class="order-content"><div class="order-name">Add tools</div><div class="order-desc">External state changes. Real systems. Blast radius now real — gates matter.</div><span class="order-tag order-tag-ng">Ng L3</span></div></div>
+    <div class="order-row"><div class="order-num">4</div><div class="order-content"><div class="order-name">Score it</div><div class="order-desc">Nest + flock from the log. Process maturity × automation reliability. Both axes on one card.</div><span class="order-tag order-tag-nick">Nick</span></div></div>
+    <div class="order-row ng-step"><div class="order-num ng">5</div><div class="order-content"><div class="order-name">Graduate it</div><div class="order-desc">Both bars full. Human removed from critical path. Fleet agent. Earned, not assumed.</div><span class="order-tag order-tag-ng">Ng L4–5</span></div></div>
   </div>
 </div>
 
-<div class="footnote">nick × ng — framework synthesis — may 2026</div>
-
+<footer>nick × ng — framework synthesis — may 2026 · hatch.crankychickens.com</footer>
 </body>
 </html>
