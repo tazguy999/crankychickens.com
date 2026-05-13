@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Measurement Layer · Hatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d; --surface: #141414; --border: #222;
+    --accent: #c8f060; --accent2: #60c8f0; --muted: #555;
+    --text: #e8e8e0; --text-dim: #888;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Fraunces', Georgia, serif; min-height: 100vh; padding: 0 1.5rem 5rem; max-width: 720px; margin: 0 auto; }
+
+  /* NAV */
+  .site-nav { display:flex; flex-direction:column; gap:.75rem; padding:1rem 0 1.25rem; margin-bottom:2rem; border-bottom:1px solid var(--border); }
+  .site-nav .nav-brand { font-family:'DM Mono',monospace; font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--accent); text-decoration:none; }
+  .site-nav .nav-links { display:flex; flex-wrap:wrap; gap:.25rem 1.25rem; list-style:none; }
+  .site-nav .nav-links a { font-family:'DM Mono',monospace; font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); text-decoration:none; transition:color .15s; padding:.2rem 0; }
+  .site-nav .nav-links a:hover, .site-nav .nav-links a.active { color:var(--accent); }
+
+  /* HEADER */
+  header { border-bottom:1px solid var(--border); padding-bottom:2rem; margin-bottom:3rem; }
+  .eyebrow { font-family:'DM Mono',monospace; font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; }
+  h1 { font-size:clamp(2rem,6vw,3.2rem); font-weight:700; line-height:1.1; letter-spacing:-.02em; margin-bottom:1rem; }
+  h1 em { font-style:italic; color:var(--accent); }
+  .subtitle { color:var(--text-dim); font-size:1.1rem; font-weight:300; line-height:1.6; font-style:italic; }
+  .meta { font-family:'DM Mono',monospace; font-size:.65rem; letter-spacing:.1em; color:var(--muted); margin-top:1.2rem; text-transform:uppercase; }
+
+  /* SECTIONS */
+  .section { margin-bottom:3.5rem; }
+  h2 { font-size:1.6rem; font-weight:700; letter-spacing:-.01em; margin-bottom:1rem; line-height:1.2; }
+  h2 em { font-style:italic; color:var(--accent); }
+  h3 { font-family:'DM Mono',monospace; font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent2); margin-bottom:.75rem; margin-top:2rem; }
+  p { font-size:1.05rem; line-height:1.75; color:var(--text); margin-bottom:1rem; font-weight:300; }
+  strong { font-weight:700; color:var(--text); }
+
+  /* CALLOUT */
+  .callout { border-left:2px solid var(--accent); padding:.9rem 1.2rem; margin:1.5rem 0; background:rgba(200,240,96,.04); }
+  .callout p { font-style:italic; color:var(--text-dim); margin:0; font-size:.95rem; }
+  .callout strong { color:var(--accent); }
+  .callout.blue { border-color:var(--accent2); background:rgba(96,200,240,.04); }
+  .callout.blue p { color:var(--text-dim); }
+  .callout.blue strong { color:var(--accent2); }
+  .callout.red { border-color:#ff6b6b; background:rgba(255,107,107,.04); }
+  .callout.red p { color:var(--text-dim); }
+  .callout.red strong { color:#ff6b6b; }
+
+  /* PRINCIPLE TAG */
+  .principle-tag { display:inline-block; font-family:'DM Mono',monospace; font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:.25rem .75rem; border-radius:99px; background:rgba(200,240,96,.08); border:1px solid rgba(200,240,96,.3); color:var(--accent); margin-bottom:1rem; }
+
+  /* CONSTRUCT CARDS */
+  .constructs { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:1.5rem 0; }
+  .construct { padding:1.1rem 1.3rem; border-bottom:1px solid var(--border); }
+  .construct:last-child { border-bottom:none; }
+  .construct-name { font-family:'DM Mono',monospace; font-size:.75rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:.5rem; }
+  .construct-type { font-family:'DM Mono',monospace; font-size:.6rem; padding:1px 7px; border-radius:99px; border:1px solid; margin-left:.6rem; vertical-align:middle; }
+  .type-leading { color:#f0a060; border-color:rgba(240,160,96,.4); background:rgba(240,160,96,.07); }
+  .type-lagging { color:var(--accent2); border-color:rgba(96,200,240,.4); background:rgba(96,200,240,.07); }
+  .type-gate    { color:#b060f0; border-color:rgba(176,96,240,.4); background:rgba(176,96,240,.07); }
+  .construct p  { font-size:.9rem; line-height:1.65; color:var(--text-dim); margin:0; }
+  .construct p strong { color:var(--text); }
+
+  /* METHOD ROWS */
+  .methods { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:1.5rem 0; }
+  .method { display:grid; grid-template-columns:1fr; gap:.4rem; padding:1rem 1.3rem; border-bottom:1px solid var(--border); }
+  .method:last-child { border-bottom:none; }
+  @media(min-width:560px){ .method { grid-template-columns:11rem 1fr; } }
+  .method-name { font-family:'DM Mono',monospace; font-size:.7rem; font-weight:700; color:var(--text); letter-spacing:.06em; }
+  .method-origin { font-family:'DM Mono',monospace; font-size:.6rem; color:var(--muted); margin-top:.15rem; }
+  .method-apply { font-size:.85rem; line-height:1.6; color:var(--text-dim); }
+  .method-apply strong { color:var(--text); }
+
+  /* QUOTE LINE */
+  .quote-line { font-size:1.1rem; font-style:italic; color:var(--text-dim); border-left:2px solid var(--border); padding:.6rem 1.1rem; margin:1.5rem 0; line-height:1.6; }
+  .quote-line em { color:var(--accent); font-style:normal; }
+
+  /* GRID REFERENCE */
+  .grid-ref { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1.5rem 0; }
+  .grid-ref-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem; }
+  .grid-ref-label { font-family:'DM Mono',monospace; font-size:.6rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
+  .grid-ref-val { font-size:.9rem; color:var(--text-dim); line-height:1.5; }
+  .grid-ref-val strong { color:var(--text); }
+
+  footer { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border); font-family:'DM Mono',monospace; font-size:.65rem; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; }
+  footer a { color:var(--muted); text-decoration:none; }
+  footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="nav-brand">🐔 Hatch</a>
+  <ul class="nav-links">
+    <li><a href="/">Framework</a></li>
+    <li><a href="/cad/">CAD</a></li>
+    <li><a href="/measurement/" class="active">Measurement</a></li>
+    <li><a href="/ai-ops/">AI Ops</a></li>
+    <li><a href="/framework/nick-ng.html">Nick × Ng</a></li>
+    <li><a href="/framework/pipeline-v3.html">Pipeline</a></li>
+  </ul>
+</nav>
+
+<header>
+  <div class="eyebrow">Companion to CAD</div>
+  <h1>The <em>Measurement</em> Layer</h1>
+  <p class="subtitle">Why instrumenting AI-assisted development is a soft science problem wearing a hard science hat — and what to do about it.</p>
+  <div class="meta">Nick Weber &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; <a href="/cad/" style="color:var(--muted);text-decoration:none">Read CAD first →</a></div>
+</header>
+
+
+<!-- ── 1. THE PROBLEM ── -->
+<div class="section">
+  <h2>1. The <em>Problem</em></h2>
+
+  <p>A CTO asked how his engineering lead was so good at token economics. The honest answer: <strong>not sure — we need instrumentation to know.</strong> That's the right instinct. But instrumentation without construct definition produces noise faster. It doesn't produce answers.</p>
+
+  <p>AI-assisted development measurement has a construct problem. We're using <strong>hard science tools</strong> — OpenTelemetry, token counters, cost dashboards — to measure <strong>soft science behavior</strong>: human judgment, AI decision quality, the interaction between them.</p>
+
+  <p>Hard science tools measure what happened with precision. They don't tell you whether what happened was <em>correct</em>. That requires defining constructs first — which is exactly what psychology and sociology developed rigorous methods for over fifty years.</p>
+
+  <div class="callout">
+    <p>Token count is not a proxy for prompt quality. Intervention rate is not a proxy for AI reliability. Cost per run is not a proxy for value delivered. These are measurements in search of constructs.</p>
+  </div>
+
+  <p>We have OpenTelemetry. We don't have validity. The measurement layer is the bridge.</p>
+</div>
+
+
+<!-- ── 2. THE PARACHUTE PRINCIPLE ── -->
+<div class="section">
+  <span class="principle-tag">Principle I</span>
+  <h2>The <em>Parachute</em> Principle</h2>
+
+  <p>You don't need a parachute to go skydiving. You need one to go skydiving twice.</p>
+
+  <p>You can ship a logger and collect 30 runs without defining constructs. The first jump works. But after 30 runs, everyone on the team has formed opinions about what the numbers mean. They've built dashboards. They've cited the data in reviews. They've made decisions based on their own informal interpretation of what "intervention rate" means.</p>
+
+  <p>At that point you cannot retrofit construct validity. The data has already been colonized by the team's intuitions. <strong>Define the constructs before the first run, not after.</strong></p>
+
+  <div class="callout">
+    <p>The cost of defining constructs upfront is one afternoon. The cost of invalidating three months of data because you didn't is the entire three months.</p>
+  </div>
+
+  <p>This isn't academic caution. It's the same discipline as writing acceptance criteria before writing code. The spec goes first. Always.</p>
+</div>
+
+
+<!-- ── 3. THE HANDOFF PRINCIPLE ── -->
+<div class="section">
+  <span class="principle-tag">Principle II</span>
+  <h2>The <em>Handoff</em> Principle</h2>
+
+  <p>Stop trying to instrument humans and AI the same way. They fail instrumentation in opposite directions.</p>
+
+  <p><strong>Humans are under-instrumented by default.</strong> They don't log their reasoning. They skip steps under pressure. They interpret standards loosely and call it judgment. You cannot capture what a developer was thinking when they approved a spec — only whether they approved it and how long it took.</p>
+
+  <p><strong>AI is over-instrumented but opaque.</strong> You can capture every token, every tool call, every logprob. But the signal you actually want — did the model understand the intent correctly — isn't in the telemetry. You have exhaust, not signal.</p>
+
+  <div class="callout blue">
+    <p><strong>The resolution:</strong> measure the handoff points between them, not the actors. The spec is the handoff from human intent to AI execution. The test result is the handoff from AI output to human judgment. Instrument those two moments and you have enough.</p>
+  </div>
+
+  <p>Everything else is noise dressed up as observability.</p>
+
+  <div class="quote-line">
+    The spec is the measurement instrument. If the spec is vague, no amount of telemetry downstream recovers the signal. <em>Spec quality is a leading indicator.</em> Everything else is lagging.
+  </div>
+</div>
+
+
+<!-- ── 4. WHAT SOFT SCIENCE KNOWS ── -->
+<div class="section">
+  <h2>4. What Soft Science <em>Knows</em></h2>
+
+  <p>Four methods from psychology and sociology that translate directly.</p>
+
+  <div class="methods">
+
+    <div class="method">
+      <div>
+        <div class="method-name">Construct Validity</div>
+        <div class="method-origin">from: psychometrics</div>
+      </div>
+      <div class="method-apply">Does your measurement actually measure what you think it measures? <strong>Intervention rate sounds like AI reliability but might be measuring developer patience, ticket quality, or sprint pressure.</strong> You don't know until you've defined the construct and checked whether your measurement tracks it.</div>
+    </div>
+
+    <div class="method">
+      <div>
+        <div class="method-name">Inter-Rater Reliability</div>
+        <div class="method-origin">from: qualitative research</div>
+      </div>
+      <div class="method-apply">If two engineers independently log a "manual intervention," do they mean the same thing? <strong>You need a codebook</strong> — a precise, written definition of what counts as an intervention, with examples of what does and doesn't qualify. Without it, your aggregate numbers are averaging different things.</div>
+    </div>
+
+    <div class="method">
+      <div>
+        <div class="method-name">Leading vs. Lagging</div>
+        <div class="method-origin">from: systems thinking</div>
+      </div>
+      <div class="method-apply">Intervention rate is a lagging indicator. It tells you the skill already failed. <strong>You want signals that predict regression before it happens.</strong> A missing or vague spec is a leading indicator of a bad skill run. Low spec quality score on entry is the canary. Build the leading indicators or you're always reading autopsies.</div>
+    </div>
+
+    <div class="method">
+      <div>
+        <div class="method-name">Operational Definitions</div>
+        <div class="method-origin">from: survey design</div>
+      </div>
+      <div class="method-apply">Every construct needs an operational definition — <strong>the exact observable behavior that counts as an instance of that construct.</strong> Not "the AI did a good job" but "the AI output satisfied all acceptance criteria without human modification to the logic." Precision isn't pedantry. It's what makes the number mean the same thing on run 1 and run 100.</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── 5. THE PRACTICAL MINIMUM ── -->
+<div class="section">
+  <h2>5. The <em>Practical</em> Minimum</h2>
+
+  <p>Not a dissertation. One paragraph per construct. Written before the first 30 runs.</p>
+
+  <div class="constructs">
+
+    <div class="construct">
+      <div class="construct-name">Process Readiness <span class="construct-type type-gate">gate</span></div>
+      <p>Is the work understood well enough to be repeatable? Defined as: a second engineer, reading only the spec and codebook, could execute the task and produce output within the same acceptance criteria. This is a binary gate, not a score. If the answer is no, the skill is not ready to run. <strong>This is what the Verified stage in the process maturity axis measures.</strong> Nothing else should be automated until this passes.</p>
+    </div>
+
+    <div class="construct">
+      <div class="construct-name">Intervention Rate <span class="construct-type type-lagging">lagging</span></div>
+      <p>How often does a human correct the output after the skill runs? <strong>Codebook definition:</strong> an intervention is any modification to AI-generated output that changes the semantic meaning or logical structure — not formatting or style. Adding a missing edge case counts. Fixing a variable name does not. Two reviewers must agree on classification. Logged per run, per skill, with the reason code. This is the number the AI Ops board displays.</p>
+    </div>
+
+    <div class="construct">
+      <div class="construct-name">Blast Radius <span class="construct-type type-gate">gate</span></div>
+      <p>What is the worst case if this skill runs wrong and no human catches it? Scored on three dimensions: reversibility (can it be undone?), scope (how many systems or people are affected?), and detection lag (how long before someone notices?). <strong>High blast radius skills require a human approval gate regardless of intervention rate.</strong> This is not a reliability question — it's a risk question. A 0% intervention rate does not reduce blast radius.</p>
+    </div>
+
+    <div class="construct">
+      <div class="construct-name">Spec Quality <span class="construct-type type-leading">leading</span></div>
+      <p>Is the input to this skill run well-formed enough to expect a good output? Assessed before the run, not after. Checklist: does the spec have explicit acceptance criteria? Are the edge cases enumerated? Is the context window free of conflicting instructions? <strong>A low spec quality score is the single most reliable leading indicator of an intervention.</strong> If the spec is vague, log it before running and accept that the run is exploratory, not production. Do not count exploratory runs in the intervention rate.</p>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <p>These four constructs, defined in writing before you collect the first data point, are worth more than six months of raw telemetry without them.</p>
+  </div>
+</div>
+
+
+<!-- ── 6. THE 2D GRID CONNECTION ── -->
+<div class="section">
+  <h2>6. How This Connects to the <em>2D Grid</em></h2>
+
+  <p>The Nick × Ng two-axis model — process maturity on one axis, automation level on the other — is only useful if the process maturity score is valid. A skill at Process ●●●● means something specific: the work is understood, standardized, and every step confirmed programmatically. That's a construct claim, not just a label.</p>
+
+  <p>Without the measurement layer, the 2D grid is decorative. You're placing skills in cells based on intuition and calling it framework. With the measurement layer, the grid is diagnostic. You're placing skills based on validated scores that mean the same thing across runs, teams, and time.</p>
+
+  <div class="grid-ref">
+    <div class="grid-ref-card">
+      <div class="grid-ref-label">Without measurement layer</div>
+      <div class="grid-ref-val">Process score is <strong>an opinion.</strong> Intervention rate is <strong>inconsistently logged.</strong> The grid shows where you think skills are.</div>
+    </div>
+    <div class="grid-ref-card">
+      <div class="grid-ref-label">With measurement layer</div>
+      <div class="grid-ref-val">Process score is <strong>a validated construct.</strong> Intervention rate has <strong>a codebook.</strong> The grid shows where skills actually are.</div>
+    </div>
+  </div>
+
+  <p>Andrew Ng's autonomy spectrum doesn't ask whether a skill should be automated. The two-axis model adds that question via the process maturity axis. But the process maturity axis only carries weight if process readiness is a defined, measurable construct — not a vibe.</p>
+
+  <div class="callout blue">
+    <p><strong>The measurement layer is what makes graduation meaningful.</strong> A skill that graduates to fleet because its intervention rate is 0% over 20 runs means something. That number only means something if the intervention codebook was written before run 1.</p>
+  </div>
+</div>
+
+
+<footer>
+  <span>hatch.crankychickens.com · The Measurement Layer · Nick Weber · v1.0</span>
+  <span><a href="/cad/">Read CAD →</a></span>
+</footer>
+
+</body>
+</html>
