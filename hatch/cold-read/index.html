@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cold Read · Hatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d0d; --surface:#141414; --border:#222;
+    --accent:#c8f060; --accent2:#60c8f0; --muted:#555;
+    --text:#e8e8e0; --text-dim:#888;
+    --amber:#f0a060; --red:#ff6b6b; --purple:#b060f0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--text);font-family:'Fraunces',Georgia,serif;min-height:100vh;}
+  body{padding:0 1.5rem 5rem;max-width:720px;margin:0 auto;}
+
+  /* NAV */
+  .site-nav{display:flex;flex-direction:column;gap:.75rem;padding:1rem 0 1.25rem;margin-bottom:2rem;border-bottom:1px solid var(--border);}
+  .site-nav .nav-brand{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);text-decoration:none;}
+  .site-nav .nav-links{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;}
+  .site-nav .nav-links a{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;transition:color .15s;padding:.2rem 0;}
+  .site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--accent);}
+
+  /* HEADER */
+  header{border-bottom:1px solid var(--border);padding-bottom:2rem;margin-bottom:3rem;}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+  h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-bottom:1rem;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .subtitle{color:var(--text-dim);font-size:1.1rem;font-weight:300;line-height:1.6;font-style:italic;}
+  .meta{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);margin-top:1.2rem;text-transform:uppercase;}
+
+  /* SECTIONS */
+  .section{margin-bottom:3.5rem;}
+  h2{font-size:1.6rem;font-weight:700;letter-spacing:-.01em;margin-bottom:1rem;line-height:1.2;}
+  h2 em{font-style:italic;color:var(--accent);}
+  h3{font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:.75rem;margin-top:2rem;}
+  p{font-size:1.05rem;line-height:1.75;color:var(--text);margin-bottom:1rem;font-weight:300;}
+  strong{font-weight:700;color:var(--text);}
+
+  /* CALLOUT */
+  .callout{border-left:2px solid var(--accent);padding:.9rem 1.2rem;margin:1.5rem 0;background:rgba(200,240,96,.04);}
+  .callout p{font-style:italic;color:var(--text-dim);margin:0;font-size:.95rem;}
+  .callout strong{color:var(--accent);}
+  .callout.blue{border-color:var(--accent2);background:rgba(96,200,240,.04);}
+  .callout.blue p{color:var(--text-dim);}
+  .callout.blue strong{color:var(--accent2);}
+  .callout.amber{border-color:var(--amber);background:rgba(240,160,96,.04);}
+  .callout.amber p{color:var(--text-dim);}
+  .callout.amber strong{color:var(--amber);}
+
+  /* PRINCIPLE TAG */
+  .principle-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .75rem;border-radius:99px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.3);color:var(--accent);margin-bottom:1rem;}
+
+  /* QUOTE LINE */
+  .quote-line{font-size:1.1rem;font-style:italic;color:var(--text-dim);border-left:2px solid var(--border);padding:.6rem 1.1rem;margin:1.5rem 0;line-height:1.6;}
+  .quote-line em{color:var(--accent);font-style:normal;}
+
+  /* COMPARISON TABLE */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0;}
+  .compare-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.1rem;}
+  .compare-label{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;}
+  .compare-item{font-size:.85rem;color:var(--text-dim);line-height:1.6;padding:.3rem 0;border-bottom:1px solid var(--border);}
+  .compare-item:last-child{border-bottom:none;}
+  .compare-item strong{color:var(--text);}
+
+  /* ARTIFACT LIST */
+  .artifacts{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:1.5rem 0;}
+  .artifact{display:grid;grid-template-columns:9rem 1fr;gap:.75rem;align-items:start;padding:.8rem 1.1rem;border-bottom:1px solid var(--border);}
+  .artifact:last-child{border-bottom:none;}
+  .artifact-type{font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;color:var(--accent2);padding-top:2px;}
+  .artifact-desc{font-size:.85rem;color:var(--text-dim);line-height:1.5;}
+  .artifact-desc strong{color:var(--text);}
+
+  /* OUTPUT EXAMPLE */
+  .output-box{background:#0a0a0a;border:1px solid #2a2a2a;border-radius:8px;padding:1.3rem 1.4rem;margin:1.5rem 0;font-family:'DM Mono',monospace;font-size:.78rem;line-height:1.85;color:#94a3b8;}
+  .out-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;}
+  .out-heading{color:var(--accent);font-weight:700;}
+  .out-sub{color:var(--accent2);}
+  .out-val{color:#e8e8e0;}
+  .out-dim{color:#475569;}
+  .out-rule{color:var(--amber);}
+
+  /* DRIFT TABLE */
+  .drift-table{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:1.5rem 0;}
+  .drift-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;align-items:center;padding:.75rem 1.1rem;border-bottom:1px solid var(--border);font-size:.82rem;}
+  .drift-row:last-child{border-bottom:none;}
+  .drift-row.header{background:var(--surface);font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .drift-plus{color:var(--red);}
+  .drift-minus{color:var(--accent);}
+  .drift-zero{color:var(--text-dim);}
+
+  /* COMMAND BLOCK */
+  .command{background:#0a0a0a;border:1px solid #2a2a2a;border-radius:6px;padding:.8rem 1.1rem;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--accent2);margin:1.5rem 0;}
+  .command .cmd-comment{color:var(--muted);}
+
+  /* LIST */
+  .plain-list{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0 1rem 1rem;}
+  .plain-list li{font-size:.95rem;line-height:1.6;color:var(--text-dim);font-weight:300;}
+  .plain-list li strong{color:var(--text);}
+
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+  footer a{color:var(--muted);text-decoration:none;}
+  footer a:hover{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="nav-brand">🐔 Hatch</a>
+  <ul class="nav-links">
+    <li><a href="/">Framework</a></li>
+    <li><a href="/cad/">CAD</a></li>
+    <li><a href="/measurement/">Measurement</a></li>
+    <li><a href="/cold-read/" class="active">Cold Read</a></li>
+    <li><a href="/ai-ops/">AI Ops</a></li>
+    <li><a href="/framework/nick-ng.html">Nick × Ng</a></li>
+  </ul>
+</nav>
+
+<header>
+  <div class="eyebrow">Post-Ship Methodology</div>
+  <h1>Cold <em>Read</em></h1>
+  <p class="subtitle">AI looks at the work artifact trail with no prior estimate in hand and tells you what the work was actually worth. No anchoring bias. No human memory. Just the evidence.</p>
+  <div class="meta">Nick Weber &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; <a href="/measurement/" style="color:var(--muted);text-decoration:none">Read Measurement Layer first →</a></div>
+</header>
+
+
+<!-- ── 1. WHAT IT IS ── -->
+<div class="section">
+  <h2>1. What It <em>Is</em></h2>
+
+  <p>After an epic ships, feed the complete artifact trail — commits, PRs, repos touched, ADO work items, meeting journals, blockers encountered — to AI with no estimate attached. Ask what it would have called the work. Cold. No anchoring bias from the original estimate. No human memory of how it felt to be in it.</p>
+
+  <div class="callout">
+    <p><strong>"AI, you have full context. You have no anchoring bias from the original estimate. What would you have said this was worth?"</strong></p>
+  </div>
+
+  <p>The output isn't a verdict on whether you estimated correctly. It's an unanchored structural assessment of what the work actually was — derived from what it left behind, not from what anyone remembers about it.</p>
+
+  <p>The delta between the cold read and your actual tier is <strong>tier drift.</strong> Over time, tier drift is the most honest signal your planning system produces.</p>
+</div>
+
+
+<!-- ── 2. WHY IT'S NOT A RETRO ── -->
+<div class="section">
+  <h2>2. Why It's Not a <em>Retro</em></h2>
+
+  <p>The overlap is that both happen post-ship. That's it.</p>
+
+  <div class="compare">
+    <div class="compare-card">
+      <div class="compare-label">Retrospective</div>
+      <div class="compare-item"><strong>Asks:</strong> how did we do and what do we change</div>
+      <div class="compare-item"><strong>Facing:</strong> team-facing, process-focused</div>
+      <div class="compare-item"><strong>Input:</strong> human reflection</div>
+      <div class="compare-item"><strong>Contaminated by:</strong> mood, politics, recency bias, who was in the room</div>
+      <div class="compare-item"><strong>Output:</strong> lessons, action items</div>
+    </div>
+    <div class="compare-card">
+      <div class="compare-label">Cold Read</div>
+      <div class="compare-item"><strong>Asks:</strong> what was this work actually worth</div>
+      <div class="compare-item"><strong>Facing:</strong> system-facing, complexity-focused</div>
+      <div class="compare-item"><strong>Input:</strong> artifact trail</div>
+      <div class="compare-item"><strong>Contaminated by:</strong> nothing — AI never saw the estimate</div>
+      <div class="compare-item"><strong>Output:</strong> complexity class, classification rules</div>
+    </div>
+  </div>
+
+  <p>A retro would have surfaced "Azure B2C was hard." The cold read surfaced <em>why</em> it was hard in structural terms — undocumented third-party behavior only discoverable in a live environment. That's not a feeling. That's a classification rule for future work.</p>
+
+  <div class="quote-line">
+    The retro tells you what happened. The cold read tells you <em>what the work was.</em> Those are different things.
+  </div>
+</div>
+
+
+<!-- ── 3. THE ARTIFACT TRAIL ── -->
+<div class="section">
+  <h2>3. The <em>Artifact</em> Trail</h2>
+
+  <p>The cold read is only as good as what you feed it. These are the inputs, in rough order of signal value.</p>
+
+  <div class="artifacts">
+    <div class="artifact">
+      <div class="artifact-type">Commits + PRs</div>
+      <div class="artifact-desc"><strong>Highest signal. Objective.</strong> Repos touched, diff size, number of files changed, review cycles. This is where complexity lived.</div>
+    </div>
+    <div class="artifact">
+      <div class="artifact-type">ADO Work Items</div>
+      <div class="artifact-desc">Ticket descriptions, AC, linked bugs, blocked states. Shows what was scoped and what grew during the work.</div>
+    </div>
+    <div class="artifact">
+      <div class="artifact-type">Repo Count</div>
+      <div class="artifact-desc"><strong>Strong multiplier signal.</strong> 4+ repos in a single feature means integration surprises compound. Every boundary is a place something unexpected lives.</div>
+    </div>
+    <div class="artifact">
+      <div class="artifact-type">Blockers Hit</div>
+      <div class="artifact-desc">Especially: undocumented third-party behavior, environment-only bugs, external API surprises. These are only discoverable in a live environment. You can't read your way out of them.</div>
+    </div>
+    <div class="artifact">
+      <div class="artifact-type">Meeting Journals</div>
+      <div class="artifact-desc">Wayfind/team journal context. <strong>Interpretive — already filtered by whoever was in the room.</strong> Useful, not objective. Weight accordingly.</div>
+    </div>
+    <div class="artifact">
+      <div class="artifact-type">Domain Survey</div>
+      <div class="artifact-desc">What did the pre-build context scan surface? Mismatches between the domain survey output and what was actually found are their own signal.</div>
+    </div>
+    <div class="artifact">
+      <div class="artifact-type">Engineer Tenure</div>
+      <div class="artifact-desc">How familiar were the engineers with the codebase? New engineers in an unfamiliar domain is a complexity multiplier the ticket doesn't capture.</div>
+    </div>
+  </div>
+
+  <div class="callout amber">
+    <p><strong>The honest caveat:</strong> the cold read has no anchoring bias on the estimate, but it inherits whatever bias exists in the input artifacts. Commits are objective. Meeting notes are not. Name this explicitly in your read.</p>
+  </div>
+</div>
+
+
+<!-- ── 4. WHAT THE OUTPUT LOOKS LIKE ── -->
+<div class="section">
+  <h2>4. What the Output <em>Looks Like</em></h2>
+
+  <p>From the signup overhaul — US-7347 + US-7387. Ran March 19 – May 12. 7–8 weeks.</p>
+
+  <div class="output-box">
+    <div class="out-label">Cold Read Output — Signup Overhaul</div>
+    <span class="out-heading">COLD READ: US-7347 + 7387</span><br>
+    <span class="out-dim">─────────────────────────────────────</span><br><br>
+    <span class="out-sub">Complexity class:</span> <span class="out-val">10–14 weeks for this profile</span><br>
+    <span class="out-sub">Tier at entry:</span>    <span class="out-val">Green</span><br>
+    <span class="out-sub">Cold read tier:</span>   <span class="out-val">Yellow → border Yellow/Orange</span><br>
+    <span class="out-sub">Tier drift:</span>       <span class="out-val" style="color:var(--red)">+2 tiers</span><br><br>
+    <span class="out-sub">Structural findings:</span><br><br>
+    <span class="out-dim">1.</span> <span class="out-val">Work that drove calendar time was not the features.</span><br>
+       <span class="out-dim">   It was two undocumented third-party behaviors —</span><br>
+       <span class="out-dim">   Azure B2C script policy + PostHog flag callback.</span><br>
+       <span class="out-dim">   Only discoverable in a live environment.</span><br>
+       <span class="out-dim">   You cannot read your way out of either.</span><br><br>
+    <span class="out-dim">2.</span> <span class="out-val">6 repos in a single feature.</span><br>
+       <span class="out-dim">   Integration surprises compound.</span><br>
+       <span class="out-dim">   Every boundary is a place something unexpected lives.</span><br><br>
+    <span class="out-dim">3.</span> <span class="out-val">Both engineers were relatively new to the codebase.</span><br>
+       <span class="out-dim">   Domain unfamiliarity is a multiplier tickets don't capture.</span><br><br>
+    <span class="out-rule">Classification rule surfaced:</span><br>
+    <span class="out-dim">   Work touching B2C + feature flags + 3+ user roles</span><br>
+    <span class="out-dim">   simultaneously → yellow floor, regardless of ticket size.</span><br>
+    <span class="out-dim">   Work touching 4+ repos → yellow floor, full stop.</span>
+  </div>
+
+  <p>The output isn't blame. The output is <strong>a classification rule your tier system can now encode.</strong> Next time work has this profile, you have a data point. Knowing the shape of a class of work upfront changes how you sequence it — not how long it takes.</p>
+</div>
+
+
+<!-- ── 5. TIER DRIFT ── -->
+<div class="section">
+  <h2>5. <em>Tier Drift</em></h2>
+
+  <p>Cold read tier minus entry tier. Run it on every epic. After six months you'll see patterns that no retro would ever surface.</p>
+
+  <div class="drift-table">
+    <div class="drift-row header">
+      <div>Drift</div>
+      <div>What it means</div>
+      <div>Action</div>
+    </div>
+    <div class="drift-row">
+      <div class="drift-plus">+2 or more</div>
+      <div style="font-size:.82rem;color:var(--text-dim)">Systematic underestimation. The work consistently costs more than its class suggests.</div>
+      <div style="font-size:.82rem;color:var(--text-dim)">Encode a complexity multiplier for this profile.</div>
+    </div>
+    <div class="drift-row">
+      <div class="drift-plus">+1</div>
+      <div style="font-size:.82rem;color:var(--text-dim)">Normal. One tier of unknown unknowns is expected in most delivery.</div>
+      <div style="font-size:.82rem;color:var(--text-dim)">Watch for patterns. Single data point doesn't move the system.</div>
+    </div>
+    <div class="drift-zero">0</div>
+    <div style="font-size:.82rem;color:var(--text-dim);padding:.75rem 0">Accurate classification. Your tier system is working for this work type.</div>
+    <div style="font-size:.82rem;color:var(--text-dim);padding:.75rem 0">No action. This is the signal you're calibrating toward.</div>
+    <div class="drift-row">
+      <div class="drift-minus">−1 or less</div>
+      <div style="font-size:.82rem;color:var(--text-dim)">Overestimated. Could mean the team is getting faster, or the tier ceiling is too conservative.</div>
+      <div style="font-size:.82rem;color:var(--text-dim)">Check if domain familiarity or tooling explains the delta.</div>
+    </div>
+  </div>
+
+  <p>Over enough cold reads, tier drift across your whole ticket history tells you:</p>
+
+  <ul class="plain-list">
+    <li>Where your classification system is <strong>systematically wrong</strong></li>
+    <li>Which domains you <strong>consistently underestimate</strong></li>
+    <li>Whether certain engineers or work types <strong>drift more than others</strong></li>
+    <li>When your green tier is <strong>hiding yellow work</strong></li>
+  </ul>
+
+  <div class="callout blue">
+    <p>This is also what answers the "why not just ship when done" question with data over time. You're not guessing at complexity. You're building an evidence base that shows what work actually costs — and where your planning system needs to be smarter.</p>
+  </div>
+</div>
+
+
+<!-- ── 6. THE SLASH COMMAND ── -->
+<div class="section">
+  <h2>6. The <em>/cold-read</em> Command</h2>
+
+  <p>Feed it a ticket ID. It pulls the full artifact trail and returns the structural assessment. No estimate required — that's the whole point.</p>
+
+  <div class="command">
+    <span class="cmd-comment">// Usage</span><br>
+    /cold-read &lt;ticket-id&gt;<br><br>
+    <span class="cmd-comment">// Example</span><br>
+    /cold-read US-7347<br><br>
+    <span class="cmd-comment">// With range</span><br>
+    /cold-read US-7347 US-7387 <span class="cmd-comment">// treats as single epic</span>
+  </div>
+
+  <h3>What it pulls</h3>
+  <p>Commits and PRs across all repos linked to the ticket. ADO work item history including blocked states and scope changes. Wayfind journal entries tagged to the work. Domain survey output if one was run. Engineer assignment and tenure in the codebase.</p>
+
+  <h3>What it does not need</h3>
+  <p>The original estimate. Story points. Any human input about how the work felt. The cold read is cold because it never saw those. That's the mechanism, not a limitation.</p>
+
+  <h3>Codebook</h3>
+  <p>The cold read output must include: complexity class (time range), cold read tier, tier drift, and at least one named structural finding. A structural finding is a <strong>classification rule</strong> — a generalizable claim about what work with this profile costs, not a comment about this specific ticket.</p>
+
+  <div class="callout">
+    <p>"Azure B2C was hard" is not a structural finding. <strong>"Work touching undocumented third-party auth behavior is only discoverable in a live environment and cannot be scoped from documentation alone"</strong> is a structural finding. Encode it. Use it next time.</p>
+  </div>
+</div>
+
+
+<!-- ── 7. WHEN TO RUN IT ── -->
+<div class="section">
+  <h2>7. When to <em>Run It</em></h2>
+
+  <p>Every epic at close. Not every ticket — epics. The artifact trail needs enough density to be meaningful. A single-ticket PR has too thin a trail. An epic that ran two weeks or more has enough.</p>
+
+  <h3>First three months</h3>
+  <p>Don't do anything with the data. Just collect it. Run the read, log the output, move on. The patterns aren't visible in individual cold reads — they're visible in the aggregate. You need a minimum of eight to ten reads before the tier drift starts meaning anything.</p>
+
+  <h3>Month four onward</h3>
+  <p>Start encoding. Every structural finding that appears in three or more reads becomes a classification rule. Add it to the tier system. Raise the floor for that work profile. Stop being surprised by the same class of work twice.</p>
+
+  <div class="callout amber">
+    <p><strong>The cost of running this consistently is near zero.</strong> Five minutes to pull the artifacts. Ten minutes for the read. The output you get is already better signal than any sprint retro. The only reason not to do it is forgetting to.</p>
+  </div>
+</div>
+
+
+<footer>
+  <span>hatch.crankychickens.com · Cold Read · Nick Weber · v1.0</span>
+  <span><a href="/measurement/">Read Measurement Layer →</a></span>
+</footer>
+
+</body>
+</html>
