@@ -126,7 +126,7 @@
         "content": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?"
       }
     ],
-    "status": "pending_review",
+    "status": "approved",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
@@ -141,33 +141,36 @@
     },
     "aiResult": {
       "characterType": "turkey",
-      "drawFn": "function drawCharacter_turkey(x,y,hp,fr,cfg,isZeroG) {\n    ctx.save();\n    \n    // HP bar\n    ctx.fillStyle=\"#111\";\n    ctx.fillRect(x,y-8,30,5);\n    ctx.fillStyle=cfg.color||\"#8B4513\";\n    ctx.fillRect(x,y-8,30*hp,5);\n    \n    // Name tag\n    if(cfg.name) {\n        ctx.fillStyle=\"#FFF\";\n        ctx.font=\"8px Arial\";\n        ctx.textAlign=\"center\";\n        ctx.fillText(cfg.name,x+16,y-12);\n    }\n    \n    // Body animation - puffing effect\n    let puff = Math.sin(fr*0.1)*2;\n    let bodyWidth = 18 + puff;\n    let bodyHeight = 16 + puff;\n    \n    // Main body (turkey brown)\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.fillRect(x+16-bodyWidth/2, y+8, bodyWidth, bodyHeight);\n    \n    // Chest feathers (lighter)\n    ctx.fillStyle = \"#CD853F\";\n    ctx.fillRect(x+16-bodyWidth/2+2, y+10, bodyWidth-4, bodyHeight-4);\n    \n    // Wing details\n    ctx.fillStyle = \"#654321\";\n    ctx.fillRect(x+6, y+12, 6, 8);\n    ctx.fillRect(x+20, y+12, 6, 8);\n    \n    // Tail feathers (fan-shaped, animated)\n    let tailSpread = Math.sin(fr*0.15)*0.3 + 0.7;\n    for(let i = 0; i < 5; i++) {\n        let angle = (i-2) * 0.4 * tailSpread;\n        let tailX = x + 16 + Math.sin(angle) * 8;\n        let tailY = y + 20 + Math.cos(angle) * 6;\n        ctx.fillStyle = i % 2 === 0 ? \"#8B4513\" : \"#A0522D\";\n        ctx.fillRect(tailX-1, tailY, 2, 8);\n    }\n    \n    // Neck\n    ctx.fillStyle = \"#CD853F\";\n    ctx.fillRect(x+14, y+4, 4, 6);\n    \n    // Head\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.fillRect(x+12, y, 8, 8);\n    \n    // Beak\n    ctx.fillStyle = \"#FFA500\";\n    ctx.fillRect(x+11, y+3, 3, 2);\n    \n    // Wattle (red dangly thing)\n    ctx.fillStyle = \"#DC143C\";\n    ctx.fillRect(x+14, y+5, 2, 3);\n    \n    // Golden eyes (commanding gaze)\n    ctx.fillStyle = cfg.eyeColor || \"#FFD700\";\n    ctx.fillRect(x+13, y+2, 2, 2);\n    ctx.fillRect(x+17, y+2, 2, 2);\n    \n    // Eye highlights\n    ctx.fillStyle = \"#FFFF00\";\n    ctx.fillRect(x+13, y+2, 1, 1);\n    ctx.fillRect(x+17, y+2, 1, 1);\n    \n    // Feet\n    ctx.fillStyle = \"#FFA500\";\n    ctx.fillRect(x+10, y+24, 3, 4);\n    ctx.fillRect(x+19, y+24, 3, 4);\n    \n    // Command stripes (military decoration)\n    ctx.fillStyle = \"#FFD700\";\n    for(let i = 0; i < 3; i++) {\n        ctx.fillRect(x+8, y+14+i*2, 4, 1);\n        ctx.fillRect(x+20, y+14+i*2, 4, 1);\n    }\n    \n    ctx.restore();\n}",
+      "drawFn": "function drawCharacter_turkey(x, y, hp, fr, cfg, isZeroG) {\n    ctx.save();\n    \n    // HP bar\n    ctx.fillStyle = \"#111\";\n    ctx.fillRect(x, y - 8, 30, 5);\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.fillRect(x, y - 8, 30 * hp, 5);\n    \n    // Name tag\n    if (cfg.name) {\n        ctx.fillStyle = \"#FFF\";\n        ctx.font = \"8px Arial\";\n        ctx.fillText(cfg.name, x - 5, y - 12);\n    }\n    \n    // Animation variables\n    const bobOffset = Math.sin(fr * 0.15) * 2;\n    const tailGlow = 0.5 + Math.sin(fr * 0.3) * 0.5;\n    const formationSway = Math.cos(fr * 0.1) * 3;\n    \n    ctx.translate(x + 16 + formationSway, y + 16 + bobOffset);\n    \n    // Jet-powered tail feathers with glow\n    ctx.shadowColor = \"#FF4500\";\n    ctx.shadowBlur = 8 * tailGlow;\n    \n    for (let i = 0; i < 5; i++) {\n        const angle = -Math.PI/3 + (i * Math.PI/6);\n        const length = 12 + Math.sin(fr * 0.2 + i) * 3;\n        \n        ctx.save();\n        ctx.rotate(angle);\n        \n        // Jet flame effect\n        const gradient = ctx.createLinearGradient(0, 0, length, 0);\n        gradient.addColorStop(0, \"#FF4500\");\n        gradient.addColorStop(0.5, \"#FF6B00\");\n        gradient.addColorStop(1, \"#FF8C00\");\n        \n        ctx.fillStyle = gradient;\n        ctx.beginPath();\n        ctx.ellipse(length/2, 0, length/2, 3, 0, 0, Math.PI * 2);\n        ctx.fill();\n        \n        ctx.restore();\n    }\n    \n    ctx.shadowBlur = 0;\n    \n    // Main turkey body\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.beginPath();\n    ctx.ellipse(0, 2, 10, 12, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Turkey head\n    ctx.fillStyle = \"#A0522D\";\n    ctx.beginPath();\n    ctx.ellipse(0, -8, 6, 7, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Proud chest plumage\n    ctx.fillStyle = \"#CD853F\";\n    ctx.beginPath();\n    ctx.ellipse(2, -2, 8, 6, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Waddle stance legs\n    ctx.strokeStyle = \"#FF8C00\";\n    ctx.lineWidth = 2;\n    ctx.beginPath();\n    ctx.moveTo(-4, 12);\n    ctx.lineTo(-6, 18);\n    ctx.moveTo(4, 12);\n    ctx.lineTo(6, 18);\n    ctx.stroke();\n    \n    // Commanding beak\n    ctx.fillStyle = \"#FF6B00\";\n    ctx.beginPath();\n    ctx.moveTo(6, -8);\n    ctx.lineTo(10, -6);\n    ctx.lineTo(6, -4);\n    ctx.closePath();\n    ctx.fill();\n    \n    // Alert commander eyes\n    ctx.fillStyle = cfg.eyeColor || \"#FF4500\";\n    ctx.beginPath();\n    ctx.ellipse(-2, -10, 2, 3, 0, 0, Math.PI * 2);\n    ctx.ellipse(2, -10, 2, 3, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Focused pupils\n    ctx.fillStyle = \"#000\";\n    ctx.beginPath();\n    ctx.ellipse(-2, -10, 1, 1.5, 0, 0, Math.PI * 2);\n    ctx.ellipse(2, -10, 1, 1.5, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Space commander crest\n    ctx.fillStyle = \"#FF4500\";\n    ctx.beginPath();\n    ctx.moveTo(0, -15);\n    ctx.lineTo(-3, -12);\n    ctx.lineTo(0, -13);\n    ctx.lineTo(3, -12);\n    ctx.closePath();\n    ctx.fill();\n    \n    // Zero gravity floating effect\n    if (isZeroG) {\n        ctx.rotate(Math.sin(fr * 0.05) * 0.2);\n    }\n    \n    ctx.restore();\n}",
       "configEntry": {
         "configType": "enemyVariant",
         "screenIndex": 0,
         "name": "Turkey Commander",
         "characterType": "turkey",
         "color": "#8B4513",
-        "eyeColor": "#FFD700",
+        "eyeColor": "#FF4500",
         "spd": 0.4,
         "pat": "h",
         "size": 1,
         "tx": 9,
         "ty": 9
       },
-      "commitMessage": "Turkey Commander — turkey character (new type)",
-      "plainEnglish": "I'll create a Turkey Commander that waddles around the Landing Zone, gobbling space orders to defend against the cranky chickens!",
+      "commitMessage": "Turkey Commander — turkey (new type)",
+      "plainEnglish": "I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
       "isNewType": true,
       "mappedFrom": null,
       "_stepResults": {
-        "write-spec": "✅ I'll create a Turkey Commander that waddles around the Landing Zone, gobbling space orders to defend against the cranky chickens!",
-        "type-resolution": "✨ New type \"turkey\" — generating sprite",
-        "sprite-gen": "✨ New drawCharacter_turkey created",
+        "write-spec": "✅ I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
+        "type-resolution": "✨ new type",
+        "sprite-gen": "✅ generated in preview",
         "feature-build": "✅ placed at screen 0"
       },
       "_dingedSkills": [],
       "_spriteOk": true,
-      "_typeExisted": false
+      "_typeExisted": false,
+      "_preloadedGameData": {
+        "error": "Path not allowed"
+      }
     },
     "intervention": {
       "id": 1778380810856,
@@ -184,6 +187,39 @@
       "note": null,
       "deliveryType": "full_code",
       "retried": true
+    },
+    "_previewResult": {
+      "spec": {
+        "name": "Turkey Commander",
+        "characterType": "turkey",
+        "color": "#8B4513",
+        "eyeColor": "#FF4500",
+        "size": 1,
+        "spd": 0.4,
+        "pat": "h",
+        "screenIndex": 0,
+        "tx": 9,
+        "ty": 9,
+        "behaviorNotes": "A proud space turkey with jet-powered tail feathers that glows orange-red, waddles in formation while making defensive swooping patterns around the landing zone.",
+        "plainEnglish": "I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!"
+      },
+      "drawFn": "function drawCharacter_turkey(x, y, hp, fr, cfg, isZeroG) {\n    ctx.save();\n    \n    // HP bar\n    ctx.fillStyle = \"#111\";\n    ctx.fillRect(x, y - 8, 30, 5);\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.fillRect(x, y - 8, 30 * hp, 5);\n    \n    // Name tag\n    if (cfg.name) {\n        ctx.fillStyle = \"#FFF\";\n        ctx.font = \"8px Arial\";\n        ctx.fillText(cfg.name, x - 5, y - 12);\n    }\n    \n    // Animation variables\n    const bobOffset = Math.sin(fr * 0.15) * 2;\n    const tailGlow = 0.5 + Math.sin(fr * 0.3) * 0.5;\n    const formationSway = Math.cos(fr * 0.1) * 3;\n    \n    ctx.translate(x + 16 + formationSway, y + 16 + bobOffset);\n    \n    // Jet-powered tail feathers with glow\n    ctx.shadowColor = \"#FF4500\";\n    ctx.shadowBlur = 8 * tailGlow;\n    \n    for (let i = 0; i < 5; i++) {\n        const angle = -Math.PI/3 + (i * Math.PI/6);\n        const length = 12 + Math.sin(fr * 0.2 + i) * 3;\n        \n        ctx.save();\n        ctx.rotate(angle);\n        \n        // Jet flame effect\n        const gradient = ctx.createLinearGradient(0, 0, length, 0);\n        gradient.addColorStop(0, \"#FF4500\");\n        gradient.addColorStop(0.5, \"#FF6B00\");\n        gradient.addColorStop(1, \"#FF8C00\");\n        \n        ctx.fillStyle = gradient;\n        ctx.beginPath();\n        ctx.ellipse(length/2, 0, length/2, 3, 0, 0, Math.PI * 2);\n        ctx.fill();\n        \n        ctx.restore();\n    }\n    \n    ctx.shadowBlur = 0;\n    \n    // Main turkey body\n    ctx.fillStyle = cfg.color || \"#8B4513\";\n    ctx.beginPath();\n    ctx.ellipse(0, 2, 10, 12, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Turkey head\n    ctx.fillStyle = \"#A0522D\";\n    ctx.beginPath();\n    ctx.ellipse(0, -8, 6, 7, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Proud chest plumage\n    ctx.fillStyle = \"#CD853F\";\n    ctx.beginPath();\n    ctx.ellipse(2, -2, 8, 6, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Waddle stance legs\n    ctx.strokeStyle = \"#FF8C00\";\n    ctx.lineWidth = 2;\n    ctx.beginPath();\n    ctx.moveTo(-4, 12);\n    ctx.lineTo(-6, 18);\n    ctx.moveTo(4, 12);\n    ctx.lineTo(6, 18);\n    ctx.stroke();\n    \n    // Commanding beak\n    ctx.fillStyle = \"#FF6B00\";\n    ctx.beginPath();\n    ctx.moveTo(6, -8);\n    ctx.lineTo(10, -6);\n    ctx.lineTo(6, -4);\n    ctx.closePath();\n    ctx.fill();\n    \n    // Alert commander eyes\n    ctx.fillStyle = cfg.eyeColor || \"#FF4500\";\n    ctx.beginPath();\n    ctx.ellipse(-2, -10, 2, 3, 0, 0, Math.PI * 2);\n    ctx.ellipse(2, -10, 2, 3, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Focused pupils\n    ctx.fillStyle = \"#000\";\n    ctx.beginPath();\n    ctx.ellipse(-2, -10, 1, 1.5, 0, 0, Math.PI * 2);\n    ctx.ellipse(2, -10, 1, 1.5, 0, 0, Math.PI * 2);\n    ctx.fill();\n    \n    // Space commander crest\n    ctx.fillStyle = \"#FF4500\";\n    ctx.beginPath();\n    ctx.moveTo(0, -15);\n    ctx.lineTo(-3, -12);\n    ctx.lineTo(0, -13);\n    ctx.lineTo(3, -12);\n    ctx.closePath();\n    ctx.fill();\n    \n    // Zero gravity floating effect\n    if (isZeroG) {\n        ctx.rotate(Math.sin(fr * 0.05) * 0.2);\n    }\n    \n    ctx.restore();\n}",
+      "s2": {
+        "ok": true,
+        "isNewType": true,
+        "isExisting": false,
+        "resolvedType": "turkey",
+        "reason": "A space turkey with jet-powered tail feathers and defensive flight patterns is distinctly different from all existing ground-based, aquatic, or mechanical creature types.",
+        "dingedSkill": null
+      },
+      "_preloadedGameData": {
+        "error": "Path not allowed"
+      },
+      "_stepResults": {
+        "write-spec": "✅ I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
+        "type-resolution": "✨ new type",
+        "sprite-gen": "✅ generated in preview"
+      }
     }
   },
   {
