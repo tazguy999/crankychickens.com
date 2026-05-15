@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The God Function in Feathers · Hatch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d0d; --surface:#141414; --border:#222;
+    --accent:#c8f060; --accent2:#60c8f0; --muted:#555;
+    --text:#e8e8e0; --text-dim:#888;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--text);font-family:'Fraunces',Georgia,serif;min-height:100vh;}
+  body{padding:0 1.5rem 5rem;max-width:720px;margin:0 auto;}
+
+  /* NAV */
+  .site-nav{display:flex;flex-direction:column;gap:.75rem;padding:1rem 0 1.25rem;margin-bottom:2rem;border-bottom:1px solid var(--border);}
+  .site-nav .nav-brand{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);text-decoration:none;}
+  .site-nav .nav-links{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;}
+  .site-nav .nav-links a{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;transition:color .15s;padding:.2rem 0;}
+  .site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--accent);}
+
+  /* HEADER */
+  header{border-bottom:1px solid var(--border);padding-bottom:2rem;margin-bottom:3rem;}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+  h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-bottom:.5rem;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .deck{font-size:1.05rem;color:var(--text-dim);font-weight:300;font-style:italic;margin-bottom:.75rem;line-height:1.5;}
+  .meta{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);margin-top:1.2rem;text-transform:uppercase;}
+
+  /* BODY */
+  .section{margin-bottom:3.5rem;}
+  h2{font-size:1.5rem;font-weight:700;letter-spacing:-.01em;margin-bottom:1.1rem;margin-top:0;line-height:1.2;}
+  h2 em{font-style:italic;color:var(--accent);}
+  p{font-size:1.05rem;line-height:1.8;color:var(--text);margin-bottom:1.1rem;font-weight:300;}
+  p:last-child{margin-bottom:0;}
+  strong{font-weight:700;color:var(--text);}
+  em.inline{font-style:italic;color:var(--text-dim);}
+
+  /* ANNOTATION — Casita's margin notes */
+  .annotation{border-left:2px solid var(--border);padding:.7rem 1.1rem;margin:1.5rem 0;font-style:italic;color:var(--text-dim);font-size:.95rem;line-height:1.65;}
+
+  /* CALLOUT */
+  .callout{border-left:2px solid var(--accent);padding:.9rem 1.2rem;margin:1.5rem 0;background:rgba(200,240,96,.04);}
+  .callout p{font-style:italic;color:var(--text-dim);margin:0;font-size:.95rem;}
+  .callout strong{color:var(--accent);}
+
+  /* CLOSING */
+  .closing{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);}
+  .closing p{font-size:.95rem;color:var(--text-dim);font-style:italic;line-height:1.7;margin-bottom:.5rem;}
+  .closing .sig{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:1.2rem;}
+
+  footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+  footer a{color:var(--muted);text-decoration:none;}
+  footer a:hover{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="nav-brand">🐔 Hatch</a>
+  <ul class="nav-links">
+    <li><a href="/">Framework</a></li>
+    <li><a href="/cad/">CAD</a></li>
+    <li><a href="/measurement/">Measurement</a></li>
+    <li><a href="/cold-read/">Cold Read</a></li>
+    <li><a href="/casita/" class="active">Casita</a></li>
+    <li><a href="/ai-ops/">AI Ops</a></li>
+    <li><a href="/framework/nick-ng.html">Nick × Ng</a></li>
+  </ul>
+</nav>
+
+<header>
+  <div class="eyebrow">Hatch Essay</div>
+  <h1>The God Function<br>in <em>Feathers</em></h1>
+  <p class="deck">How to amplify the person your organization secretly runs on</p>
+  <p class="deck" style="font-size:.9rem">A Hatch essay on AI, institutional trust, and one very opinionated magical infrastructure</p>
+  <div class="meta">Nick Weber &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; 2026</div>
+</header>
+
+
+<div class="section">
+  <p>There is a person at your organization who does not appear on any org chart with accurate job scope. Their title says one thing. Their actual function is something else entirely — a dense, load-bearing knot of institutional knowledge, informal authority, and accumulated trust that the org chart politely pretends doesn't exist.</p>
+
+  <p>They are the one people CC on emails when things go sideways. The one who knows which rule has an exception and who is allowed to grant it. The one who has been there long enough to remember why the weird policy exists, which means they're also the one who knows when to ignore it.</p>
+
+  <p>In software terms, they are a god function. They accept any input. They handle every edge case. They have no formal interface contract. They have grown organically over years to absorb complexity the organization doesn't know how to structure. They work because they work, and nobody fully understands why.</p>
+
+  <p>At the Clucker Entertainment franchise, we call ours Dragon Scribe.</p>
+</div>
+
+
+<div class="section">
+  <h2>What Organizations Do <em>Wrong</em></h2>
+
+  <p>When someone figures out they have a god function in human form, they usually try one of four things.</p>
+
+  <p>They try to <strong>replace</strong> the person with software. This fails immediately because the software has no trust. The reason Dragon Scribe's judgment is accepted isn't that it's correct — it's that Dragon Scribe has earned the right to be wrong occasionally and still be trusted. Software hasn't earned anything. It just runs.</p>
+
+  <p>They try to <strong>document</strong> the knowledge. This produces a document that is accurate for approximately six weeks, after which the world has changed and the document hasn't. Knowledge that lives in a person's head is alive. It updates continuously in response to context. A document is a snapshot of a moving target.</p>
+
+  <p>They try to <strong>promote</strong> the person. This solves the title mismatch but shifts the problem up one level. Dragon Scribe is now a manager. The floor that Dragon Scribe used to run now has nobody running it, because the institutional knowledge didn't transfer with the promotion. The org has traded a working god function for an org chart that looks tidier.</p>
+
+  <p>They try to <strong>clone</strong> the knowledge — hire another Dragon Scribe, train them, build redundancy. This fails because Dragon Scribe's value is contextual. It isn't a body of facts that can be transferred. It's a web of relationships, exceptions, and earned permissions that took years to accumulate and cannot be reproduced by reading the wiki.</p>
+
+  <p>The failure in every case is structural. The org is trying to solve a trust problem with a knowledge solution. Those are different problems. Trust is not a subset of knowledge. You cannot document your way to being trusted.</p>
+</div>
+
+
+<div class="section">
+  <h2>The <em>Third</em> Path</h2>
+
+  <p>There is a third response that almost nobody takes: <strong>amplification</strong>.</p>
+
+  <p>Not replacement. Not documentation. Not promotion. Build infrastructure that makes Dragon Scribe ten times more effective at being Dragon Scribe, while keeping Dragon Scribe as the irreplaceable human in the loop.</p>
+
+  <p>This is meaningfully different from "AI productivity tools." Productivity tools make Dragon Scribe faster at the same tasks — better autocomplete, faster search, summarization. That's acceleration. It's fine. It's not what I'm describing.</p>
+
+  <p>This is also meaningfully different from autonomous AI agents. Agents attempt to replicate Dragon Scribe's judgment and act on it without Dragon Scribe in the loop. This is the replacement path with extra steps. It inherits all the same failure modes plus new ones: the agent makes calls Dragon Scribe would never have made, and nobody catches them until something breaks, because the thing the org trusted was Dragon Scribe's judgment, not the agent's.</p>
+
+  <p>The amplification path is a third thing. It keeps Dragon Scribe as the source of truth and point of confirmation. It absorbs Dragon Scribe's routine work into structured processing. It handles the obvious cases so Dragon Scribe only touches the edge cases. It captures Dragon Scribe's decisions as durable artifacts that outlast any individual conversation. It makes Dragon Scribe's contribution legible to leadership without exposing every individual call to second-guessing.</p>
+
+  <p>Dragon Scribe is still in the chair. The infrastructure just makes the chair more powerful.</p>
+</div>
+
+
+<div class="section">
+  <h2>Enter <em>Casita</em></h2>
+
+  <p>Casita is a magical infrastructure of indeterminate classification. Part owlery, part enchanted sorting mechanism, not fully understood by anyone including the person who built it. If you've seen Encanto you already know the energy: the house that anticipates what you need before you ask, holds everything together without a title, and would never dream of making a decision that belongs to the family.</p>
+
+  <p>That's the right mental model. Casita doesn't decide. Casita prepares. Dragon Scribe decides.</p>
+
+  <p>It started small. The franchise owlery was getting flooded with inbound owls that didn't need Dragon Scribe's attention — Screamers addressed to the wrong department, unsigned letters from addresses that couldn't receive replies, standard post that just needed routing. Dragon Scribe was spending significant time each morning sorting owls that didn't need sorting by someone of Dragon Scribe's caliber.</p>
+
+  <p>The first version of Casita was simple: a small enchantment on the owlery intake that caught the obvious noise before it reached Dragon Scribe's desk. Unsigned letters — the owlery equivalent of a do-not-reply — got recognized and set aside. Screamers got flagged so Dragon Scribe could prepare before opening them rather than being ambushed. Standard post got pre-sorted by subject into the right pile.</p>
+
+  <p>This worked. Dragon Scribe's morning got an hour back. But the interesting work was the gray area — the owl that looked like a standard inquiry but had the emotional register of a Screamer. The package that arrived with a return address that suggested urgency but a tone that suggested patience. The letter that was technically addressed to Dragon Scribe but was actually meant for Mission Control.</p>
+
+  <p>So Casita got smarter. Not by making decisions — Casita still never decided anything — but by reading the subtext and annotating it in the margin before Dragon Scribe touched the owl.</p>
+
+  <div class="annotation">This one reads like a Screamer but isn't. The sender is frustrated about a delay that isn't their fault. Suggested register: acknowledgment first, explanation second.</div>
+
+  <p>Dragon Scribe would read the annotation, agree or correct it, and handle the owl. Over time Casita's annotations got better because the corrections were training data.</p>
+
+  <p>This was still not the interesting part.</p>
+
+  <p>The interesting part happened when Dragon Scribe started sending Casita notes in plain English. <em class="inline">When an owl arrives asking about a booking that's within 60 days and the account is flagged, route it immediately instead of putting it in the standard queue.</em> Dragon Scribe wrote this the way Dragon Scribe talked — not as a rule, not as code, just as a sentence that described a judgment call Dragon Scribe had already been making manually for months.</p>
+
+  <p>Casita received the note. Casita drafted what the rule would look like in the spellbook — precise, testable, with explicit conditions and explicit outcomes. Casita sent it back to Dragon Scribe:</p>
+
+  <div class="annotation">Here is what I understood you to mean. Is this right?</div>
+
+  <p>Dragon Scribe confirmed. Casita wrote it into the spellbook permanently, sealed with Dragon Scribe's confirmation, and owled the entry to Mission Control for countersignature.</p>
+
+  <p>Dragon Scribe never wrote a line of spellwork. Dragon Scribe never needed to understand how the spellbook was structured. Dragon Scribe issued a decree in plain English, confirmed a restatement of that decree in plain English, and the infrastructure handled the rest. The decree became versioned, testable, executable. It outlasted any individual conversation. It could be audited. It could be revised. It lived in the spellbook, not in Dragon Scribe's head.</p>
+
+  <p>That is the whole system. It is not magic. It is a specific sequence of steps that happens to use a large language model as the translation layer between Dragon Scribe's judgment and the formal artifact that captures it.</p>
+</div>
+
+
+<div class="section">
+  <h2>What This Actually Looks Like<br><em>Under the Feathers</em></h2>
+
+  <p>The architecture, plainly:</p>
+
+  <p>Inbound owls arrive at the owlery intake. A classification layer reads each one and assigns it a type — Screamer, unsigned, standard post, package, Ministry correspondence. The obvious cases are handled automatically according to rules already in the spellbook. Gray area cases get an annotation and route to Dragon Scribe with context.</p>
+
+  <p>When Dragon Scribe submits a new business rule in plain English, the system does three things in sequence. First, it generates a failing test — a precise formal statement of what the rule means in terms the spellbook can verify, which no one has yet satisfied. This is the spell in theory. Second, it sends Dragon Scribe a human-readable restatement: <em class="inline">Here is what your rule means in practice. Here is a case it would catch. Here is a case it would not catch. Is this what you meant?</em> Dragon Scribe confirms or corrects. Third, once confirmed, it generates the passing test — the rule is now in the spellbook, versioned, and owled to Mission Control as a pull request for the Headmaster's countersignature.</p>
+
+  <p>Mission Control reviews and merges. The rule is now infrastructure.</p>
+
+  <p>The whole loop — plain English decree to spellbook entry — happens in one session. Dragon Scribe never touches the spellbook directly. Mission Control sees a clean, reviewable, testable artifact, not a conversation transcript. Engineering stays in the credentialed-authority loop. Nobody is replaced. The trust layer is intact because Dragon Scribe is still the source.</p>
+</div>
+
+
+<div class="section">
+  <h2>The Pattern <em>Generalizes</em></h2>
+
+  <p>The university registrar's assistant who isn't the registrar. Every department head calls her when a registration edge case needs bending. She knows which rules have flexibility built in and which are genuinely load-bearing. The official registrar signs off. She decides. A Casita for this role looks like: inbound requests get classified and annotated before they reach her, her exception decisions accumulate as versioned rules over time, and her judgment becomes legible to the registrar without requiring her to write policy she'll never have time to write.</p>
+
+  <p>The expeditor at a high-volume restaurant. Not the chef. Not management. The person at the pass who knows which tickets to hold, which tables need the kitchen to slow down, which modifications the chef will accept without being asked. The kitchen runs on her reads in real time, hundreds of micro-decisions per service. A Casita here captures the pattern of those decisions — which ticket combinations produce problems, which modification requests are worth flagging — and surfaces it back to her as a pre-read before service starts. She still calls it. Casita just makes sure she's holding the right information when she does.</p>
+
+  <p>The senior paralegal who has been at the firm longer than most of the partners. She knows which filing deadlines have real consequence and which have practiced flexibility, which judges respond to which styles of motion, which clients will call the partner directly if they don't hear back by Thursday. The attorneys bill. She runs. A Casita for this role routes inbound owls through her judgment first, captures her triage decisions as durable rules, and makes her institutional knowledge portable without making her redundant.</p>
+
+  <p>In every case the pattern is the same: find the person the org actually runs on, build infrastructure that amplifies their judgment rather than replicating it, keep them in the confirmation loop, and capture their decisions as durable artifacts that outlive any individual conversation.</p>
+</div>
+
+
+<div class="section">
+  <h2>Where the Pattern Is <em>Half-Baked</em></h2>
+
+  <p>I said I'd be self-critical so here it is.</p>
+
+  <p>Casita works because Dragon Scribe is a specific kind of god function — one whose domain is relatively well-bounded, whose judgment calls are frequent enough to train on, and who is genuinely willing to engage with the infrastructure. Not every god function has those properties.</p>
+
+  <p>The pattern gets harder when the domain is truly open-ended, when the judgment calls are rare and high-stakes rather than frequent and routine, or when the person is resistant to having their informal authority made legible. Making tacit knowledge explicit can feel like exposure. Some god functions have survived precisely because their contribution was invisible. Amplification requires making the contribution visible, which changes the political dynamics.</p>
+
+  <p>This isn't a reason not to do it. It's a reason to do it carefully and with the person's genuine buy-in, not as something done to them.</p>
+</div>
+
+
+<div class="section">
+  <h2>The Design <em>Test</em></h2>
+
+  <p>When you're evaluating an AI tool or feature — for your team, your product, your org — ask one question:</p>
+
+  <div class="callout">
+    <p><strong>Does this amplify a trusted gatekeeper, or does it try to replace them?</strong></p>
+  </div>
+
+  <p>Amplification compounds. You keep the trust layer. The gatekeeper gets more powerful. Their judgment becomes more durable and more legible. The org gets the benefit of their knowledge without the single-point-of-failure risk. Everyone wins including the gatekeeper, which is why they'll actually use it.</p>
+
+  <p>Replacement commoditizes. You lose the trust layer. The thing that made the gatekeeper's judgment valuable — the earned authority, the contextual knowledge, the relationship capital — doesn't transfer to the software. You get a system that can execute the rules but can't be trusted with the exceptions. And the exceptions are where everything important happens.</p>
+
+  <p>Casita doesn't make decisions for Dragon Scribe. Casita makes sure Dragon Scribe never has to make a decision without the right context in hand.</p>
+
+  <p>Casita doesn't open the owls. Dragon Scribe opens the owls. Casita just makes sure Dragon Scribe is holding the right ones.</p>
+</div>
+
+
+<div class="closing">
+  <p>Casita is real. The owlery is real. Dragon Scribe confirmed this before it went out.</p>
+  <div class="sig">— Hatch, crankychickens.com</div>
+</div>
+
+<footer>
+  <span>hatch.crankychickens.com · The God Function in Feathers · Nick Weber · v1.0</span>
+  <span><a href="/cad/">Read CAD →</a></span>
+</footer>
+
+</body>
+</html>
