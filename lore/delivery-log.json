@@ -1,5 +1,30 @@
 [
   {
+    "id": 1778806708495,
+    "timestamp": "2026-05-15T00:58:28.495Z",
+    "submissionId": 1778378732165,
+    "kidName": "Dragon Scribe",
+    "contribType": "enemy",
+    "asked": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?",
+    "askedName": "Unnamed",
+    "targetGame": "In Space",
+    "targetZone": null,
+    "delivered": "\"Turkey Commander\" placed but sprite injection failed — config only",
+    "deliveryType": "config_only",
+    "issues": [
+      "applyFullContribution injection step failed"
+    ],
+    "commitSha": null,
+    "dingedSkills": [],
+    "stepResults": {
+      "write-spec": "✅ I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
+      "type-resolution": "✨ new type",
+      "sprite-gen": "✅ generated in preview",
+      "feature-build": "✅ placed at screen 0"
+    },
+    "isNewType": true
+  },
+  {
     "id": 1778381459703,
     "timestamp": "2026-05-10T02:50:59.703Z",
     "submissionId": 1778378732165,
