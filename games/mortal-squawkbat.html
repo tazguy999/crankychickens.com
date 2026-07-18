@@ -340,7 +340,7 @@ class Fighter{
     if(this.state==='block'){d=Math.floor(d*0.1);sfx('blk');}
     else sfx(Math.random()<0.5?'punch':'kick');
     this.hp=Math.max(0,this.hp-d);
-    if(this.state!=='block'){this.hitstun=20;this.vx=kbx*5.5;this.vy=-3.5;this.setState('hit');}
+    if(this.state!=='block'){this.hitstun=20;this.vx=kbx*5.5;this.vy=-3.5;this.gnd=false;this.setState('hit');}
     this.invT=10;return d;
   }
   update(opp){
