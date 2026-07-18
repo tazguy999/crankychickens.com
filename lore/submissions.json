@@ -1,5 +1,84 @@
 [
   {
+    "id": 1784334160019,
+    "timestamp": "2026-07-18T00:22:40.019Z",
+    "scribeName": "Professor chicken",
+    "description": "Throws potions at enemies causing damage",
+    "contribType": "enemy",
+    "originalSubmission": {
+      "id": 1784334095816,
+      "timestamp": "2026-07-18T00:21:35.816Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Throws potions at characters that causes damage "
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": null,
+      "summary": "Awesome idea received!",
+      "feature": "To be determined",
+      "type": "mechanic",
+      "excitement": "BOOM! Your idea is on its way!",
+      "forScribe": "Raw submission received — needs interpretation.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "A new scroll arrives from the Cannon Master! The ancient runes shimmer with potential. What lore shall we weave from this idea, Scribe?"
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "New lore entry",
+      "devNote": "Review and implement per scribe description.",
+      "nicksNote": "Your scroll is sealed and flying to Nick!",
+      "priority": "medium"
+    },
+    "aiResult": {
+      "characterType": "chicken",
+      "drawFn": "function drawCharacter_chicken(x,y,hp,fr,cfg,isZeroG){\nctx.save();\nctx.translate(x,y);\n\nvar wobble=Math.sin(fr*0.08)*1.5;\nvar waddle=Math.sin(fr*0.1)*2;\nvar bounce=Math.abs(Math.sin(fr*0.1))*1.5;\n\nif(isZeroG){\nctx.translate(Math.sin(fr*0.03)*3,Math.cos(fr*0.04)*3);\n}\n\nctx.translate(waddle*0.5,bounce*0.3);\n\nctx.fillStyle=\"#2a5a1f\";\nctx.beginPath();\nctx.ellipse(16,22,7,5,0,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#4a7c3f\";\nctx.beginPath();\nctx.ellipse(16,18,8,9,wobble*0.05,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#3a6b2f\";\nctx.beginPath();\nctx.ellipse(16,19,6,7,0,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#e8e8e8\";\nctx.fillRect(10,14,12,8);\nctx.strokeStyle=\"#cccccc\";\nctx.lineWidth=0.5;\nctx.strokeRect(10,14,12,8);\n\nctx.strokeStyle=\"#aaaaaa\";\nctx.lineWidth=0.4;\nctx.beginPath();\nctx.moveTo(16,14);\nctx.lineTo(16,22);\nctx.stroke();\n\nfor(var i=0;i<3;i++){\nctx.strokeStyle=\"#aaaaaa\";\nctx.lineWidth=0.4;\nctx.beginPath();\nctx.moveTo(10,15+i*2.5);\nctx.lineTo(22,15+i*2.5);\nctx.stroke();\n}\n\nctx.fillStyle=\"#4a7c3f\";\nctx.beginPath();\nctx.ellipse(16,12,6,6,0,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#3a6b2f\";\nctx.beginPath();\nctx.ellipse(14,10,2,2.5,0,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.ellipse(18,10,2,2.5,0,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#5a8c4f\";\nctx.beginPath();\nctx.moveTo(13,8);\nctx.lineTo(11,5);\nctx.lineTo(15,7);\nctx.closePath();\nctx.fill();\nctx.beginPath();\nctx.moveTo(19,8);\nctx.lineTo(21,5);\nctx.lineTo(17,7);\nctx.closePath();\nctx.fill();\n\nctx.fillStyle=\"#f5c518\";\nctx.beginPath();\nctx.ellipse(cfg&&cfg.eyeColor?14:14,12,2.2,2.2,0,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.ellipse(18,12,2.2,2.2,0,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#f5c518\";\nvar eyeColor=cfg&&cfg.eyeColor?cfg.eyeColor:\"#f5c518\";\nctx.fillStyle=eyeColor;\nctx.beginPath();\nctx.arc(14,12,2.2,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.arc(18,12,2.2,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#111111\";\nctx.beginPath();\nctx.arc(14.4,12,1,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.arc(18.4,12,1,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#ffffff\";\nctx.beginPath();\nctx.arc(14.8,11.4,0.4,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.arc(18.8,11.4,0.4,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#cc4400\";\nctx.beginPath();\nctx.moveTo(14,14);\nctx.lineTo(16,15.5);\nctx.lineTo(18,14);\nctx.lineTo(16,13.5);\nctx.closePath();\nctx.fill();\n\nctx.fillStyle=\"#cc6600\";\nctx.beginPath();\nctx.moveTo(15,11.5);\nctx.quadraticCurveTo(16,10.5,17,11.5);\nctx.lineTo(16,12.5);\nctx.closePath();\nctx.fill();\n\nctx.fillStyle=\"#4a7c3f\";\nctx.beginPath();\nctx.ellipse(8,19,3,5,wobble*0.1-0.3,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.ellipse(24,19,3,5,wobble*0.1+0.3,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#3a6b2f\";\nctx.beginPath();\nctx.ellipse(6,23,2.5,2,0,0,Math.PI*2);\nctx.fill();\nctx.beginPath();\nctx.ellipse(26,23,2.5,2,0,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#e8dd00\";\nctx.beginPath();\nctx.moveTo(5,24);\nctx.lineTo(4,26);\nctx.lineTo(6,26);\nctx.lineTo(6.5,24.5);\nctx.closePath();\nctx.fill();\nctx.beginPath();\nctx.moveTo(25,24);\nctx.lineTo(24,26);\nctx.lineTo(26,26);\nctx.lineTo(26.5,24.5);\nctx.closePath();\nctx.fill();\n\nvar throwPhase=(fr*0.07)%(Math.PI*2);\nvar potionVisible=throwPhase<Math.PI;\nif(potionVisible){\nvar potionX=8+throwPhase*(8/Math.PI);\nvar potionY=19-Math.sin(throwPhase)*8;\nvar glow=0.5+0.5*Math.sin(fr*0.2);\n\nctx.save();\nctx.shadowColor=\"rgba(100,255,100,0.8)\";\nctx.shadowBlur=6;\n\nvar grad=ctx.createRadialGradient(potionX,potionY,1,potionX,potionY,4);\ngrad.addColorStop(0,\"rgba(180,255,100,\"+glow+\")\");\ngrad.addColorStop(1,\"rgba(50,200,50,0)\");\nctx.fillStyle=grad;\nctx.beginPath();\nctx.arc(potionX,potionY,4,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#aaff55\";\nctx.beginPath();\nctx.ellipse(potionX,potionY,2.5,3,throwPhase*0.5,0,Math.PI*2);\nctx.fill();\n\nctx.fillStyle=\"#88cc33\";\nctx.beginPath();\nctx.rect(potionX-1,potionY-5,2,3);\nctx.fill();\n\nctx.restore();\n}\n\nif(throwPhase>Math.PI&&throwPhase<Math.PI+0.3){\nvar splashX=16;\nvar splashY=19;\nvar splashSize=(throwPhase-Math.PI)/0.3;\nfor(var s=0;s<6;s++){\nvar angle2=(s/6)*",
+      "configEntry": {
+        "configType": "enemyVariant",
+        "screenIndex": 0,
+        "name": "Professor Chicken",
+        "characterType": "chicken",
+        "color": "#4a7c3f",
+        "eyeColor": "#f5c518",
+        "spd": 0.4,
+        "pat": "h",
+        "size": 1,
+        "tx": 9,
+        "ty": 9
+      },
+      "commitMessage": "Professor Chicken — chicken (new type)",
+      "plainEnglish": "We're building Professor Chicken, a smart space hen who tosses sparkling potions at bad guys to zap them with damage!",
+      "isNewType": true,
+      "mappedFrom": null,
+      "_stepResults": {
+        "write-spec": "✅ We're building Professor Chicken, a smart space hen who tosses sparkling potions at bad guys to zap them with damage!",
+        "type-resolution": "✨ new type",
+        "sprite-gen": "✅ generated in preview",
+        "feature-build": "✅ placed at screen 0"
+      },
+      "_dingedSkills": [],
+      "_spriteOk": true,
+      "_typeExisted": false,
+      "_preloadedGameData": {
+        "error": "Path not allowed"
+      }
+    }
+  },
+  {
     "id": 1778381319471,
     "timestamp": "2026-05-10T02:48:39.471Z",
     "scribeName": "Six seven",
@@ -126,7 +205,7 @@
         "content": "*Ancient starlight flickers with curiosity*\n\nAh yes, I sense the Turkey Armada stirring in the cosmic winds! These feathered foes could be the IECC's elite guard - perhaps they waddle in formation like RiverClan warriors, but with jet-powered tail feathers that let them swoop and dive in zero gravity. \n\nWhat draws your creative fire about these space turkeys, young Scribe? Do they gobble war cries across the void, or guard something precious the chickens need?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",

@@ -1,5 +1,30 @@
 [
   {
+    "id": 1784335582368,
+    "timestamp": "2026-07-18T00:46:22.368Z",
+    "submissionId": 1784334160019,
+    "kidName": "Cannon Master",
+    "contribType": "enemy",
+    "asked": "Throws potions at enemies causing damage",
+    "askedName": "Professor chicken",
+    "targetGame": "In Space",
+    "targetZone": null,
+    "delivered": "\"Professor Chicken\" placed but sprite injection failed — config only",
+    "deliveryType": "config_only",
+    "issues": [
+      "applyFullContribution injection step failed"
+    ],
+    "commitSha": null,
+    "dingedSkills": [],
+    "stepResults": {
+      "write-spec": "✅ We're building Professor Chicken, a smart space hen who tosses sparkling potions at bad guys to zap them with damage!",
+      "type-resolution": "✨ new type",
+      "sprite-gen": "✅ generated in preview",
+      "feature-build": "✅ placed at screen 0"
+    },
+    "isNewType": true
+  },
+  {
     "id": 1778806708495,
     "timestamp": "2026-05-15T00:58:28.495Z",
     "submissionId": 1778378732165,

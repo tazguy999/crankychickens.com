@@ -1,6 +1,6 @@
 {
-  "_version": 25,
-  "_updated": "2026-05-15T00:58:28.787Z",
+  "_version": 26,
+  "_updated": "2026-07-18T00:46:23.299Z",
   "_game": "in-space",
   "_note": "Managed by Mission Control. Kid contributions go here.",
   "zones": [
@@ -163,6 +163,19 @@
       "characterType": "turkey",
       "color": "#8B4513",
       "eyeColor": "#FF4500",
+      "spd": 0.4,
+      "pat": "h",
+      "size": 1,
+      "tx": 9,
+      "ty": 9
+    },
+    {
+      "configType": "enemyVariant",
+      "screenIndex": 0,
+      "name": "Professor Chicken",
+      "characterType": "chicken",
+      "color": "#4a7c3f",
+      "eyeColor": "#f5c518",
       "spd": 0.4,
       "pat": "h",
       "size": 1,
