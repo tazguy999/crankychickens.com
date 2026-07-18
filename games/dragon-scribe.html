@@ -527,9 +527,11 @@ body::before {
       <div class="lore-section-title">✦ Give it a Name in the Lore</div>
       <div class="lore-chips" id="nameChips"></div>
       <input class="lore-input" id="loreName" placeholder="Or write your own name..." style="min-height:44px">
+      <button id="mic_loreName" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
 
       <div class="lore-section-title">✦ Describe It (in your words)</div>
       <textarea class="lore-input" id="loreDesc" placeholder="What does it look like? What does it do? Is it evil? Does it have a backstory?..." rows="4"></textarea>
+      <button id="mic_loreDesc" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
 
       <div class="lore-section-title">✦ Ask the Ancient AI</div>
       <div class="chat-wrap" id="chatWrap">
@@ -540,7 +542,7 @@ body::before {
       </div>
       <div class="chat-input-row">
         <textarea class="chat-input" id="chatInput" placeholder="Ask anything — what should it do, what's its name, how does it fit the story..." rows="1"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea><button id="mic_chatInput" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
         <button class="chat-send" onclick="sendChat()">🐉</button>
       </div>
     </div>
@@ -813,7 +815,7 @@ Respond with JSON only (no markdown):
     const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'claude_complete',
-        model:'claude-sonnet-4-20250514',max_tokens:600,
+        model:'claude-sonnet-4-6',max_tokens:600,
         messages:[{role:'user',content:prompt}]
       })
     });
@@ -1006,7 +1008,7 @@ Respond with JSON only:
   try{
     const res=await fetch(PROXY,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'claude_complete',model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({action:'claude_complete',model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]})
     });
     const data=await res.json();
     const text=data.content.find(b=>b.type==='text')?.text||'{}';
@@ -1040,6 +1042,35 @@ window.addEventListener('load',()=>{
     refreshInbox();
   }
 });
+
+// ═══ VOICE-TO-TEXT (for younger kids) ═══
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let activeMic=null;
+function attachMic(fieldId){
+  if(!SR)return; // unsupported — buttons stay hidden
+  const btn=document.getElementById('mic_'+fieldId);
+  if(!btn)return;
+  btn.style.display='inline-flex';
+  btn.addEventListener('click',()=>{
+    if(activeMic){activeMic.stop();return;}
+    const field=document.getElementById(fieldId);
+    const rec=new SR();
+    rec.lang='en-US';rec.interimResults=false;rec.continuous=false;
+    activeMic=rec;
+    btn.textContent='🔴 listening... tap to stop';
+    btn.style.background='rgba(255,60,60,0.3)';
+    rec.onresult=e=>{
+      const txt=Array.from(e.results).map(r=>r[0].transcript).join(' ');
+      field.value=(field.value?field.value+' ':'')+txt;
+      field.dispatchEvent(new Event('input'));
+    };
+    rec.onend=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
+    rec.onerror=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
+    rec.start();
+  });
+}
+
+['loreName','loreDesc','chatInput'].forEach(attachMic);
 </script>
 </body>
 </html>

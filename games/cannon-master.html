@@ -196,6 +196,7 @@ body::before {
   position:relative;
 }
 #drawCanvas {
+  max-height:50vh;
   display:block;
   width:100%;
   touch-action:none;
@@ -520,7 +521,9 @@ body::before {
     <div class="section-label">Draw anything — a level, a chicken, an explosion!</div>
 
     <div class="canvas-wrap">
+      <button id="modeToggle" onclick="setDrawMode(scrollMode)" style="width:100%;margin-bottom:8px;padding:12px;font-family:'Fredoka One',cursive;font-size:14px;background:rgba(255,107,0,0.25);border:2px solid rgba(255,107,0,0.6);color:#fff;border-radius:10px;cursor:pointer;">✏️ DRAWING — tap to scroll instead</button>
       <canvas id="drawCanvas" width="640" height="480"></canvas>
+      <div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.4);padding:4px;font-family:'Fredoka One',cursive">💡 two fingers always scrolls</div>
     </div>
 
     <div class="canvas-tools">
@@ -541,6 +544,7 @@ body::before {
     <div style="padding:0 0 4px">
       <label class="section-label" style="font-size:clamp(14px,4.5vw,18px);color:var(--yellow)">✏️ What did you draw? Tell us!</label>
       <textarea class="idea-textarea" id="drawCaption" placeholder="Type what it is, what it does, why it's awesome... 🚀" rows="3"></textarea>
+    <button id="mic_drawCaption" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
     </div>
   </div>
 
@@ -678,6 +682,7 @@ body::before {
 
     <div class="vote-q" style="margin-top:8px">What needs to be FIXED?</div>
     <textarea class="idea-textarea" id="fixText" placeholder="Something is broken or annoying..." rows="3"></textarea>
+    <button id="mic_fixText" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
   </div>
 
   <button class="fire-btn" onclick="submitRating()">
@@ -711,6 +716,7 @@ body::before {
     </div>
 
     <textarea class="idea-textarea" id="ideaText" placeholder="Type your amazing idea here! The bigger the better! 🚀" rows="5"></textarea>
+    <button id="mic_ideaText" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
   </div>
 
   <button class="fire-btn" onclick="submitText()">
@@ -744,6 +750,7 @@ body::before {
     </div>
 
     <textarea class="idea-textarea" id="photoCaption" placeholder="What is this? Tell us about it! 🎨" rows="3"></textarea>
+    <button id="mic_photoCaption" style="display:none;align-items:center;gap:6px;margin-top:6px;padding:10px 14px;font-family:'Fredoka One',cursive;font-size:13px;background:rgba(120,200,255,0.15);border:2px solid rgba(120,200,255,0.4);color:#aaddff;border-radius:9px;cursor:pointer;">🎤 talk instead of type</button>
   </div>
 
   <button class="fire-btn" onclick="submitPhoto()">
@@ -928,8 +935,27 @@ function getPos(e){
   const src=e.touches?e.touches[0]:e;
   return{x:src.clientX-r.left,y:src.clientY-r.top};
 }
-drawCanvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=getPos(e);dCtx.beginPath();dCtx.moveTo(p.x,p.y);},{passive:false});
-drawCanvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=getPos(e);dCtx.lineTo(p.x,p.y);dCtx.strokeStyle=brushColor;dCtx.lineWidth=brushSize;dCtx.lineCap='round';dCtx.lineJoin='round';dCtx.stroke();},{passive:false});
+let scrollMode=false;
+function setDrawMode(on){
+  scrollMode=!on;
+  drawCanvas.style.touchAction=on?'none':'pan-y';
+  const b=document.getElementById('modeToggle');
+  if(b){
+    b.textContent=on?'✏️ DRAWING — tap to scroll instead':'✋ SCROLLING — tap to draw';
+    b.style.background=on?'rgba(255,107,0,0.25)':'rgba(100,200,255,0.2)';
+    b.style.borderColor=on?'rgba(255,107,0,0.6)':'rgba(100,200,255,0.5)';
+  }
+}
+drawCanvas.addEventListener('touchstart',e=>{
+  if(scrollMode)return;                       // scroll mode: let the page scroll
+  if(e.touches.length>1){drawing=false;return;} // two fingers = scroll, always
+  e.preventDefault();drawing=true;const p=getPos(e);dCtx.beginPath();dCtx.moveTo(p.x,p.y);
+},{passive:false});
+drawCanvas.addEventListener('touchmove',e=>{
+  if(scrollMode)return;
+  if(e.touches.length>1){drawing=false;return;}
+  e.preventDefault();if(!drawing)return;const p=getPos(e);dCtx.lineTo(p.x,p.y);dCtx.strokeStyle=brushColor;dCtx.lineWidth=brushSize;dCtx.lineCap='round';dCtx.lineJoin='round';dCtx.stroke();
+},{passive:false});
 drawCanvas.addEventListener('touchend',()=>drawing=false);
 drawCanvas.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);dCtx.beginPath();dCtx.moveTo(p.x,p.y);});
 drawCanvas.addEventListener('mousemove',e=>{if(!drawing)return;const p=getPos(e);dCtx.lineTo(p.x,p.y);dCtx.strokeStyle=brushColor;dCtx.lineWidth=brushSize;dCtx.lineCap='round';dCtx.lineJoin='round';dCtx.stroke();});
@@ -1122,6 +1148,35 @@ function resetAll(){
   Object.keys(voteSelections).forEach(k=>delete voteSelections[k]);
   currentRating=0;
 }
+
+// ═══ VOICE-TO-TEXT (for younger kids) ═══
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let activeMic=null;
+function attachMic(fieldId){
+  if(!SR)return; // unsupported — buttons stay hidden
+  const btn=document.getElementById('mic_'+fieldId);
+  if(!btn)return;
+  btn.style.display='inline-flex';
+  btn.addEventListener('click',()=>{
+    if(activeMic){activeMic.stop();return;}
+    const field=document.getElementById(fieldId);
+    const rec=new SR();
+    rec.lang='en-US';rec.interimResults=false;rec.continuous=false;
+    activeMic=rec;
+    btn.textContent='🔴 listening... tap to stop';
+    btn.style.background='rgba(255,60,60,0.3)';
+    rec.onresult=e=>{
+      const txt=Array.from(e.results).map(r=>r[0].transcript).join(' ');
+      field.value=(field.value?field.value+' ':'')+txt;
+      field.dispatchEvent(new Event('input'));
+    };
+    rec.onend=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
+    rec.onerror=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
+    rec.start();
+  });
+}
+
+['drawCaption','fixText','ideaText','photoCaption'].forEach(attachMic);
 </script>
 </body>
 </html>
