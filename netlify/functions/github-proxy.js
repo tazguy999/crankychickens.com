@@ -171,6 +171,61 @@ exports.handler = async (event) => {
     } catch (e) { return err(CORS, e.message); }
   }
 
+  // ── PUSH: SUBSCRIBE ──
+  if (action === 'push_subscribe') {
+    const { sub } = body;
+    if (!sub || !sub.endpoint) return err(CORS, 'Missing subscription');
+    try {
+      const res = await ghFetch(`/repos/${REPO}/contents/shows/push-subs.json?ref=${BRANCH}`, TOKEN);
+      let subs = [], sha = null;
+      if (res.status !== 404) {
+        const data = await res.json();
+        sha = data.sha;
+        try { subs = JSON.parse(Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8')); } catch (e) {}
+      }
+      if (!subs.find(s => s.endpoint === sub.endpoint)) {
+        subs.push(sub);
+        subs = subs.slice(-50);
+        const enc = Buffer.from(JSON.stringify(subs, null, 2)).toString('base64');
+        await ghFetch(`/repos/${REPO}/contents/shows/push-subs.json`, TOKEN, 'PUT', {
+          message: '🔔 New episode-alert subscriber', content: enc, branch: BRANCH, ...(sha ? { sha } : {}),
+        });
+      }
+      return ok(CORS, { subscribed: true, total: subs.length });
+    } catch (e) { return err(CORS, e.message); }
+  }
+
+  // ── PUSH: SEND (Mission Control) ──
+  if (action === 'push_send') {
+    const { title, body: msgBody, url } = body;
+    const VAPID_PUB = process.env.VAPID_PUBLIC_KEY;
+    const VAPID_PRIV = process.env.VAPID_PRIVATE_KEY;
+    if (!VAPID_PUB || !VAPID_PRIV) return err(CORS, 'VAPID keys not set — add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Netlify environment variables');
+    let webpush;
+    try { webpush = require('web-push'); } catch (e) { return err(CORS, 'web-push not installed — redeploy after package.json update'); }
+    webpush.setVapidDetails('mailto:nick@crankychickens.com', VAPID_PUB, VAPID_PRIV);
+    try {
+      const res = await ghFetch(`/repos/${REPO}/contents/shows/push-subs.json?ref=${BRANCH}`, TOKEN);
+      if (res.status === 404) return ok(CORS, { sent: 0, note: 'no subscribers yet' });
+      const data = await res.json();
+      const sha = data.sha;
+      let subs = JSON.parse(Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8'));
+      const payload = JSON.stringify({ title: title || '🐔 New Episode!', body: msgBody || 'A new Cranky Chickens episode is ready to watch!', url: url || '/' });
+      let sent = 0; const alive = [];
+      for (const s of subs) {
+        try { await webpush.sendNotification(s, payload); sent++; alive.push(s); }
+        catch (e) { if (e.statusCode !== 404 && e.statusCode !== 410) alive.push(s); }
+      }
+      if (alive.length !== subs.length) {
+        const enc = Buffer.from(JSON.stringify(alive, null, 2)).toString('base64');
+        await ghFetch(`/repos/${REPO}/contents/shows/push-subs.json`, TOKEN, 'PUT', {
+          message: '🔔 Pruned dead subscribers', content: enc, branch: BRANCH, sha,
+        });
+      }
+      return ok(CORS, { sent, total: alive.length });
+    } catch (e) { return err(CORS, e.message); }
+  }
+
   // ── GET SUBMISSIONS ──
   if (action === 'get_submissions') {
     try {

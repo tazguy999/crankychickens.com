@@ -274,6 +274,7 @@ html, body {
     <a href="https://kids-preview--crankychickens.netlify.app" target="_blank" class="preview-link">
       🌐 Preview Branch ↗
     </a>
+  <button class="stat-pill" style="cursor:pointer;border-color:rgba(120,255,120,0.4);color:#9f9;background:rgba(120,255,120,0.06);font-family:inherit;font-size:inherit;" onclick="notifyKids()">📣 Notify Kids</button>
   </div>
 </div>
 
@@ -409,6 +410,23 @@ html, body {
 
 <script>
 const PROXY='/.netlify/functions/github-proxy';
+
+async function notifyKids(){
+  const title=prompt('Notification title:','📺 NEW EPISODE!');
+  if(title===null)return;
+  const bodyMsg=prompt('Message:','Invasion of the Corn Snatchers is ready to watch!');
+  if(bodyMsg===null)return;
+  const url=prompt('Link to open:','/shows/episode-2.html');
+  if(url===null)return;
+  toast('📣 Sending...');
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'push_send',title,body:bodyMsg,url})});
+    const d=await res.json();
+    if(d.error)toast('❌ '+d.error.slice(0,80));
+    else toast('📣 Sent to '+d.sent+' device(s)!');
+  }catch(e){toast('❌ '+e.message.slice(0,60));}
+}
 
 let allSubmissions=[];
 let currentSha=null;
