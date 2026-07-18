@@ -1,5 +1,24 @@
 [
   {
+    "id": 1784417475590,
+    "timestamp": "2026-07-18T23:31:15.590Z",
+    "scribeName": "In the next episode Scratchy and Kevin go on a walk and they",
+    "description": "In the next episode Scratchy and Kevin go on a walk and they see a dog with pointy ears and they take him home. They him Archie put on a collar, bathe him, feed him, and take him to the vet. The doctor is a girl white cat named SURGEON. She gives Archie medicine and helps him feel better. Then Scratchy finds out that he can't have Archie so he gives him to Aunt Barb. Cady and Gizmo are happy. At the end Scratchy, Pearl, Kevin, Aunt Barb, El Jaguar, Kevin, Archie and Nut are drinking juice",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "You invented a whole episode about finding a lost dog named Archie and making sure he gets taken care of — that's such a big-hearted story idea!"
+    },
+    "image": null,
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
     "id": 1784417352014,
     "timestamp": "2026-07-18T23:29:12.014Z",
     "scribeName": "Better animation in show",
