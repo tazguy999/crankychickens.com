@@ -962,11 +962,21 @@ async function resolveType(spec, gameFileContent){
     return {ok:true, isNewType:false, isExisting:true, resolvedType:spec.characterType, dingedSkill:null};
   }
 
+  // Birds and chickens are always new types — never map to reptiles
+  const birdWords = ['chicken','bird','duck','owl','parrot','eagle','penguin','flamingo','hen','rooster','chick','feather','beak','talon','wing'];
+  const typeLC = (spec.characterType||'').toLowerCase();
+  const descLC = (spec.behaviorNotes||'').toLowerCase();
+  if(birdWords.some(w => typeLC.includes(w) || descLC.includes(w))){
+    toast('🐔 Step 2: Bird/chicken detected — generating new sprite');
+    return {ok:true, isNewType:true, isExisting:false, resolvedType:spec.characterType, reason:'Bird/chicken — always a new type', dingedSkill:null};
+  }
+
   // Ask LLM: map to existing or genuinely new?
   const prompt = 'A kid described a game creature called "'+spec.characterType+'". '+
     'Description: "'+spec.behaviorNotes+'".\n'+
     'Existing character types in the game: '+KNOWN_TYPES.join(', ')+'.\n\n'+
-    'Does "'+spec.characterType+'" map closely to one of these existing types, or is it genuinely different?\n\n'+
+    'Does "'+spec.characterType+'" map closely to one of these existing types, or is it genuinely different?\n'+
+    'IMPORTANT: NEVER map a bird, chicken, or flying creature to iguana. Iguana is for reptile/lizard creatures only.\n\n'+
     'Return ONLY this JSON:\n'+
     '{"decision":"map"|"new","mappedTo":"existing_type_or_null","reason":"one sentence"}';
 
@@ -1737,8 +1747,10 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
   }catch(e){
     console.error('Preview eval failed:', e);
     pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
-    pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='12px Fredoka One'; pctx.textAlign='center';
-    pctx.fillText('Could not render sprite preview', cnv.width/2, cnv.height/2);
+    pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='11px Fredoka One'; pctx.textAlign='center';
+    pctx.fillText('Preview eval error: '+e.message.slice(0,50), cnv.width/2, cnv.height/2-8);
+    pctx.font='9px monospace'; pctx.fillStyle='rgba(255,150,100,0.5)';
+    pctx.fillText('Check console for full error', cnv.width/2, cnv.height/2+12);
     pctx.textAlign='left';
     return;
   }
