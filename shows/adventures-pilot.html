@@ -38,6 +38,7 @@ button:active{transform:scale(0.96);}
   <div id="seekWrap"><div id="seekBar"><div id="seekFill"></div></div></div>
   <div id="timeLbl">0:00 / 15:30</div>
   <button id="muteBtn">🔊</button>
+  <button id="voiceBtn">🗣 VOICES: ON</button>
 </div>
 <div id="chapters">
   <button data-t="0">Act 1: A Normal Tuesday</button>
@@ -53,6 +54,46 @@ const C=document.getElementById('c'),ctx=C.getContext('2d');
 const W=640,H=400,GY=310;
 const FF="'Fredoka One',cursive";
 let T=0,playing=false,muted=false,lastTs=null;
+let voicesOn=true,lastSpokenLine=null;
+
+// ══ VOICE ENGINE (Web Speech API) ══
+// Each character gets a pitch/rate personality. Device voices vary — that's part of the charm.
+const VOICE_PROFILES={
+  'SCRATCHY':   {pitch:0.7, rate:0.95},
+  'PEARL':      {pitch:1.5, rate:1.15},
+  'EL JAGUAR':  {pitch:0.5, rate:0.85},
+  'AUNT BARB':  {pitch:1.2, rate:0.9},
+  'REGINALD':   {pitch:0.85,rate:0.7},
+  'CRAB':       {pitch:1.3, rate:0.8},
+  'NARRATOR':   {pitch:1.0, rate:0.92},
+};
+let voicePool=[];
+function loadVoices(){
+  voicePool=(speechSynthesis.getVoices()||[]).filter(v=>v.lang&&v.lang.startsWith('en'));
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  speechSynthesis.onvoiceschanged=loadVoices;
+}
+function speakLine(who,text){
+  if(!voicesOn||!('speechSynthesis' in window))return;
+  // Kevin only barks — the sfx handles him
+  if(who==='KEVIN')return;
+  // Strip stage directions like (to the rake) and asterisk actions like *GASP*
+  let clean=text.replace(/\([^)]*\)/g,'').replace(/\*[^*]*\*/g,'').trim();
+  if(!clean||clean==='...')return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(clean);
+  const prof=VOICE_PROFILES[who]||{pitch:1,rate:1};
+  u.pitch=prof.pitch;u.rate=prof.rate;u.volume=0.9;
+  // Spread characters across available device voices for variety
+  if(voicePool.length>0){
+    const idx=Math.abs(who.split('').reduce((a,ch)=>a+ch.charCodeAt(0),0))%voicePool.length;
+    u.voice=voicePool[idx];
+  }
+  speechSynthesis.speak(u);
+}
+function stopSpeech(){if('speechSynthesis' in window)speechSynthesis.cancel();}
 
 // ══ AUDIO ══
 let AC=null,musicTimer=null,curMood=null,nextNoteTime=0,stepIdx=0;
@@ -561,6 +602,9 @@ function render(){
   else if(sc.bg){BGS[sc.bg]();}
   if(sc.castExtra)sc.castExtra(lt);
   const line=activeLine(sc.lines,lt);
+  // Speak new lines as they appear (only while playing)
+  if(playing&&line&&line!==lastSpokenLine){lastSpokenLine=line;speakLine(line.who,line.text);}
+  if(!line)lastSpokenLine=null;
   const talkWho=line&&line.who!=='NARRATOR'?line.who.toLowerCase().replace('el jaguar','jaguar').replace('aunt barb','barb').replace('reginald','iguana'):null;
   if(sc.cast)drawCast(sc.cast,lt,talkWho);
   if(line){
@@ -605,7 +649,12 @@ document.getElementById('playBtn').addEventListener('click',()=>{
   if(T>=TOTAL){T=0;}
   playing=!playing;
   document.getElementById('playBtn').textContent=playing?'⏸ PAUSE':'▶ PLAY';
-  if(!playing)setMood('none');
+  if(!playing){setMood('none');stopSpeech();}
+});
+document.getElementById('voiceBtn').addEventListener('click',()=>{
+  voicesOn=!voicesOn;
+  document.getElementById('voiceBtn').textContent=voicesOn?'🗣 VOICES: ON':'🗣 VOICES: OFF';
+  if(!voicesOn)stopSpeech();
 });
 document.getElementById('muteBtn').addEventListener('click',()=>{
   muted=!muted;
@@ -616,12 +665,13 @@ function seekTo(clientX){
   const r=seekWrap.getBoundingClientRect();
   const p=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
   T=p*TOTAL;
+  stopSpeech();lastSpokenLine=null;
   SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});
 }
 seekWrap.addEventListener('click',e=>seekTo(e.clientX));
 seekWrap.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e.touches[0].clientX);},{passive:false});
 document.querySelectorAll('#chapters button').forEach(b=>{
-  b.addEventListener('click',()=>{T=parseFloat(b.dataset.t);SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});if(!playing){playing=true;ac();document.getElementById('playBtn').textContent='⏸ PAUSE';}});
+  b.addEventListener('click',()=>{T=parseFloat(b.dataset.t);stopSpeech();lastSpokenLine=null;SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});if(!playing){playing=true;ac();document.getElementById('playBtn').textContent='⏸ PAUSE';}});
 });
 
 requestAnimationFrame(loop);
