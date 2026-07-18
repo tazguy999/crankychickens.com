@@ -196,7 +196,6 @@ body::before {
   position:relative;
 }
 #drawCanvas {
-  max-height:50vh;
   display:block;
   width:100%;
   touch-action:none;
@@ -949,7 +948,11 @@ function resizeCanvas(){
   const w=wrap.clientWidth;
   if(!w) return;
   const ratio=480/640;
-  const newH=Math.round(w*ratio);
+  // Cap height so tools stay reachable on tablets — at the INTERNAL resolution,
+  // so displayed pixels always equal canvas pixels (taps land exactly under fingers)
+  const newH=Math.min(Math.round(w*ratio), Math.round(window.innerHeight*0.48));
+  drawCanvas.style.width=w+'px';
+  drawCanvas.style.height=newH+'px';
   // Save current drawing if canvas has content
   let saved=null;
   if(drawCanvas.width>0 && drawCanvas.height>0){
@@ -972,7 +975,11 @@ window.addEventListener('resize',resizeCanvas);
 function getPos(e){
   const r=drawCanvas.getBoundingClientRect();
   const src=e.touches?e.touches[0]:e;
-  return{x:src.clientX-r.left,y:src.clientY-r.top};
+  // Scale from displayed pixels to canvas pixels — exact under any CSS sizing
+  return{
+    x:(src.clientX-r.left)*(drawCanvas.width/r.width),
+    y:(src.clientY-r.top)*(drawCanvas.height/r.height)
+  };
 }
 let scrollMode=false;
 function setDrawMode(on){
