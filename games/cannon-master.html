@@ -463,6 +463,14 @@ body::before {
       <div class="btn-label">RATE THE GAME</div>
       <div class="btn-sub">Is it fun?</div>
     </button>
+
+    <button class="big-btn full" onclick="startEpisode()" style="border-color:rgba(255,204,2,0.6);background:rgba(255,204,2,0.08);">
+      <span class="btn-icon">📺</span>
+      <div>
+        <div class="btn-label">EPISODE IDEA!</div>
+        <div class="btn-sub">Pitch the next show!</div>
+      </div>
+    </button>
   </div>
 </div>
 
@@ -696,8 +704,8 @@ body::before {
 <!-- ════════════════════════════════════ -->
 <div class="screen" id="screenText">
   <div class="hdr">
-    <div class="title">💬 YOUR BIG IDEA</div>
-    <div class="sub">TYPE IT OUT!</div>
+    <div class="title" id="textScreenTitle">💬 YOUR BIG IDEA</div>
+    <div class="sub" id="textScreenSub">TYPE IT OUT!</div>
   </div>
   <div class="nav-back" onclick="goTo('screenHome')">← Back</div>
 
@@ -1101,10 +1109,60 @@ async function submitVote(){
   document.getElementById('successMsg').textContent=parsed.excitement||'Your votes are in!';
 }
 
+let episodeMode=false;
+function startEpisode(){
+  episodeMode=true;
+  document.getElementById('textScreenTitle').textContent='📺 EPISODE IDEA';
+  document.getElementById('textScreenSub').textContent='WHAT HAPPENS IN THE NEXT SHOW?';
+  document.getElementById('ideaText').placeholder='What happens in the episode? Who is in it? What goes wrong? How does it end?... 📺';
+  goTo('screenText');
+}
+async function submitEpisodeToShow(text,parsed){
+  // Write directly to the shared Mission Control queue
+  try{
+    const getRes=await fetch('/.netlify/functions/github-proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_submissions'})
+    });
+    const getData=await getRes.json();
+    const existing=getData.submissions||[];
+    const title=(text.split(/[.!?\n]/)[0]||'Episode Idea').slice(0,60);
+    existing.unshift({
+      id:Date.now(),
+      timestamp:new Date().toISOString(),
+      scribeName:title,
+      description:text,
+      contribType:'episode',
+      originalSubmission:{from:'cannon-master',summary:parsed.summary||''},
+      status:'pending_review',
+      targetGame:{slug:'show',title:'The Adventures of Cranky Chickens',emoji:'📺'},
+      targetZone:null,
+    });
+    await fetch('/.netlify/functions/github-proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'save_submissions',
+        submissions:existing,
+        sha:getData.sha||null,
+        commitMsg:'📺 Cannon Master episode pitch: "'+title+'"'
+      })
+    });
+    return true;
+  }catch(e){console.error('Episode submit failed:',e);return false;}
+}
 async function submitText(){
-  if(!selectedGame){ showGamePicker('screenText'); return; }
   const text=document.getElementById('ideaText').value.trim();
   if(!text){alert('Type your idea first! 💬');return;}
+  if(episodeMode){
+    goTo('screenSuccess');
+    document.getElementById('successMsg').textContent='📺 Your episode idea is flying to the studio!';
+    const parsed=await submitToAI('text','EPISODE PITCH for the animated show: '+text);
+    storeSubmission(parsed,{type:'episode',text});
+    await submitEpisodeToShow(text,parsed);
+    document.getElementById('successMsg').textContent=parsed.excitement||'📺 Episode pitch delivered to the studio!';
+    return;
+  }
+  if(!selectedGame){ showGamePicker('screenText'); return; }
   goTo('screenSuccess');
   showSuccessLocation();
   const parsed=await submitToAI('text',text);
@@ -1136,6 +1194,10 @@ async function submitRating(){
 }
 
 function resetAll(){
+  episodeMode=false;
+  const t=document.getElementById('textScreenTitle');if(t)t.textContent='💬 YOUR BIG IDEA';
+  const s=document.getElementById('textScreenSub');if(s)s.textContent='TYPE IT OUT!';
+  const i=document.getElementById('ideaText');if(i)i.placeholder='Type your amazing idea here! The bigger the better! 🚀';
   clearCanvas();
   document.getElementById('drawCaption').value='';
   document.getElementById('ideaText').value='';
