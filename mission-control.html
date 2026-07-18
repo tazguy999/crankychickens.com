@@ -526,7 +526,7 @@ function renderCard(s, i){
   const isApproved=s.status==='approved'||s.status==='deployed';
   const isRejected=s.status==='rejected';
   const priorityBadge=s.spec?.priority?`<span class="badge badge-priority-${s.spec.priority}">${s.spec.priority} priority</span>`:'';
-  const typeIcon={'mechanic':'⚙️','enemy':'👾','level':'🗺️','visual':'🎨','story':'📖','sound':'🔊','vote':'⚡','rating':'⭐','drawing':'✏️','photo':'📸','text':'💬'}[s.type]||'📜';
+  const typeIcon=s.contribType==='episode'?'📺':({'mechanic':'⚙️','enemy':'👾','level':'🗺️','visual':'🎨','story':'📖','sound':'🔊','vote':'⚡','rating':'⭐','drawing':'✏️','photo':'📸','text':'💬'}[s.type]||'📜');
   const source=s.originalSubmission?'<span class="badge badge-cannon">💥 Cannon Master</span>':'<span class="badge badge-scribe">🐉 Dragon Scribe</span>';
 
   const gameTag=s.targetGame?`<span class="badge badge-type">${s.targetGame.emoji} ${s.targetGame.title}</span>`:'';
@@ -616,15 +616,40 @@ async function approve(idx){
     commitSha: null,
   };
 
-  // ── EPISODE PITCH ──
+  // ── EPISODE PITCH — same pipeline as games: log + committed artifact + status ──
   if(sub.contribType==='episode'){
     toast('📺 Greenlighting episode pitch...');
-    log.delivered = 'Episode pitch "'+(sub.scribeName||sub.spec?.title||'Untitled')+'" GREENLIT — queued for production with Dad + Claude';
+    // Commit to the production backlog — the episode equivalent of committing game code
+    try{
+      const gf=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'get_file',path:'shows/episode-backlog.json'})});
+      const gd=await gf.json();
+      let backlog=[];
+      try{ if(gd.content) backlog=JSON.parse(gd.content); }catch(e){}
+      backlog.unshift({
+        id: sub.id,
+        title: sub.scribeName||'Untitled Episode',
+        description: sub.description||'',
+        image: sub.image||null,
+        from: sub.originalSubmission?.from==='cannon-master'?'Cannon Master':'Dragon Scribe',
+        greenlitAt: new Date().toISOString(),
+        status: 'greenlit'
+      });
+      backlog=backlog.slice(0,15);
+      await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'save_file',path:'shows/episode-backlog.json',
+          content:JSON.stringify(backlog,null,2),sha:gd.sha||null,
+          commitMsg:'📺 Greenlit episode: "'+(sub.scribeName||'Untitled')+'"'})});
+      log.commitSha='episode-backlog';
+    }catch(e){
+      log.issues.push('backlog commit failed: '+e.message);
+    }
+    log.delivered = 'Episode pitch "'+(sub.scribeName||sub.spec?.title||'Untitled')+'" GREENLIT — committed to shows/episode-backlog.json, queued for production';
     log.deliveryType = 'episode_greenlight';
     await writeDeliveryLog(log);
     allSubmissions[idx].status='approved';
     await saveSubmissions('📺 Episode greenlit: '+(sub.scribeName||'Untitled'));
-    toast('📺 Episode GREENLIT! Production queued.');
+    toast('📺 Episode GREENLIT! Committed to production backlog.');
     renderAll();
     return;
   }
@@ -813,7 +838,7 @@ function renderDeliveryLog(log){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
     return;
   }
-  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖'};
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺'};
   const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed',intervention:'Intervention',ai_pass:'AI Pass'};
   el.innerHTML=log.map(e=>`
     <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">

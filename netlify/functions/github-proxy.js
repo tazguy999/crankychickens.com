@@ -241,7 +241,8 @@ const ALLOWED_PATHS = [
 function isSafePath(p) {
   return ALLOWED_PATHS.includes(p) ||
     (p.startsWith('configs/') && p.endsWith('.json') && !p.includes('..')) ||
-    (p.startsWith('services/logs/') && p.endsWith('.json') && !p.includes('..'));
+    (p.startsWith('services/logs/') && p.endsWith('.json') && !p.includes('..')) ||
+    (p.startsWith('shows/') && p.endsWith('.json') && !p.includes('..'));
 }
 
 // ── HELPERS ──
