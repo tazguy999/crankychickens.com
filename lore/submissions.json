@@ -1,5 +1,23 @@
 [
   {
+    "id": 1784414219305,
+    "timestamp": "2026-07-18T22:36:59.305Z",
+    "scribeName": "There should be a new weapon that",
+    "description": "There should be a new weapon that... Hypnotizes chickens.",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "A sneaky space gadget that can hypnotize enemy chickens and make them fight on YOUR side — totally wild!"
+    },
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
     "id": 1784413957296,
     "timestamp": "2026-07-18T22:32:37.296Z",
     "scribeName": "Corn snatchers",
@@ -16,13 +34,13 @@
     "targetGame": {
       "slug": "show",
       "title": "The Adventures of Cranky Chickens",
-      "emoji": "\ud83d\udcfa"
+      "emoji": "📺"
     },
     "targetZone": null,
     "spec": {
       "title": "Corn Snatchers: Alien Heist Story Arc",
       "devNote": "Nick, this introduces a multi-character story trigger on 'Tuesday' in-game time, requiring a cutscene sequence where El Jaguar is marked as 'fear-flagged' and skips the corn abduction event; King Squirrelington and Nut will need NPC AI roles as antagonists with a capture-objective behavior tree.",
-      "nicksNote": "Your lore is SO good that Nick is probably already drawing King Squirrelington on a sticky note right now! \ud83d\udc3f\ufe0f\ud83c\udf3d\ud83d\ude80",
+      "nicksNote": "Your lore is SO good that Nick is probably already drawing King Squirrelington on a sticky note right now! 🐿️🌽🚀",
       "priority": "high"
     }
   },
@@ -42,14 +60,14 @@
       "targetGame": {
         "slug": "in-space",
         "title": "In Space",
-        "emoji": "\ud83d\ude80"
+        "emoji": "🚀"
       },
       "targetZone": null,
       "summary": "Awesome idea received!",
       "feature": "To be determined",
       "type": "mechanic",
       "excitement": "BOOM! Your idea is on its way!",
-      "forScribe": "Raw submission received \u2014 needs interpretation.",
+      "forScribe": "Raw submission received — needs interpretation.",
       "status": "read"
     },
     "chatHistory": [
@@ -62,7 +80,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -87,15 +105,15 @@
         "tx": 9,
         "ty": 9
       },
-      "commitMessage": "Professor Chicken \u2014 chicken (new type)",
+      "commitMessage": "Professor Chicken — chicken (new type)",
       "plainEnglish": "We're building Professor Chicken, a smart space hen who tosses sparkling potions at bad guys to zap them with damage!",
       "isNewType": true,
       "mappedFrom": null,
       "_stepResults": {
-        "write-spec": "\u2705 We're building Professor Chicken, a smart space hen who tosses sparkling potions at bad guys to zap them with damage!",
-        "type-resolution": "\u2728 new type",
-        "sprite-gen": "\u2705 generated in preview",
-        "feature-build": "\u2705 placed at screen 0"
+        "write-spec": "✅ We're building Professor Chicken, a smart space hen who tosses sparkling potions at bad guys to zap them with damage!",
+        "type-resolution": "✨ new type",
+        "sprite-gen": "✅ generated in preview",
+        "feature-build": "✅ placed at screen 0"
       },
       "_dingedSkills": [],
       "_spriteOk": true,
@@ -130,12 +148,12 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 1,
       "name": "Crater Fields",
-      "emoji": "\ud83d\udca5"
+      "emoji": "💥"
     },
     "spec": {
       "title": "Sixtyseven Binary Oracle NPC",
@@ -172,9 +190,9 @@
         "error": "Path not allowed"
       },
       "_stepResults": {
-        "write-spec": "\u2705 I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
-        "type-resolution": "\u2705 mapped to spirit",
-        "sprite-gen": "\u2705 regenerated in preview"
+        "write-spec": "✅ I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
+        "type-resolution": "✅ mapped to spirit",
+        "sprite-gen": "✅ regenerated in preview"
       }
     },
     "aiResult": {
@@ -193,15 +211,15 @@
         "tx": 9,
         "ty": 9
       },
-      "commitMessage": "Sixtyseven the Binary Oracle \u2014 spirit",
+      "commitMessage": "Sixtyseven the Binary Oracle — spirit",
       "plainEnglish": "I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
       "isNewType": false,
       "mappedFrom": "alien",
       "_stepResults": {
-        "write-spec": "\u2705 I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
-        "type-resolution": "\u2705 mapped to spirit",
-        "sprite-gen": "\u2705 regenerated in preview",
-        "feature-build": "\u2705 placed at screen 1"
+        "write-spec": "✅ I'll create Sixtyseven, a mysterious floating alien oracle in the Crater Fields who speaks in numbers and might be trying to warn the chickens about something important!",
+        "type-resolution": "✅ mapped to spirit",
+        "sprite-gen": "✅ regenerated in preview",
+        "feature-build": "✅ placed at screen 1"
       },
       "_dingedSkills": [],
       "_spriteOk": true,
@@ -225,7 +243,7 @@
       },
       {
         "role": "user",
-        "content": "Space turkey swarm\" \u2014 *Ancient starlight flickers in approval* Ah, the dreaded Turkey Armada! Picture this, young Scribe:..."
+        "content": "Space turkey swarm\" — *Ancient starlight flickers in approval* Ah, the dreaded Turkey Armada! Picture this, young Scribe:..."
       },
       {
         "role": "assistant",
@@ -236,7 +254,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -261,15 +279,15 @@
         "tx": 9,
         "ty": 9
       },
-      "commitMessage": "Turkey Commander \u2014 turkey (new type)",
+      "commitMessage": "Turkey Commander — turkey (new type)",
       "plainEnglish": "I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
       "isNewType": true,
       "mappedFrom": null,
       "_stepResults": {
-        "write-spec": "\u2705 I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
-        "type-resolution": "\u2728 new type",
-        "sprite-gen": "\u2705 generated in preview",
-        "feature-build": "\u2705 placed at screen 0"
+        "write-spec": "✅ I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
+        "type-resolution": "✨ new type",
+        "sprite-gen": "✅ generated in preview",
+        "feature-build": "✅ placed at screen 0"
       },
       "_dingedSkills": [],
       "_spriteOk": true,
@@ -322,9 +340,9 @@
         "error": "Path not allowed"
       },
       "_stepResults": {
-        "write-spec": "\u2705 I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
-        "type-resolution": "\u2728 new type",
-        "sprite-gen": "\u2705 generated in preview"
+        "write-spec": "✅ I'll create a Turkey Commander that guards the landing zone with jet-powered feathers and patrols back and forth like a space sentinel!",
+        "type-resolution": "✨ new type",
+        "sprite-gen": "✅ generated in preview"
       }
     }
   },
@@ -344,7 +362,7 @@
       "targetGame": {
         "slug": "in-space",
         "title": "In Space",
-        "emoji": "\ud83d\ude80"
+        "emoji": "🚀"
       },
       "targetZone": null,
       "summary": "You've created an adorable space jellyfish who wants to be friends instead of fighting!",
@@ -372,7 +390,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -404,7 +422,7 @@
     "id": 1778335494181,
     "timestamp": "2026-05-09T14:04:54.181Z",
     "scribeName": "Unnamed",
-    "description": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent \u2014 a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?",
+    "description": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent — a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?",
     "contribType": "enemy",
     "originalSubmission": null,
     "chatHistory": [
@@ -418,14 +436,14 @@
       },
       {
         "role": "assistant",
-        "content": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent \u2014 a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?"
+        "content": "Ah, a magnificent cosmic wyrm to grace the starfields! *ancient wisdom gleams*\n\nPicture the Stellar Serpent — a colossal dragon drifting between planets like a living constellation. Its scales shimmer with starlight, and perhaps tiny space debris orbits around its massive form. The chickens might glimpse it through their shuttle windows, a reminder that even greater mysteries swim through the cosmic void.\n\nDoes this ancient beast slumber peacefully, or does it watch the chickens' quest with curious, galaxy-sized eyes?"
       }
     ],
     "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -457,7 +475,7 @@
     "id": 1778206914229,
     "timestamp": "2026-05-08T02:21:54.229Z",
     "scribeName": "Canine Nebula",
-    "description": "*The cosmic winds whisper of a distant realm...* Behold the **Canine Nebula** \u2014 a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys! What draws you to this doggy space realm, young Scribe?",
+    "description": "*The cosmic winds whisper of a distant realm...* Behold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys! What draws you to this doggy space realm, young Scribe?",
     "contribType": "area",
     "originalSubmission": null,
     "chatHistory": [
@@ -470,12 +488,12 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 1,
       "name": "Crater Fields",
-      "emoji": "\ud83d\udca5"
+      "emoji": "💥"
     },
     "spec": {
       "title": "Canine Nebula Allied Space Station",
@@ -488,7 +506,7 @@
     "id": 1778206539622,
     "timestamp": "2026-05-08T02:15:39.622Z",
     "scribeName": "Canine Nebula",
-    "description": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** \u2014 a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?",
+    "description": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?",
     "contribType": "area",
     "originalSubmission": null,
     "chatHistory": [
@@ -502,19 +520,19 @@
       },
       {
         "role": "assistant",
-        "content": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** \u2014 a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?"
+        "content": "*The cosmic winds whisper of a distant realm...*\n\nBehold the **Canine Nebula** — a sprawling space station shaped like a giant dog bone, where the heroic **Space Hounds** patrol the galaxy! These brave dog-pilots wear sleek spacesuits and fly ships that look like flying fire hydrants. Their leader, Captain Barkington, has been tracking the chickens' stolen shuttle because he believes they're actually space heroes on a secret mission. The Space Hounds could be unexpected allies who help the chickens navigate through asteroid fields shaped like squeaky toys!\n\nWhat draws you to this doggy space realm, young Scribe?"
       }
     ],
     "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 1,
       "name": "Crater Fields",
-      "emoji": "\ud83d\udca5"
+      "emoji": "💥"
     },
     "spec": {
       "title": "Canine Nebula Space Station Level",
@@ -556,12 +574,12 @@
       "targetGame": {
         "slug": "in-space",
         "title": "In Space",
-        "emoji": "\ud83d\ude80"
+        "emoji": "🚀"
       },
       "targetZone": {
         "index": 1,
         "name": "Crater Fields",
-        "emoji": "\ud83d\udca5"
+        "emoji": "💥"
       },
       "summary": "Your floaty head guy could be a mysterious space creature that drifts around levels!",
       "feature": "A floating enemy or NPC that moves in smooth, unpredictable patterns across the screen, possibly immune to direct cannon shots but vulnerable to environmental hazards or ricochet attacks.",
@@ -580,12 +598,12 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 3,
       "name": "Harvester Core",
-      "emoji": "\u26a1"
+      "emoji": "⚡"
     },
     "spec": {
       "title": "Floaty Head Guy Enemy Type",
@@ -627,7 +645,7 @@
       "targetGame": {
         "slug": "in-space",
         "title": "In Space",
-        "emoji": "\ud83d\ude80"
+        "emoji": "🚀"
       },
       "targetZone": null,
       "summary": "A happy space helmet character that could be a friendly helper or power-up in the game!",
@@ -655,7 +673,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -670,7 +688,7 @@
     "id": 1777946116253,
     "timestamp": "2026-05-05T01:55:16.253Z",
     "scribeName": "Unnamed",
-    "description": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization\u2014perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like\u2014wispy and translucent like between-world spirits, or something more solid and alien?",
+    "description": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization—perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like—wispy and translucent like between-world spirits, or something more solid and alien?",
     "originalSubmission": {
       "id": 1777946036923,
       "timestamp": "2026-05-05T01:53:56.923Z",
@@ -681,12 +699,12 @@
       "targetGame": {
         "slug": "in-space",
         "title": "In Space",
-        "emoji": "\ud83d\ude80"
+        "emoji": "🚀"
       },
       "targetZone": {
         "index": 1,
         "name": "Crater Fields",
-        "emoji": "\ud83d\udca5"
+        "emoji": "💥"
       },
       "summary": "Your floaty head guy could be a mysterious space creature that drifts around levels!",
       "feature": "A floating enemy or NPC that moves in smooth, unpredictable patterns across the screen, possibly immune to direct cannon shots but vulnerable to environmental hazards or ricochet attacks.",
@@ -698,7 +716,7 @@
     "chatHistory": [
       {
         "role": "assistant",
-        "content": "Ah, young Dragon Scribe, your brother has conjured something truly fascinating from the cosmic depths! These drifting entities whisper of ancient mysteries and lost civilizations among the stars\u2014perfect material for weaving epic tales into your cranky chicken saga."
+        "content": "Ah, young Dragon Scribe, your brother has conjured something truly fascinating from the cosmic depths! These drifting entities whisper of ancient mysteries and lost civilizations among the stars—perfect material for weaving epic tales into your cranky chicken saga."
       },
       {
         "role": "user",
@@ -706,19 +724,19 @@
       },
       {
         "role": "assistant",
-        "content": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization\u2014perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like\u2014wispy and translucent like between-world spirits, or something more solid and alien?"
+        "content": "*The ancient cosmic winds stir with excitement*\n\nExcellent, young scribe! These mysterious floaty beings could be the remnants of an ancient space civilization—perhaps the original guardians of the Corn Moon, now wandering as ethereal sentinels through your levels. \n\nPicture them drifting like StarClan spirits, but among the asteroids and space stations, their glowing forms providing cryptic guidance to your brave chickens. They might whisper secrets about hidden corn caches or warn of lurking iguana ambushes in the void ahead!\n\nWhat do you envision these mystical space drifters looking like—wispy and translucent like between-world spirits, or something more solid and alien?"
       }
     ],
     "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 3,
       "name": "Harvester Core",
-      "emoji": "\u26a1"
+      "emoji": "⚡"
     },
     "spec": {
       "title": "Ethereal Space Guardian NPCs",
@@ -742,14 +760,14 @@
         "tx": 9,
         "ty": 9
       },
-      "commitMessage": "\u2728 Add ethereal Cosmic Guardian spirits to Harvester Core"
+      "commitMessage": "✨ Add ethereal Cosmic Guardian spirits to Harvester Core"
     }
   },
   {
     "id": 1777945675241,
     "timestamp": "2026-05-05T01:47:55.241Z",
     "scribeName": "Unnamed",
-    "description": "By the ancient starfire! Your brother has conjured a most wondrous addition to your cosmic chicken chronicle! Sock Munch sounds like a creature straight from the Department of Mysteries \u2014 a galactic duck alien with such peculiar dietary habits!\n\nThis creates fascinating possibilities, young scribe: Will she become an unlikely ally to your cranky chickens, perhaps helping them navigate space in exchange for assistance with her size predicament? Or might the same space wizard who shrunk her be connected to the Interstellar Egg Harvesting Consortium?\n\nPicture the humor when your brave chickens discover this mighty galactic being now pecking around at sock-sized portions, like Hagrid trying to fit through a normal doorway!",
+    "description": "By the ancient starfire! Your brother has conjured a most wondrous addition to your cosmic chicken chronicle! Sock Munch sounds like a creature straight from the Department of Mysteries — a galactic duck alien with such peculiar dietary habits!\n\nThis creates fascinating possibilities, young scribe: Will she become an unlikely ally to your cranky chickens, perhaps helping them navigate space in exchange for assistance with her size predicament? Or might the same space wizard who shrunk her be connected to the Interstellar Egg Harvesting Consortium?\n\nPicture the humor when your brave chickens discover this mighty galactic being now pecking around at sock-sized portions, like Hagrid trying to fit through a normal doorway!",
     "originalSubmission": {
       "id": 1777943564177,
       "timestamp": "2026-05-05T01:12:44.177Z",
@@ -760,18 +778,18 @@
       "targetGame": {
         "slug": "in-space",
         "title": "In Space",
-        "emoji": "\ud83d\ude80"
+        "emoji": "🚀"
       },
       "targetZone": {
         "index": 3,
         "name": "Harvester Core",
-        "emoji": "\u26a1"
+        "emoji": "⚡"
       },
       "summary": "Awesome idea received!",
       "feature": "To be determined",
       "type": "mechanic",
       "excitement": "BOOM! Your idea is on its way!",
-      "forScribe": "Raw submission received \u2014 needs interpretation.",
+      "forScribe": "Raw submission received — needs interpretation.",
       "status": "read"
     },
     "chatHistory": [
@@ -784,7 +802,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -809,7 +827,7 @@
         "tx": 7,
         "ty": 8
       },
-      "commitMessage": "\ud83e\udde6\ud83e\udd86 Add Sock Munch - tiny galactic duck with sock cravings"
+      "commitMessage": "🧦🦆 Add Sock Munch - tiny galactic duck with sock cravings"
     }
   },
   {
@@ -849,12 +867,12 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": {
       "index": 0,
       "name": "Landing Zone",
-      "emoji": "\ud83c\udf15"
+      "emoji": "🌕"
     },
     "spec": {
       "title": "Quantum Chicken Cannon Transportation System",
@@ -873,7 +891,7 @@
     "id": 1777849281097,
     "timestamp": "2026-05-03T23:01:21.097Z",
     "scribeName": "Unnamed",
-    "description": "A feline warrior spirit called a StarCat \u2014 gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
+    "description": "A feline warrior spirit called a StarCat — gold and orange, moves in a patrol pattern, guards the Crater Fields for the ancient cat clans",
     "originalSubmission": null,
     "chatHistory": [
       {
@@ -885,7 +903,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -931,7 +949,7 @@
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
-      "emoji": "\ud83d\ude80"
+      "emoji": "🚀"
     },
     "targetZone": null,
     "spec": {
@@ -963,7 +981,7 @@
       "feature": "To be determined",
       "type": "mechanic",
       "excitement": "BOOM! Your idea is on its way!",
-      "forScribe": "Raw submission received \u2014 needs interpretation.",
+      "forScribe": "Raw submission received — needs interpretation.",
       "status": "read"
     },
     "chatHistory": [
