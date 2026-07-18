@@ -963,44 +963,12 @@ async function resolveType(spec, gameFileContent){
     return {ok:true, isNewType:false, isExisting:true, resolvedType:spec.characterType, dingedSkill:null};
   }
 
-  // Birds and chickens are always new types — never map to reptiles
-  const birdWords = ['chicken','bird','duck','owl','parrot','eagle','penguin','flamingo','hen','rooster','chick','feather','beak','talon','wing'];
-  const typeLC = (spec.characterType||'').toLowerCase();
-  const descLC = (spec.behaviorNotes||'').toLowerCase();
-  if(birdWords.some(w => typeLC.includes(w) || descLC.includes(w))){
-    toast('🐔 Step 2: Bird/chicken detected — generating new sprite');
-    return {ok:true, isNewType:true, isExisting:false, resolvedType:spec.characterType, reason:'Bird/chicken — always a new type', dingedSkill:null};
-  }
-
-  // Ask LLM: map to existing or genuinely new?
-  const prompt = 'A kid described a game creature called "'+spec.characterType+'". '+
-    'Description: "'+spec.behaviorNotes+'".\n'+
-    'Existing character types in the game: '+KNOWN_TYPES.join(', ')+'.\n\n'+
-    'Does "'+spec.characterType+'" map closely to one of these existing types, or is it genuinely different?\n'+
-    'IMPORTANT: NEVER map a bird, chicken, or flying creature to iguana. Iguana is for reptile/lizard creatures only.\n\n'+
-    'Return ONLY this JSON:\n'+
-    '{"decision":"map"|"new","mappedTo":"existing_type_or_null","reason":"one sentence"}';
-
-  try{
-    const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'claude_complete',max_tokens:120,messages:[{role:'user',content:prompt}]})});
-    const data = await res.json();
-    if(data.error) throw new Error(data.error);
-    const text = data.content?.find(b=>b.type==='text')?.text||'';
-    const result = JSON.parse(text.replace(/```json|```/g,'').trim());
-
-    if(result.decision==='map' && result.mappedTo && KNOWN_TYPES.includes(result.mappedTo)){
-      toast('✅ Step 2: "'+spec.characterType+'" mapped to existing "'+result.mappedTo+'"');
-      return {ok:true, isNewType:false, isExisting:false, resolvedType:result.mappedTo, mappedFrom:spec.characterType, reason:result.reason, dingedSkill:null};
-    } else {
-      toast('✨ Step 2: "'+spec.characterType+'" is a new type — will generate sprite!');
-      return {ok:true, isNewType:true, isExisting:false, resolvedType:spec.characterType, reason:result.reason, dingedSkill:null};
-    }
-  }catch(e){
-    // Fallback — default to iguana but ding type-resolution
-    toast('⚠️ Step 2 type-resolution failed — defaulting to iguana');
-    return {ok:false, isNewType:false, isExisting:false, resolvedType:'iguana', error:e.message, dingedSkill:'type-resolution'};
-  }
+  // Always generate a new sprite — LLM mapping step was wrong (everything became iguana).
+  // Kids describe new creatures and should always get new sprites.
+  const safeTypeName = (spec.characterType||'creature')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || 'creature';
+  toast('✨ Step 2: Inventing new creature "'+safeTypeName+'" — generating fresh sprite!');
+  return {ok:true, isNewType:true, isExisting:false, resolvedType:safeTypeName, reason:'Always new', dingedSkill:null};
 }
 
 // ── STEP 3: generateSprite → /sprite-gen ──
