@@ -569,6 +569,8 @@ function renderCard(s, i){
 
     <div class="card-summary">${s.summary||s.description||''}</div>
 
+    ${s.image?`<img src="${s.image}" style="max-width:100%;max-height:220px;border-radius:10px;margin:8px 0;border:2px solid rgba(255,204,2,0.25);background:#fff;" onclick="window.open(this.src)" alt="kid artwork">`:''}
+
     ${s.spec?.devNote?`<div class="card-dev-note">🔧 ${s.spec.devNote}</div>`:''}
 
     ${s.description?`
@@ -633,6 +635,39 @@ async function approve(idx){
     issues: [],
     commitSha: null,
   };
+
+  // ── KID ARTWORK — save to gallery ──
+  if(sub.contribType==='drawing'||sub.contribType==='photo'){
+    toast('🖼️ Saving artwork to gallery...');
+    try{
+      const gf=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'get_file',path:'shows/art-gallery.json'})});
+      const gd=await gf.json();
+      let gallery=[];
+      try{ if(gd.content) gallery=JSON.parse(gd.content); }catch(e){}
+      gallery.unshift({
+        id: sub.id,
+        caption: sub.scribeName||sub.description||'Untitled masterpiece',
+        image: sub.image||null,
+        from: sub.originalSubmission?.from==='cannon-master'?'Cannon Master':'Dragon Scribe',
+        savedAt: new Date().toISOString()
+      });
+      gallery=gallery.slice(0,30);
+      await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'save_file',path:'shows/art-gallery.json',
+          content:JSON.stringify(gallery,null,2),sha:gd.sha||null,
+          commitMsg:'🖼️ Gallery: "'+(sub.scribeName||'artwork').slice(0,50)+'"'})});
+      log.commitSha='art-gallery';
+    }catch(e){ log.issues.push('gallery commit failed: '+e.message); }
+    log.delivered='Artwork "'+(sub.scribeName||'untitled')+'" saved to shows/art-gallery.json';
+    log.deliveryType='artwork_saved';
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='approved';
+    await saveSubmissions('🖼️ Artwork saved: '+(sub.scribeName||'untitled').slice(0,40));
+    toast('🖼️ Saved to the gallery!');
+    renderAll();
+    return;
+  }
 
   // ── EPISODE PITCH — same pipeline as games: log + committed artifact + status ──
   if(sub.contribType==='episode'){
@@ -856,7 +891,7 @@ function renderDeliveryLog(log){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
     return;
   }
-  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺'};
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️'};
   const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed',intervention:'Intervention',ai_pass:'AI Pass'};
   el.innerHTML=log.map(e=>`
     <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">
@@ -1630,7 +1665,29 @@ function openPreview(idx){
   document.getElementById('previewActions').innerHTML =
     '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>';
 
-  if(type === 'episode'){
+  if(type === 'drawing' || type === 'photo'){
+    document.getElementById('previewSub').textContent = type==='drawing'?'✏️ KID ARTWORK — REVIEW':'📸 KID PHOTO — REVIEW';
+    const cnv=document.getElementById('previewCanvas');
+    const pctx=cnv.getContext('2d');
+    pctx.fillStyle='#000008';pctx.fillRect(0,0,cnv.width,cnv.height);
+    if(sub.image){
+      const im=new Image();
+      im.onload=()=>{
+        const sc2=Math.min((cnv.width-16)/im.width,(cnv.height-16)/im.height);
+        const iw=im.width*sc2,ih=im.height*sc2;
+        pctx.fillStyle='#fff';pctx.fillRect((cnv.width-iw)/2-4,(cnv.height-ih)/2-4,iw+8,ih+8);
+        pctx.drawImage(im,(cnv.width-iw)/2,(cnv.height-ih)/2,iw,ih);
+      };
+      im.src=sub.image;
+    }else{
+      pctx.fillStyle='rgba(255,255,255,0.5)';pctx.font='13px Fredoka One';pctx.textAlign='center';
+      pctx.fillText('No image attached',cnv.width/2,cnv.height/2);pctx.textAlign='left';
+    }
+    document.getElementById('previewDesc').textContent=(sub.description||sub.summary||'')+' — from '+(sub.originalSubmission?.from==='cannon-master'?'Cannon Master':'the kids');
+    document.getElementById('previewActions').innerHTML =
+      '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+      '<button class="preview-confirm" onclick="confirmPreviewDirect()">🖼️ SAVE TO GALLERY</button>';
+  } else if(type === 'episode'){
     // Episode pitch — no sprite, show the pitch for greenlight
     document.getElementById('previewSub').textContent = '📺 EPISODE PITCH — READ & GREENLIGHT';
     const cnv=document.getElementById('previewCanvas');

@@ -1144,6 +1144,7 @@ async function submitDraw(){
   document.getElementById('successMsg').textContent='Your drawing is flying through space to the Dragon Scribe! 🐉🎨';
   const parsed=await submitToAI('drawing',imgData,caption);
   storeSubmission(parsed,{type:'drawing',caption});
+  shrinkImage(imgData,480,small=>{submitArtToMC('drawing',caption,parsed,small);});
   document.getElementById('successMsg').textContent=parsed.excitement||'Your idea is on its way!';
 }
 
@@ -1181,6 +1182,37 @@ function shrinkImage(dataUrl,maxW,cb){
     cb(cv.toDataURL('image/jpeg',0.6));
   };
   img.src=dataUrl;
+}
+async function submitArtToMC(kind,caption,parsed,image){
+  // Ship every drawing/photo to Mission Control so Dad actually sees them
+  try{
+    const getRes=await fetch('/.netlify/functions/github-proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_submissions'})
+    });
+    const getData=await getRes.json();
+    const existing=getData.submissions||[];
+    const title=(caption||parsed.summary||(kind==='drawing'?'A drawing':'A photo')).slice(0,60);
+    existing.unshift({
+      id:Date.now(),
+      timestamp:new Date().toISOString(),
+      scribeName:title,
+      description:(caption?caption+' — ':'')+(parsed.summary||''),
+      contribType:kind,
+      type:kind,
+      originalSubmission:{from:'cannon-master',summary:parsed.summary||'',forScribe:parsed.forScribe||''},
+      image:image||null,
+      status:'pending_review',
+      targetGame:selectedGame||{slug:'in-space',title:'In Space',emoji:'🚀'},
+      targetZone:selectedZone||null,
+    });
+    await fetch('/.netlify/functions/github-proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save_submissions',submissions:existing,sha:getData.sha||null,
+        commitMsg:'🎨 Cannon Master '+kind+': "'+title+'"'})
+    });
+    return true;
+  }catch(e){console.error('Art submit failed:',e);return false;}
 }
 async function submitEpisodeToShow(text,parsed,image){
   // Write directly to the shared Mission Control queue
@@ -1255,6 +1287,7 @@ async function submitPhoto(){
   showSuccessLocation();
   const parsed=await submitToAI('photo',photoDataUrl,caption);
   storeSubmission(parsed,{type:'photo',caption});
+  shrinkImage(photoDataUrl,480,small=>{submitArtToMC('photo',caption,parsed,small);});
   document.getElementById('successMsg').textContent=parsed.excitement||'Your photo is on its way!';
 }
 
