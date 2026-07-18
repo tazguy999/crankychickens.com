@@ -1,5 +1,24 @@
 [
   {
+    "id": 1784417352014,
+    "timestamp": "2026-07-18T23:29:12.014Z",
+    "scribeName": "Better animation in show",
+    "description": "Better animation in show.",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "You want the Cranky Chickens animated show to look super cool and smooth, just like your favorite cartoons!"
+    },
+    "image": null,
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
     "id": 1784414219305,
     "timestamp": "2026-07-18T22:36:59.305Z",
     "scribeName": "There should be a new weapon that",
