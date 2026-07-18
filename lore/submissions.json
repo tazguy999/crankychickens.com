@@ -30,7 +30,7 @@
         "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
       }
     ],
-    "status": "pending_review",
+    "status": "approved",
     "targetGame": {
       "slug": "show",
       "title": "The Adventures of Cranky Chickens",
