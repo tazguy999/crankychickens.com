@@ -1593,6 +1593,25 @@ function openPreview(idx){
     const cnv=document.getElementById('previewCanvas');
     const pctx=cnv.getContext('2d');
     pctx.fillStyle='#000008';pctx.fillRect(0,0,cnv.width,cnv.height);
+    if(sub.image){
+      const im=new Image();
+      im.onload=()=>{
+        const sc2=Math.min((cnv.width-20)/im.width,(cnv.height-58)/im.height);
+        const iw=im.width*sc2,ih=im.height*sc2;
+        pctx.drawImage(im,(cnv.width-iw)/2,44,iw,ih);
+        pctx.fillStyle='#ffcc02';pctx.font='bold 15px Fredoka One';pctx.textAlign='center';
+        pctx.fillText('📺 '+(sub.scribeName||'Untitled Episode'),cnv.width/2,26);
+        pctx.textAlign='left';
+      };
+      im.src=sub.image;
+      pctx.fillStyle='#ffcc02';pctx.font='bold 15px Fredoka One';pctx.textAlign='center';
+      pctx.fillText('📺 loading art...',cnv.width/2,26);pctx.textAlign='left';
+      document.getElementById('previewDesc').textContent=(sub.description||'')+' — The Adventures of Cranky Chickens';
+      document.getElementById('previewActions').innerHTML =
+        '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+        '<button class="preview-confirm" onclick="confirmPreviewDirect()">📺 GREENLIGHT IT</button>';
+      return;
+    }
     pctx.fillStyle='#ffcc02';pctx.font='bold 18px Fredoka One';pctx.textAlign='center';
     pctx.fillText('📺 '+(sub.scribeName||'Untitled Episode'),cnv.width/2,50);
     pctx.fillStyle='rgba(255,255,255,0.8)';pctx.font='12px Fredoka One';

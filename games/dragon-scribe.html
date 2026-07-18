@@ -1046,27 +1046,45 @@ window.addEventListener('load',()=>{
 // ═══ VOICE-TO-TEXT (for younger kids) ═══
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let activeMic=null;
+function micReset(btn){activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';}
 function attachMic(fieldId){
-  if(!SR)return; // unsupported — buttons stay hidden
   const btn=document.getElementById('mic_'+fieldId);
   if(!btn)return;
-  btn.style.display='inline-flex';
+  btn.style.display='inline-flex'; // ALWAYS show — explain if unsupported
   btn.addEventListener('click',()=>{
-    if(activeMic){activeMic.stop();return;}
+    if(!SR){
+      alert('🎤 Voice typing is not available in this browser.\n\nTry opening this page in Chrome or Safari — or ask a grown-up to check microphone settings!');
+      return;
+    }
+    if(activeMic){try{activeMic.stop();}catch(e){}return;}
     const field=document.getElementById(fieldId);
-    const rec=new SR();
-    rec.lang='en-US';rec.interimResults=false;rec.continuous=false;
+    const baseValue=field.value?field.value.trim()+' ':'';
+    let rec;
+    try{rec=new SR();}catch(e){alert('🎤 Could not start the microphone: '+e.message);return;}
+    rec.lang='en-US';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
     activeMic=rec;
-    btn.textContent='🔴 listening... tap to stop';
+    btn.textContent='🔴 listening... say your idea!';
     btn.style.background='rgba(255,60,60,0.3)';
     rec.onresult=e=>{
-      const txt=Array.from(e.results).map(r=>r[0].transcript).join(' ');
-      field.value=(field.value?field.value+' ':'')+txt;
+      // Live words appear as he talks — big feedback win for kids
+      let txt='';
+      for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;
+      field.value=baseValue+txt;
       field.dispatchEvent(new Event('input'));
     };
-    rec.onend=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
-    rec.onerror=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
-    rec.start();
+    rec.onend=()=>micReset(btn);
+    rec.onerror=ev=>{
+      micReset(btn);
+      if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+        alert('🎤 The microphone is blocked!\n\nAsk a grown-up to tap the 🔒 or "aA" next to the web address and turn the Microphone ON.');
+      }else if(ev.error==='no-speech'){
+        btn.textContent='🎤 did not hear anything — try again!';
+        setTimeout(()=>micReset(btn),2500);
+      }else if(ev.error!=='aborted'){
+        alert('🎤 Microphone problem: '+ev.error);
+      }
+    };
+    try{rec.start();}catch(e){micReset(btn);alert('🎤 Could not start listening: '+e.message);}
   });
 }
 

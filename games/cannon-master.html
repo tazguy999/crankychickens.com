@@ -702,6 +702,37 @@ body::before {
 <!-- ════════════════════════════════════ -->
 <!--  TEXT IDEA SCREEN                   -->
 <!-- ════════════════════════════════════ -->
+<div class="screen" id="screenEpisodeChoose">
+  <div class="hdr">
+    <div class="title">📺 EPISODE IDEA</div>
+    <div class="sub">HOW DO YOU WANT TO PITCH IT?</div>
+  </div>
+  <div class="nav-back" onclick="episodeMode=false;goTo('screenHome')">← Back</div>
+  <div class="big-btn-grid" style="padding:16px;">
+    <button class="big-btn full" onclick="goTo('screenDraw')" style="border-color:rgba(255,204,2,0.6);">
+      <span class="btn-icon">🎨</span>
+      <div>
+        <div class="btn-label">DRAW THE EPISODE!</div>
+        <div class="btn-sub">Draw the aliens, the corn, anything!</div>
+      </div>
+    </button>
+    <button class="big-btn full" onclick="goTo('screenText')" style="border-color:rgba(255,204,2,0.6);">
+      <span class="btn-icon">💬</span>
+      <div>
+        <div class="btn-label">TELL THE STORY!</div>
+        <div class="btn-sub">Type it or talk it 🎤</div>
+      </div>
+    </button>
+    <button class="big-btn full" onclick="goTo('screenPhoto')" style="border-color:rgba(255,204,2,0.6);">
+      <span class="btn-icon">📸</span>
+      <div>
+        <div class="btn-label">SEND A DRAWING PHOTO!</div>
+        <div class="btn-sub">Paper drawings welcome!</div>
+      </div>
+    </button>
+  </div>
+</div>
+
 <div class="screen" id="screenText">
   <div class="hdr">
     <div class="title" id="textScreenTitle">💬 YOUR BIG IDEA</div>
@@ -1087,9 +1118,20 @@ function storeSubmission(parsed, raw){
 }
 
 async function submitDraw(){
-  if(!selectedGame){ showGamePicker('screenDraw'); return; }
   const caption=document.getElementById('drawCaption').value;
   const imgData=drawCanvas.toDataURL('image/png');
+  if(episodeMode){
+    goTo('screenSuccess');
+    document.getElementById('successMsg').textContent='📺 Your episode drawing is flying to the studio!';
+    const parsed=await submitToAI('drawing',imgData,'EPISODE PITCH drawing for the animated show. '+caption);
+    storeSubmission(parsed,{type:'episode-drawing',caption});
+    shrinkImage(imgData,480,async small=>{
+      await submitEpisodeToShow(caption||parsed.summary||'Episode drawing',parsed,small);
+    });
+    document.getElementById('successMsg').textContent=parsed.excitement||'📺 Episode drawing delivered to the studio!';
+    return;
+  }
+  if(!selectedGame){ showGamePicker('screenDraw'); return; }
   goTo('screenSuccess');
   showSuccessLocation();
   document.getElementById('successMsg').textContent='Your drawing is flying through space to the Dragon Scribe! 🐉🎨';
@@ -1115,9 +1157,25 @@ function startEpisode(){
   document.getElementById('textScreenTitle').textContent='📺 EPISODE IDEA';
   document.getElementById('textScreenSub').textContent='WHAT HAPPENS IN THE NEXT SHOW?';
   document.getElementById('ideaText').placeholder='What happens in the episode? Who is in it? What goes wrong? How does it end?... 📺';
-  goTo('screenText');
+  document.getElementById('drawCaption').placeholder='What is happening in your episode drawing? Who is this? 📺';
+  document.getElementById('photoCaption').placeholder='Who did you draw? What do they do in the episode? 📺';
+  goTo('screenEpisodeChoose');
 }
-async function submitEpisodeToShow(text,parsed){
+// Shrink images before shipping to the shared queue (keeps the JSON light)
+function shrinkImage(dataUrl,maxW,cb){
+  const img=new Image();
+  img.onload=()=>{
+    const scale=Math.min(1,maxW/img.width);
+    const cv=document.createElement('canvas');
+    cv.width=Math.round(img.width*scale);cv.height=Math.round(img.height*scale);
+    const cx2=cv.getContext('2d');
+    cx2.fillStyle='#fff';cx2.fillRect(0,0,cv.width,cv.height);
+    cx2.drawImage(img,0,0,cv.width,cv.height);
+    cb(cv.toDataURL('image/jpeg',0.6));
+  };
+  img.src=dataUrl;
+}
+async function submitEpisodeToShow(text,parsed,image){
   // Write directly to the shared Mission Control queue
   try{
     const getRes=await fetch('/.netlify/functions/github-proxy',{
@@ -1134,6 +1192,7 @@ async function submitEpisodeToShow(text,parsed){
       description:text,
       contribType:'episode',
       originalSubmission:{from:'cannon-master',summary:parsed.summary||''},
+      image:image||null,
       status:'pending_review',
       targetGame:{slug:'show',title:'The Adventures of Cranky Chickens',emoji:'📺'},
       targetZone:null,
@@ -1171,9 +1230,20 @@ async function submitText(){
 }
 
 async function submitPhoto(){
-  if(!selectedGame){ showGamePicker('screenPhoto'); return; }
   if(!photoDataUrl){alert('Pick a photo first! 📸');return;}
   const caption=document.getElementById('photoCaption').value;
+  if(episodeMode){
+    goTo('screenSuccess');
+    document.getElementById('successMsg').textContent='📺 Your episode photo is flying to the studio!';
+    const parsed=await submitToAI('photo',photoDataUrl,'EPISODE PITCH photo (probably a paper drawing) for the animated show. '+caption);
+    storeSubmission(parsed,{type:'episode-photo',caption});
+    shrinkImage(photoDataUrl,480,async small=>{
+      await submitEpisodeToShow(caption||parsed.summary||'Episode photo',parsed,small);
+    });
+    document.getElementById('successMsg').textContent=parsed.excitement||'📺 Episode art delivered to the studio!';
+    return;
+  }
+  if(!selectedGame){ showGamePicker('screenPhoto'); return; }
   goTo('screenSuccess');
   showSuccessLocation();
   const parsed=await submitToAI('photo',photoDataUrl,caption);
@@ -1198,6 +1268,8 @@ function resetAll(){
   const t=document.getElementById('textScreenTitle');if(t)t.textContent='💬 YOUR BIG IDEA';
   const s=document.getElementById('textScreenSub');if(s)s.textContent='TYPE IT OUT!';
   const i=document.getElementById('ideaText');if(i)i.placeholder='Type your amazing idea here! The bigger the better! 🚀';
+  const dc=document.getElementById('drawCaption');if(dc)dc.placeholder='Type what it is, what it does, why it is awesome... 🚀';
+  const pc=document.getElementById('photoCaption');if(pc)pc.placeholder='What is this? Tell us about it! 🎨';
   clearCanvas();
   document.getElementById('drawCaption').value='';
   document.getElementById('ideaText').value='';
@@ -1214,27 +1286,45 @@ function resetAll(){
 // ═══ VOICE-TO-TEXT (for younger kids) ═══
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let activeMic=null;
+function micReset(btn){activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';}
 function attachMic(fieldId){
-  if(!SR)return; // unsupported — buttons stay hidden
   const btn=document.getElementById('mic_'+fieldId);
   if(!btn)return;
-  btn.style.display='inline-flex';
+  btn.style.display='inline-flex'; // ALWAYS show — explain if unsupported
   btn.addEventListener('click',()=>{
-    if(activeMic){activeMic.stop();return;}
+    if(!SR){
+      alert('🎤 Voice typing is not available in this browser.\n\nTry opening this page in Chrome or Safari — or ask a grown-up to check microphone settings!');
+      return;
+    }
+    if(activeMic){try{activeMic.stop();}catch(e){}return;}
     const field=document.getElementById(fieldId);
-    const rec=new SR();
-    rec.lang='en-US';rec.interimResults=false;rec.continuous=false;
+    const baseValue=field.value?field.value.trim()+' ':'';
+    let rec;
+    try{rec=new SR();}catch(e){alert('🎤 Could not start the microphone: '+e.message);return;}
+    rec.lang='en-US';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
     activeMic=rec;
-    btn.textContent='🔴 listening... tap to stop';
+    btn.textContent='🔴 listening... say your idea!';
     btn.style.background='rgba(255,60,60,0.3)';
     rec.onresult=e=>{
-      const txt=Array.from(e.results).map(r=>r[0].transcript).join(' ');
-      field.value=(field.value?field.value+' ':'')+txt;
+      // Live words appear as he talks — big feedback win for kids
+      let txt='';
+      for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;
+      field.value=baseValue+txt;
       field.dispatchEvent(new Event('input'));
     };
-    rec.onend=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
-    rec.onerror=()=>{activeMic=null;btn.textContent='🎤 talk instead of type';btn.style.background='rgba(120,200,255,0.15)';};
-    rec.start();
+    rec.onend=()=>micReset(btn);
+    rec.onerror=ev=>{
+      micReset(btn);
+      if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+        alert('🎤 The microphone is blocked!\n\nAsk a grown-up to tap the 🔒 or "aA" next to the web address and turn the Microphone ON.');
+      }else if(ev.error==='no-speech'){
+        btn.textContent='🎤 did not hear anything — try again!';
+        setTimeout(()=>micReset(btn),2500);
+      }else if(ev.error!=='aborted'){
+        alert('🎤 Microphone problem: '+ev.error);
+      }
+    };
+    try{rec.start();}catch(e){micReset(btn);alert('🎤 Could not start listening: '+e.message);}
   });
 }
 
