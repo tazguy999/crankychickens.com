@@ -1,5 +1,32 @@
 [
   {
+    "id": 1784413957296,
+    "timestamp": "2026-07-18T22:32:37.296Z",
+    "scribeName": "Corn snatchers",
+    "description": "On a Tuesday Scratchy, El Jaguar, Pearl and Kevin are drinking juice after their truce. Then they hear a noise but El Jaguar didn't come because she was too scared. Scratchy, Pearl and Kevin saw a light picking up all of their corn one by one. Then it flew away. Then they decided to go after the corn snatchers. Meanwhile in the ship king squirrelington was yelling at his assistant named nut and saying he was nuts. And they needed to capture the angry chickens.. And dog.. And the story keeps going",
+    "contribType": "enemy",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Corn Snatchers: Alien Heist Story Arc",
+      "devNote": "Nick, this introduces a multi-character story trigger on 'Tuesday' in-game time, requiring a cutscene sequence where El Jaguar is marked as 'fear-flagged' and skips the corn abduction event; King Squirrelington and Nut will need NPC AI roles as antagonists with a capture-objective behavior tree.",
+      "nicksNote": "Your lore is SO good that Nick is probably already drawing King Squirrelington on a sticky note right now! 🐿️🌽🚀",
+      "priority": "high"
+    }
+  },
+  {
     "id": 1784334160019,
     "timestamp": "2026-07-18T00:22:40.019Z",
     "scribeName": "Professor chicken",
