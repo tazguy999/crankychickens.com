@@ -1740,22 +1740,46 @@ async function runPreviewPipeline(idx){
 function renderLiveSprite(drawFnStr, spec, cnv, pctx){
   if(previewRAF) cancelAnimationFrame(previewRAF);
 
-  // Safely evaluate the draw function in a sandboxed scope
-  let drawFn;
+  // Sanitize type name to valid JS identifier
+  const safeType = (spec.characterType||'creature')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || 'creature';
+
+  // Log generated code so we can debug issues
+  console.log('[Preview] Rendering sprite type:', safeType);
+  console.log('[Preview] Generated code:\n', drawFnStr);
+
+  // Extract just the function definition to avoid extra content causing parse errors
+  function extractFn(code, name) {
+    const start = code.indexOf('function drawCharacter_');
+    if(start === -1) return code;
+    let depth = 0, i = start, started = false;
+    while(i < code.length) {
+      if(code[i] === '{') { depth++; started = true; }
+      else if(code[i] === '}') { depth--; if(started && depth === 0) return code.slice(start, i+1); }
+      i++;
+    }
+    return code.slice(start);
+  }
+  const cleanFn = extractFn(drawFnStr, safeType);
+
+  // Use new Function so ctx is injected as a real parameter
+  let innerFn;
   try{
-    // Build a function that takes ctx and calls the draw function
-    const wrapped = '(function(ctx, x, y, hp, fr, cfg, isZeroG){\n' +
-      drawFnStr + '\n' +
-      'drawCharacter_'+spec.characterType+'(x, y, hp, fr, cfg, isZeroG);\n' +
-      '})';
-    drawFn = eval(wrapped);
+    const creator = new Function('ctx',
+      cleanFn + '\n' +
+      'var _f = typeof drawCharacter_' + safeType + ' !== "undefined" ? drawCharacter_' + safeType + ' : null;\n' +
+      'return _f;'
+    );
+    innerFn = creator(pctx);
+    if(!innerFn) throw new Error('drawCharacter_' + safeType + ' not found after eval');
   }catch(e){
     console.error('Preview eval failed:', e);
+    console.log('[Preview] Cleaned code that failed:\n', cleanFn);
     pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
     pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='11px Fredoka One'; pctx.textAlign='center';
-    pctx.fillText('Preview eval error: '+e.message.slice(0,50), cnv.width/2, cnv.height/2-8);
+    pctx.fillText('Preview eval error: '+e.message.slice(0,52), cnv.width/2, cnv.height/2-8);
     pctx.font='9px monospace'; pctx.fillStyle='rgba(255,150,100,0.5)';
-    pctx.fillText('Check console for full error', cnv.width/2, cnv.height/2+12);
+    pctx.fillText('Check console for full error + code', cnv.width/2, cnv.height/2+12);
     pctx.textAlign='left';
     return;
   }
@@ -1779,7 +1803,7 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
     // Draw the actual generated sprite
     try{
       const hp = 0.7 + Math.sin(previewFrame*0.03)*0.3;
-      drawFn(pctx, cx, cy, hp, previewFrame, {color:spec.color, eyeColor:spec.eyeColor, name:spec.name}, false);
+      innerFn(cx, cy, hp, previewFrame, {color:spec.color, eyeColor:spec.eyeColor, name:spec.name}, false);
     }catch(e){
       pctx.fillStyle='rgba(255,100,100,0.5)'; pctx.font='10px monospace'; pctx.textAlign='center';
       pctx.fillText('Render error: '+e.message.slice(0,40), cnv.width/2, cnv.height-10);
