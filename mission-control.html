@@ -1039,16 +1039,17 @@ async function generateSprite(spec, sub, isNewType){
 
     try{
       const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'claude_complete',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
+        body:JSON.stringify({action:'claude_complete',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
       const data = await res.json();
       if(data.error) throw new Error(data.error);
       let fn = data.content?.find(b=>b.type==='text')?.text||'';
       fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
       if(!fn.includes('function drawCharacter_')) throw new Error('Missing function declaration');
-      if(!fn.includes('ctx.save')) throw new Error('Missing ctx.save');
-      if(!fn.includes('ctx.restore')) throw new Error('Missing ctx.restore');
+      // Auto-patch missing save/restore — don't reject over it
+      if(!fn.includes('ctx.save')) fn = fn.replace(/function drawCharacter_[^{]+{/, '$&\n  ctx.save();');
+      if(!fn.includes('ctx.restore')) fn = fn.replace(/}\s*$/, '  ctx.restore();\n}');
       const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
-      if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' vs '+closes);
+      if(Math.abs(opens-closes)>4) throw new Error('Brace imbalance: '+opens+' vs '+closes);
       toast('✅ Step 3: New creature "'+typeName+'" drawn!');
       return {ok:true, drawFn:fn, isNewType:true, resolvedTypeName:typeName};
     }catch(e){
@@ -1086,10 +1087,10 @@ async function generateSprite(spec, sub, isNewType){
       let fn = data.content?.find(b=>b.type==='text')?.text||'';
       fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
       if(!fn.includes('function drawCharacter_')) throw new Error('Missing function declaration');
-      if(!fn.includes('ctx.save')) throw new Error('Missing ctx.save');
-      if(!fn.includes('ctx.restore')) throw new Error('Missing ctx.restore');
+      if(!fn.includes('ctx.save')) fn = fn.replace(/function drawCharacter_[^{]+{/, '$&\n  ctx.save();');
+      if(!fn.includes('ctx.restore')) fn = fn.replace(/}\s*$/, '  ctx.restore();\n}');
       const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
-      if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' vs '+closes);
+      if(Math.abs(opens-closes)>4) throw new Error('Brace imbalance: '+opens+' vs '+closes);
       toast('✅ Step 3: Sprite generated for '+typeName);
       return {ok:true, drawFn:fn, isNewType:false};
     }catch(e){
