@@ -1034,8 +1034,10 @@ async function generateSprite(spec, sub, isNewType){
       '- HP bar: ctx.fillStyle="#111";ctx.fillRect(x,y-8,30,5);ctx.fillStyle=cfg.color||"'+spec.color+'";ctx.fillRect(x,y-8,30*hp,5);\n'+
       '- Stay within 32x32 bounding box at position (x,y)\n'+
       '- canvas2D only — no external libraries\n'+
+      '- IMPORTANT: Use double-quoted strings or template literals only. Never single-quoted strings (they break with apostrophes).\n'+
+      '- IMPORTANT: No comments in the output. Code only.\n'+
       '- Be creative! This is a new species.\n\n'+
-      'Respond with ONLY the JavaScript function. No markdown.';
+      'Respond with ONLY the JavaScript function. No markdown, no comments, no explanation.';
 
     try{
       const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1749,6 +1751,22 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
   console.log('[Preview] Rendering sprite type:', safeType);
   console.log('[Preview] Generated code:\n', drawFnStr);
 
+  // Sanitize: fix common model mistakes that break JS parsing
+  function sanitizeCode(code) {
+    // Strip JS line comments to avoid apostrophes in comments breaking parse
+    code = code.replace(/\/\/[^\n]*/g, '');
+    // Fix the classic 'Name's thing' pattern → "Name's thing"
+    code = code.replace(/'([^'\n]{0,60})'s\s/g, function(m, inner) {
+      return '"' + inner + "'s ";
+    });
+    // Convert remaining single-quoted strings to double-quoted (safe for no-apostrophe cases)
+    code = code.replace(/'([^'\n\\]{0,80})'/g, function(m, inner) {
+      if(inner.includes('"')) return m;
+      return '"' + inner + '"';
+    });
+    return code;
+  }
+
   // Extract just the function definition to avoid extra content causing parse errors
   function extractFn(code, name) {
     const start = code.indexOf('function drawCharacter_');
@@ -1761,7 +1779,8 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
     }
     return code.slice(start);
   }
-  const cleanFn = extractFn(drawFnStr, safeType);
+  const sanitized = sanitizeCode(drawFnStr);
+  const cleanFn = extractFn(sanitized, safeType);
 
   // Use new Function so ctx is injected as a real parameter
   let innerFn;
@@ -1778,9 +1797,11 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
     console.log('[Preview] Cleaned code that failed:\n', cleanFn);
     pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
     pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='11px Fredoka One'; pctx.textAlign='center';
-    pctx.fillText('Preview eval error: '+e.message.slice(0,52), cnv.width/2, cnv.height/2-8);
-    pctx.font='9px monospace'; pctx.fillStyle='rgba(255,150,100,0.5)';
-    pctx.fillText('Check console for full error + code', cnv.width/2, cnv.height/2+12);
+    pctx.fillText('Preview unavailable', cnv.width/2, cnv.height/2-16);
+    pctx.font='10px Fredoka One'; pctx.fillStyle='rgba(255,200,100,0.7)';
+    pctx.fillText('Sprite is ready — click Approve', cnv.width/2, cnv.height/2+4);
+    pctx.font='9px monospace'; pctx.fillStyle='rgba(200,150,100,0.5)';
+    pctx.fillText(e.message.slice(0,48), cnv.width/2, cnv.height/2+20);
     pctx.textAlign='left';
     return;
   }
