@@ -516,6 +516,7 @@ body::before {
         <div class="lore-chip" onclick="pickContribType('secret','🔐 Secret',this)">🔐 Secret Passage</div>
         <div class="lore-chip" onclick="pickContribType('rename','🏷️ Rename Zone',this)">🏷️ Rename a Zone</div>
         <div class="lore-chip" onclick="pickContribType('lore','📖 Add Lore Text',this)">📖 Lore Text</div>
+        <div class="lore-chip" onclick="pickContribType('episode','📺 New Episode',this)" style="border-color:rgba(255,204,2,0.5)">📺 New Episode</div>
       </div>
 
       <div class="lore-section-title" id="zonePickLabel">✦ Which Zone? <span style="opacity:0.5;font-size:11px">(optional)</span></div>
@@ -955,7 +956,7 @@ async function castSpell(){
     originalSubmission:currentSubmission||null,
     chatHistory:chatHistory.slice(0,6),
     status:'pending_review',
-    targetGame:selectedGame||{slug:'in-space',title:'In Space',emoji:'🚀'},
+    targetGame:selectedContribType==='episode'?{slug:'show',title:'The Adventures of Cranky Chickens',emoji:'📺'}:(selectedGame||{slug:'in-space',title:'In Space',emoji:'🚀'}),
     targetZone:selectedZone||null,
   };
 

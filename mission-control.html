@@ -616,6 +616,19 @@ async function approve(idx){
     commitSha: null,
   };
 
+  // ── EPISODE PITCH ──
+  if(sub.contribType==='episode'){
+    toast('📺 Greenlighting episode pitch...');
+    log.delivered = 'Episode pitch "'+(sub.scribeName||sub.spec?.title||'Untitled')+'" GREENLIT — queued for production with Dad + Claude';
+    log.deliveryType = 'episode_greenlight';
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='approved';
+    await saveSubmissions('📺 Episode greenlit: '+(sub.scribeName||'Untitled'));
+    toast('📺 Episode GREENLIT! Production queued.');
+    renderAll();
+    return;
+  }
+
   // ── NEW AREA ──
   if(sub.contribType==='area'){
     toast('🗺️ Generating new level...');
@@ -1574,7 +1587,30 @@ function openPreview(idx){
   document.getElementById('previewActions').innerHTML =
     '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>';
 
-  if(type === 'enemy'){
+  if(type === 'episode'){
+    // Episode pitch — no sprite, show the pitch for greenlight
+    document.getElementById('previewSub').textContent = '📺 EPISODE PITCH — READ & GREENLIGHT';
+    const cnv=document.getElementById('previewCanvas');
+    const pctx=cnv.getContext('2d');
+    pctx.fillStyle='#000008';pctx.fillRect(0,0,cnv.width,cnv.height);
+    pctx.fillStyle='#ffcc02';pctx.font='bold 18px Fredoka One';pctx.textAlign='center';
+    pctx.fillText('📺 '+(sub.scribeName||'Untitled Episode'),cnv.width/2,50);
+    pctx.fillStyle='rgba(255,255,255,0.8)';pctx.font='12px Fredoka One';
+    const words=(sub.description||'No description').split(' ');
+    let line='',ly=85;
+    words.forEach(w=>{
+      if((line+' '+w).length>52){pctx.fillText(line.trim(),cnv.width/2,ly);ly+=18;line=w;}
+      else line+=' '+w;
+    });
+    if(line.trim())pctx.fillText(line.trim(),cnv.width/2,ly);
+    pctx.fillStyle='rgba(170,255,170,0.7)';pctx.font='11px Fredoka One';
+    pctx.fillText('Approving queues this for production',cnv.width/2,cnv.height-16);
+    pctx.textAlign='left';
+    document.getElementById('previewDesc').textContent='The Adventures of Cranky Chickens — pitched by the writers room.';
+    document.getElementById('previewActions').innerHTML =
+      '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+      '<button class="preview-confirm" onclick="confirmPreviewDirect()">📺 GREENLIGHT IT</button>';
+  } else if(type === 'enemy'){
     // Auto-run live sprite generation
     document.getElementById('previewSub').textContent = 'GENERATING LIVE SPRITE — PLEASE WAIT';
     runPreviewPipeline(idx);
