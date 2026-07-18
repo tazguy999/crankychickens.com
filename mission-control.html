@@ -1780,7 +1780,12 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
     return code.slice(start);
   }
   const sanitized = sanitizeCode(drawFnStr);
-  const cleanFn = extractFn(sanitized, safeType);
+  // Skip extraction — pass full sanitized code, extraction was causing brace-counting issues
+  const cleanFn = sanitized;
+
+  // Store generated code globally so Nick can inspect it from console
+  window._lastPreviewCode = drawFnStr;
+  window._lastCleanCode = cleanFn;
 
   // Use new Function so ctx is injected as a real parameter
   let innerFn;
@@ -1794,14 +1799,20 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
     if(!innerFn) throw new Error('drawCharacter_' + safeType + ' not found after eval');
   }catch(e){
     console.error('Preview eval failed:', e);
-    console.log('[Preview] Cleaned code that failed:\n', cleanFn);
+    console.log('[Preview] Raw code:\n', drawFnStr);
+    console.log('[Preview] Cleaned code:\n', cleanFn);
+    // Show first 120 chars of generated code on screen so we can debug on mobile
     pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
     pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='11px Fredoka One'; pctx.textAlign='center';
-    pctx.fillText('Preview unavailable', cnv.width/2, cnv.height/2-16);
+    pctx.fillText('Preview unavailable', cnv.width/2, 60);
     pctx.font='10px Fredoka One'; pctx.fillStyle='rgba(255,200,100,0.7)';
-    pctx.fillText('Sprite is ready — click Approve', cnv.width/2, cnv.height/2+4);
-    pctx.font='9px monospace'; pctx.fillStyle='rgba(200,150,100,0.5)';
-    pctx.fillText(e.message.slice(0,48), cnv.width/2, cnv.height/2+20);
+    pctx.fillText('Sprite ready — click Approve', cnv.width/2, 82);
+    pctx.font='8px monospace'; pctx.fillStyle='rgba(180,180,255,0.6)';
+    const preview = cleanFn.slice(0,200).replace(/\n/g,' ');
+    const words = preview.match(/.{1,55}/g)||[];
+    words.slice(0,3).forEach((line,i) => pctx.fillText(line, cnv.width/2, 106+i*14));
+    pctx.fillStyle='rgba(200,150,100,0.5)'; pctx.font='9px monospace';
+    pctx.fillText('Error: '+e.message.slice(0,44), cnv.width/2, cnv.height-12);
     pctx.textAlign='left';
     return;
   }
