@@ -1,5 +1,51 @@
 [
   {
+    "id": 1784334160019,
+    "timestamp": "2026-07-18T00:22:40.019Z",
+    "scribeName": "Professor chicken",
+    "description": "Throws potions at enemies causing damage",
+    "contribType": "enemy",
+    "originalSubmission": {
+      "id": 1784334095816,
+      "timestamp": "2026-07-18T00:21:35.816Z",
+      "raw": {
+        "type": "drawing",
+        "caption": "Throws potions at characters that causes damage "
+      },
+      "targetGame": {
+        "slug": "in-space",
+        "title": "In Space",
+        "emoji": "🚀"
+      },
+      "targetZone": null,
+      "summary": "Awesome idea received!",
+      "feature": "To be determined",
+      "type": "mechanic",
+      "excitement": "BOOM! Your idea is on its way!",
+      "forScribe": "Raw submission received — needs interpretation.",
+      "status": "read"
+    },
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "A new scroll arrives from the Cannon Master! The ancient runes shimmer with potential. What lore shall we weave from this idea, Scribe?"
+      }
+    ],
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "New lore entry",
+      "devNote": "Review and implement per scribe description.",
+      "nicksNote": "Your scroll is sealed and flying to Nick!",
+      "priority": "medium"
+    }
+  },
+  {
     "id": 1778381319471,
     "timestamp": "2026-05-10T02:48:39.471Z",
     "scribeName": "Six seven",
