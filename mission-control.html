@@ -1005,7 +1005,12 @@ async function resolveType(spec, gameFileContent){
 // ── STEP 3: generateSprite → /sprite-gen ──
 // Two modes: existing type (reference examples) or new creature (blank slate)
 async function generateSprite(spec, sub, isNewType){
-  const typeName = spec.characterType;
+  // Sanitize: typeName must be a valid JS identifier
+  const typeName = (spec.characterType||'chicken')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_|_$/g,'')
+    || 'chicken';
 
   if(isNewType){
     toast('✨ Step 3: Inventing new creature "'+typeName+'"...');
@@ -1039,13 +1044,13 @@ async function generateSprite(spec, sub, isNewType){
       if(data.error) throw new Error(data.error);
       let fn = data.content?.find(b=>b.type==='text')?.text||'';
       fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-      if(!fn.includes('function drawCharacter_')) throw new Error('Response is not a draw function');
-      if(!fn.includes('ctx.save()')) throw new Error('Missing ctx.save()');
-      if(!fn.includes('ctx.restore()')) throw new Error('Missing ctx.restore()');
+      if(!fn.includes('function drawCharacter_')) throw new Error('Missing function declaration');
+      if(!fn.includes('ctx.save')) throw new Error('Missing ctx.save');
+      if(!fn.includes('ctx.restore')) throw new Error('Missing ctx.restore');
       const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
       if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' vs '+closes);
       toast('✅ Step 3: New creature "'+typeName+'" drawn!');
-      return {ok:true, drawFn:fn, isNewType:true};
+      return {ok:true, drawFn:fn, isNewType:true, resolvedTypeName:typeName};
     }catch(e){
       toast('⚠️ Step 3 new creature failed: '+e.message.slice(0,50));
       return {ok:false, error:e.message, dingedSkill:'sprite-gen'};
@@ -1080,9 +1085,9 @@ async function generateSprite(spec, sub, isNewType){
       if(data.error) throw new Error(data.error);
       let fn = data.content?.find(b=>b.type==='text')?.text||'';
       fn = fn.replace(/^```javascript\s*/,'').replace(/^```js\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-      if(!fn.includes('function drawCharacter_')) throw new Error('Response is not a draw function');
-      if(!fn.includes('ctx.save()')) throw new Error('Missing ctx.save()');
-      if(!fn.includes('ctx.restore()')) throw new Error('Missing ctx.restore()');
+      if(!fn.includes('function drawCharacter_')) throw new Error('Missing function declaration');
+      if(!fn.includes('ctx.save')) throw new Error('Missing ctx.save');
+      if(!fn.includes('ctx.restore')) throw new Error('Missing ctx.restore');
       const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
       if(Math.abs(opens-closes)>2) throw new Error('Brace imbalance: '+opens+' vs '+closes);
       toast('✅ Step 3: Sprite generated for '+typeName);
@@ -1691,7 +1696,7 @@ async function runPreviewPipeline(idx){
       drawFn = s3.drawFn;
       logStep('✅ Sprite ready!', 'rgba(100,220,100,0.8)');
     } else {
-      logStep('⚠️ Sprite failed — will use orbital fallback', 'rgba(255,180,80,0.8)');
+      logStep('⚠️ Sprite failed: '+(s3.error||'unknown error').slice(0,80), 'rgba(255,180,80,0.8)');
     }
   }
 
