@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Adventures of Cranky Chickens — Episode 1: The Corn Must Flow</title>
+<meta property="og:title" content="The Adventures of Cranky Chickens — Episode 1">
+<meta property="og:description" content="The corn is gone. All 47 pieces. Someone will answer for this. A 15-minute animated pilot.">
+<meta property="og:type" content="video.episode">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:#0a0612;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'Fredoka One',cursive;padding:10px;}
+#wrap{width:100%;max-width:720px;}
+h1{color:#ffcc02;font-size:clamp(15px,4vw,22px);text-align:center;margin:8px 0 2px;letter-spacing:1px;text-shadow:0 0 18px rgba(255,150,0,0.4);}
+#epTitle{color:rgba(255,220,180,0.7);font-size:clamp(11px,3vw,14px);text-align:center;margin-bottom:10px;}
+canvas{display:block;width:100%;border-radius:12px;background:#000;box-shadow:0 8px 40px rgba(0,0,0,0.6);}
+#controls{display:flex;align-items:center;gap:10px;padding:10px 4px;flex-wrap:wrap;}
+button{font-family:'Fredoka One',cursive;background:rgba(255,204,2,0.12);border:2px solid rgba(255,204,2,0.4);color:#ffcc02;border-radius:9px;padding:8px 14px;font-size:14px;cursor:pointer;}
+button:active{transform:scale(0.96);}
+#seekWrap{flex:1;min-width:150px;height:22px;display:flex;align-items:center;cursor:pointer;}
+#seekBar{width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;position:relative;overflow:hidden;}
+#seekFill{height:100%;background:#ffcc02;width:0%;border-radius:4px;}
+#timeLbl{color:rgba(255,255,255,0.6);font-size:12px;min-width:88px;text-align:center;}
+#chapters{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding-bottom:14px;}
+#chapters button{font-size:11px;padding:6px 10px;background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);}
+#homeLink{color:rgba(255,255,255,0.35);font-size:11px;text-decoration:none;display:block;text-align:center;padding:8px;}
+#homeLink:hover{color:rgba(255,255,255,0.7);}
+</style>
+</head>
+<body>
+<div id="wrap">
+<h1>THE ADVENTURES OF CRANKY CHICKENS</h1>
+<div id="epTitle">Episode One: "The Corn Must Flow" · 15 min</div>
+<canvas id="c" width="640" height="400"></canvas>
+<div id="controls">
+  <button id="playBtn">▶ PLAY</button>
+  <div id="seekWrap"><div id="seekBar"><div id="seekFill"></div></div></div>
+  <div id="timeLbl">0:00 / 15:30</div>
+  <button id="muteBtn">🔊</button>
+</div>
+<div id="chapters">
+  <button data-t="0">Act 1: A Normal Tuesday</button>
+  <button data-t="183">Act 2: The Heist</button>
+  <button data-t="446">Act 3: The Journey</button>
+  <button data-t="690">Act 4: The Lair</button>
+  <button data-t="866">Credits</button>
+</div>
+<a id="homeLink" href="/">← back to crankychickens.com</a>
+</div>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=640,H=400,GY=310;
+const FF="'Fredoka One',cursive";
+let T=0,playing=false,muted=false,lastTs=null;
+
+// ══ AUDIO ══
+let AC=null,musicTimer=null,curMood=null,nextNoteTime=0,stepIdx=0;
+function ac(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,v,tp,when){if(muted)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();o.type=tp;o.connect(g);g.connect(a.destination);o.frequency.setValueAtTime(f,when);g.gain.setValueAtTime(v,when);g.gain.exponentialRampToValueAtTime(0.001,when+d);o.start(when);o.stop(when+d+0.02);}catch(e){}}
+function sfx(n){if(muted)return;try{const a=ac(),t=a.currentTime;
+  if(n==='crow'){[440,550,660,550].forEach((f,i)=>tone(f,0.18,0.2,'sawtooth',t+i*0.14));}
+  else if(n==='clang'){tone(800,0.25,0.3,'square',t);tone(400,0.4,0.2,'square',t+0.05);}
+  else if(n==='bark'){tone(300,0.08,0.3,'square',t);tone(250,0.1,0.25,'square',t+0.1);}
+  else if(n==='ding'){tone(660,0.4,0.25,'sine',t);tone(880,0.5,0.2,'sine',t+0.35);}
+  else if(n==='gasp'){tone(500,0.1,0.15,'sine',t);tone(700,0.15,0.12,'sine',t+0.08);}
+  else if(n==='thunder'){const buf=a.createBuffer(1,a.sampleRate*0.6,a.sampleRate);const d2=buf.getChannelData(0);for(let i=0;i<d2.length;i++)d2[i]=(Math.random()*2-1)*Math.pow(1-i/d2.length,1.5)*0.4;const s=a.createBufferSource(),g=a.createGain();s.buffer=buf;s.connect(g);g.connect(a.destination);g.gain.setValueAtTime(0.3,t);s.start(t);}
+  else if(n==='stamp'){tone(200,0.12,0.35,'square',t);}
+  else if(n==='pop'){tone(500,0.06,0.22,'square',t);}
+}catch(e){}}
+
+const MOODS={
+  theme:{bpm:132,bass:[130,0,130,0,98,0,98,0],mel:[523,659,784,659,523,392,440,523]},
+  calm:{bpm:84,bass:[98,0,0,0,110,0,0,0],mel:[392,0,440,0,523,0,440,0]},
+  sneaky:{bpm:100,bass:[82,0,82,0,73,0,87,0],mel:[0,330,0,311,0,330,0,294]},
+  adventure:{bpm:120,bass:[110,110,0,110,98,98,0,98],mel:[440,0,523,587,523,0,440,392]},
+  ominous:{bpm:66,bass:[55,0,0,0,58,0,0,0],mel:[220,0,0,208,0,0,220,0]},
+  heart:{bpm:88,bass:[130,0,110,0,98,0,110,0],mel:[523,587,659,0,587,523,440,0]},
+  none:null,
+};
+function setMood(m){
+  if(m===curMood)return;curMood=m;stepIdx=0;
+  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+  if(!m||m==='none'||!MOODS[m])return;
+  const mood=MOODS[m];nextNoteTime=ac().currentTime+0.05;
+  const stepDur=60/mood.bpm/2;
+  musicTimer=setInterval(()=>{
+    if(muted||!playing)return;
+    const a=ac();
+    while(nextNoteTime<a.currentTime+0.15){
+      const b=mood.bass[stepIdx%8],ml=mood.mel[stepIdx%8];
+      if(b)tone(b,stepDur*0.85,0.09,'triangle',nextNoteTime);
+      if(ml)tone(ml,stepDur*0.6,0.05,'square',nextNoteTime);
+      nextNoteTime+=stepDur;stepIdx++;
+    }
+  },60);
+}
+
+// ══ SPRITES ══
+function dChicken(x,y,fr,fc=1,talk=false,walk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,15,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const bob=walk?Math.abs(Math.sin(fr*0.2))*3:Math.sin(fr*0.06)*1.5;
+  ctx.translate(0,-bob);
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.ellipse(0,-14,14,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffcc6e';ctx.beginPath();ctx.ellipse(0,-12,9,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.arc(0,-26,10,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff3333';ctx.beginPath();ctx.moveTo(-6,-33);ctx.lineTo(-8,-40);ctx.lineTo(-3,-36);ctx.lineTo(0,-42);ctx.lineTo(3,-36);ctx.lineTo(8,-40);ctx.lineTo(6,-33);ctx.closePath();ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(-2,-27,5,6,-0.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(6,-27,5,6,0.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-1,-26,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7,-26,3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#cc2200';ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-6,-31);ctx.lineTo(1,-29);ctx.stroke();ctx.beginPath();ctx.moveTo(3,-29);ctx.lineTo(10,-31);ctx.stroke();
+  const beakOpen=talk?Math.abs(Math.sin(fr*0.35))*3:0;
+  ctx.fillStyle='#ff6b00';ctx.beginPath();ctx.moveTo(-3,-22);ctx.lineTo(3,-22);ctx.lineTo(0,-18+beakOpen);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e08010';ctx.beginPath();ctx.ellipse(-12,-14,4,8,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(12,-14,4,8,-0.4,0,Math.PI*2);ctx.fill();
+  const ls=walk?Math.sin(fr*0.25)*4:0;
+  ctx.fillStyle='#ff6b00';ctx.fillRect(-7+ls,-3,4,4);ctx.fillRect(3-ls,-3,4,4);
+  ctx.fillRect(-9+ls,1,4,2);ctx.fillRect(-4+ls,1,4,2);ctx.fillRect(1-ls,1,4,2);ctx.fillRect(6-ls,1,4,2);
+  ctx.restore();
+}
+function dHen(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,14,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.translate(0,-Math.sin(fr*0.07)*1.5);
+  ctx.fillStyle='#f8f0e0';ctx.beginPath();ctx.ellipse(0,-13,13,12,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff8ee';ctx.beginPath();ctx.ellipse(0,-11,8,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f8f0e0';ctx.beginPath();ctx.arc(0,-24,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff6688';ctx.beginPath();ctx.arc(-2,-32,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(2,-34,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(-2,-25,4,5,-0.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(5,-25,4,5,0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-1,-24,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(6,-24,2.5,0,Math.PI*2);ctx.fill();
+  const bo=talk?Math.abs(Math.sin(fr*0.35))*2.5:0;
+  ctx.fillStyle='#ffaa33';ctx.beginPath();ctx.moveTo(-2,-20);ctx.lineTo(3,-20);ctx.lineTo(0,-17+bo);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e8ddc8';ctx.beginPath();ctx.ellipse(-11,-13,3.5,7,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(11,-13,3.5,7,-0.4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffaa33';ctx.fillRect(-6,-2,3,3);ctx.fillRect(3,-2,3,3);
+  ctx.restore();
+}
+function dJaguar(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,18,5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.translate(0,-Math.sin(fr*0.05)*1.5);
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.ellipse(0,-16,18,14,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8b4513';[[-7,-10],[9,-13],[-2,-24],[12,-22],[3,-15]].forEach(([sx,sy])=>{ctx.beginPath();ctx.arc(sx,sy,3.2,0,Math.PI*2);ctx.fill();});
+  ctx.strokeStyle='#e07840';ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-14,-12);ctx.quadraticCurveTo(-26,-6+Math.sin(fr*0.08)*8,-32,-14+Math.sin(fr*0.06)*10);ctx.stroke();
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.arc(2,-34,12,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(-6,-42);ctx.lineTo(-11,-52);ctx.lineTo(-1,-44);ctx.fill();
+  ctx.beginPath();ctx.moveTo(10,-42);ctx.lineTo(15,-52);ctx.lineTo(5,-44);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(-3,-34,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8,-34,6,0,Math.PI*2);ctx.fill();
+  const px=Math.cos(fr*0.1)*1.5,py=Math.sin(fr*0.1)*1.5;
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3+px,-35+py,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8-px,-35-py,3,0,Math.PI*2);ctx.fill();
+  const mo=talk?Math.abs(Math.sin(fr*0.35))*2:0;
+  ctx.strokeStyle='#5c3317';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(2,-28+mo,4,0.2,Math.PI-0.2);ctx.stroke();
+  ctx.fillStyle='#f4a261';ctx.fillRect(-11,-4,7,5);ctx.fillRect(5,-4,7,5);
+  ctx.restore();
+}
+function dBarb(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,13,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#7799cc';ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(-8,-28);ctx.lineTo(8,-28);ctx.lineTo(12,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ffddbb';ctx.beginPath();ctx.arc(0,-36,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ddd8d0';ctx.beginPath();ctx.arc(0,-43,6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(0,-38,9,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3,-37,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(3,-37,1.5,0,Math.PI*2);ctx.fill();
+  const sm=talk?Math.abs(Math.sin(fr*0.3))*1.5:0;
+  ctx.strokeStyle='#cc6666';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-33+sm,3,0.2,Math.PI-0.2);ctx.stroke();
+  ctx.fillStyle='#ffddbb';ctx.fillRect(-14,-24,4,12);ctx.fillRect(10,-24,4,12);
+  ctx.fillStyle='#556688';ctx.fillRect(-8,0,6,3);ctx.fillRect(2,0,6,3);
+  ctx.restore();
+}
+function dKevin(x,y,fr,fc=1,excited=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,13,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const wig=excited?Math.sin(fr*0.4)*4:Math.sin(fr*0.08)*1;
+  ctx.fillStyle='#a0714a';ctx.beginPath();ctx.ellipse(0,-9,13,8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#a0714a';ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-11,-11);ctx.quadraticCurveTo(-18,-16+wig,-20,-10+wig);ctx.stroke();
+  ctx.fillStyle='#a0714a';ctx.beginPath();ctx.arc(9,-16,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#7a5030';ctx.beginPath();ctx.ellipse(4,-22,3,5,0.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(13,-22,3,5,-0.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(8,-17,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(13,-17,2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#332211';ctx.beginPath();ctx.arc(16,-14,2.5,0,Math.PI*2);ctx.fill();
+  if(excited){ctx.fillStyle='#ff8888';ctx.beginPath();ctx.ellipse(15,-10,2,3.5,0.3,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#cc3333';ctx.fillRect(2,-13,12,3);
+  ctx.fillStyle='#8a5f3d';ctx.fillRect(-8,-2,3,4);ctx.fillRect(-2,-2,3,4);ctx.fillRect(4,-2,3,4);ctx.fillRect(9,-2,3,4);
+  ctx.restore();
+}
+function dIguana(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.15;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,16,3,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#66aa44';ctx.beginPath();ctx.ellipse(0,-6,15,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#88cc55';for(let i=0;i<5;i++)ctx.fillRect(-10+i*5,-14,3,5);
+  ctx.strokeStyle='#559933';ctx.lineWidth=3.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-13,-5);ctx.quadraticCurveTo(-24,-2,-30,-8+Math.sin(fr*0.05)*4);ctx.stroke();
+  ctx.fillStyle='#66aa44';ctx.beginPath();ctx.arc(13,-9,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffee66';ctx.beginPath();ctx.arc(15,-11,2.8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(15,-11,1.4,0,Math.PI*2);ctx.fill();
+  const mo=talk?Math.abs(Math.sin(fr*0.3))*1.5:0;
+  ctx.strokeStyle='#447722';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(17,-6+mo);ctx.lineTo(21,-5+mo);ctx.stroke();
+  ctx.fillStyle='#559933';ctx.fillRect(-8,0,3,3);ctx.fillRect(0,0,3,3);ctx.fillRect(8,0,3,3);
+  ctx.restore();
+}
+function dCrab(x,y,fr){
+  ctx.save();ctx.translate(x,y);
+  ctx.fillStyle='#dd4433';ctx.beginPath();ctx.ellipse(0,-6,10,7,0,0,Math.PI*2);ctx.fill();
+  const cl=Math.sin(fr*0.15)*2;
+  ctx.fillStyle='#cc3322';ctx.beginPath();ctx.arc(-12,-9+cl,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(12,-9-cl,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(-3,-11,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(3,-11,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3,-11,1.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(3,-11,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#aa2211';ctx.lineWidth=1.5;
+  [[-8,0],[-4,1],[4,1],[8,0]].forEach(([lx,ly])=>{ctx.beginPath();ctx.moveTo(lx,-3);ctx.lineTo(lx*1.4,ly+2);ctx.stroke();});
+  ctx.restore();
+}
+function dCorn(x,y,fr,s=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  const bob=Math.sin(fr*0.06+x)*1;
+  ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.ellipse(0,bob,5,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffd700';for(let r=0;r<3;r++)for(let cc=0;cc<2;cc++)ctx.fillRect(-3+cc*4,-4+r*4+bob,3,3);
+  ctx.fillStyle='#90e050';ctx.beginPath();ctx.moveTo(0,-7+bob);ctx.lineTo(5,-13+bob);ctx.lineTo(2,-5+bob);ctx.fill();
+  ctx.restore();
+}
+function dCornPile(x,y,fr,count=12){
+  for(let i=0;i<count;i++){
+    const row=Math.floor(i/5),col=i%5;
+    dCorn(x+col*13-26+row*6,y-row*10,fr,0.9);
+  }
+}
+
+// ══ BACKGROUNDS ══
+function bgSky(top,mid,bot){
+  const g=ctx.createLinearGradient(0,0,0,GY);g.addColorStop(0,top);g.addColorStop(0.6,mid);g.addColorStop(1,bot);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,GY);
+}
+function bgGround(col,glow){
+  ctx.fillStyle=col;ctx.fillRect(0,GY,W,H-GY);
+  if(glow){const g=ctx.createLinearGradient(0,GY,0,GY+14);g.addColorStop(0,glow);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,GY,W,14);}
+}
+function drawCoop(x,y){
+  ctx.fillStyle='#a05c30';ctx.fillRect(x,y-60,90,60);
+  ctx.fillStyle='#7a4522';ctx.beginPath();ctx.moveTo(x-8,y-60);ctx.lineTo(x+45,y-90);ctx.lineTo(x+98,y-60);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#4a2c14';ctx.fillRect(x+32,y-38,26,38);
+  ctx.fillStyle='#ffe9a0';ctx.fillRect(x+10,y-50,16,14);ctx.fillRect(x+64,y-50,16,14);
+  ctx.strokeStyle='#4a2c14';ctx.lineWidth=2;ctx.strokeRect(x+10,y-50,16,14);ctx.strokeRect(x+64,y-50,16,14);
+}
+function drawPalm(x,y,s=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  ctx.strokeStyle='#8a6238';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(6,-40,2,-72);ctx.stroke();
+  ctx.strokeStyle='#3d8b40';ctx.lineWidth=5;ctx.lineCap='round';
+  for(let i=0;i<5;i++){const a=(i/5)*Math.PI-Math.PI*0.1;ctx.beginPath();ctx.moveTo(2,-72);ctx.quadraticCurveTo(2+Math.cos(a)*28,-78+Math.sin(a)*8,2+Math.cos(a)*44,-64+Math.sin(a)*22);ctx.stroke();}
+  ctx.restore();
+}
+const NSTARS=Array.from({length:70},(_,i)=>({x:(i*137+7)%W,y:(i*61+5)%(GY-40),r:i%4===0?1.4:0.7,s:0.02+Math.random()*0.03,o:Math.random()*7}));
+function drawStars(a=1){NSTARS.forEach(s=>{ctx.globalAlpha=(0.3+Math.sin(fr_g*s.s+s.o)*0.4)*a;ctx.fillStyle='#dde8ff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+
+let fr_g=0;
+const BGS={
+  farmDawn(){bgSky('#2a2050','#cc7755','#ffcc88');ctx.fillStyle='rgba(255,200,80,0.85)';ctx.beginPath();ctx.arc(520,GY-30,26,0,Math.PI*2);ctx.fill();bgGround('#5a7d3a','rgba(255,200,100,0.25)');drawCoop(60,GY);drawPalm(560,GY,0.9);},
+  farmDay(){bgSky('#66aadd','#88ccee','#cceeff');ctx.fillStyle='#fff6cc';ctx.beginPath();ctx.arc(540,60,24,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,0.8)';[[130,70],[300,50],[440,85]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx,cy,30,12,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(cx+20,cy-6,22,10,0,0,Math.PI*2);ctx.fill();});bgGround('#6a9d4a','rgba(120,200,80,0.3)');drawCoop(60,GY);drawPalm(560,GY,0.9);},
+  farmNight(){bgSky('#0a0a2a','#141438','#1e1e48');drawStars();ctx.fillStyle='#e8e0d0';ctx.beginPath();ctx.arc(520,70,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#0a0a2a';ctx.beginPath();ctx.arc(527,66,17,0,Math.PI*2);ctx.fill();bgGround('#2a3d24','rgba(100,120,255,0.12)');drawCoop(60,GY);drawPalm(560,GY,0.9);},
+  beach(){bgSky('#55aadd','#88ccee','#bbe8ff');ctx.fillStyle='#3388bb';ctx.fillRect(0,GY-46,W,46);ctx.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<6;i++){const wx=(fr_g*0.6+i*120)%(W+60)-30;ctx.beginPath();ctx.ellipse(wx,GY-8,26,4,0,0,Math.PI*2);ctx.fill();}bgGround('#e8d8a8','rgba(255,240,180,0.4)');drawPalm(80,GY,1);drawPalm(580,GY,0.85);},
+  jungle(){bgSky('#1a3d1a','#2a5d2a','#3a7d3a');ctx.fillStyle='rgba(20,50,20,0.7)';for(let i=0;i<7;i++){ctx.fillRect(i*95+20,40,14,GY-40);ctx.beginPath();ctx.arc(i*95+27,60,32,0,Math.PI*2);ctx.fill();}bgGround('#2d4d22','rgba(80,180,60,0.2)');ctx.fillStyle='rgba(60,140,50,0.6)';for(let i=0;i<9;i++){ctx.beginPath();ctx.ellipse(i*75+30,GY+8,22,7,0,0,Math.PI*2);ctx.fill();}},
+  ruins(){bgSky('#5a5040','#7a6a52','#9a8868');bgGround('#6a5c44','rgba(200,170,110,0.2)');ctx.fillStyle='#8a7858';[[100,GY,60,90],[480,GY,70,110]].forEach(([x,y,w,h])=>{ctx.fillRect(x,y-h,w,h);ctx.fillStyle='#7a6848';ctx.fillRect(x+8,y-h+12,w-16,10);ctx.fillRect(x+8,y-h+34,w-16,10);ctx.fillStyle='#8a7858';});ctx.fillStyle='#756244';ctx.beginPath();ctx.arc(300,GY-70,34,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5c4c34';ctx.beginPath();ctx.arc(288,GY-76,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(312,GY-76,6,0,Math.PI*2);ctx.fill();ctx.fillRect(288,GY-62,24,5);},
+  lairExt(){bgSky('#1a0a20','#2d1030','#441838');drawStars(0.5);bgGround('#241226','rgba(255,60,20,0.15)');ctx.fillStyle='#332038';ctx.fillRect(180,GY-160,280,160);ctx.fillStyle='#241428';ctx.beginPath();ctx.moveTo(160,GY-160);ctx.lineTo(320,GY-220);ctx.lineTo(480,GY-160);ctx.closePath();ctx.fill();ctx.fillStyle='#1a0a1e';ctx.fillRect(280,GY-90,80,90);ctx.fillStyle='#f4a261';ctx.beginPath();ctx.arc(320,GY-120,22,0,Math.PI*2);ctx.fill();ctx.fillStyle='#241428';ctx.beginPath();ctx.arc(312,GY-124,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(328,GY-124,4,0,Math.PI*2);ctx.fill();const fl=Math.sin(fr_g*0.13)*3;ctx.fillStyle='rgba(255,150,30,0.8)';[[220,GY-60],[420,GY-60]].forEach(([tx,ty])=>{ctx.beginPath();ctx.ellipse(tx,ty+fl,5,10,0,0,Math.PI*2);ctx.fill();});},
+  lairInt(){bgSky('#160a1a','#241030','#331640');bgGround('#1e1024','rgba(255,120,30,0.18)');const fl=Math.sin(fr_g*0.13)*3;ctx.fillStyle='rgba(255,150,30,0.75)';[[80,GY-70],[560,GY-70]].forEach(([tx,ty])=>{ctx.fillStyle='#443';ctx.fillRect(tx-4,ty,8,70);ctx.fillStyle='rgba(255,150,30,0.75)';ctx.beginPath();ctx.ellipse(tx,ty-6+fl,6,12,0,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#3a2444';ctx.fillRect(430,GY-70,140,70);ctx.fillStyle='#4a2e55';ctx.fillRect(445,GY-88,110,20);},
+  void(){ctx.fillStyle='#050008';ctx.fillRect(0,0,W,H);drawStars(0.8);},
+};
+
+// ══ DIALOGUE ══
+function wrapText(text,max){
+  const words=text.split(' ');const lines=[];let cur='';
+  words.forEach(w=>{if((cur+' '+w).trim().length>max){lines.push(cur.trim());cur=w;}else cur+=' '+w;});
+  if(cur.trim())lines.push(cur.trim());
+  return lines;
+}
+function bubble(x,y,who,text){
+  const lines=wrapText(text,26);
+  ctx.font=`12px ${FF}`;
+  let mw=0;lines.forEach(l=>{mw=Math.max(mw,ctx.measureText(l).width);});
+  const bw=Math.max(mw+24,70),bh=lines.length*16+26;
+  let bx=x-bw/2;bx=Math.max(8,Math.min(W-bw-8,bx));
+  let by=y-bh-56;if(by<6)by=6;
+  ctx.fillStyle='rgba(255,255,255,0.96)';
+  ctx.beginPath();ctx.roundRect(bx,by,bw,bh,10);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.96)';
+  ctx.beginPath();ctx.moveTo(x-7,by+bh-1);ctx.lineTo(x,by+bh+10);ctx.lineTo(x+7,by+bh-1);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#cc5500';ctx.font=`bold 9px ${FF}`;ctx.textAlign='left';
+  ctx.fillText(who,bx+12,by+14);
+  ctx.fillStyle='#1a1a2e';ctx.font=`12px ${FF}`;
+  lines.forEach((l,i)=>ctx.fillText(l,bx+12,by+30+i*16));
+}
+function narrate(text){
+  ctx.fillStyle='rgba(0,0,0,0.75)';ctx.fillRect(0,0,W,42);ctx.fillRect(0,H-42,W,42);
+  ctx.fillStyle='rgba(255,230,180,0.92)';ctx.font=`15px ${FF}`;ctx.textAlign='center';
+  ctx.fillText(text,W/2,H-16);ctx.textAlign='left';
+}
+
+// ══ ACTOR REGISTRY ══
+const DRAW={scratchy:dChicken,pearl:dHen,jaguar:dJaguar,barb:dBarb,kevin:dKevin,iguana:dIguana,crab:dCrab};
+
+function drawCast(cast,lt,talkWho){
+  (cast||[]).forEach(a=>{
+    let x=a.x,y=a.y===undefined?GY:a.y;
+    if(a.move){const p=Math.max(0,Math.min(1,(lt-a.move.t0)/(a.move.t1-a.move.t0)));x=a.x+(a.move.x1-a.x)*p;if(a.move.y1!==undefined)y=y+(a.move.y1-y)*p;}
+    const walking=a.move&&lt>=a.move.t0&&lt<=a.move.t1;
+    const talk=talkWho===a.who;
+    const fn=DRAW[a.who];
+    if(fn===dChicken)fn(x,y,fr_g,a.fc||1,talk,walking);
+    else if(fn===dKevin)fn(x,y,fr_g,a.fc||1,a.excited||walking);
+    else if(fn)fn(x,y,fr_g,a.fc||1,talk);
+    a._x=x;a._y=y;
+  });
+}
+function activeLine(lines,lt){
+  let cur=null;
+  (lines||[]).forEach(l=>{const d=l.d||3.2;if(lt>=l.t&&lt<l.t+d)cur=l;});
+  return cur;
+}
+
+// ══ SCENE FX (custom overlays) ══
+function fxTitle(lt){
+  BGS.void();
+  const a=Math.min(1,lt/1.5);
+  ctx.globalAlpha=a;
+  ctx.fillStyle='#ffcc02';ctx.font=`bold 30px ${FF}`;ctx.textAlign='center';
+  ctx.shadowColor='#ff8800';ctx.shadowBlur=18;
+  ctx.fillText('THE ADVENTURES OF',W/2,130);
+  ctx.font=`bold 44px ${FF}`;
+  ctx.fillText('CRANKY CHICKENS',W/2,185);ctx.shadowBlur=0;
+  if(lt>3){ctx.globalAlpha=Math.min(1,(lt-3)/1.5);ctx.fillStyle='rgba(255,220,180,0.85)';ctx.font=`17px ${FF}`;ctx.fillText('Episode One: "The Corn Must Flow"',W/2,235);}
+  ctx.globalAlpha=1;
+  const cx=((lt*55)%(W+200))-100;
+  dChicken(cx,330,fr_g,1,false,true);
+  dKevin(cx-60,330,fr_g,1,true);
+  if(lt>8)dHen(cx-115,330,fr_g,1,false);
+  ctx.textAlign='left';
+}
+function fxMeter(lt){
+  BGS.farmDay();
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';ctx.font=`bold 20px ${FF}`;ctx.textAlign='center';
+  ctx.fillText('OFFICIAL CRANKY METER™',W/2,90);
+  ctx.strokeStyle='#fff';ctx.lineWidth=4;
+  ctx.beginPath();ctx.arc(W/2,240,85,Math.PI,0);ctx.stroke();
+  ctx.font=`11px ${FF}`;ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.fillText('MILD',W/2-72,225);ctx.fillText('CRANKY',W/2,140);ctx.fillText('DO NOT',W/2+72,215);ctx.fillText('APPROACH',W/2+72,228);
+  const p=Math.min(1,lt/2.5);
+  const ang=Math.PI+p*Math.PI*0.98;
+  if(lt<3.4){
+    ctx.strokeStyle='#ff3322';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(W/2,240);ctx.lineTo(W/2+Math.cos(ang)*72,240+Math.sin(ang)*72);ctx.stroke();
+  }else{
+    const fy=240+Math.min(70,(lt-3.4)*90);
+    const fr2=(lt-3.4)*4;
+    ctx.save();ctx.translate(W/2+66,fy);ctx.rotate(fr2);
+    ctx.strokeStyle='#ff3322';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-30,0);ctx.lineTo(30,0);ctx.stroke();ctx.restore();
+  }
+  ctx.textAlign='left';
+}
+function fxNote(lt){
+  BGS.farmDay();
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,H);
+  const a=Math.min(1,lt/1);
+  ctx.globalAlpha=a;
+  ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-0.04);
+  ctx.fillStyle='#f5eeda';ctx.fillRect(-150,-95,300,190);
+  ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.strokeRect(-150,-95,300,190);
+  ctx.fillStyle='#2a2a3e';ctx.font=`bold 21px ${FF}`;ctx.textAlign='center';
+  ctx.fillText('IT IS MINE NOW.',0,-38);
+  ctx.fillText('YOU KNOW',0,-6);
+  ctx.fillText('WHAT YOU DID.',0,26);
+  ctx.font=`16px ${FF}`;ctx.fillStyle='#883322';
+  ctx.fillText('— E.J.',70,66);
+  ctx.restore();ctx.globalAlpha=1;ctx.textAlign='left';
+}
+function fxForm(lt){
+  BGS.farmDay();
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(W/2,H/2);
+  ctx.fillStyle='#fdfdf5';ctx.fillRect(-160,-100,320,200);
+  ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2;ctx.strokeRect(-160,-100,320,200);
+  ctx.fillStyle='#1a1a2e';ctx.font=`bold 15px ${FF}`;ctx.textAlign='center';
+  ctx.fillText('GRIEVANCE FORM 7-B',0,-72);
+  ctx.font=`12px ${FF}`;
+  ctx.fillText('SUBJECT: CORN (STOLEN)',0,-46);
+  ctx.fillText('QUANTITY: 47 (FORTY-SEVEN)',0,-24);
+  ctx.fillText('EMOTIONAL DAMAGES: EXTENSIVE',0,-2);
+  ctx.fillText('REQUESTED REMEDY: THE CORN',0,20);
+  ctx.strokeStyle='rgba(0,0,0,0.3)';[[-130,36],[-130,58]].forEach(([lx,ly])=>{ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(130,ly);ctx.stroke();});
+  if(lt>2.5){
+    const sa=Math.min(1,(lt-2.5)/0.4);
+    ctx.globalAlpha=sa;ctx.save();ctx.rotate(-0.25);ctx.translate(60,55);
+    ctx.strokeStyle='#cc2222';ctx.lineWidth=4;ctx.strokeRect(-52,-20,104,40);
+    ctx.fillStyle='#cc2222';ctx.font=`bold 20px ${FF}`;ctx.fillText('FILED',0,7);
+    ctx.restore();ctx.globalAlpha=1;
+  }
+  ctx.restore();ctx.textAlign='left';
+}
+function fxEgg(lt){
+  BGS.void();
+  const eg=0.35+Math.sin(lt*2.5)*0.22;
+  const grd=ctx.createRadialGradient(W/2,H/2+10,8,W/2,H/2+10,100);
+  grd.addColorStop(0,`rgba(220,160,50,${eg*0.5})`);grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#221133';ctx.fillRect(W/2-35,H/2+18,70,35);ctx.fillRect(W/2-44,H/2+15,88,10);
+  ctx.fillStyle='#f0e0c0';ctx.beginPath();ctx.ellipse(W/2,H/2-5,26,33,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=`rgba(255,200,50,${eg*1.2})`;ctx.lineWidth=2+eg*4;
+  ctx.beginPath();ctx.ellipse(W/2,H/2-5,26,33,0,0,Math.PI*2);ctx.stroke();
+  if(lt>10){
+    ctx.globalAlpha=Math.min(1,(lt-10)/2);
+    ctx.fillStyle='#ffcc02';ctx.font=`bold 26px ${FF}`;ctx.textAlign='center';
+    ctx.shadowColor='#ff6600';ctx.shadowBlur=15;ctx.fillText('SOON.',W/2,H*0.82);ctx.shadowBlur=0;
+    ctx.globalAlpha=1;ctx.textAlign='left';
+  }
+}
+function fxCredits(lt){
+  BGS.void();
+  const CREDITS=['THE ADVENTURES OF CRANKY CHICKENS','','Episode One: "The Corn Must Flow"','','Directed by: The Egg','Written by: Committee of Cranky Chickens','Corn Wrangler: Kevin','Grievances: Filed (Form 7-B)','Juice Boxes: Provided by Aunt Barb','','Starring:','SCRATCHY as Himself (under protest)','PEARL as The Optimist','ERNESTO "EL JAGUAR" as The Misunderstood','KEVIN as Kevin','AUNT BARB as The Voice of Reason','REGINALD as Checkpoint Iguana #1','','No iguanas were consulted.','The rope remains symbolic.','Corn count: 46. Noted. Forever.','','Filmed on location in Tulum, Mexico','(and one scene in Wisconsin, canceled)','','CRANKY CHICKENS WILL RETURN'];
+  const scroll=lt*22-H;
+  ctx.textAlign='center';
+  CREDITS.forEach((line,i)=>{
+    const y=H-scroll+i*28;
+    if(y>-30&&y<H+30){
+      ctx.fillStyle=i===0?'#ffcc02':line.startsWith('CRANKY CHICKENS WILL')?'#ffcc02':'rgba(255,255,255,0.75)';
+      ctx.font=i===0||line.startsWith('CRANKY')?`bold 18px ${FF}`:`13px ${FF}`;
+      ctx.fillText(line,W/2,y);
+    }
+  });
+  ctx.textAlign='left';
+  const cx=((lt*30)%(W+150))-75;
+  dChicken(cx,378,fr_g,1,false,true);
+}
+
+// ══ SCENES ══
+// Each: {dur, bg, music, cast, lines, fx, events}
+const SC=[
+// ═ ACT 1 ═
+{dur:18,bg:'farmDawn',music:'calm',cast:[{who:'scratchy',x:200,fc:1}],
+ lines:[{t:1,who:'NARRATOR',text:'Tulum, Mexico. A farm. Tuesday.'},{t:5,who:'NARRATOR',text:'Some places wake up gently. This is not one of them.'},{t:10.5,who:'SCRATCHY',text:'...'},{t:13,who:'SCRATCHY',text:'I hate Tuesdays.',d:4}],
+ events:[{t:8.5,sfx:'crow'}]},
+{dur:25,fx:fxTitle,music:'theme'},
+{dur:22,bg:'farmDay',music:'calm',cast:[{who:'scratchy',x:150,fc:1,move:{t0:1,t1:6,x1:280}},{who:'kevin',x:420,fc:-1,excited:true}],
+ lines:[{t:2,who:'SCRATCHY',text:'Coffee. Corn. Silence. In that order.'},{t:7,who:'KEVIN',text:'BARK!',d:2},{t:9.5,who:'SCRATCHY',text:'We have talked about mornings, Kevin.'},{t:14,who:'KEVIN',text:'Bark.',d:2},{t:16.5,who:'SCRATCHY',text:'Apology noted. Not accepted. Noted.'}],
+ events:[{t:7,sfx:'bark'}]},
+{dur:30,bg:'farmDay',music:'calm',cast:[{who:'scratchy',x:230,fc:1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'...forty-five... forty-six... forty-seven.'},{t:6.5,who:'SCRATCHY',text:'47 pieces. Same as yesterday. Same as always.'},{t:11.5,who:'NARRATOR',text:'The corn count was sacred.'},{t:15,who:'SCRATCHY',text:'It is not sacred. It is INVENTORY.'},{t:19.5,who:'NARRATOR',text:'...The inventory was sacred.'},{t:24,who:'SCRATCHY',text:'I can hear you, you know.',d:4}],
+ fx:null,castExtra:(lt)=>{dCornPile(340,GY,fr_g,14);}},
+{dur:20,bg:'farmDay',music:'calm',cast:[{who:'barb',x:150,fc:1},{who:'scratchy',x:300,fc:-1}],
+ lines:[{t:1.5,who:'AUNT BARB',text:'Morning, sunshine!'},{t:5,who:'SCRATCHY',text:'We are enemies of the morning, Barb.'},{t:9.5,who:'AUNT BARB',text:'That is nice, dear.'},{t:13.5,who:'SCRATCHY',text:'You are unrattle-able. It is deeply unsettling.'}]},
+{dur:18,bg:'farmDay',music:'calm',cast:[{who:'scratchy',x:200,fc:1},{who:'kevin',x:300,fc:-1}],
+ lines:[{t:1,who:'SCRATCHY',text:'Cousin Gary sent a postcard. Wisconsin has cheese that squeaks.'},{t:7.5,who:'SCRATCHY',text:'...I do not trust it.'},{t:11,who:'KEVIN',text:'Bark?',d:2},{t:13.5,who:'SCRATCHY',text:'Nobody trusts it, Kevin.'}]},
+{dur:20,bg:'farmDay',music:'calm',cast:[{who:'iguana',x:440,fc:-1},{who:'scratchy',x:280,fc:1}],
+ lines:[{t:1.5,who:'REGINALD',text:'Sup.'},{t:4,who:'SCRATCHY',text:'Reginald.'},{t:6.5,who:'REGINALD',text:'Nice corn pile.'},{t:9.5,who:'SCRATCHY',text:'...Why did you say that.'},{t:13,who:'REGINALD',text:'No reason. Iguanas notice things.'},{t:17,who:'SCRATCHY',text:'Iguanas are on notice.'}],
+ castExtra:()=>{dCornPile(150,GY,fr_g,14);}},
+{dur:18,bg:'farmNight',music:'ominous',cast:[],
+ lines:[{t:2,who:'NARRATOR',text:'That night, something watched from the treeline.'},{t:7,who:'NARRATOR',text:'Something cranky.'},{t:11,who:'NARRATOR',text:'Something... feline.'}],
+ castExtra:(lt)=>{if(lt>5){const bl=Math.floor(lt*1.4)%3!==0;if(bl){ctx.fillStyle='#ffdd44';ctx.beginPath();ctx.arc(560,180,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(576,180,4,0,Math.PI*2);ctx.fill();}}}},
+{dur:12,bg:'farmNight',music:'ominous',cast:[{who:'scratchy',x:120,fc:1}],
+ lines:[{t:1,who:'SCRATCHY',text:'Goodnight, corn.'},{t:5,who:'NARRATOR',text:'He said it every night. The corn never answered.'},{t:9.5,who:'NARRATOR',text:'Tonight, that felt ominous.'}],
+ castExtra:()=>{dCornPile(340,GY,fr_g,14);}},
+// ═ ACT 2 ═
+{dur:22,bg:'farmNight',music:'sneaky',cast:[{who:'jaguar',x:620,fc:-1,move:{t0:1,t1:8,x1:420}}],
+ lines:[{t:9,who:'EL JAGUAR',text:'Shh. Sorry. My bad.',d:3},{t:13,who:'EL JAGUAR',text:'(to the rake) You saw nothing.'},{t:17.5,who:'NARRATOR',text:'The rake saw everything.'}],
+ events:[{t:8.2,sfx:'clang'}],
+ castExtra:(lt)=>{ctx.strokeStyle='#8a6238';ctx.lineWidth=3;if(lt<8.2){ctx.beginPath();ctx.moveTo(400,GY);ctx.lineTo(400,GY-42);ctx.stroke();ctx.fillStyle='#666';ctx.fillRect(392,GY-48,16,6);}else{ctx.beginPath();ctx.moveTo(380,GY-2);ctx.lineTo(422,GY-8);ctx.stroke();ctx.fillStyle='#666';ctx.fillRect(418,GY-12,16,6);}}},
+{dur:20,bg:'farmNight',music:'sneaky',cast:[{who:'jaguar',x:420,fc:-1,move:{t0:2,t1:9,x1:250}},{who:'kevin',x:120,fc:1}],
+ lines:[{t:3,who:'EL JAGUAR',text:'The guard dog...',d:3},{t:7,who:'EL JAGUAR',text:'Asleep. Good boy. Terrible guard. Good boy.'},{t:13,who:'NARRATOR',text:'Kevin dreamed of tennis balls, unaware of history unfolding.'}],
+ castExtra:()=>{ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font=`13px ${FF}`;ctx.fillText('z z z',108,GY-56);}},
+{dur:28,bg:'farmNight',music:'sneaky',cast:[{who:'jaguar',x:290,fc:1}],
+ lines:[{t:2,who:'EL JAGUAR',text:'...forty-five, forty-six, forty-seven.'},{t:7,who:'EL JAGUAR',text:'And one for the road—'},{t:10.5,who:'EL JAGUAR',text:'Forty-eight— no. Wait. Math.'},{t:15,who:'NARRATOR',text:'He ate one. This detail becomes important.'},{t:20,who:'EL JAGUAR',text:'They will never know.'},{t:24,who:'NARRATOR',text:'They would absolutely know.'}],
+ castExtra:(lt)=>{const left=Math.max(0,14-Math.floor(lt/1.6));dCornPile(360,GY,fr_g,left);ctx.fillStyle='#5a4632';ctx.beginPath();ctx.roundRect(220,GY-52,52,52,8);ctx.fill();ctx.fillStyle='#f0e6d0';ctx.font=`bold 8px ${FF}`;ctx.textAlign='center';ctx.fillText('NOT',246,GY-32);ctx.fillText('CORN',246,GY-20);ctx.textAlign='left';}},
+{dur:15,fx:fxNote,music:'sneaky',
+ lines:[{t:8,who:'NARRATOR',text:'He signed it with his initials. Detective work would be brief.'},{t:12.7,who:'EL JAGUAR',text:'(offscreen, distant) I am fine!',d:2}]},
+{dur:25,bg:'farmDay',music:'none',cast:[{who:'scratchy',x:160,fc:1,move:{t0:1,t1:4,x1:260}}],
+ lines:[{t:5.5,who:'SCRATCHY',text:'...',d:2.5},{t:8.5,who:'NARRATOR',text:'The coffee cup fell in slow motion. Physics understood the moment.'},{t:15,who:'SCRATCHY',text:'...',d:2},{t:18,who:'SCRATCHY',text:'KEVIN.',d:4}],
+ castExtra:(lt)=>{ctx.fillStyle='#8a6844';ctx.beginPath();ctx.ellipse(360,GY-4,26,6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(0,0,0,0.25)';ctx.font=`10px ${FF}`;ctx.textAlign='center';ctx.fillText('(where corn was)',360,GY-14);ctx.textAlign='left';
+  if(lt>5.5&&lt<15){const p=(lt-5.5)/9.5;const cy2=GY-40+p*36;ctx.save();ctx.translate(238,cy2);ctx.rotate(p*2.5);ctx.fillStyle='#eee';ctx.fillRect(-6,-7,12,14);ctx.fillStyle='#8a5c2e';ctx.fillRect(-5,-6,10,4);ctx.restore();}
+  if(lt>=15){ctx.fillStyle='#eee';ctx.save();ctx.translate(238,GY-5);ctx.rotate(1.6);ctx.fillRect(-6,-7,12,14);ctx.restore();}}},
+{dur:20,fx:fxMeter,music:'adventure',
+ lines:[{t:6.5,who:'NARRATOR',text:'The meter was not designed for this.'},{t:12,who:'NARRATOR',text:'No meter was.'}],
+ events:[{t:3.4,sfx:'pop'}]},
+{dur:22,bg:'farmDay',music:'adventure',cast:[{who:'scratchy',x:220,fc:1},{who:'barb',x:400,fc:-1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'"You know what you did"?! I do not know what I did!'},{t:7,who:'SCRATCHY',text:'I NEVER know what I did!'},{t:11,who:'AUNT BARB',text:'Maybe it is a cry for help.'},{t:15.5,who:'SCRATCHY',text:'It is a cry for CONSEQUENCES.'}]},
+{dur:30,bg:'farmDay',music:'adventure',cast:[{who:'scratchy',x:200,fc:1},{who:'pearl',x:360,fc:-1},{who:'kevin',x:440,fc:-1},{who:'barb',x:520,fc:-1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'Friends. Neighbors. Kevin.'},{t:6,who:'SCRATCHY',text:'Our corn is gone. All 47 pieces.'},{t:11,who:'PEARL',text:'*GASP*',d:2},{t:13.5,who:'PEARL',text:'Even the lucky one?'},{t:17,who:'SCRATCHY',text:'ESPECIALLY the lucky one.'},{t:21.5,who:'PEARL',text:'This is the worst Tuesday of all time.'},{t:26,who:'SCRATCHY',text:'They all are, Pearl. They all are.'}],
+ events:[{t:11,sfx:'gasp'}],
+ castExtra:()=>{ctx.fillStyle='#7a5c3a';ctx.fillRect(180,GY-14,44,14);}},
+{dur:28,bg:'farmDay',music:'adventure',cast:[{who:'scratchy',x:220,fc:1},{who:'barb',x:400,fc:-1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'We march on the lair at dawn.'},{t:6,who:'AUNT BARB',text:'Or we could file a formal grievance.'},{t:10.5,who:'SCRATCHY',text:'...'},{t:13,who:'SCRATCHY',text:'We can do both.'},{t:16.5,who:'NARRATOR',text:'They did both.'},{t:20,who:'AUNT BARB',text:'I will get the shoebox.'},{t:24,who:'SCRATCHY',text:'The system is a shoebox, Barb.'}]},
+{dur:20,fx:fxForm,music:'calm',
+ lines:[{t:7,who:'AUNT BARB',text:'The system works.'},{t:11,who:'SCRATCHY',text:'The shoebox is full, Barb.'},{t:15,who:'AUNT BARB',text:'The system is thorough.'}],
+ events:[{t:2.5,sfx:'stamp'}]},
+{dur:18,bg:'farmDay',music:'heart',cast:[{who:'scratchy',x:240,fc:1},{who:'kevin',x:360,fc:-1,excited:true}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'Kevin. You have been deputized.'},{t:6,who:'KEVIN',text:'BARK!',d:2},{t:8.5,who:'SCRATCHY',text:'Do not make it weird, Kevin.'},{t:12.5,who:'NARRATOR',text:'Kevin made it weird immediately.'}],
+ events:[{t:6,sfx:'bark'}]},
+{dur:15,bg:'farmDawn',music:'adventure',cast:[{who:'scratchy',x:180,fc:1},{who:'kevin',x:250,fc:1,excited:true},{who:'pearl',x:310,fc:1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'Let us go get our corn.'},{t:6,who:'NARRATOR',text:'It was a 25-minute walk.'},{t:10,who:'NARRATOR',text:'They packed for a week.'}]},
+// ═ ACT 3 ═
+{dur:22,bg:'beach',music:'adventure',cast:[{who:'scratchy',x:140,fc:1},{who:'pearl',x:230,fc:1},{who:'kevin',x:300,fc:1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'The beach. I hate sand.'},{t:5.5,who:'PEARL',text:'It is beautiful!'},{t:9,who:'SCRATCHY',text:'It is infrastructure failure in powder form.'},{t:14.5,who:'PEARL',text:'The water is so blue!'},{t:18,who:'SCRATCHY',text:'The water is UNREGULATED.'}]},
+{dur:28,bg:'beach',music:'adventure',cast:[{who:'scratchy',x:180,fc:1},{who:'kevin',x:260,fc:1},{who:'crab',x:400}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'THE CORN.'},{t:4.5,who:'CRAB',text:'found it. finders keepers.'},{t:9,who:'SCRATCHY',text:'That corn is EVIDENCE.'},{t:13,who:'CRAB',text:'...'},{t:15.5,who:'CRAB',text:'fine. take it. the vibe is off.'},{t:20.5,who:'SCRATCHY',text:'One down. 46 to go.'},{t:24.5,who:'NARRATOR',text:'Nobody told him the jaguar had simply dropped that one.'}],
+ castExtra:()=>{dCorn(400,GY-24,fr_g,0.9);}},
+{dur:20,bg:'jungle',music:'adventure',cast:[{who:'scratchy',x:150,fc:1},{who:'pearl',x:240,fc:1},{who:'kevin',x:310,fc:1}],
+ lines:[{t:1.5,who:'PEARL',text:'It is so humid.'},{t:5,who:'SCRATCHY',text:'Crankiness thrives in humidity.'},{t:9.5,who:'SCRATCHY',text:'I am at FULL POWER.'},{t:14,who:'PEARL',text:'That is not something to be proud of.'},{t:17.5,who:'SCRATCHY',text:'And yet.'}]},
+{dur:32,bg:'jungle',music:'adventure',cast:[{who:'scratchy',x:170,fc:1},{who:'kevin',x:250,fc:1},{who:'iguana',x:430,fc:-1},{who:'pearl',x:100,fc:1}],
+ lines:[{t:1.5,who:'REGINALD',text:'Do you have an appointment?'},{t:5.5,who:'SCRATCHY',text:'We are pursuing a corn thief.'},{t:9.5,who:'REGINALD',text:'So... no appointment.'},{t:13.5,who:'SCRATCHY',text:'Reginald. The rope is LYING ON THE GROUND.'},{t:18.5,who:'REGINALD',text:'The rope is symbolic.'},{t:22.5,who:'NARRATOR',text:'Kevin walked around the rope.'},{t:26.5,who:'REGINALD',text:'...The dog gets it.'}],
+ castExtra:()=>{ctx.strokeStyle='#c8a060';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(320,GY-2);ctx.quadraticCurveTo(360,GY+2,400,GY-2);ctx.stroke();}},
+{dur:22,bg:'jungle',music:'adventure',cast:[{who:'scratchy',x:150,fc:1,move:{t0:8,t1:16,x1:420}},{who:'pearl',x:90,fc:1,move:{t0:10,t1:18,x1:360}}],
+ lines:[{t:1.5,who:'PEARL',text:'Is the bridge safe?'},{t:5,who:'SCRATCHY',text:'Nothing is safe. That is the founding principle of my entire personality.'},{t:17,who:'NARRATOR',text:'One plank fell. Nobody commented. It felt right.'}],
+ castExtra:()=>{ctx.strokeStyle='#8a6238';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(120,GY-8);ctx.quadraticCurveTo(320,GY+8,520,GY-8);ctx.stroke();for(let i=0;i<9;i++){ctx.fillStyle='#a07848';ctx.fillRect(140+i*44,GY-6,26,5);}}},
+{dur:20,bg:'ruins',music:'ominous',cast:[{who:'scratchy',x:160,fc:1},{who:'pearl',x:250,fc:1},{who:'kevin',x:320,fc:1}],
+ lines:[{t:1.5,who:'NARRATOR',text:'The ancient ruins of the ancients. Ancient.'},{t:7,who:'SCRATCHY',text:'The narrator is phoning it in.'},{t:11,who:'NARRATOR',text:'The narrator heard that.'},{t:15,who:'SCRATCHY',text:'Good.'}]},
+{dur:30,bg:'ruins',music:'adventure',cast:[{who:'scratchy',x:120,fc:1,move:{t0:2,t1:22,x1:500}},{who:'kevin',x:60,fc:1,move:{t0:6,t1:26,x1:440},excited:true}],
+ lines:[{t:2,who:'SCRATCHY',text:'Trap corridor. Classic.'},{t:6,who:'SCRATCHY',text:'No signage. No guardrail.'},{t:10.5,who:'SCRATCHY',text:'That log is a lawsuit.'},{t:15,who:'SCRATCHY',text:'Unmarked pressure plates. UNMARKED.'},{t:20,who:'NARRATOR',text:'Kevin triggered every single trap. All of them missed.'},{t:25.5,who:'SCRATCHY',text:'Kevin.'}],
+ events:[{t:20,sfx:'clang'},{t:22,sfx:'clang'}],
+ castExtra:(lt)=>{const sw=Math.sin(lt*2.2)*50;ctx.strokeStyle='#6a5030';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(320,60);ctx.lineTo(320+sw,150);ctx.stroke();ctx.fillStyle='#7a5c38';ctx.beginPath();ctx.ellipse(320+sw,160,12,22,0,0,Math.PI*2);ctx.fill();}},
+{dur:18,bg:'ruins',music:'adventure',cast:[{who:'pearl',x:220,fc:1},{who:'scratchy',x:320,fc:1}],
+ lines:[{t:1.5,who:'PEARL',text:'A trail of corn kernels!'},{t:5.5,who:'SCRATCHY',text:'He is EATING OUR EVIDENCE.'},{t:10,who:'PEARL',text:'Should we save some as—'},{t:13,who:'SCRATCHY',text:'EVERY kernel comes home, Pearl.'}],
+ castExtra:()=>{[380,430,480,530].forEach((kx,i)=>dCorn(kx,GY-6,fr_g,0.55));}},
+{dur:25,bg:'lairExt',music:'ominous',cast:[{who:'scratchy',x:160,fc:1},{who:'pearl',x:100,fc:1},{who:'kevin',x:230,fc:1}],
+ lines:[{t:1.5,who:'NARRATOR',text:'The lair.'},{t:5,who:'PEARL',text:'How do we get in?'},{t:8.5,who:'SCRATCHY',text:'...'},{t:11,who:'SCRATCHY',text:'There is a doorbell. Labeled "RING FOR JAGUAR."'},{t:16.5,who:'SCRATCHY',text:'I am almost disappointed.'},{t:20.5,who:'PEARL',text:'Ring it!'}],
+ events:[{t:22.5,sfx:'ding'}],
+ castExtra:()=>{ctx.fillStyle='#c8a020';ctx.beginPath();ctx.arc(372,GY-58,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font=`8px ${FF}`;ctx.fillText('RING FOR',352,GY-74);ctx.fillText('JAGUAR',356,GY-66);}},
+{dur:12,bg:'lairExt',music:'ominous',cast:[{who:'scratchy',x:160,fc:1},{who:'pearl',x:100,fc:1},{who:'kevin',x:230,fc:1}],
+ lines:[{t:2,who:'EL JAGUAR',text:'(from the darkness) ...Did you bring the paperwork?'},{t:8,who:'SCRATCHY',text:'...We did, actually.'}]},
+// ═ ACT 4 ═
+{dur:25,bg:'lairInt',music:'ominous',cast:[{who:'jaguar',x:480,fc:-1},{who:'scratchy',x:180,fc:1},{who:'pearl',x:110,fc:1},{who:'kevin',x:250,fc:1}],
+ lines:[{t:1.5,who:'EL JAGUAR',text:'So. You came.'},{t:5.5,who:'SCRATCHY',text:'You left a NOTE. With your INITIALS. Ernesto.'},{t:11,who:'EL JAGUAR',text:'The note was dramatic. Drama requires a signature.'},{t:17,who:'SCRATCHY',text:'Drama requires CONSEQUENCES.'},{t:21,who:'EL JAGUAR',text:'We are more alike than you know.'}],
+ castExtra:()=>{dCornPile(500,GY-70,fr_g,12);const fl=Math.sin(fr_g*0.13)*2;ctx.fillStyle='rgba(255,180,50,0.7)';[[458,GY-78],[548,GY-78]].forEach(([cx2,cy2])=>{ctx.fillStyle='#665';ctx.fillRect(cx2-2,cy2,4,12);ctx.fillStyle='rgba(255,180,50,0.7)';ctx.beginPath();ctx.ellipse(cx2,cy2-4+fl,3,7,0,0,Math.PI*2);ctx.fill();});}},
+{dur:30,bg:'lairInt',music:'heart',cast:[{who:'jaguar',x:460,fc:-1},{who:'scratchy',x:200,fc:1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'"You know what you did." WHAT did we do?'},{t:7,who:'EL JAGUAR',text:'...'},{t:9.5,who:'EL JAGUAR',text:'Every Tuesday. The corn count.'},{t:14,who:'EL JAGUAR',text:'47 pieces. Everyone gathered around.'},{t:19,who:'EL JAGUAR',text:'...'},{t:21.5,who:'EL JAGUAR',text:'Nobody ever invited me.',d:6}]},
+{dur:25,bg:'lairInt',music:'heart',cast:[{who:'jaguar',x:460,fc:-1},{who:'pearl',x:150,fc:1},{who:'scratchy',x:250,fc:1}],
+ lines:[{t:1.5,who:'PEARL',text:'You stole 47 pieces of corn... because you were lonely?'},{t:8,who:'EL JAGUAR',text:'I stole 47 pieces of corn because I was EXCLUDED.'},{t:14,who:'EL JAGUAR',text:'There is a difference. It is a legal difference.'},{t:19.5,who:'PEARL',text:'It really is not.'}]},
+{dur:22,bg:'lairInt',music:'heart',cast:[{who:'scratchy',x:250,fc:1},{who:'jaguar',x:460,fc:-1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'...'},{t:5,who:'NARRATOR',text:'Scratchy stared for a long moment.'},{t:10,who:'SCRATCHY',text:'I have never related to anyone more in my entire life.'},{t:16.5,who:'EL JAGUAR',text:'...Really?'},{t:19,who:'SCRATCHY',text:'Do not make it weird, Ernesto.'}]},
+{dur:30,bg:'lairInt',music:'calm',cast:[{who:'scratchy',x:220,fc:1},{who:'jaguar',x:450,fc:-1},{who:'kevin',x:330,fc:-1,excited:true},{who:'pearl',x:130,fc:1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'Terms: the corn comes home.'},{t:5.5,who:'EL JAGUAR',text:'Agreed.'},{t:8,who:'SCRATCHY',text:'You get invited to Tuesdays.'},{t:11.5,who:'EL JAGUAR',text:'...Agreed.'},{t:14,who:'SCRATCHY',text:'And you withdraw the counter-grievance.'},{t:18,who:'PEARL',text:'You filed a COUNTER-grievance?'},{t:21.5,who:'EL JAGUAR',text:'I felt attacked!'},{t:24.5,who:'NARRATOR',text:'Meanwhile, Kevin received ear scratches from the enemy.'},{t:28,who:'SCRATCHY',text:'KEVIN.',d:2}]},
+{dur:25,bg:'farmDay',music:'calm',cast:[{who:'scratchy',x:220,fc:1},{who:'jaguar',x:420,fc:-1}],
+ lines:[{t:1.5,who:'SCRATCHY',text:'...forty-five. Forty-six.'},{t:6,who:'SCRATCHY',text:'...'},{t:8.5,who:'SCRATCHY',text:'Ernesto.'},{t:11,who:'EL JAGUAR',text:'I was NERVOUS. Nervous eating is VALID.'},{t:16.5,who:'SCRATCHY',text:'46 pieces. Adjusted inventory.'},{t:20.5,who:'SCRATCHY',text:'Noted. Forever.'}],
+ castExtra:()=>{dCornPile(320,GY,fr_g,13);}},
+{dur:25,bg:'farmDay',music:'heart',cast:[{who:'scratchy',x:180,fc:1},{who:'pearl',x:260,fc:1},{who:'jaguar',x:420,fc:-1},{who:'kevin',x:330,fc:1,excited:true},{who:'barb',x:520,fc:-1}],
+ lines:[{t:1.5,who:'NARRATOR',text:'The next Tuesday. Corn count. Attendance: everyone.'},{t:7,who:'AUNT BARB',text:'Juice boxes for the whole crew!'},{t:11.5,who:'SCRATCHY',text:'This changes nothing. I am still cranky.'},{t:16.5,who:'PEARL',text:'We know.'},{t:19,who:'EL JAGUAR',text:'We know.'},{t:21.5,who:'SCRATCHY',text:'...Good.'}],
+ castExtra:()=>{dCornPile(320,GY-40,fr_g,13);ctx.fillStyle='#ff6688';[[210,GY-46],[290,GY-46],[450,GY-52]].forEach(([jx,jy])=>{ctx.fillRect(jx,jy,10,14);ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(jx+5,jy);ctx.lineTo(jx+7,jy-6);ctx.stroke();});}},
+{dur:18,fx:fxEgg,music:'ominous',
+ lines:[{t:2,who:'NARRATOR',text:'Meanwhile, somewhere else...'},{t:7,who:'NARRATOR',text:'Something was waiting.'}],
+ events:[{t:10,sfx:'thunder'}]},
+{dur:46,fx:fxCredits,music:'theme'},
+];
+// compute starts
+let acc=0;SC.forEach(s=>{s.start=acc;acc+=s.dur;});
+const TOTAL=acc;
+
+// ══ RENDER ══
+function render(){
+  fr_g++;
+  let sc=SC[SC.length-1];
+  for(const s of SC){if(T>=s.start&&T<s.start+s.dur){sc=s;break;}}
+  const lt=T-sc.start;
+  if(sc.music!==undefined)setMood(playing?sc.music:curMood);
+  ctx.clearRect(0,0,W,H);
+  if(sc.fx){sc.fx(lt);}
+  else if(sc.bg){BGS[sc.bg]();}
+  if(sc.castExtra)sc.castExtra(lt);
+  const line=activeLine(sc.lines,lt);
+  const talkWho=line&&line.who!=='NARRATOR'?line.who.toLowerCase().replace('el jaguar','jaguar').replace('aunt barb','barb').replace('reginald','iguana'):null;
+  if(sc.cast)drawCast(sc.cast,lt,talkWho);
+  if(line){
+    if(line.who==='NARRATOR')narrate(line.text);
+    else{
+      let ax=W/2,ay=GY;
+      (sc.cast||[]).forEach(a=>{
+        const nm=a.who;
+        const lw=line.who.toLowerCase();
+        if((nm==='jaguar'&&lw.includes('jaguar'))||(nm==='barb'&&lw.includes('barb'))||(nm==='iguana'&&lw.includes('reginald'))||(nm==='crab'&&lw.includes('crab'))||nm===lw){ax=a._x||a.x;ay=a._y||GY;}
+      });
+      bubble(ax,ay,line.who,line.text);
+    }
+  }
+  // scene events (sfx)
+  (sc.events||[]).forEach(ev=>{
+    if(!ev._fired&&lt>=ev.t&&lt<ev.t+0.5&&playing){ev._fired=true;sfx(ev.sfx);}
+    if(lt<ev.t)ev._fired=false;
+  });
+  // letterbox for narrator-free polish: episode frame
+  updateUI();
+}
+
+function fmtTime(s){const m=Math.floor(s/60),ss=Math.floor(s%60);return m+':'+String(ss).padStart(2,'0');}
+function updateUI(){
+  document.getElementById('seekFill').style.width=(T/TOTAL*100)+'%';
+  document.getElementById('timeLbl').textContent=fmtTime(T)+' / '+fmtTime(TOTAL);
+}
+
+function loop(ts){
+  if(lastTs===null)lastTs=ts;
+  const dt=Math.min(0.1,(ts-lastTs)/1000);
+  lastTs=ts;
+  if(playing){T+=dt;if(T>=TOTAL){T=TOTAL;playing=false;document.getElementById('playBtn').textContent='↻ REPLAY';setMood('none');}}
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ══ CONTROLS ══
+document.getElementById('playBtn').addEventListener('click',()=>{
+  ac();
+  if(T>=TOTAL){T=0;}
+  playing=!playing;
+  document.getElementById('playBtn').textContent=playing?'⏸ PAUSE':'▶ PLAY';
+  if(!playing)setMood('none');
+});
+document.getElementById('muteBtn').addEventListener('click',()=>{
+  muted=!muted;
+  document.getElementById('muteBtn').textContent=muted?'🔇':'🔊';
+});
+const seekWrap=document.getElementById('seekWrap');
+function seekTo(clientX){
+  const r=seekWrap.getBoundingClientRect();
+  const p=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
+  T=p*TOTAL;
+  SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});
+}
+seekWrap.addEventListener('click',e=>seekTo(e.clientX));
+seekWrap.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e.touches[0].clientX);},{passive:false});
+document.querySelectorAll('#chapters button').forEach(b=>{
+  b.addEventListener('click',()=>{T=parseFloat(b.dataset.t);SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});if(!playing){playing=true;ac();document.getElementById('playBtn').textContent='⏸ PAUSE';}});
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

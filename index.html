@@ -342,6 +342,41 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
   </div>
 
 
+  <!-- SHOW: THE ADVENTURES OF CRANKY CHICKENS -->
+  <div class="card" data-tag="NOW STREAMING™" id="cardTOON">
+    <div class="screen-wrap">
+      <canvas class="screen-canvas" id="c13" width="640" height="200"></canvas>
+      <div class="screen-tag">THE FARM — TUESDAY — CORN COUNT IN PROGRESS</div>
+      <button class="play-hint" onclick="playTrailer('toon')"><span>▶ WATCH TRAILER</span></button>
+    </div>
+    <div class="card-body">
+      <div class="game-num">THE ANIMATED SERIES</div>
+      <div class="game-title">THE ADVENTURES OF CRANKY CHICKENS</div>
+      <div class="game-sub">"Episode One: The Corn Must Flow"</div>
+      <p class="game-desc">The corn is gone. All 47 pieces. Including the lucky one. A note has been left, signed with initials, because drama requires a signature. Now one profoundly cranky chicken, one relentlessly optimistic hen, and one recently deputized dog must cross the beach, the jungle, and the ruins to confront the thief in his lair — and discover that the real crime was the Tuesdays nobody shared along the way.<br><br>
+      <strong style="color:#ffcc02">A full 15-minute animated pilot.</strong> With dialogue, a narrator who takes personal offense, an official Cranky Meter™, a formal grievance (Form 7-B, filed), and a juice box resolution. Watch it right here. No subscription. The shoebox is the subscription.</p>
+      <div class="quotes">
+        <div class="quote">"I have never related to anyone more in my entire life."<span>— SCRATCHY, upon hearing the villain's motive</span></div>
+        <div class="quote">"The rope is symbolic."<span>— REGINALD, CHECKPOINT IGUANA #1</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">📺 15-MINUTE PILOT EPISODE</span>
+        <span class="tag">🌽 47 PIECES (46 RECOVERED)</span>
+        <span class="tag">📋 GRIEVANCE: FILED</span>
+        <span class="tag">🥤 JUICE BOX DIPLOMACY</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E</div>
+        <div class="rating-txt">Mild Cartoon Crankiness · Corn-Based Drama · One Nervous-Eaten Kernel<br>Symbolic Ropes · A Narrator With Feelings · Wisconsin (Mentioned)</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="/shows/adventures-pilot.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffcc02;border-color:#ffcc02;color:#1a0a2e;font-family:inherit;font-size:inherit;">▶ WATCH EPISODE</a>
+        <button class="wishlist" onclick="cluck('📺 EPISODE QUEUED')">+ WATCHLIST</button>
+        <button class="wishlist" style="background:transparent;border-color:rgba(255,100,50,0.5);color:#ff6633;" onclick="shareCard('cardTOON','The Adventures of Cranky Chickens')">🔗 SHARE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- GAME 12: MORTAL SQUAWKBAT -->
   <div class="card" data-tag="COMING SOON™" id="cardMSB">
     <div class="screen-wrap">
@@ -1375,6 +1410,104 @@ function drawAutoBox(ctx,text,x,y){
     ctx.shadowBlur=0;
     ctx.globalAlpha=0.6+Math.sin(fr*0.08)*0.4;ctx.fillStyle='rgba(255,200,220,0.8)';ctx.font='bold 10px Fredoka One';
     ctx.fillText('"He was the last one." — Aunt Barb',W/2,H-6);
+    ctx.textAlign='left';ctx.globalAlpha=1;
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+
+// ── THUMBNAIL: THE ADVENTURES OF CRANKY CHICKENS ──
+(function(){
+  const canvas=document.getElementById('c13'); if(!canvas) return;
+  const ctx=canvas.getContext('2d'); let fr=0;
+  const W=640,H=200;
+
+  function tChick(x,y,sc,walk){
+    ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+    ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,15,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+    const bob=walk?Math.abs(Math.sin(fr*0.2))*3:Math.sin(fr*0.06)*1.5;
+    ctx.translate(0,-bob);
+    ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.ellipse(0,-14,14,13,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffcc6e';ctx.beginPath();ctx.ellipse(0,-12,9,8,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.arc(0,-26,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff3333';ctx.beginPath();ctx.moveTo(-6,-33);ctx.lineTo(-8,-40);ctx.lineTo(-3,-36);ctx.lineTo(0,-42);ctx.lineTo(3,-36);ctx.lineTo(8,-40);ctx.lineTo(6,-33);ctx.closePath();ctx.fill();
+    ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(-2,-27,5,6,-0.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(6,-27,5,6,0.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-1,-26,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7,-26,3,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#cc2200';ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-6,-31);ctx.lineTo(1,-29);ctx.stroke();ctx.beginPath();ctx.moveTo(3,-29);ctx.lineTo(10,-31);ctx.stroke();
+    ctx.fillStyle='#ff6b00';ctx.beginPath();ctx.moveTo(-3,-22);ctx.lineTo(3,-22);ctx.lineTo(0,-18);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#e08010';ctx.beginPath();ctx.ellipse(-12,-14,4,8,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(12,-14,4,8,-0.4,0,Math.PI*2);ctx.fill();
+    const ls=walk?Math.sin(fr*0.25)*4:0;
+    ctx.fillStyle='#ff6b00';ctx.fillRect(-7+ls,-3,4,4);ctx.fillRect(3-ls,-3,4,4);
+    ctx.restore();
+  }
+  function tKevin(x,y,sc){
+    ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+    const wig=Math.sin(fr*0.4)*4;
+    ctx.fillStyle='#a0714a';ctx.beginPath();ctx.ellipse(0,-9,13,8,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#a0714a';ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-11,-11);ctx.quadraticCurveTo(-18,-16+wig,-20,-10+wig);ctx.stroke();
+    ctx.fillStyle='#a0714a';ctx.beginPath();ctx.arc(9,-16,8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#7a5030';ctx.beginPath();ctx.ellipse(4,-22,3,5,0.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(13,-22,3,5,-0.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(8,-17,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(13,-17,2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#332211';ctx.beginPath();ctx.arc(16,-14,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#cc3333';ctx.fillRect(2,-13,12,3);
+    ctx.fillStyle='#8a5f3d';ctx.fillRect(-8,-2,3,4);ctx.fillRect(-2,-2,3,4);ctx.fillRect(4,-2,3,4);ctx.fillRect(9,-2,3,4);
+    ctx.restore();
+  }
+  function tJag(x,y,sc){
+    ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+    ctx.fillStyle='#f4a261';ctx.beginPath();ctx.ellipse(0,-16,18,14,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#8b4513';[[-7,-10],[9,-13],[-2,-24],[12,-22]].forEach(([sx,sy])=>{ctx.beginPath();ctx.arc(sx,sy,3.2,0,Math.PI*2);ctx.fill();});
+    ctx.strokeStyle='#e07840';ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-14,-12);ctx.quadraticCurveTo(-26,-6+Math.sin(fr*0.08)*8,-32,-14);ctx.stroke();
+    ctx.fillStyle='#f4a261';ctx.beginPath();ctx.arc(2,-34,12,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.moveTo(-6,-42);ctx.lineTo(-11,-52);ctx.lineTo(-1,-44);ctx.fill();
+    ctx.beginPath();ctx.moveTo(10,-42);ctx.lineTo(15,-52);ctx.lineTo(5,-44);ctx.fill();
+    ctx.fillStyle='white';ctx.beginPath();ctx.arc(-3,-34,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8,-34,6,0,Math.PI*2);ctx.fill();
+    const px=Math.cos(fr*0.1)*1.5;
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3+px,-35,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8-px,-35,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f4a261';ctx.fillRect(-11,-4,7,5);ctx.fillRect(5,-4,7,5);
+    ctx.restore();
+  }
+  function tCorn(x,y,s){
+    ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+    const bob=Math.sin(fr*0.06+x)*1;
+    ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.ellipse(0,bob,5,7,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffd700';for(let r=0;r<3;r++)for(let cc=0;cc<2;cc++)ctx.fillRect(-3+cc*4,-4+r*4+bob,3,3);
+    ctx.fillStyle='#90e050';ctx.beginPath();ctx.moveTo(0,-7+bob);ctx.lineTo(5,-13+bob);ctx.lineTo(2,-5+bob);ctx.fill();
+    ctx.restore();
+  }
+
+  function loop(){
+    fr++;
+    // Warm day sky
+    const sky=ctx.createLinearGradient(0,0,0,H*0.72);
+    sky.addColorStop(0,'#66aadd');sky.addColorStop(1,'#cceeff');
+    ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*0.72);
+    ctx.fillStyle='#fff6cc';ctx.beginPath();ctx.arc(560,42,20,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.8)';[[140,40],[330,32]].forEach(([cx2,cy2])=>{ctx.beginPath();ctx.ellipse(cx2,cy2,28,11,0,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle='#6a9d4a';ctx.fillRect(0,H*0.72,W,H*0.28);
+    // coop
+    ctx.fillStyle='#a05c30';ctx.fillRect(40,H*0.72-46,68,46);
+    ctx.fillStyle='#7a4522';ctx.beginPath();ctx.moveTo(34,H*0.72-46);ctx.lineTo(74,H*0.72-68);ctx.lineTo(114,H*0.72-46);ctx.closePath();ctx.fill();
+    // corn pile
+    for(let i=0;i<10;i++){const row=Math.floor(i/5),col=i%5;tCorn(452+col*12-24+row*6,H*0.72-2-row*9,0.8);}
+    // characters
+    tChick(190,H*0.72,1.0,true);
+    tKevin(130,H*0.72,1.0);
+    // jaguar lurking at right edge behind bush
+    ctx.fillStyle='rgba(40,90,40,0.85)';ctx.beginPath();ctx.ellipse(600,H*0.72-14,42,30,0,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.rect(560,H*0.3,80,H*0.42);ctx.clip();tJag(596,H*0.72,0.85);ctx.restore();
+    // eyes peek
+    // title
+    ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,22);
+    ctx.fillStyle='#ffcc02';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.shadowColor='#ff8800';ctx.shadowBlur=7;
+    ctx.fillText('📺 THE ADVENTURES OF CRANKY CHICKENS — EPISODE ONE NOW PLAYING',W/2,15);ctx.shadowBlur=0;
+    const pulse=0.5+Math.sin(fr*0.08)*0.35;
+    ctx.globalAlpha=pulse;ctx.fillStyle='rgba(255,204,2,0.9)';ctx.font='bold 10px Fredoka One';
+    ctx.fillText('"The Corn Must Flow" · 15 min',W/2,H-7);
     ctx.textAlign='left';ctx.globalAlpha=1;
     requestAnimationFrame(loop);
   }
@@ -4117,6 +4250,153 @@ TRAILER_SCRIPTS['barb'] = (()=>{
       ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='bold 11px Fredoka One'; ctx.textAlign='center';
       ctx.fillText('Lou is fine. He loves the dog. He will never admit it.',GW/2,390);
       ctx.globalAlpha=1; ctx.textAlign='left';
+    }},
+  ];
+})();
+
+
+TRAILER_SCRIPTS['toon'] = (()=>{
+  const GW=640,GH=400,TGY=308;
+  let TF=0;
+  const TSTARS=Array.from({length:80},(_,i)=>({x:(i*137+13)%GW,y:(i*79+7)%(TGY-40),r:i%4===0?1.4:0.7,s:0.02+Math.random()*0.03,o:Math.random()*7}));
+  function tStars(c,a=1){TSTARS.forEach(s=>{c.globalAlpha=(0.3+Math.sin(TF*s.s+s.o)*0.4)*a;c.fillStyle='#dde8ff';c.beginPath();c.arc(s.x,s.y,s.r,0,Math.PI*2);c.fill();});c.globalAlpha=1;}
+  function tChick(c,x,y,sc,walk){
+    c.save();c.translate(x,y);c.scale(sc,sc);
+    c.globalAlpha=0.18;c.fillStyle='#000';c.beginPath();c.ellipse(0,2,15,4,0,0,Math.PI*2);c.fill();c.globalAlpha=1;
+    const bob=walk?Math.abs(Math.sin(TF*0.2))*3:Math.sin(TF*0.06)*1.5;
+    c.translate(0,-bob);
+    c.fillStyle='#ff9f1c';c.beginPath();c.ellipse(0,-14,14,13,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#ffcc6e';c.beginPath();c.ellipse(0,-12,9,8,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#ff9f1c';c.beginPath();c.arc(0,-26,10,0,Math.PI*2);c.fill();
+    c.fillStyle='#ff3333';c.beginPath();c.moveTo(-6,-33);c.lineTo(-8,-40);c.lineTo(-3,-36);c.lineTo(0,-42);c.lineTo(3,-36);c.lineTo(8,-40);c.lineTo(6,-33);c.closePath();c.fill();
+    c.fillStyle='white';c.beginPath();c.ellipse(-2,-27,5,6,-0.3,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(6,-27,5,6,0.3,0,Math.PI*2);c.fill();
+    c.fillStyle='#1a1a2e';c.beginPath();c.arc(-1,-26,3,0,Math.PI*2);c.fill();c.beginPath();c.arc(7,-26,3,0,Math.PI*2);c.fill();
+    c.strokeStyle='#cc2200';c.lineWidth=2.2;c.beginPath();c.moveTo(-6,-31);c.lineTo(1,-29);c.stroke();c.beginPath();c.moveTo(3,-29);c.lineTo(10,-31);c.stroke();
+    c.fillStyle='#ff6b00';c.beginPath();c.moveTo(-3,-22);c.lineTo(3,-22);c.lineTo(0,-18);c.closePath();c.fill();
+    c.fillStyle='#e08010';c.beginPath();c.ellipse(-12,-14,4,8,0.4,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(12,-14,4,8,-0.4,0,Math.PI*2);c.fill();
+    const ls=walk?Math.sin(TF*0.25)*4:0;
+    c.fillStyle='#ff6b00';c.fillRect(-7+ls,-3,4,4);c.fillRect(3-ls,-3,4,4);
+    c.restore();
+  }
+  function tJag(c,x,y,sc){
+    c.save();c.translate(x,y);c.scale(sc,sc);
+    c.globalAlpha=0.18;c.fillStyle='#000';c.beginPath();c.ellipse(0,2,18,5,0,0,Math.PI*2);c.fill();c.globalAlpha=1;
+    c.fillStyle='#f4a261';c.beginPath();c.ellipse(0,-16,18,14,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#8b4513';[[-7,-10],[9,-13],[-2,-24],[12,-22]].forEach(([sx,sy])=>{c.beginPath();c.arc(sx,sy,3.2,0,Math.PI*2);c.fill();});
+    c.strokeStyle='#e07840';c.lineWidth=4;c.lineCap='round';
+    c.beginPath();c.moveTo(-14,-12);c.quadraticCurveTo(-26,-6+Math.sin(TF*0.08)*8,-32,-14+Math.sin(TF*0.06)*10);c.stroke();
+    c.fillStyle='#f4a261';c.beginPath();c.arc(2,-34,12,0,Math.PI*2);c.fill();
+    c.beginPath();c.moveTo(-6,-42);c.lineTo(-11,-52);c.lineTo(-1,-44);c.fill();
+    c.beginPath();c.moveTo(10,-42);c.lineTo(15,-52);c.lineTo(5,-44);c.fill();
+    c.fillStyle='white';c.beginPath();c.arc(-3,-34,6,0,Math.PI*2);c.fill();c.beginPath();c.arc(8,-34,6,0,Math.PI*2);c.fill();
+    const px=Math.cos(TF*0.1)*1.5;
+    c.fillStyle='#1a1a2e';c.beginPath();c.arc(-3+px,-35,3,0,Math.PI*2);c.fill();c.beginPath();c.arc(8-px,-35,3,0,Math.PI*2);c.fill();
+    c.strokeStyle='#5c3317';c.lineWidth=1.8;c.beginPath();c.arc(2,-28,4,0.2,Math.PI-0.2);c.stroke();
+    c.fillStyle='#f4a261';c.fillRect(-11,-4,7,5);c.fillRect(5,-4,7,5);
+    c.restore();
+  }
+  function tCornP(c,x,y,n){
+    for(let i=0;i<n;i++){const row=Math.floor(i/5),col=i%5;
+      const cx2=x+col*13-26+row*6,cy2=y-row*10;
+      const bob=Math.sin(TF*0.06+cx2)*1;
+      c.fillStyle='#ffcc02';c.beginPath();c.ellipse(cx2,cy2+bob,5,7,0,0,Math.PI*2);c.fill();
+      c.fillStyle='#ffd700';for(let r=0;r<3;r++)for(let cc2=0;cc2<2;cc2++)c.fillRect(cx2-3+cc2*4,cy2-4+r*4+bob,3,3);
+      c.fillStyle='#90e050';c.beginPath();c.moveTo(cx2,cy2-7+bob);c.lineTo(cx2+5,cy2-13+bob);c.lineTo(cx2+2,cy2-5+bob);c.fill();
+    }
+  }
+  function farmBG(c){
+    const sky=c.createLinearGradient(0,0,0,TGY);sky.addColorStop(0,'#66aadd');sky.addColorStop(1,'#cceeff');
+    c.fillStyle=sky;c.fillRect(0,0,GW,TGY);
+    c.fillStyle='#fff6cc';c.beginPath();c.arc(540,60,24,0,Math.PI*2);c.fill();
+    c.fillStyle='#6a9d4a';c.fillRect(0,TGY,GW,GH-TGY);
+    c.fillStyle='#a05c30';c.fillRect(60,TGY-60,90,60);
+    c.fillStyle='#7a4522';c.beginPath();c.moveTo(52,TGY-60);c.lineTo(105,TGY-90);c.lineTo(158,TGY-60);c.closePath();c.fill();
+  }
+  function nightBG(c){
+    const sky=c.createLinearGradient(0,0,0,TGY);sky.addColorStop(0,'#0a0a2a');sky.addColorStop(1,'#1e1e48');
+    c.fillStyle=sky;c.fillRect(0,0,GW,TGY);tStars(c);
+    c.fillStyle='#2a3d24';c.fillRect(0,TGY,GW,GH-TGY);
+    c.fillStyle='#a05c30';c.fillRect(60,TGY-60,90,60);
+    c.fillStyle='#7a4522';c.beginPath();c.moveTo(52,TGY-60);c.lineTo(105,TGY-90);c.lineTo(158,TGY-60);c.closePath();c.fill();
+  }
+  function capBar(c,text,sub){
+    c.fillStyle='rgba(0,0,0,0.78)';c.fillRect(0,GH-70,GW,70);
+    c.fillStyle='#ffcc02';c.font='bold 26px Fredoka One';c.textAlign='center';
+    c.shadowColor='#ff8800';c.shadowBlur=12;c.fillText(text,GW/2,GH-38);c.shadowBlur=0;
+    if(sub){c.fillStyle='rgba(255,220,180,0.7)';c.font='14px Fredoka One';c.fillText(sub,GW/2,GH-14);}
+    c.textAlign='left';
+  }
+  return [
+    {dur:280, draw(c,fr,t){TF=fr;
+      farmBG(c);tCornP(c,340,TGY,14);tChick(c,220,TGY,1.3,false);
+      capBar(c,'Every Tuesday. The corn count.','47 pieces. Same as always.');
+    }},
+    {dur:280, draw(c,fr,t){TF=fr;
+      nightBG(c);
+      const jx=Math.min(400,620-fr*0.9);
+      tJag(c,jx,TGY,1.2);tCornP(c,340,TGY,Math.max(0,14-Math.floor(fr/28)));
+      capBar(c,'Until one night...','someone took everything.');
+    }},
+    {dur:260, draw(c,fr,t){TF=fr;
+      farmBG(c);
+      c.fillStyle='rgba(0,0,0,0.5)';c.fillRect(0,0,GW,GH);
+      c.save();c.translate(GW/2,GH/2-30);c.rotate(-0.04);
+      c.fillStyle='#f5eeda';c.fillRect(-140,-80,280,160);
+      c.fillStyle='#2a2a3e';c.font='bold 19px Fredoka One';c.textAlign='center';
+      c.fillText('IT IS MINE NOW.',0,-30);c.fillText('YOU KNOW',0,0);c.fillText('WHAT YOU DID.',0,30);
+      c.font='14px Fredoka One';c.fillStyle='#883322';c.fillText('— E.J.',65,58);
+      c.restore();c.textAlign='left';
+      capBar(c,'A note was left.','Detective work would be brief.');
+    }},
+    {dur:280, draw(c,fr,t){TF=fr;
+      farmBG(c);
+      const wx=((fr*1.4)%(GW+200))-100;
+      tChick(c,wx,TGY,1.15,true);
+      tChick(c,wx-70,TGY,1.0,true);
+      c.save();c.translate(wx-135,TGY);
+      const wig=Math.sin(TF*0.4)*4;
+      c.fillStyle='#a0714a';c.beginPath();c.ellipse(0,-9,13,8,0,0,Math.PI*2);c.fill();
+      c.strokeStyle='#a0714a';c.lineWidth=4;c.lineCap='round';
+      c.beginPath();c.moveTo(-11,-11);c.quadraticCurveTo(-18,-16+wig,-20,-10+wig);c.stroke();
+      c.fillStyle='#a0714a';c.beginPath();c.arc(9,-16,8,0,Math.PI*2);c.fill();
+      c.fillStyle='#1a1a2e';c.beginPath();c.arc(8,-17,2,0,Math.PI*2);c.fill();c.beginPath();c.arc(13,-17,2,0,Math.PI*2);c.fill();
+      c.fillStyle='#cc3333';c.fillRect(2,-13,12,3);
+      c.fillStyle='#8a5f3d';c.fillRect(-8,-2,3,4);c.fillRect(4,-2,3,4);
+      c.restore();
+      capBar(c,'One cranky chicken. One optimist. One dog.','And a formal grievance. Filed.');
+    }},
+    {dur:300, draw(c,fr,t){TF=fr;
+      c.fillStyle='#160a1a';c.fillRect(0,0,GW,GH);
+      const vgrd=c.createRadialGradient(GW/2,GH/2,40,GW/2,GH/2,380);
+      vgrd.addColorStop(0,'transparent');vgrd.addColorStop(1,'rgba(120,0,40,0.6)');
+      c.fillStyle=vgrd;c.fillRect(0,0,GW,GH);
+      c.fillStyle='#1e1024';c.fillRect(0,TGY,GW,GH-TGY);
+      tJag(c,GW/2,TGY,2.0);
+      const ta=Math.min(1,fr/40);c.globalAlpha=ta;
+      capBar(c,'The thief has a name.','And a doorbell. And feelings.');
+      c.globalAlpha=1;
+    }},
+    {dur:320, draw(c,fr,t){TF=fr;
+      c.fillStyle='#050008';c.fillRect(0,0,GW,GH);tStars(c,0.8);
+      const ma=Math.min(1,fr/25);c.globalAlpha=ma;
+      c.fillStyle='#ffcc02';c.font='bold 30px Fredoka One';c.textAlign='center';
+      c.shadowColor='#ff8800';c.shadowBlur=18;
+      c.fillText('THE ADVENTURES OF',GW/2,140);
+      c.font='bold 46px Fredoka One';
+      c.fillText('CRANKY CHICKENS',GW/2,195);c.shadowBlur=0;
+      if(fr>60){c.globalAlpha=Math.min(1,(fr-60)/30);
+        c.fillStyle='rgba(255,220,180,0.85)';c.font='17px Fredoka One';
+        c.fillText('Episode One: "The Corn Must Flow"',GW/2,240);
+      }
+      if(fr>120){c.globalAlpha=Math.min(1,(fr-120)/30);
+        c.fillStyle='#aaffaa';c.font='bold 20px Fredoka One';
+        c.fillText('15 MINUTES. STREAMING NOW.',GW/2,285);
+        c.fillStyle='rgba(255,255,255,0.5)';c.font='13px Fredoka One';
+        c.fillText('Right here. No subscription. The shoebox is the subscription.',GW/2,315);
+      }
+      c.globalAlpha=1;c.textAlign='left';
+      const cx=((fr*1.6)%(GW+150))-75;
+      tChick(c,cx,378,1.0,true);
     }},
   ];
 })();
