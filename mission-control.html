@@ -312,6 +312,7 @@ html, body {
     <canvas id="previewCanvas" width="460" height="180"></canvas>
     <div id="previewVariants" class="preview-variants"></div>
     <div id="previewDesc" style="font-size:12px;color:rgba(200,220,255,0.6);text-align:center;line-height:1.5;min-height:36px"></div>
+    <details id="previewCodeDump" style="display:none;margin:6px 0;"><summary style="font-family:monospace;font-size:10px;color:rgba(180,180,255,0.5);cursor:pointer">▶ Show generated code</summary><pre id="previewCodePre" style="font-size:9px;color:rgba(200,255,200,0.7);background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;overflow:auto;max-height:140px;white-space:pre-wrap;word-break:break-all;margin-top:4px"></pre></details>
     <div id="previewSteps" style="display:flex;flex-direction:column;gap:3px;margin:4px 0;font-family:'JetBrains Mono',monospace;font-size:10px;"></div>
     <div class="preview-actions" id="previewActions">
       <button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>
@@ -1721,6 +1722,7 @@ async function runPreviewPipeline(idx){
   if(drawFn){
     renderLiveSprite(drawFn, resolvedSpec, cnv, pctx);
     document.getElementById('previewSub').textContent = 'LIVE SPRITE PREVIEW';
+  const _cd=document.getElementById('previewCodeDump');if(_cd)_cd.style.display='none';
     document.getElementById('previewDesc').textContent =
       resolvedSpec.name + ' — ' + resolvedSpec.characterType +
       (s2.isNewType ? ' (new type ✨)' : s2.mappedFrom ? ' (mapped from '+s2.mappedFrom+')' : '');
@@ -1801,18 +1803,15 @@ function renderLiveSprite(drawFnStr, spec, cnv, pctx){
     console.error('Preview eval failed:', e);
     console.log('[Preview] Raw code:\n', drawFnStr);
     console.log('[Preview] Cleaned code:\n', cleanFn);
-    // Show first 120 chars of generated code on screen so we can debug on mobile
+    // Show code in expandable dump
+    const dumpEl = document.getElementById('previewCodeDump');
+    const preEl = document.getElementById('previewCodePre');
+    if(dumpEl && preEl){ dumpEl.style.display='block'; preEl.textContent = cleanFn; }
     pctx.fillStyle='#000008'; pctx.fillRect(0,0,cnv.width,cnv.height);
     pctx.fillStyle='rgba(255,100,100,0.6)'; pctx.font='11px Fredoka One'; pctx.textAlign='center';
-    pctx.fillText('Preview unavailable', cnv.width/2, 60);
-    pctx.font='10px Fredoka One'; pctx.fillStyle='rgba(255,200,100,0.7)';
-    pctx.fillText('Sprite ready — click Approve', cnv.width/2, 82);
-    pctx.font='8px monospace'; pctx.fillStyle='rgba(180,180,255,0.6)';
-    const preview = cleanFn.slice(0,200).replace(/\n/g,' ');
-    const words = preview.match(/.{1,55}/g)||[];
-    words.slice(0,3).forEach((line,i) => pctx.fillText(line, cnv.width/2, 106+i*14));
-    pctx.fillStyle='rgba(200,150,100,0.5)'; pctx.font='9px monospace';
-    pctx.fillText('Error: '+e.message.slice(0,44), cnv.width/2, cnv.height-12);
+    pctx.fillText('Preview unavailable — '+e.message.slice(0,30), cnv.width/2, cnv.height/2-10);
+    pctx.font='10px Fredoka One'; pctx.fillStyle='rgba(255,200,100,0.8)';
+    pctx.fillText('Sprite is ready — click Approve This', cnv.width/2, cnv.height/2+12);
     pctx.textAlign='left';
     return;
   }
