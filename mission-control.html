@@ -458,10 +458,33 @@ function validateEpisodeJSON(txt){
   if(errs.length) return {ok:false,error:errs.slice(0,8).join('; ')};
   return {ok:true,scenes,total};
 }
+// ═══ DRAFT MONITOR — persistent progress panel ═══
+function draftPanel(){
+  let p=document.getElementById('draftMonitor');
+  if(!p){
+    p=document.createElement('div');p.id='draftMonitor';
+    p.style.cssText='position:fixed;bottom:12px;left:12px;right:12px;max-width:460px;margin:0 auto;background:#0e1226;border:2px solid rgba(140,200,255,0.4);border-radius:12px;padding:12px;z-index:998;font-family:\'Fredoka One\',cursive;box-shadow:0 8px 30px rgba(0,0,0,0.6);';
+    p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="color:#8cf;font-size:13px;">🤖 Draft Monitor</span><button onclick="document.getElementById(\'draftMonitor\').remove()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:15px;cursor:pointer;font-family:inherit;">✕</button></div><div id="draftLog" style="font-size:11px;line-height:1.7;color:rgba(255,255,255,0.8);max-height:180px;overflow:auto;"></div>';
+    document.body.appendChild(p);
+  }
+  return p;
+}
+function dlog(msg,color){
+  draftPanel();
+  const el=document.getElementById('draftLog');
+  const line=document.createElement('div');
+  if(color)line.style.color=color;
+  line.textContent=msg;
+  el.appendChild(line);
+  el.scrollTop=el.scrollHeight;
+}
+
 async function draftEpisode(idx){
   const sub=allSubmissions[idx];
   closePreview();
-  toast('🤖 Drafting episode from the pitch...');
+  const _mp=document.getElementById('draftMonitor');if(_mp)_mp.remove();
+  dlog('📝 Pitch: "'+(sub.scribeName||'Untitled').slice(0,50)+'"');
+  dlog('🤖 Drafting episode from the pitch...');
   const from=sub.originalSubmission?.from==='cannon-master'?'Cannon Master (age 8)':'Dragon Scribe (age 11)';
   const title=(sub.scribeName||'Untitled Episode').replace(/"/g,'');
   const basePrompt='Write a scene list for an animated episode of "The Adventures of Cranky Chickens".\n\n'+
@@ -474,23 +497,24 @@ async function draftEpisode(idx){
   try{
     let prompt=basePrompt;
     while(attempt<=3){
-      toast('🤖 Draft attempt '+attempt+'...');
+      toast('🤖 Draft attempt '+attempt+'...');dlog('🤖 Attempt '+attempt+': generating script... (30-60s)');
       const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({action:'claude_complete',max_tokens:6000,messages:[{role:'user',content:prompt}]})});
       const data=await res.json();
       if(data.error) throw new Error(data.error);
       raw=data.content?.find(b=>b.type==='text')?.text||'';
       result=validateEpisodeJSON(raw);
-      if(result.ok) break;
-      toast('🔁 Fixing: '+result.error.slice(0,60));
+      if(result.ok){dlog('✅ Script valid on attempt '+attempt,'#8f8');break;}
+      toast('🔁 Fixing: '+result.error.slice(0,60));dlog('🔁 Validation failed: '+result.error.slice(0,90),'#fc8');
       prompt='Your previous episode JSON had errors. Fix ALL of them and return the corrected FULL JSON array.\n\nERRORS: '+result.error+'\n\nPREVIOUS JSON:\n'+raw.slice(0,9000)+'\n\nSchema reminder: '+EP_SCHEMA+'\nRespond with ONLY the corrected JSON array.';
       attempt++;
     }
     if(!result.ok) throw new Error('Validation failed after 3 attempts: '+result.error.slice(0,100));
-    toast('✅ Script valid: '+result.scenes.length+' scenes, '+Math.round(result.total/60)+'m'+(result.total%60)+'s. Building page...');
+    toast('✅ Script valid');dlog('📊 '+result.scenes.length+' scenes · '+Math.floor(result.total/60)+'m'+(result.total%60)+'s runtime','#8f8');dlog('🏗️ Injecting into episode engine...');
     // Fetch template (static asset) and inject
     const tRes=await fetch('/shows/episode-template.html');
-    if(!tRes.ok) throw new Error('Template not deployed yet — wait for Netlify, then retry');
+    if(!tRes.ok) throw new Error('Template not deployed yet — wait 1 min for Netlify, then retry');
+    dlog('📄 Template loaded ('+Math.round((await tRes.clone().text()).length/1024)+'KB)');
     let page=await tRes.text();
     page=page.split('__EP_TITLE__').join(title).split('__EP_FROM__').join(from);
     page=page.replace('/*__SCENES__*/[]', JSON.stringify(result.scenes));
@@ -500,6 +524,7 @@ async function draftEpisode(idx){
         commitMsg:'🤖 Auto-draft episode: "'+title+'" ('+attempt+' attempt'+(attempt>1?'s':'')+')'})});
     const sd=await sf.json();
     if(sd.error) throw new Error(sd.error);
+    dlog('📦 Committed: '+path,'#8f8');dlog('⏳ Netlify deploying... live in ~1 minute','#8cf');
     // Log it through the normal workflow
     const log={id:Date.now(),timestamp:new Date().toISOString(),submissionId:sub.id,
       kidName:sub.originalSubmission?'Cannon Master':'Dragon Scribe',contribType:'episode',
@@ -507,10 +532,12 @@ async function draftEpisode(idx){
       delivered:'AUTO-DRAFT "'+title+'" built in '+attempt+' attempt'+(attempt>1?'s':'')+' — live at /'+path+' after deploy',
       deliveryType:'episode_draft',issues:[],commitSha:'draft'};
     await writeDeliveryLog(log);
-    toast('🤖📺 Draft committed! Live in ~1 min at /'+path);
+    toast('🤖📺 Draft committed!');
+    dlog('');
+    (function(){const el=document.getElementById('draftLog');const a=document.createElement('a');a.href='/'+path;a.target='_blank';a.textContent='📺 OPEN DRAFT →';a.style.cssText='display:block;color:#ffcc02;font-size:14px;text-decoration:none;padding:8px;border:1px solid rgba(255,204,2,0.4);border-radius:8px;text-align:center;margin-top:4px;';el.appendChild(a);})();
     setTimeout(()=>{ if(confirm('Draft "'+title+'" committed!\n\nOpen it? (give Netlify ~1 minute)')) window.open('/'+path); },400);
   }catch(e){
-    toast('❌ Draft failed: '+e.message.slice(0,80));
+    toast('❌ Draft failed');dlog('❌ FAILED: '+e.message.slice(0,120),'#f88');dlog('Tap DRAFT IT to retry.','#f88');
   }
 }
 
