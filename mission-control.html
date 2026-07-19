@@ -454,7 +454,7 @@ function validateEpisodeJSON(txt){
     });
     if(!(s.lines||[]).length&&!(s.cast||[]).length) errs.push('scene '+i+': empty scene');
   });
-  if(total<240||total>620) errs.push('total duration '+total+'s — target 300-600s');
+  if(total<200||total>620) errs.push('total duration '+total+'s — target 240-600s');
   if(errs.length) return {ok:false,error:errs.slice(0,8).join('; ')};
   return {ok:true,scenes,total};
 }
@@ -491,7 +491,7 @@ async function draftEpisode(idx){
     'THE KID\'S PITCH (honor it faithfully — their ideas are canon):\n"'+(sub.description||'')+'"\n\n'+
     'SERIES VOICE: deadpan cranky humor, formal-grievance jokes, running gags (corn counting, juice boxes, "Do not make it weird, Kevin", El Jaguar\'s cowardice framed as tactics). Scratchy is cranky but principled. Kevin ONLY barks. The NARRATOR takes personal offense.\n\n'+
     'CAST/BACKGROUNDS/SCHEMA: '+EP_SCHEMA+'\n\n'+
-    'Requirements: 14-22 scenes, total 320-520 seconds, dialogue-driven, 3-7 lines per scene, line times spread through each scene, end with a warm resolution scene (no need to write title or credits — those are automatic).\n\n'+
+    'Requirements: 12-16 scenes, total 280-420 seconds, dialogue-driven, 3-5 SHORT lines per scene (under 90 characters each), line times spread through each scene, end with a warm resolution scene (no need to write title or credits — those are automatic). Keep the JSON COMPACT.\n\n'+
     'Respond with ONLY the JSON array. No markdown, no commentary.';
   let attempt=1, result=null, raw='';
   try{
@@ -499,14 +499,20 @@ async function draftEpisode(idx){
     while(attempt<=3){
       toast('🤖 Draft attempt '+attempt+'...');dlog('🤖 Attempt '+attempt+': generating script... (30-60s)');
       const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'claude_complete',max_tokens:6000,messages:[{role:'user',content:prompt}]})});
+        body:JSON.stringify({action:'claude_complete',max_tokens:8000,messages:[{role:'user',content:prompt}]})});
       const data=await res.json();
       if(data.error) throw new Error(data.error);
       raw=data.content?.find(b=>b.type==='text')?.text||'';
       result=validateEpisodeJSON(raw);
       if(result.ok){dlog('✅ Script valid on attempt '+attempt,'#8f8');break;}
       toast('🔁 Fixing: '+result.error.slice(0,60));dlog('🔁 Validation failed: '+result.error.slice(0,90),'#fc8');
-      prompt='Your previous episode JSON had errors. Fix ALL of them and return the corrected FULL JSON array.\n\nERRORS: '+result.error+'\n\nPREVIOUS JSON:\n'+raw.slice(0,9000)+'\n\nSchema reminder: '+EP_SCHEMA+'\nRespond with ONLY the corrected JSON array.';
+      const truncated=/Unterminated|Unexpected end|position \\d+$/.test(result.error)||raw.length>18000;
+      if(truncated){
+        dlog('✂️ Output was cut off — regenerating SHORTER','#fc8');
+        prompt=basePrompt.replace('12-16 scenes, total 280-420','10-12 scenes, total 240-330').replace('3-5 SHORT lines','2-4 VERY short lines');
+      }else{
+        prompt='Your previous episode JSON had errors. Fix ALL of them and return the corrected FULL JSON array.\n\nERRORS: '+result.error+'\n\nPREVIOUS JSON:\n'+raw.slice(0,9000)+'\n\nSchema reminder: '+EP_SCHEMA+'\nRespond with ONLY the corrected JSON array.';
+      }
       attempt++;
     }
     if(!result.ok) throw new Error('Validation failed after 3 attempts: '+result.error.slice(0,100));
