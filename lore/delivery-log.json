@@ -1,5 +1,20 @@
 [
   {
+    "id": 1784474667557,
+    "timestamp": "2026-07-19T15:24:27.557Z",
+    "submissionId": 1784419707027,
+    "kidName": "Cannon Master",
+    "contribType": "episode",
+    "asked": "[Converted from drawing idea] A cranky chicken all tangled up in glowing space rope who needs your help to break free and blast off!",
+    "askedName": "A cranky chicken all tangled up in glowing space rope who ne",
+    "targetGame": "The Adventures of Cranky Chickens",
+    "targetZone": null,
+    "delivered": "Episode pitch \"A cranky chicken all tangled up in glowing space rope who ne\" GREENLIT — committed to shows/episode-backlog.json, queued for production",
+    "deliveryType": "episode_greenlight",
+    "issues": [],
+    "commitSha": "episode-backlog"
+  },
+  {
     "id": 1784474638414,
     "timestamp": "2026-07-19T15:23:58.414Z",
     "submissionId": 1784419857415,
