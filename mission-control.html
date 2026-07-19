@@ -506,29 +506,46 @@ async function draftEpisode(idx){
     for(let a=0;a<ACTS.length;a++){
       const act=ACTS[a];
       let chunkOK=false;
-      for(let tries=1;tries<=2&&!chunkOK;tries++){
+      for(let tries=1;tries<=3&&!chunkOK;tries++){
         attempt=tries;
-        dlog('🎬 '+act.label+' — generating'+(tries>1?' (retry)':'')+'...');
-        const prompt=basePrompt.replace('Requirements: 12-16 scenes, total 280-420 seconds','Requirements: write ONLY '+act.brief+' Each scene 15-28 seconds')+
-          (story?'\nSTORY SO FAR (do not repeat): '+story.slice(-500):'')+
-          '\nRespond with ONLY a JSON array of 3-4 scene objects.';
-        const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'claude_complete',max_tokens:1800,messages:[{role:'user',content:prompt}]})});
-        let data;
-        try{ data=await res.json(); }
-        catch(e){ dlog('⚠️ Server hiccup on '+act.label+' — retrying','#fc8'); continue; }
-        if(data.error){ dlog('⚠️ '+String(data.error).slice(0,70),'#fc8'); continue; }
-        const raw=data.content?.find(b=>b.type==='text')?.text||'';
-        let scenes;
-        try{ scenes=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
-        catch(e){ dlog('🔁 '+act.label+': bad JSON — retrying','#fc8'); continue; }
-        if(!Array.isArray(scenes)||scenes.length<2){ dlog('🔁 '+act.label+': too few scenes — retrying','#fc8'); continue; }
-        allScenes=allScenes.concat(scenes);
-        story+=scenes.map(s=>(s.lines||[]).map(l=>l.text).join(' ')).join(' ').slice(0,400)+' ';
-        dlog('✅ '+act.label+': '+scenes.length+' scenes','#8f8');
-        chunkOK=true;
+        dlog('🎬 '+act.label+' — generating'+(tries>1?' (retry '+tries+')':'')+'...');
+        try{
+          const prompt=basePrompt.replace('Requirements: 12-16 scenes, total 280-420 seconds','Requirements: write ONLY '+act.brief+' Each scene 15-28 seconds')+
+            (story?'\nSTORY SO FAR (do not repeat): '+story.slice(-500):'')+
+            '\nRespond with ONLY a JSON array of 3-4 scene objects.';
+          const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({action:'claude_complete',max_tokens:1800,messages:[{role:'user',content:prompt}]})});
+          const data=await res.json();
+          if(data.error){ dlog('⚠️ '+String(data.error).slice(0,70),'#fc8'); continue; }
+          const raw=data.content?.find(b=>b.type==='text')?.text||'';
+          const scenes=JSON.parse(raw.replace(/```json|```/g,'').trim());
+          if(!Array.isArray(scenes)||scenes.length<2){ dlog('🔁 '+act.label+': too few scenes — retrying','#fc8'); continue; }
+          allScenes=allScenes.concat(scenes);
+          story+=scenes.map(s=>(s.lines||[]).map(l=>l.text).join(' ')).join(' ').slice(0,400)+' ';
+          dlog('✅ '+act.label+': '+scenes.length+' scenes','#8f8');
+          chunkOK=true;
+        }catch(e){
+          // Network blips, timeouts, bad JSON — all retry instead of killing the run
+          dlog('⚠️ '+act.label+': '+(e.message||'network hiccup').slice(0,50)+' — retrying','#fc8');
+          await new Promise(r=>setTimeout(r,1500));
+        }
       }
-      if(!chunkOK) throw new Error(act.label+' failed twice — tap DRAFT IT to retry');
+      if(!chunkOK){
+        if(a===ACTS.length-1){
+          // Never lose a finished story to a missing ending — canned juice-box resolution
+          dlog('🧯 Act 4 unreachable — using the backup ending','#fc8');
+          allScenes.push(
+            {dur:18,bg:'farmDay',music:'heart',cast:[{who:'scratchy',x:180},{who:'pearl',x:260},{who:'kevin',x:330},{who:'barb',x:440,fc:-1}],
+             lines:[{t:1,who:'NARRATOR',text:'And so, things worked out. Mostly.'},{t:5,who:'AUNT BARB',text:'Juice boxes for everyone!'},{t:9,who:'SCRATCHY',text:'This changes nothing. I am still cranky.'},{t:14,who:'PEARL',text:'We know.'}]},
+            {dur:12,bg:'farmDay',music:'heart',cast:[{who:'scratchy',x:250},{who:'kevin',x:330}],
+             lines:[{t:1,who:'KEVIN',text:'Bark!',d:2},{t:4,who:'SCRATCHY',text:'Do not make it weird, Kevin.'},{t:8,who:'NARRATOR',text:'Kevin made it weird. The end.'}]}
+          );
+        } else if(allScenes.length>=4){
+          dlog('⏭️ Skipping '+act.label+' — continuing with what we have','#fc8');
+        } else {
+          throw new Error(act.label+' failed 3 times — tap DRAFT IT to retry');
+        }
+      }
     }
     // Full validation over the assembled script (the normalizer in the template is the safety net)
     result=validateEpisodeJSON(JSON.stringify(allScenes));
