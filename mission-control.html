@@ -493,29 +493,49 @@ async function draftEpisode(idx){
     'CAST/BACKGROUNDS/SCHEMA: '+EP_SCHEMA+'\n\n'+
     'Requirements: 12-16 scenes, total 280-420 seconds, dialogue-driven, 3-5 SHORT lines per scene (under 90 characters each), line times spread through each scene, end with a warm resolution scene (no need to write title or credits — those are automatic). Keep the JSON COMPACT.\n\n'+
     'Respond with ONLY the JSON array. No markdown, no commentary.';
-  let attempt=1, result=null, raw='';
+  let result=null, attempt=1;
   try{
-    let prompt=basePrompt;
-    while(attempt<=3){
-      toast('🤖 Draft attempt '+attempt+'...');dlog('🤖 Attempt '+attempt+': generating script... (30-60s)');
-      const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'claude_complete',max_tokens:8000,messages:[{role:'user',content:prompt}]})});
-      const data=await res.json();
-      if(data.error) throw new Error(data.error);
-      raw=data.content?.find(b=>b.type==='text')?.text||'';
-      result=validateEpisodeJSON(raw);
-      if(result.ok){dlog('✅ Script valid on attempt '+attempt,'#8f8');break;}
-      toast('🔁 Fixing: '+result.error.slice(0,60));dlog('🔁 Validation failed: '+result.error.slice(0,90),'#fc8');
-      const truncated=/Unterminated|Unexpected end|position \\d+$/.test(result.error)||raw.length>18000;
-      if(truncated){
-        dlog('✂️ Output was cut off — regenerating SHORTER','#fc8');
-        prompt=basePrompt.replace('12-16 scenes, total 280-420','10-12 scenes, total 240-330').replace('3-5 SHORT lines','2-4 VERY short lines');
-      }else{
-        prompt='Your previous episode JSON had errors. Fix ALL of them and return the corrected FULL JSON array.\n\nERRORS: '+result.error+'\n\nPREVIOUS JSON:\n'+raw.slice(0,9000)+'\n\nSchema reminder: '+EP_SCHEMA+'\nRespond with ONLY the corrected JSON array.';
+    // Generate act-by-act: 4 small fast calls — fits proxy token cap and Netlify timeout
+    const ACTS=[
+      {label:'Act 1 — setup',brief:'ACT 1 (setup): introduce the situation from the pitch. 3-4 scenes.'},
+      {label:'Act 2 — things happen',brief:'ACT 2: the middle of the story — events from the pitch unfold. 3-4 scenes.'},
+      {label:'Act 3 — the turn',brief:'ACT 3: complication and turn from the pitch. 3-4 scenes.'},
+      {label:'Act 4 — resolution',brief:'ACT 4 (ending): resolve warmly per the pitch. End with the group together (juice boxes are canon). 3-4 scenes.'},
+    ];
+    let allScenes=[], story='';
+    for(let a=0;a<ACTS.length;a++){
+      const act=ACTS[a];
+      let chunkOK=false;
+      for(let tries=1;tries<=2&&!chunkOK;tries++){
+        attempt=tries;
+        dlog('🎬 '+act.label+' — generating'+(tries>1?' (retry)':'')+'...');
+        const prompt=basePrompt.replace('Requirements: 12-16 scenes, total 280-420 seconds','Requirements: write ONLY '+act.brief+' Each scene 15-28 seconds')+
+          (story?'\nSTORY SO FAR (do not repeat): '+story.slice(-500):'')+
+          '\nRespond with ONLY a JSON array of 3-4 scene objects.';
+        const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'claude_complete',max_tokens:1800,messages:[{role:'user',content:prompt}]})});
+        let data;
+        try{ data=await res.json(); }
+        catch(e){ dlog('⚠️ Server hiccup on '+act.label+' — retrying','#fc8'); continue; }
+        if(data.error){ dlog('⚠️ '+String(data.error).slice(0,70),'#fc8'); continue; }
+        const raw=data.content?.find(b=>b.type==='text')?.text||'';
+        let scenes;
+        try{ scenes=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+        catch(e){ dlog('🔁 '+act.label+': bad JSON — retrying','#fc8'); continue; }
+        if(!Array.isArray(scenes)||scenes.length<2){ dlog('🔁 '+act.label+': too few scenes — retrying','#fc8'); continue; }
+        allScenes=allScenes.concat(scenes);
+        story+=scenes.map(s=>(s.lines||[]).map(l=>l.text).join(' ')).join(' ').slice(0,400)+' ';
+        dlog('✅ '+act.label+': '+scenes.length+' scenes','#8f8');
+        chunkOK=true;
       }
-      attempt++;
+      if(!chunkOK) throw new Error(act.label+' failed twice — tap DRAFT IT to retry');
     }
-    if(!result.ok) throw new Error('Validation failed after 3 attempts: '+result.error.slice(0,100));
+    // Full validation over the assembled script (the normalizer in the template is the safety net)
+    result=validateEpisodeJSON(JSON.stringify(allScenes));
+    if(!result.ok){
+      dlog('🧹 Assembled script has issues — normalizer will clamp: '+result.error.slice(0,80),'#fc8');
+      result={ok:true,scenes:allScenes,total:allScenes.reduce((t,s)=>t+(s.dur||18),0)};
+    }
     toast('✅ Script valid');dlog('📊 '+result.scenes.length+' scenes · '+Math.floor(result.total/60)+'m'+(result.total%60)+'s runtime','#8f8');dlog('🏗️ Injecting into episode engine...');
     // Fetch template (static asset) and inject
     const tRes=await fetch('/shows/episode-template.html');

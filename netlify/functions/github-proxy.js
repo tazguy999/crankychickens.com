@@ -115,7 +115,7 @@ exports.handler = async (event) => {
     }
     // Sanitize system prompt too
     if (system) system = sanitizeInput(system, 4000);
-    max_tokens = Math.min(max_tokens, 2000); // cap tokens
+    max_tokens = Math.min(max_tokens, 3000); // cap tokens
 
     // Inject injection-resistance into system prompt
     const safeSystem = (system || '') +
