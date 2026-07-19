@@ -15,6 +15,80 @@
         { "screenIndex": 2, "name": "Moon Base",      "emoji": "🛸" },
         { "screenIndex": 3, "name": "Harvester Core", "emoji": "⚡" }
       ]
+    },
+    {
+      "slug": "mortal-squawkbat",
+      "title": "Mortal Squawkbat",
+      "subtitle": "FINISH THE BIRD",
+      "emoji": "🥋",
+      "status": "active",
+      "gameUrl": "/games/mortal-squawkbat.html",
+      "zones": [
+        { "screenIndex": 0, "name": "Tournament Ladder", "emoji": "⚔️" },
+        { "screenIndex": 1, "name": "The Egg Pedestal",  "emoji": "🥚" },
+        { "screenIndex": 2, "name": "El Jaguar's Ring",  "emoji": "🐆" }
+      ]
+    },
+    {
+      "slug": "mystery-island",
+      "title": "Mystery Island",
+      "subtitle": "The Island Knows Things",
+      "emoji": "🏝️",
+      "status": "active",
+      "gameUrl": "/games/mystery-island.html",
+      "zones": [
+        { "screenIndex": 0, "name": "The Beach",  "emoji": "🏖️" },
+        { "screenIndex": 1, "name": "The Jungle", "emoji": "🌿" },
+        { "screenIndex": 2, "name": "The Ruins",  "emoji": "🗿" }
+      ]
+    },
+    {
+      "slug": "rescue-ranch",
+      "title": "Rescue Ranch",
+      "subtitle": "Aunt Barb Needs You",
+      "emoji": "🐴",
+      "status": "active",
+      "gameUrl": "/games/rescue-ranch.html",
+      "zones": [
+        { "screenIndex": 0, "name": "The Barn",     "emoji": "🏚️" },
+        { "screenIndex": 1, "name": "The Pasture",  "emoji": "🌾" },
+        { "screenIndex": 2, "name": "Barb's Porch", "emoji": "🍋" }
+      ]
+    },
+    {
+      "slug": "tulum-trouble",
+      "title": "Tulum Trouble",
+      "subtitle": "The One That Started It All",
+      "emoji": "🌴",
+      "status": "active",
+      "gameUrl": "/games/tulum-trouble.html",
+      "zones": [
+        { "screenIndex": 0, "name": "Beach Zone",  "emoji": "🏖️" },
+        { "screenIndex": 1, "name": "Jungle Zone", "emoji": "🌿" },
+        { "screenIndex": 2, "name": "Ruins Zone",  "emoji": "🛕" }
+      ]
+    },
+    {
+      "slug": "jurassic-squawk",
+      "title": "Jurassic Squawk",
+      "subtitle": "COMING SOON — your ideas shape it!",
+      "emoji": "🦖",
+      "status": "active",
+      "zones": [
+        { "screenIndex": 0, "name": "Raptor Coop", "emoji": "🦕" },
+        { "screenIndex": 1, "name": "Amber Mine",  "emoji": "💎" }
+      ]
+    },
+    {
+      "slug": "medieval-molt",
+      "title": "Medieval Molt",
+      "subtitle": "COMING SOON — your ideas shape it!",
+      "emoji": "🏰",
+      "status": "active",
+      "zones": [
+        { "screenIndex": 0, "name": "The Castle", "emoji": "🏰" },
+        { "screenIndex": 1, "name": "The Moat",   "emoji": "🐊" }
+      ]
     }
   ]
 }

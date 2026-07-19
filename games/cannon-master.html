@@ -1070,7 +1070,8 @@ function handlePhoto(input){
 //  SUBMISSION — sends to Claude API
 // ═══════════════════════════════
 async function submitToAI(type, content, caption=''){
-  const systemPrompt=`You are receiving a game idea submission from an 8-year-old boy who loves Angry Birds cannon mechanics. He is contributing to "Cranky Chickens: In Space" — a Zelda-style top-down space adventure game. 
+  const gameName=selectedGame?`Cranky Chickens: ${selectedGame.title}`:'the Cranky Chickens game universe';
+  const systemPrompt=`You are receiving a game idea submission from an 8-year-old boy who loves Angry Birds cannon mechanics. He is contributing to "${gameName}" — part of the Cranky Chickens franchise. 
 
 Respond with a JSON object (no markdown, no backticks) with these fields:
 {
