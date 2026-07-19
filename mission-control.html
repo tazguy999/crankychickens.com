@@ -513,6 +513,21 @@ async function draftEpisode(idx){
   }
 }
 
+async function convertToEpisode(idx){
+  const sub=allSubmissions[idx];
+  if(!confirm('Convert "'+(sub.scribeName||'this idea')+'" into an episode pitch?\n\nThe original stays in the description — it just retargets to the show.'))return;
+  sub._origContribType=sub.contribType;
+  sub._origTargetGame=sub.targetGame;
+  sub.contribType='episode';
+  sub.targetGame={slug:'show',title:'The Adventures of Cranky Chickens',emoji:'📺'};
+  sub.targetZone=null;
+  if(sub._origContribType&&sub._origContribType!=='episode'&&!(sub.description||'').startsWith('[Converted'))
+    sub.description='[Converted from '+sub._origContribType+' idea] '+(sub.description||sub.summary||'');
+  await saveSubmissions('📺 Converted to episode pitch: '+(sub.scribeName||'idea').slice(0,40));
+  toast('📺 Now an episode pitch — preview it to greenlight or draft!');
+  renderAll();
+}
+
 let allSubmissions=[];
 let currentSha=null;
 let currentTab='pending';
@@ -671,6 +686,7 @@ function renderCard(s, i){
       `:
         isRejected?`<div class="status-rejected">✕ Rejected</div>`:`
         <button class="act-btn btn-approve" onclick="openPreview(${globalIdx})">👁️ Preview & Approve</button>
+        ${s.contribType!=='episode'?`<button class="act-btn" style="border-color:rgba(120,200,255,0.5);color:#8cf" onclick="convertToEpisode(${globalIdx})">📺 Make Episode</button>`:''}
         <button class="act-btn btn-reject" onclick="openPassPicker(${globalIdx})">✕ Pass</button>`}
       <a href="https://kids-preview--crankychickens.netlify.app" target="_blank" class="act-btn btn-view">🌐 Preview</a>
     </div>
