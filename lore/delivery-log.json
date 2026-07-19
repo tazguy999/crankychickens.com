@@ -1,5 +1,35 @@
 [
   {
+    "id": 1784414292399,
+    "timestamp": "2026-07-18T22:38:12.399Z",
+    "submissionId": 1784413957296,
+    "kidName": "Dragon Scribe",
+    "contribType": "episode",
+    "asked": "On a Tuesday Scratchy, El Jaguar, Pearl and Kevin are drinking juice after their truce. Then they hear a noise but El Jaguar didn't come because she was too scared. Scratchy, Pearl and Kevin saw a light picking up all of their corn one by one. Then it flew away. Then they decided to go after the corn snatchers. Meanwhile in the ship king squirrelington was yelling at his assistant named nut and saying he was nuts. And they needed to capture the angry chickens.. And dog.. And the story keeps going",
+    "askedName": "Corn snatchers",
+    "targetGame": "The Adventures of Cranky Chickens",
+    "targetZone": null,
+    "delivered": "Episode pitch \"Corn snatchers\" GREENLIT — committed to shows/episode-backlog.json, queued for production",
+    "deliveryType": "episode_greenlight",
+    "issues": [],
+    "commitSha": "episode-backlog"
+  },
+  {
+    "id": 1784414278488,
+    "timestamp": "2026-07-18T22:37:58.488Z",
+    "submissionId": 1784414219305,
+    "kidName": "Cannon Master",
+    "contribType": "episode",
+    "asked": "There should be a new weapon that... Hypnotizes chickens.",
+    "askedName": "There should be a new weapon that",
+    "targetGame": "The Adventures of Cranky Chickens",
+    "targetZone": null,
+    "delivered": "Episode pitch \"There should be a new weapon that\" GREENLIT — committed to shows/episode-backlog.json, queued for production",
+    "deliveryType": "episode_greenlight",
+    "issues": [],
+    "commitSha": "episode-backlog"
+  },
+  {
     "id": 1784335582368,
     "timestamp": "2026-07-18T00:46:22.368Z",
     "submissionId": 1784334160019,

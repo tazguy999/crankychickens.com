@@ -1,5 +1,161 @@
 [
   {
+    "id": 1784419857415,
+    "timestamp": "2026-07-19T00:10:57.415Z",
+    "scribeName": "A super grumpy space chicken with pointy ears and angry eyeb",
+    "description": "[Converted from drawing idea] A super grumpy space chicken with pointy ears and angry eyebrows who looks like they mean SERIOUS business!",
+    "contribType": "episode",
+    "type": "drawing",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "A super grumpy space chicken with pointy ears and angry eyebrows who looks like they mean SERIOUS business!",
+      "forScribe": "Lore angle: This is Commander Cluckazar, the grumpiest chicken in the known galaxy. Legend says they were once a cheerful space cadet until a rogue pig satellite ate their lunch — now they channel pure fury into battle. Their pointy ears (actually antennae from a crashed alien ship they fused with) let them detect enemies through walls, making them a legendary but difficult ally or fearsome rival. Narrative hook: The player first encounters Cluckazar blocking the path to the Space Roost, arms crossed and scowling. They must earn Cluckazar's trust through a challenge. Implementation notes: Character sprite should have a permanent scowl with heavy brow, crossed-arm idle stance, and cat-ear-style helmet spikes. Suggest a 'rage meter' mechanic tied to this character — the angrier they get (lower health = higher damage output), the more their eyes glow red. Sound design cue: low grumbling cluck sounds during idle, explosive squawk on attack."
+    },
+    "image": "data:image/jpeg;base64,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",
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null,
+    "_origContribType": "drawing",
+    "_origTargetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    }
+  },
+  {
+    "id": 1784419707027,
+    "timestamp": "2026-07-19T00:08:27.027Z",
+    "scribeName": "A cranky chicken all tangled up in glowing space rope who ne",
+    "description": "[Converted from drawing idea] A cranky chicken all tangled up in glowing space rope who needs your help to break free and blast off!",
+    "contribType": "episode",
+    "type": "drawing",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "A cranky chicken all tangled up in glowing space rope who needs your help to break free and blast off!",
+      "forScribe": "Lore angle: This is Clucky Starbeam, a Cranky Chicken scout who got snared by the Space Snarlweed — a living, glowing blue vine creature deployed by the villain to trap allies and block paths. Narrative beat: The player stumbles upon Clucky mid-mission, completely wrapped up and grumpy about it (very on-brand for a Cranky Chicken). After freeing him, Clucky is so fired up that he offers to be launched from the player's Egg Cannon as a one-time super shot. Implementation notes: The untangle puzzle could be a simple top-down 'follow the rope' or 'tap in order' mini-game suited to the Zelda-style interface. The co-op launch attack should have a satisfying arc trajectory (Angry Birds style) with a starburst impact effect. Clucky can reappear in later levels still grumpy, still occasionally getting tangled, making him a recurring comic-relief ally with real mechanical value."
+    },
+    "image": "data:image/jpeg;base64,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",
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null,
+    "_origContribType": "drawing",
+    "_origTargetGame": {
+      "slug": "in-space",
+      "title": "In Space",
+      "emoji": "🚀"
+    }
+  },
+  {
+    "id": 1784418155365,
+    "timestamp": "2026-07-18T23:42:35.365Z",
+    "scribeName": "Awesome idea received",
+    "description": "Awesome idea received!",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "Awesome idea received!"
+    },
+    "image": "data:image/jpeg;base64,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",
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
+    "id": 1784417475590,
+    "timestamp": "2026-07-18T23:31:15.590Z",
+    "scribeName": "In the next episode Scratchy and Kevin go on a walk and they",
+    "description": "In the next episode Scratchy and Kevin go on a walk and they see a dog with pointy ears and they take him home. They him Archie put on a collar, bathe him, feed him, and take him to the vet. The doctor is a girl white cat named SURGEON. She gives Archie medicine and helps him feel better. Then Scratchy finds out that he can't have Archie so he gives him to Aunt Barb. Cady and Gizmo are happy. At the end Scratchy, Pearl, Kevin, Aunt Barb, El Jaguar, Kevin, Archie and Nut are drinking juice",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "You invented a whole episode about finding a lost dog named Archie and making sure he gets taken care of — that's such a big-hearted story idea!"
+    },
+    "image": null,
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
+    "id": 1784417352014,
+    "timestamp": "2026-07-18T23:29:12.014Z",
+    "scribeName": "Better animation in show",
+    "description": "Better animation in show.",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "You want the Cranky Chickens animated show to look super cool and smooth, just like your favorite cartoons!"
+    },
+    "image": null,
+    "status": "pending_review",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
+    "id": 1784414219305,
+    "timestamp": "2026-07-18T22:36:59.305Z",
+    "scribeName": "There should be a new weapon that",
+    "description": "There should be a new weapon that... Hypnotizes chickens.",
+    "contribType": "episode",
+    "originalSubmission": {
+      "from": "cannon-master",
+      "summary": "A sneaky space gadget that can hypnotize enemy chickens and make them fight on YOUR side — totally wild!"
+    },
+    "status": "approved",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null
+  },
+  {
+    "id": 1784413957296,
+    "timestamp": "2026-07-18T22:32:37.296Z",
+    "scribeName": "Corn snatchers",
+    "description": "On a Tuesday Scratchy, El Jaguar, Pearl and Kevin are drinking juice after their truce. Then they hear a noise but El Jaguar didn't come because she was too scared. Scratchy, Pearl and Kevin saw a light picking up all of their corn one by one. Then it flew away. Then they decided to go after the corn snatchers. Meanwhile in the ship king squirrelington was yelling at his assistant named nut and saying he was nuts. And they needed to capture the angry chickens.. And dog.. And the story keeps going",
+    "contribType": "episode",
+    "originalSubmission": null,
+    "chatHistory": [
+      {
+        "role": "assistant",
+        "content": "The scrolls are blank and ready. What lore shall we weave today? A new enemy? A secret planet? A weapon with a dark past? Tell me your vision, Scribe."
+      }
+    ],
+    "status": "approved",
+    "targetGame": {
+      "slug": "show",
+      "title": "The Adventures of Cranky Chickens",
+      "emoji": "📺"
+    },
+    "targetZone": null,
+    "spec": {
+      "title": "Corn Snatchers: Alien Heist Story Arc",
+      "devNote": "Nick, this introduces a multi-character story trigger on 'Tuesday' in-game time, requiring a cutscene sequence where El Jaguar is marked as 'fear-flagged' and skips the corn abduction event; King Squirrelington and Nut will need NPC AI roles as antagonists with a capture-objective behavior tree.",
+      "nicksNote": "Your lore is SO good that Nick is probably already drawing King Squirrelington on a sticky note right now! 🐿️🌽🚀",
+      "priority": "high"
+    }
+  },
+  {
     "id": 1784334160019,
     "timestamp": "2026-07-18T00:22:40.019Z",
     "scribeName": "Professor chicken",
@@ -31,7 +187,7 @@
         "content": "A new scroll arrives from the Cannon Master! The ancient runes shimmer with potential. What lore shall we weave from this idea, Scribe?"
       }
     ],
-    "status": "approved",
+    "status": "deployed",
     "targetGame": {
       "slug": "in-space",
       "title": "In Space",
