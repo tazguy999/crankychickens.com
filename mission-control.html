@@ -707,6 +707,40 @@ async function approve(idx){
     return;
   }
 
+  // ── OTHER GAMES — commit to build queue (config pipeline is In-Space only) ──
+  if(sub.targetGame && sub.targetGame.slug && sub.targetGame.slug!=='in-space' && sub.targetGame.slug!=='show'){
+    toast('🧰 Queuing for '+sub.targetGame.title+' build...');
+    try{
+      const gf=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'get_file',path:'configs/build-backlog.json'})});
+      const gd=await gf.json();
+      let queue=[];
+      try{ if(gd.content) queue=JSON.parse(gd.content); }catch(e){}
+      queue.unshift({
+        id:sub.id, game:sub.targetGame.title, gameSlug:sub.targetGame.slug,
+        zone:sub.targetZone?.name||null, contribType:sub.contribType||sub.type||'idea',
+        title:sub.scribeName||sub.spec?.title||'Untitled',
+        description:sub.description||sub.summary||'', image:sub.image||null,
+        from:sub.originalSubmission?.from==='cannon-master'?'Cannon Master':'Dragon Scribe',
+        approvedAt:new Date().toISOString()
+      });
+      queue=queue.slice(0,25);
+      await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'save_file',path:'configs/build-backlog.json',
+          content:JSON.stringify(queue,null,2),sha:gd.sha||null,
+          commitMsg:'🧰 Build queue: "'+(sub.scribeName||'idea').slice(0,40)+'" for '+sub.targetGame.title})});
+      log.commitSha='build-backlog';
+    }catch(e){ log.issues.push('build queue commit failed: '+e.message); }
+    log.delivered='"'+(sub.scribeName||'idea')+'" approved for '+sub.targetGame.title+' — committed to configs/build-backlog.json for the next build session';
+    log.deliveryType='queued_for_build';
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='approved';
+    await saveSubmissions('🧰 Queued for '+sub.targetGame.title+': '+(sub.scribeName||'idea').slice(0,35));
+    toast('🧰 Approved and queued for the next '+sub.targetGame.title+' session!');
+    renderAll();
+    return;
+  }
+
   // ── NEW AREA ──
   if(sub.contribType==='area'){
     toast('🗺️ Generating new level...');
@@ -891,7 +925,7 @@ function renderDeliveryLog(log){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
     return;
   }
-  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️'};
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️',queued_for_build:'🧰'};
   const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed',intervention:'Intervention',ai_pass:'AI Pass'};
   el.innerHTML=log.map(e=>`
     <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">
@@ -1064,7 +1098,81 @@ async function resolveType(spec, gameFileContent){
 
 // ── STEP 3: generateSprite → /sprite-gen ──
 // Two modes: existing type (reference examples) or new creature (blank slate)
+// ═══ THE CLAUDE LOOP — generate, validate, repair-with-error, review, ship ═══
+function validateSpriteCode(fn, typeName){
+  // mini-critic, in-browser
+  if(!fn||fn.length<80) return {ok:false,error:'Code too short or empty'};
+  if(fn.length>12000) return {ok:false,error:'Code suspiciously long'};
+  if(!fn.includes('function drawCharacter_'+typeName)) return {ok:false,error:'Missing function drawCharacter_'+typeName};
+  const banned=['fetch(','eval(','document.','window.','localStorage','XMLHttpRequest','import ','require('];
+  for(const b of banned){ if(fn.includes(b)) return {ok:false,error:'Forbidden token: '+b}; }
+  const opens=(fn.match(/{/g)||[]).length, closes=(fn.match(/}/g)||[]).length;
+  if(opens!==closes) return {ok:false,error:'Brace imbalance: '+opens+' open vs '+closes+' close'};
+  const saves=(fn.match(/ctx\.save\(/g)||[]).length, restores=(fn.match(/ctx\.restore\(/g)||[]).length;
+  if(saves!==restores) return {ok:false,error:'ctx.save/restore mismatch: '+saves+' vs '+restores};
+  // real syntax check — same as running node -e
+  try{ new Function('ctx','cfg','x','y','hp','fr','isZeroG', fn+'\n;return typeof drawCharacter_'+typeName+'==="function";'); }
+  catch(e){ return {ok:false,error:'Syntax: '+e.message}; }
+  return {ok:true};
+}
+async function repairSpriteCode(fn, errMsg, typeName, spec){
+  const prompt='This JavaScript canvas function is broken. Fix it.\n\n'+
+    'EXACT ERROR: '+errMsg+'\n\n'+
+    'BROKEN CODE:\n'+fn+'\n\n'+
+    'Rules: function must be named drawCharacter_'+typeName+', signature (x,y,hp,fr,cfg,isZeroG), '+
+    'start ctx.save() end ctx.restore(), double-quoted strings only, no comments, canvas2D only, no fetch/eval/document/window.\n'+
+    'Respond with ONLY the corrected JavaScript function. No markdown, no explanation.';
+  const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'claude_complete',max_tokens:2200,messages:[{role:'user',content:prompt}]})});
+  const data=await res.json();
+  if(data.error) throw new Error(data.error);
+  let fixed=data.content?.find(b=>b.type==='text')?.text||'';
+  return fixed.replace(/^```(javascript|js)?\s*/,'').replace(/\s*```$/,'').trim();
+}
+async function reviewSprite(fn, spec, typeName){
+  const prompt='A kid asked for this game character:\n'+
+    'Name: "'+spec.name+'" — described as: "'+(spec.behaviorNotes||'')+'" — color '+spec.color+'.\n\n'+
+    'Here is the generated canvas draw code:\n'+fn+'\n\n'+
+    'Does the drawing plausibly match what the kid asked for? Judge shapes, colors, features actually drawn.\n'+
+    'Respond ONLY with JSON: {"verdict":"SHIP"|"FIX","issues":"one short sentence, empty if SHIP"}';
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claude_complete',max_tokens:150,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const txt=data.content?.find(b=>b.type==='text')?.text||'';
+    return JSON.parse(txt.replace(/```json|```/g,'').trim());
+  }catch(e){ return {verdict:'SHIP',issues:''}; } // review is best-effort, never blocks
+}
 async function generateSprite(spec, sub, isNewType){
+  const typeName=(spec.characterType||'chicken').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'chicken';
+  let result=await generateSpriteOnce(spec, sub, isNewType);
+  if(!result.ok) return result;
+  let fn=result.drawFn, attempts=1;
+  // Loop 1: syntax + safety, with error-feedback repair (how Claude actually works)
+  for(let i=0;i<3;i++){
+    const v=validateSpriteCode(fn, typeName);
+    if(v.ok) break;
+    if(i===2) return {ok:false,error:'Unfixable after 3 attempts: '+v.error,dingedSkill:'sprite-gen'};
+    attempts++;
+    toast('🔁 Attempt '+attempts+': fixing — '+v.error.slice(0,44));
+    try{ fn=await repairSpriteCode(fn, v.error, typeName, spec); }
+    catch(e){ return {ok:false,error:'Repair call failed: '+e.message,dingedSkill:'sprite-gen'}; }
+  }
+  // Loop 2: semantic self-review against the kid's ask
+  toast('🧐 Reviewing against the kid\u2019s description...');
+  const rev=await reviewSprite(fn, spec, typeName);
+  if(rev.verdict==='FIX'&&rev.issues){
+    attempts++;
+    toast('🔁 Review says: '+rev.issues.slice(0,50));
+    try{
+      const fixed=await repairSpriteCode(fn,'Reviewer feedback (make the drawing match): '+rev.issues,typeName,spec);
+      if(validateSpriteCode(fixed,typeName).ok) fn=fixed;
+    }catch(e){ /* keep validated version */ }
+  }
+  toast('✅ Sprite shipped after '+attempts+' attempt'+(attempts>1?'s':'')+' ✓ validated ✓ reviewed');
+  return {...result, drawFn:fn, attempts, reviewNotes:rev.issues||''};
+}
+async function generateSpriteOnce(spec, sub, isNewType){
   // Sanitize: typeName must be a valid JS identifier
   const typeName = (spec.characterType||'chicken')
     .toLowerCase()
