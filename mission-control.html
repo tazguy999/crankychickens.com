@@ -428,6 +428,91 @@ async function notifyKids(){
   }catch(e){toast('❌ '+e.message.slice(0,60));}
 }
 
+// ═══ EPISODE AUTO-DRAFT — the Claude loop applied to episodes ═══
+const EP_SCHEMA='Each scene: {"dur":8-30,"bg":"farmDay"|"farmNight"|"space"|"shipInt"|"throne","music":"theme"|"calm"|"spooky"|"villain"|"adventure"|"hypno"|"heart","cast":[{"who":"scratchy"|"pearl"|"jaguar"|"barb"|"kevin"|"king"|"nut","x":60-580,"fc":1|-1}],"lines":[{"t":seconds,"who":"SCRATCHY"|"PEARL"|"EL JAGUAR"|"AUNT BARB"|"KEVIN"|"KING SQUIRRELINGTON"|"NUT"|"NARRATOR","text":"...","d":optional_seconds}]}';
+function validateEpisodeJSON(txt){
+  let scenes;
+  try{ scenes=JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+  catch(e){ return {ok:false,error:'JSON parse: '+e.message}; }
+  if(!Array.isArray(scenes)) return {ok:false,error:'Not an array'};
+  if(scenes.length<10||scenes.length>28) return {ok:false,error:'Need 10-28 scenes, got '+scenes.length};
+  const OKBG=['farmDay','farmNight','space','shipInt','throne'];
+  const OKWHO=['scratchy','pearl','jaguar','barb','kevin','king','nut'];
+  const OKSPK=['SCRATCHY','PEARL','EL JAGUAR','AUNT BARB','KEVIN','KING SQUIRRELINGTON','NUT','NARRATOR'];
+  let total=0; const errs=[];
+  scenes.forEach((s,i)=>{
+    if(!s.dur||s.dur<8||s.dur>30) errs.push('scene '+i+': dur must be 8-30');
+    total+=s.dur||0;
+    if(!OKBG.includes(s.bg)) errs.push('scene '+i+': bad bg "'+s.bg+'"');
+    (s.cast||[]).forEach(a=>{ if(!OKWHO.includes(a.who)) errs.push('scene '+i+': unknown cast "'+a.who+'"'); });
+    (s.lines||[]).forEach((l,j)=>{
+      if(!OKSPK.includes(l.who)) errs.push('scene '+i+' line '+j+': unknown speaker "'+l.who+'"');
+      if(l.t===undefined||l.t<0||l.t>(s.dur-1)) errs.push('scene '+i+' line '+j+': t outside scene');
+      if(!l.text) errs.push('scene '+i+' line '+j+': empty text');
+      if(l.who!=='NARRATOR'&&l.who!=='KEVIN'&&s.cast&&!s.cast.find(a=>({SCRATCHY:'scratchy',PEARL:'pearl','EL JAGUAR':'jaguar','AUNT BARB':'barb',KEVIN:'kevin','KING SQUIRRELINGTON':'king',NUT:'nut'}[l.who]===a.who))) errs.push('scene '+i+' line '+j+': speaker '+l.who+' not in cast');
+    });
+    if(!(s.lines||[]).length&&!(s.cast||[]).length) errs.push('scene '+i+': empty scene');
+  });
+  if(total<240||total>620) errs.push('total duration '+total+'s — target 300-600s');
+  if(errs.length) return {ok:false,error:errs.slice(0,8).join('; ')};
+  return {ok:true,scenes,total};
+}
+async function draftEpisode(idx){
+  const sub=allSubmissions[idx];
+  closePreview();
+  toast('🤖 Drafting episode from the pitch...');
+  const from=sub.originalSubmission?.from==='cannon-master'?'Cannon Master (age 8)':'Dragon Scribe (age 11)';
+  const title=(sub.scribeName||'Untitled Episode').replace(/"/g,'');
+  const basePrompt='Write a scene list for an animated episode of "The Adventures of Cranky Chickens".\n\n'+
+    'THE KID\'S PITCH (honor it faithfully — their ideas are canon):\n"'+(sub.description||'')+'"\n\n'+
+    'SERIES VOICE: deadpan cranky humor, formal-grievance jokes, running gags (corn counting, juice boxes, "Do not make it weird, Kevin", El Jaguar\'s cowardice framed as tactics). Scratchy is cranky but principled. Kevin ONLY barks. The NARRATOR takes personal offense.\n\n'+
+    'CAST/BACKGROUNDS/SCHEMA: '+EP_SCHEMA+'\n\n'+
+    'Requirements: 14-22 scenes, total 320-520 seconds, dialogue-driven, 3-7 lines per scene, line times spread through each scene, end with a warm resolution scene (no need to write title or credits — those are automatic).\n\n'+
+    'Respond with ONLY the JSON array. No markdown, no commentary.';
+  let attempt=1, result=null, raw='';
+  try{
+    let prompt=basePrompt;
+    while(attempt<=3){
+      toast('🤖 Draft attempt '+attempt+'...');
+      const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'claude_complete',max_tokens:6000,messages:[{role:'user',content:prompt}]})});
+      const data=await res.json();
+      if(data.error) throw new Error(data.error);
+      raw=data.content?.find(b=>b.type==='text')?.text||'';
+      result=validateEpisodeJSON(raw);
+      if(result.ok) break;
+      toast('🔁 Fixing: '+result.error.slice(0,60));
+      prompt='Your previous episode JSON had errors. Fix ALL of them and return the corrected FULL JSON array.\n\nERRORS: '+result.error+'\n\nPREVIOUS JSON:\n'+raw.slice(0,9000)+'\n\nSchema reminder: '+EP_SCHEMA+'\nRespond with ONLY the corrected JSON array.';
+      attempt++;
+    }
+    if(!result.ok) throw new Error('Validation failed after 3 attempts: '+result.error.slice(0,100));
+    toast('✅ Script valid: '+result.scenes.length+' scenes, '+Math.round(result.total/60)+'m'+(result.total%60)+'s. Building page...');
+    // Fetch template (static asset) and inject
+    const tRes=await fetch('/shows/episode-template.html');
+    if(!tRes.ok) throw new Error('Template not deployed yet — wait for Netlify, then retry');
+    let page=await tRes.text();
+    page=page.split('__EP_TITLE__').join(title).split('__EP_FROM__').join(from);
+    page=page.replace('/*__SCENES__*/[]', JSON.stringify(result.scenes));
+    const path='shows/drafts/draft-'+sub.id+'.html';
+    const sf=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save_file',path,branch:'main',content:page,
+        commitMsg:'🤖 Auto-draft episode: "'+title+'" ('+attempt+' attempt'+(attempt>1?'s':'')+')'})});
+    const sd=await sf.json();
+    if(sd.error) throw new Error(sd.error);
+    // Log it through the normal workflow
+    const log={id:Date.now(),timestamp:new Date().toISOString(),submissionId:sub.id,
+      kidName:sub.originalSubmission?'Cannon Master':'Dragon Scribe',contribType:'episode',
+      asked:sub.description||'',askedName:title,targetGame:'The Adventures of Cranky Chickens',targetZone:null,
+      delivered:'AUTO-DRAFT "'+title+'" built in '+attempt+' attempt'+(attempt>1?'s':'')+' — live at /'+path+' after deploy',
+      deliveryType:'episode_draft',issues:[],commitSha:'draft'};
+    await writeDeliveryLog(log);
+    toast('🤖📺 Draft committed! Live in ~1 min at /'+path);
+    setTimeout(()=>{ if(confirm('Draft "'+title+'" committed!\n\nOpen it? (give Netlify ~1 minute)')) window.open('/'+path); },400);
+  }catch(e){
+    toast('❌ Draft failed: '+e.message.slice(0,80));
+  }
+}
+
 let allSubmissions=[];
 let currentSha=null;
 let currentTab='pending';
@@ -925,7 +1010,7 @@ function renderDeliveryLog(log){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
     return;
   }
-  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️',queued_for_build:'🧰'};
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️',queued_for_build:'🧰',episode_draft:'🤖'};
   const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed',intervention:'Intervention',ai_pass:'AI Pass'};
   el.innerHTML=log.map(e=>`
     <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">
@@ -1836,6 +1921,7 @@ function openPreview(idx){
     document.getElementById('previewDesc').textContent='The Adventures of Cranky Chickens — pitched by the writers room.';
     document.getElementById('previewActions').innerHTML =
       '<button class="preview-cancel" onclick="closePreview()">✕ Cancel</button>' +
+      '<button class="preview-cancel" style="border-color:rgba(120,200,255,0.5);color:#8cf" onclick="draftEpisode('+idx+')">🤖 DRAFT IT</button>' +
       '<button class="preview-confirm" onclick="confirmPreviewDirect()">📺 GREENLIGHT IT</button>';
   } else if(type === 'enemy'){
     // Auto-run live sprite generation
