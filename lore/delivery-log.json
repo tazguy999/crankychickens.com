@@ -1,5 +1,20 @@
 [
   {
+    "id": 1784474638414,
+    "timestamp": "2026-07-19T15:23:58.414Z",
+    "submissionId": 1784419857415,
+    "kidName": "Cannon Master",
+    "contribType": "episode",
+    "asked": "[Converted from drawing idea] A super grumpy space chicken with pointy ears and angry eyebrows who looks like they mean SERIOUS business!",
+    "askedName": "A super grumpy space chicken with pointy ears and angry eyeb",
+    "targetGame": "The Adventures of Cranky Chickens",
+    "targetZone": null,
+    "delivered": "Episode pitch \"A super grumpy space chicken with pointy ears and angry eyeb\" GREENLIT — committed to shows/episode-backlog.json, queued for production",
+    "deliveryType": "episode_greenlight",
+    "issues": [],
+    "commitSha": "episode-backlog"
+  },
+  {
     "id": 1784426750730,
     "timestamp": "2026-07-19T02:05:50.730Z",
     "submissionId": 1784417475590,
