@@ -275,6 +275,7 @@ html, body {
       🌐 Preview Branch ↗
     </a>
   <button class="stat-pill" style="cursor:pointer;border-color:rgba(120,255,120,0.4);color:#9f9;background:rgba(120,255,120,0.06);font-family:inherit;font-size:inherit;" onclick="notifyKids()">📣 Notify Kids</button>
+  <button class="stat-pill" style="cursor:pointer;border-color:rgba(140,200,255,0.4);color:#8cf;background:rgba(140,200,255,0.06);font-family:inherit;font-size:inherit;" onclick="showDrafts()">🤖 Drafts</button>
   </div>
 </div>
 
@@ -526,6 +527,29 @@ async function convertToEpisode(idx){
   await saveSubmissions('📺 Converted to episode pitch: '+(sub.scribeName||'idea').slice(0,40));
   toast('📺 Now an episode pitch — preview it to greenlight or draft!');
   renderAll();
+}
+
+async function showDrafts(){
+  toast('🤖 Loading drafts...');
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'list_drafts'})});
+    const d=await res.json();
+    if(d.error){toast('❌ '+d.error.slice(0,60));return;}
+    const drafts=d.drafts||[];
+    let el=document.getElementById('draftsModal');
+    if(!el){
+      el=document.createElement('div');el.id='draftsModal';
+      el.style.cssText='position:fixed;inset:0;background:rgba(0,0,10,0.85);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      el.onclick=e=>{if(e.target===el)el.remove();};
+      document.body.appendChild(el);
+    }
+    el.innerHTML='<div style="background:#10142a;border:2px solid rgba(140,200,255,0.35);border-radius:14px;padding:20px;max-width:440px;width:100%;max-height:70vh;overflow:auto;font-family:\'Fredoka One\',cursive;">'+
+      '<div style="color:#8cf;font-size:16px;margin-bottom:12px;">🤖 Auto-Draft Episodes</div>'+
+      (drafts.length?drafts.map(dr=>'<a href="'+dr.path+'" target="_blank" style="display:block;color:#ffcc02;text-decoration:none;padding:10px;border:1px solid rgba(255,204,2,0.25);border-radius:9px;margin-bottom:8px;">📺 '+dr.name.replace('draft-','').replace('.html','')+' →</a>').join(''):
+        '<div style="color:rgba(255,255,255,0.5);font-size:13px;">No drafts yet — hit 🤖 DRAFT IT on an episode pitch.</div>')+
+      '<button onclick="document.getElementById(\'draftsModal\').remove()" style="margin-top:8px;width:100%;font-family:inherit;padding:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:9px;cursor:pointer;">Close</button></div>';
+  }catch(e){toast('❌ '+e.message.slice(0,60));}
 }
 
 let allSubmissions=[];

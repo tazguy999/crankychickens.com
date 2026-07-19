@@ -226,6 +226,18 @@ exports.handler = async (event) => {
     } catch (e) { return err(CORS, e.message); }
   }
 
+  // ── LIST DRAFTS ──
+  if (action === 'list_drafts') {
+    try {
+      const res = await ghFetch(`/repos/${REPO}/contents/shows/drafts?ref=main`, TOKEN);
+      if (res.status === 404) return ok(CORS, { drafts: [] });
+      const data = await res.json();
+      const drafts = (Array.isArray(data)?data:[]).filter(f=>f.name.endsWith('.html'))
+        .map(f=>({ name: f.name, path: '/shows/drafts/'+f.name }));
+      return ok(CORS, { drafts });
+    } catch (e) { return err(CORS, e.message); }
+  }
+
   // ── GET SUBMISSIONS ──
   if (action === 'get_submissions') {
     try {
