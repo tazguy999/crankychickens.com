@@ -622,6 +622,82 @@ async function showDrafts(){
   }catch(e){toast('❌ '+e.message.slice(0,60));}
 }
 
+// ═══ BUILD IT — the full Claude workflow on any game file ═══
+async function buildIt(idx){
+  const sub=allSubmissions[idx];
+  const slug=sub.targetGame?.slug;
+  const path='games/'+slug+'.html';
+  const _mp=document.getElementById('draftMonitor');if(_mp)_mp.remove();
+  dlog('🔨 BUILD: "'+(sub.scribeName||'idea').slice(0,44)+'" → '+path);
+  try{
+    dlog('📖 Reading '+path+'...');
+    const gf=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'get_file',path})});
+    const gd=await gf.json();
+    if(gd.error||!gd.content) throw new Error(gd.error||'file empty');
+    let content=gd.content;
+    dlog('📖 '+Math.round(content.length/1024)+'KB loaded');
+    const kw=["sp:'",'doSpl','special','function draw','const CH','ENEMY','spawn'];
+    let excerpt='';
+    kw.forEach(k=>{let i=content.indexOf(k);if(i>-1)excerpt+=content.slice(Math.max(0,i-200),i+1400)+'\n...\n';});
+    excerpt=excerpt.slice(0,7000)||content.slice(0,7000);
+    let edits=null, lastErr='';
+    for(let attempt=1;attempt<=3;attempt++){
+      dlog('🤖 Attempt '+attempt+': designing patch...');
+      const prompt='A kid submitted this idea for the game "'+sub.targetGame.title+'":\n"'+(sub.description||sub.scribeName)+'"\n\n'+
+        'Here are relevant excerpts of the game file (canvas JS game):\n'+excerpt+'\n\n'+
+        (lastErr?'PREVIOUS ATTEMPT FAILED: '+lastErr+'\n\n':'')+
+        'Implement the idea as SMALL surgical string edits. Each "find" must be an EXACT unique substring copied verbatim from the excerpts (30-200 chars). Keep changes modest and safe.\n'+
+        'Respond ONLY with JSON: {"edits":[{"find":"...","replace":"..."}],"note":"one line"}';
+      const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'claude_complete',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
+      let data;try{data=await res.json();}catch(e){lastErr='server hiccup';dlog('⚠️ retry','#fc8');continue;}
+      if(data.error){lastErr=String(data.error);dlog('⚠️ '+lastErr.slice(0,60),'#fc8');continue;}
+      const raw=data.content?.find(b=>b.type==='text')?.text||'';
+      let parsed;
+      try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}
+      catch(e){lastErr='response was not valid JSON';dlog('🔁 bad JSON — retry','#fc8');continue;}
+      if(!parsed.edits||!parsed.edits.length){lastErr='no edits returned';continue;}
+      let trial=content, fail='';
+      const banned=['fetch(','eval(','localStorage','XMLHttpRequest','document.cookie'];
+      for(const ed of parsed.edits){
+        if(!ed.find||trial.indexOf(ed.find)===-1){fail='find-string not present verbatim: "'+String(ed.find).slice(0,60)+'"';break;}
+        if(trial.split(ed.find).length>2){fail='find-string not unique: "'+String(ed.find).slice(0,50)+'"';break;}
+        if(banned.some(b=>(ed.replace||'').includes(b))){fail='forbidden token in replacement';break;}
+        trial=trial.replace(ed.find,ed.replace||'');
+      }
+      if(!fail){
+        const s2=trial.indexOf('<script>')+8, e2=trial.lastIndexOf('<\/script>');
+        try{new Function(trial.slice(s2,e2));}
+        catch(e){fail='resulting JS broken: '+e.message;}
+      }
+      if(fail){lastErr=fail;dlog('🔁 '+fail.slice(0,80),'#fc8');continue;}
+      edits=parsed;content=trial;
+      dlog('✅ '+parsed.edits.length+' edit(s) applied + validated: '+(parsed.note||''),'#8f8');
+      break;
+    }
+    if(!edits) throw new Error('No safe patch after 3 attempts: '+lastErr.slice(0,80));
+    dlog('📦 Committing to '+path+'...');
+    const sf=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save_file',path,branch:'main',content,sha:gd.sha||null,
+        commitMsg:'🔨 Built from kid idea: "'+(sub.scribeName||'idea').slice(0,50)+'" — '+(edits.note||'')})});
+    const sd=await sf.json();
+    if(sd.error) throw new Error(sd.error);
+    const log={id:Date.now(),timestamp:new Date().toISOString(),submissionId:sub.id,
+      kidName:sub.originalSubmission?'Cannon Master':'Dragon Scribe',contribType:sub.contribType||'idea',
+      asked:sub.description||'',askedName:sub.scribeName||'',targetGame:sub.targetGame.title,targetZone:null,
+      delivered:'BUILT into '+path+': '+(edits.note||'change applied'),deliveryType:'built_deployed',issues:[],commitSha:'build'};
+    await writeDeliveryLog(log);
+    allSubmissions[idx].status='deployed';
+    await saveSubmissions('🔨 Built: '+(sub.scribeName||'idea').slice(0,40));
+    dlog('🚀 DEPLOYED — live in ~1 min at /'+path,'#8f8');
+    renderAll();
+  }catch(e){
+    dlog('❌ BUILD FAILED: '+e.message.slice(0,100),'#f88');
+    dlog('It stays queued for a session with Claude.','#f88');
+  }
+}
+
 let allSubmissions=[];
 let currentSha=null;
 let currentTab='pending';
@@ -776,6 +852,7 @@ function renderCard(s, i){
     <div class="card-actions">
       ${isApproved?`
         <div class="status-approved">✅ ${s.status==='deployed'?'Deployed to production':s.status==='needs_revision'?'⚠️ Needs revision':'Approved — ready to merge'}</div>
+        ${(s.status!=='deployed'&&s.targetGame&&s.targetGame.slug&&s.targetGame.slug!=='in-space'&&s.targetGame.slug!=='show')?`<button class="act-btn" style="border-color:rgba(255,180,80,0.5);color:#fc8" onclick="buildIt(${globalIdx})">🔨 BUILD IT</button>`:''}
         ${(s.status==='deployed'||s.status==='needs_revision')&&s.id===mostRecentDeployedId?`<button class="act-btn btn-nqr" onclick="openNQR(${globalIdx})">🎯 Not quite right</button>`:''}
       `:
         isRejected?`<div class="status-rejected">✕ Rejected</div>`:`
@@ -1120,7 +1197,7 @@ function renderDeliveryLog(log){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No deliveries yet</div><div class="empty-sub">Approve a submission to see the log.</div></div>`;
     return;
   }
-  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️',queued_for_build:'🧰',episode_draft:'🤖'};
+  const typeIcon={full_code:'✅',config_only:'🔧',orbital:'🌌',new_screen:'🗺️',secret:'🔐',failed:'❌',intervention:'🎯',ai_pass:'🤖',episode_greenlight:'📺',artwork_saved:'🖼️',queued_for_build:'🧰',episode_draft:'🤖',built_deployed:'🔨'};
   const typeLabel={full_code:'Full code',config_only:'Config only',orbital:'Orbital entity',new_screen:'New screen',secret:'Secret placed',failed:'Failed',intervention:'Intervention',ai_pass:'AI Pass'};
   el.innerHTML=log.map(e=>`
     <div class="submission-card" style="border-color:${e.deliveryType==='full_code'?'rgba(0,204,102,0.4)':e.deliveryType==='orbital'?'rgba(123,47,255,0.4)':e.deliveryType==='failed'?'rgba(230,57,70,0.3)':'rgba(100,150,255,0.2)'}">
