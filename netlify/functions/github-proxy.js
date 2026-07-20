@@ -310,7 +310,8 @@ function isSafePath(p) {
     (p.startsWith('configs/') && p.endsWith('.json') && !p.includes('..')) ||
     (p.startsWith('services/logs/') && p.endsWith('.json') && !p.includes('..')) ||
     (p.startsWith('shows/') && p.endsWith('.json') && !p.includes('..')) ||
-    (p.startsWith('shows/drafts/') && p.endsWith('.html') && !p.includes('..'));
+    (p.startsWith('shows/drafts/') && p.endsWith('.html') && !p.includes('..')) ||
+    (p.startsWith('games/') && p.endsWith('.html') && !p.includes('..'));
 }
 
 // ── HELPERS ──
