@@ -102,7 +102,7 @@ function sfx(n){
 
 // ── CHARS ──
 const CH={
-  scratchy:{id:'scratchy',name:'SCRATCHY CAGE',sub:'"The Dark Cluck Rises"',col:'#cc2200',spd:4.2,jf:-13.5,ad:9,kd:14,sd:22,sp:'burst',spn:'POWER BURST!',tp:'arm',ac:'#cc2200',agg:0.5},
+  scratchy:{id:'scratchy',name:'SCRATCHY CAGE',sub:'"The Dark Cluck Rises"',col:'#cc2200',spd:4.2,jf:-13.5,ad:9,kd:14,sd:22,sp:'tornado',spn:'CHICKEN TORNADO!',tp:'arm',ac:'#cc2200',agg:0.5},
   belmondo:{id:'belmondo',name:'BAWK BAWK BELMONDO',sub:'The One Who Walks Wrong',col:'#ffcc02',spd:3.6,jf:-13,ad:8,kd:12,sd:20,sp:'teleport',spn:'SIDEWALK SURPRISE!',tp:'bel',ac:'#ffcc02',agg:0.42},
   subyolk: {id:'subyolk',name:'SUB-YOLK',sub:'"Ice Ice Bawky"',col:'#2266ff',spd:4.0,jf:-13,ad:8,kd:13,sd:24,sp:'freeze',spn:'ICE YOLK!',tp:'arm',ac:'#2266ff',agg:0.46},
   shang:   {id:'shang',name:'SHANG TSQAWK',sub:'"Your soul... is showing"',col:'#aa44ff',spd:3.8,jf:-13,ad:9,kd:13,sd:26,sp:'soul',spn:'SOUL SWIPE!',tp:'arm',ac:'#aa44ff',agg:0.52},
@@ -292,6 +292,18 @@ function drawF(f){
   if(t==='arm')dArmored(f.x,f.y,f.fr,f.fac,f.char.ac,f.state);
   else if(t==='bel')dBelmondo(f.x,f.y,f.fr,f.fac,f.state);
   else dJaguar(f.x,f.y,f.fr,f.fac,f.state);
+  // CHICKEN TORNADO — spinning trails (design: Cannon Master, age 8)
+  if(f._spin){
+    ctx.save();ctx.translate(f.x,f.y-38);
+    ctx.strokeStyle='rgba(160,80,220,0.7)';ctx.lineWidth=3;
+    for(let i=0;i<3;i++){
+      const a0=f.fr*0.6+i*2.1;
+      ctx.beginPath();ctx.ellipse(0,i*14-14,30-i*4,9,0,a0,a0+4.2);ctx.stroke();
+    }
+    ctx.strokeStyle='rgba(80,220,120,0.8)';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(-38,38);ctx.lineTo(38,38);ctx.stroke();
+    ctx.restore();
+  }
   // special aura
   if(f.state==='special'){
     const st=f.stTimer;
@@ -391,7 +403,8 @@ class Fighter{
   }
   doSpl(opp){
     const sp=this.char.sp;
-    if(sp==='burst'){this.vx=this.fac*9;}
+    if(sp==='tornado'){this.vx=this.fac*11;this._spin=true;setTimeout(()=>{this._spin=false;},800);}
+    else if(sp==='burst'){this.vx=this.fac*9;}
     else if(sp==='teleport'){setTimeout(()=>{this.x=Math.max(40,Math.min(W-40,opp.x+opp.fac*65));},130);}
     else if(sp==='pounce'){this.vy=this.char.jf*1.1;this.gnd=false;this.vx=this.fac*this.char.spd*2.2;}
   }
