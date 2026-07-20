@@ -1,5 +1,20 @@
 [
   {
+    "id": 1784507538385,
+    "timestamp": "2026-07-20T00:32:18.385Z",
+    "submissionId": 1784487719622,
+    "kidName": "Cannon Master",
+    "contribType": "drawing",
+    "asked": "A super spinning chicken tornado that zooms across the ground and kicks everything in its path — AWESOME!",
+    "askedName": "A super spinning chicken tornado that zooms across the groun",
+    "targetGame": "Mortal Squawkbat",
+    "targetZone": null,
+    "delivered": "Artwork \"A super spinning chicken tornado that zooms across the groun\" saved to shows/art-gallery.json",
+    "deliveryType": "artwork_saved",
+    "issues": [],
+    "commitSha": "art-gallery"
+  },
+  {
     "id": 1784474667557,
     "timestamp": "2026-07-19T15:24:27.557Z",
     "submissionId": 1784419707027,
