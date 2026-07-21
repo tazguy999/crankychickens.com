@@ -1,5 +1,20 @@
 [
   {
+    "id": 1784677881147,
+    "timestamp": "2026-07-21T23:51:21.147Z",
+    "submissionId": 1784472178388,
+    "kidName": "Cannon Master",
+    "contribType": "drawing",
+    "asked": "No falling objects\n — You draw a cannon that shoots chickens at a wobbly lineup of island villains, but nothing can fall on the chickens while they're flying through the air!",
+    "askedName": "No falling objects\n",
+    "targetGame": "Mystery Island",
+    "targetZone": "The Jungle",
+    "delivered": "Artwork \"No falling objects\n\" saved to shows/art-gallery.json",
+    "deliveryType": "artwork_saved",
+    "issues": [],
+    "commitSha": "art-gallery"
+  },
+  {
     "id": 1784507538385,
     "timestamp": "2026-07-20T00:32:18.385Z",
     "submissionId": 1784487719622,
