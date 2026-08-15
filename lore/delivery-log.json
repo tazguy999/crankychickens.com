@@ -1,5 +1,20 @@
 [
   {
+    "id": 1786800169934,
+    "timestamp": "2026-08-15T13:22:49.934Z",
+    "submissionId": 1786800094245,
+    "kidName": "Cannon Master",
+    "contribType": "episode",
+    "asked": "[Converted from drawing idea] A brave knight chicken uses a catapult to launch eggs at a giant dinosaur from 5 spaces away — just like Angry Birds but with dino-smashing power!",
+    "askedName": "A brave knight chicken uses a catapult to launch eggs at a g",
+    "targetGame": "The Adventures of Cranky Chickens",
+    "targetZone": null,
+    "delivered": "Episode pitch \"A brave knight chicken uses a catapult to launch eggs at a g\" GREENLIT — committed to shows/episode-backlog.json, queued for production",
+    "deliveryType": "episode_greenlight",
+    "issues": [],
+    "commitSha": "episode-backlog"
+  },
+  {
     "id": 1784677881147,
     "timestamp": "2026-07-21T23:51:21.147Z",
     "submissionId": 1784472178388,
