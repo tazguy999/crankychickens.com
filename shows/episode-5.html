@@ -40,16 +40,16 @@ button:active{transform:scale(0.96);}
 <div id="controls">
   <button id="playBtn">▶ PLAY</button>
   <div id="seekWrap"><div id="seekBar"><div id="seekFill"></div></div></div>
-  <div id="timeLbl">0:00 / 4:48</div>
+  <div id="timeLbl">0:00 / 7:44</div>
   <button id="muteBtn">🔊</button>
   <button id="voiceBtn">🗣 VOICES: ON</button>
 </div>
 <div id="chapters">
   <button data-t="0">Act 1: Hear Ye</button>
-  <button data-t="88">Act 2: Five Spaces</button>
-  <button data-t="134">Act 3: Eleven Bonks</button>
-  <button data-t="184">Act 4: Gerald</button>
-  <button data-t="248">Credits</button>
+  <button data-t="150">Act 2: Five Spaces</button>
+  <button data-t="218">Act 3: Eleven Bonks</button>
+  <button data-t="316">Act 4: Gerald</button>
+  <button data-t="424">Credits</button>
 </div>
 <div id="notifyRow"><button id="notifyBtn">🔔 Tell me when new episodes are ready!</button></div>
 <a id="homeLink" href="/">← back to crankychickens.com</a>
@@ -861,15 +861,26 @@ function sfxOnce(name,t,lt){
 const SC=[
 {dur:18,bg:'castle',music:'calm',cast:[{who:'pearl',x:300,fc:1},{who:'scratchy',x:420,fc:-1}],
  lines:[{t:1,who:'NARRATOR',text:'The kingdom of Medieval Molt. Tuesday. Naturally.'},{t:6,who:'PEARL',text:'Hear ye! A GIANT DINOSAUR approaches the castle!'},{t:11.5,who:'SCRATCHY',text:'We do not have a castle.'},{t:14.5,who:'PEARL',text:'We do TODAY. Hear ye!'}]},
+{dur:20,bg:'castle',music:'calm',cast:[{who:'pearl',x:280,fc:1,move:{t0:1,t1:18,x1:480}},{who:'kevin',x:200,fc:1,move:{t0:2,t1:19,x1:400},excited:true}],
+ lines:[{t:1,who:'PEARL',text:'Hear ye! Hear ye! HEAR YE!'},{t:5.5,who:'NARRATOR',text:'Pearl had been waiting her whole life to say hear ye.'},{t:11,who:'PEARL',text:'Everyone remain calm in a MEDIEVAL fashion!'},{t:16,who:'NARRATOR',text:'Nobody knew what that meant. Including Pearl.'}]},
 {dur:24,fx:fxTitle,music:'theme'},
 {dur:22,bg:'castle',music:'spooky',cast:[{who:'dino',x:520,fc:-1},{who:'scratchy',x:220,fc:1},{who:'kevin',x:300,fc:1}],
  lines:[{t:1,who:'NARRATOR',text:'It was, in fairness, a very large dinosaur.'},{t:6,who:'SCRATCHY',text:'It is stepping on things.'},{t:9.5,who:'NARRATOR',text:'It was stepping OVER things. Very carefully.'},{t:14.5,who:'SCRATCHY',text:'It is CONSIDERING stepping on things.'},{t:19,who:'KEVIN',text:'Bark.',d:2}],
  events:[{t:19,sfx:'bark'}]},
+{dur:20,bg:'porch',music:'calm',cast:[{who:'barb',x:420,fc:1},{who:'scratchy',x:250,fc:-1},{who:'cady',x:550}],
+ lines:[{t:1,who:'SCRATCHY',text:'Barb. Evacuate. There is a dinosaur.'},{t:5.5,who:'AUNT BARB',text:'That is nice, dear. Lemonade?'},{t:9.5,who:'SCRATCHY',text:'Cady. Evacuate.'},{t:12.5,who:'NARRATOR',text:'Cady evaluated the threat and went back to sleep.'},{t:17.5,who:'SCRATCHY',text:'This kingdom deserves whatever happens to it.'}]},
 {dur:24,bg:'castle',music:'adventure',cast:[{who:'pearl',x:180,fc:1},{who:'scratchy',x:320,fc:-1},{who:'kevin',x:420,fc:-1}],
  lines:[{t:1,who:'PEARL',text:'The kingdom needs a KNIGHT. Kneel, Scratchy.'},{t:6,who:'SCRATCHY',text:'Absolutely not.'},{t:9,who:'PEARL',text:'Sir Scratchy of the Eternal Grievance.'},{t:13.5,who:'SCRATCHY',text:'...The title is accurate. Fine. But I am not kneeling.'},{t:19,who:'NARRATOR',text:'He knelt a little.'}]},
+{dur:22,bg:'castle',music:'heart',cast:[{who:'scratchy',x:240,fc:-1},{who:'kevin',x:340,fc:-1,excited:true}],
+ lines:[{t:1,who:'SCRATCHY',text:'Kevin. You are my squire now.'},{t:5,who:'KEVIN',text:'BARK!',d:2},{t:7.5,who:'SCRATCHY',text:'A squire carries the equipment and does not make it weird.'},{t:13.5,who:'NARRATOR',text:'Kevin wore a small pot as a helmet. It was extremely weird.'},{t:19,who:'SCRATCHY',text:'...Acceptable.'}],
+ events:[{t:5,sfx:'bark'}]},
 {dur:22,bg:'castle',music:'adventure',cast:[{who:'scratchy',x:260,fc:-1},{who:'barb',x:430,fc:1}],
  lines:[{t:1,who:'SCRATCHY',text:'I require the catapult.'},{t:4.5,who:'AUNT BARB',text:'Catapult operation requires Form 11-K, dear.'},{t:9.5,who:'SCRATCHY',text:'I filled it out on the way here.'},{t:13,who:'AUNT BARB',text:'In triplicate?'},{t:16,who:'SCRATCHY',text:'Barb. Who do you think I am.'}],
  extra:()=>{dCatapult(340,GY,fr_g,true);}},
+{dur:22,bg:'castle',music:'calm',cast:[{who:'barb',x:200,fc:-1},{who:'scratchy',x:360,fc:1},{who:'kevin',x:450,fc:1}],
+ lines:[{t:1,who:'AUNT BARB',text:'Catapult safety briefing. Rule one: do not stand in the spoon.'},{t:7,who:'SCRATCHY',text:'Obviously.'},{t:9.5,who:'AUNT BARB',text:'Rule two: Kevin, get out of the spoon.'},{t:14,who:'KEVIN',text:'Bark.',d:2},{t:16.5,who:'NARRATOR',text:'Kevin exited the spoon with dignity. Some dignity.'}],
+ events:[{t:14,sfx:'bark'}],
+ extra:()=>{dCatapult(300,GY,fr_g,true);}},
 {dur:24,bg:'castle',music:'adventure',cast:[{who:'scratchy',x:200,fc:-1},{who:'kevin',x:130,fc:-1},{who:'dino',x:540,fc:-1}],
  lines:[{t:1,who:'NARRATOR',text:'Sir Scratchy measured the field.'},{t:5,who:'SCRATCHY',text:'One. Two. Three. Four. FIVE spaces.'},{t:10,who:'SCRATCHY',text:'Optimal dino-smashing range, per the royal specifications.'},{t:15.5,who:'NARRATOR',text:'The royal specifications were written in crayon. They were correct.'},{t:21,who:'KEVIN',text:'Bark!',d:2}],
  events:[{t:21,sfx:'bark'}],
@@ -880,9 +891,18 @@ const SC=[
  extra:(lt)=>{dCatapult(240,GY,fr_g,(lt%4)<2);dKnightHelm(200,GY,fr_g);const p=(lt%4)/4;if(p<0.5){const px2=240+p*2*300;const py=GY-40-Math.sin(p*2*Math.PI)*80;dEggShot(px2,py);}}},
 {dur:24,bg:'castle',music:'heart',cast:[{who:'dino',x:520,fc:-1},{who:'scratchy',x:230,fc:-1},{who:'pearl',x:140,fc:1}],
  lines:[{t:1,who:'DINO',text:'...Are you done?',d:4},{t:6,who:'SCRATCHY',text:'IT TALKS.'},{t:9,who:'DINO',text:'I have been trying to say something for an HOUR.'},{t:14.5,who:'PEARL',text:'The kingdom apologizes. Mostly.'},{t:18.5,who:'DINO',text:'I am Gerald. I found your kernel.'}]},
+{dur:24,bg:'castle',music:'calm',cast:[{who:'dino',x:520,fc:-1},{who:'scratchy',x:230,fc:-1},{who:'kevin',x:320,fc:-1}],
+ lines:[{t:1,who:'NARRATOR',text:'Between volleys, Kevin had fetched every egg back.'},{t:6.5,who:'DINO',text:'Your squire returned the ammunition. Eleven times.'},{t:12,who:'SCRATCHY',text:'He is a professional.'},{t:15.5,who:'DINO',text:'He also brought me a stick.'},{t:19,who:'SCRATCHY',text:'That is a great honor. Take the stick, Gerald.'}]},
+{dur:24,bg:'castle',music:'heart',cast:[{who:'dino',x:520,fc:-1},{who:'pearl',x:150,fc:1},{who:'scratchy',x:250,fc:-1}],
+ lines:[{t:1,who:'SCRATCHY',text:'Describe the hen. Every detail. Spare NOTHING.'},{t:6.5,who:'DINO',text:'Red coat. Red hat. Ran like she had somewhere better to be.'},{t:13,who:'DINO',text:'She said, quote, tell the cranky one I said hello.'},{t:18.5,who:'SCRATCHY',text:'...She KNOWS me?',d:2.5},{t:21.5,who:'PEARL',text:'Everyone knows you, Scratchy.'}]},
 {dur:26,bg:'castle',music:'heart',cast:[{who:'dino',x:520,fc:-1},{who:'scratchy',x:230,fc:-1},{who:'kevin',x:320,fc:-1,excited:true}],
  lines:[{t:1,who:'DINO',text:'A hen in a red coat dropped this while running. Very fast. Very smug.'},{t:8,who:'SCRATCHY',text:'THE LUCKY KERNEL. Gerald. You are a knight among dinosaurs.'},{t:15,who:'DINO',text:'I was stepping carefully because your kingdom is very small.'},{t:21,who:'SCRATCHY',text:'It is COZY.'}],
  extra:()=>{dCorn(430,GY-100,fr_g,1.4);}},
+{dur:22,bg:'farmDay',music:'calm',cast:[{who:'scratchy',x:230,fc:1},{who:'pearl',x:140,fc:1},{who:'dino',x:540,fc:-1}],
+ lines:[{t:1,who:'SCRATCHY',text:'...forty-five. Forty-six. FORTY-SEVEN.'},{t:6.5,who:'SCRATCHY',text:'The count is WHOLE. For the first time since the jaguar incident.'},{t:13,who:'NARRATOR',text:'Somewhere, Ernesto felt personally referenced.'},{t:18,who:'SCRATCHY',text:'Full inventory. Noted. FOREVER.'}],
+ extra:()=>{dCornPile(340,GY,fr_g,14);}},
+{dur:22,bg:'castle',music:'heart',cast:[{who:'pearl',x:170,fc:1},{who:'dino',x:500,fc:-1},{who:'scratchy',x:280,fc:-1}],
+ lines:[{t:1,who:'PEARL',text:'Gerald. Kneel. Well. Lean.'},{t:5.5,who:'NARRATOR',text:'Gerald leaned, carefully, over the entire kingdom.'},{t:11,who:'PEARL',text:'Sir Gerald of the Careful Steps, Royal Watchtower of Medieval Molt.'},{t:17.5,who:'DINO',text:'I will guard it on Tuesdays.'},{t:20.5,who:'SCRATCHY',text:'Tuesdays are when things happen.'}]},
 {dur:24,bg:'castle',music:'heart',cast:[{who:'scratchy',x:190,fc:-1},{who:'pearl',x:110,fc:1},{who:'dino',x:520,fc:-1},{who:'kevin',x:280,fc:1,excited:true},{who:'barb',x:370,fc:-1}],
  lines:[{t:1,who:'AUNT BARB',text:'Juice boxes! Gerald, yours is a bucket.'},{t:5.5,who:'DINO',text:'I am honored.'},{t:8.5,who:'SCRATCHY',text:'This changes nothing. I am still cranky.'},{t:12.5,who:'PEARL',text:'We know.'},{t:15,who:'DINO',text:'We know.'},{t:17.5,who:'SCRATCHY',text:'The DINOSAUR gets it. Day one.'}],
  extra:()=>{juiceBoxes([[210,GY-46],[130,GY-42],[300,GY-38],[390,GY-52]]);ctx.fillStyle='#ff6688';ctx.fillRect(495,GY-30,26,26);}},
