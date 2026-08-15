@@ -445,6 +445,40 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     </div>
   </div>
 
+  <!-- GAME 13: CARMEN SANDIEGGO -->
+  <div class="card" data-tag="COMING SOON™" id="cardCSD">
+    <div class="screen-wrap">
+      <canvas class="screen-canvas" id="c14" width="640" height="200"></canvas>
+      <div class="screen-tag">THE GLOBE ROOM — A CORN CRIME IN PROGRESS</div>
+      <button class="play-hint" onclick="playTrailer('carmen')"><span>▶ WATCH TRAILER</span></button>
+    </div>
+    <div class="card-body">
+      <div class="game-num">CRANKY CHICKENS XIV</div>
+      <div class="game-title">WHERE IN THE WORLD IS CARMEN SANDIEGGO?</div>
+      <div class="game-sub">"She could be anywhere. She is definitely not here."</div>
+      <p class="game-desc">A hen in a red coat is stealing the world's most geographically significant corn. The Lucky Kernel: gone. Wisconsin's squeakiest cheese: gone. The symbolic rope: GONE (Reginald is inconsolable). Now Detective Kevin (trench coat, zero words) and Chief Scratchy (all words) must chase her across every zone the franchise has ever built, interrogating iguanas and filing international warrants — which, yes, require paperwork. Form 9-G. In triplicate.<br><br>
+      <strong style="color:#ffcc02">A geography mystery.</strong> Learn actual places. Accuse actual hens. The red coat is always one juice box ahead.</p>
+      <div class="quotes">
+        <div class="quote">"She left a single red feather and a postcard that said 'wish you were sharper.'"<span>— CHIEF SCRATCHY, taking it personally</span></div>
+        <div class="quote">"Bark."<span>— DETECTIVE KEVIN, closing in</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">🌍 GEOGRAPHY-BASED CRIME</span>
+        <span class="tag">🕵️ INTERROGATE IGUANAS</span>
+        <span class="tag">🧥 THE RED COAT</span>
+        <span class="tag">📋 WARRANTS: FORM 9-G</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E</div>
+        <div class="rating-txt">Mild Educational Content · International Corn Theft · One Very Smug Hen<br>Trench Coats On Dogs · Geography You Will Accidentally Learn</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="wishlist" onclick="cluck('🌍 WARRANT FILED — FORM 9-G')">+ WISHLIST</button>
+        <button class="wishlist" style="background:transparent;border-color:rgba(255,100,50,0.5);color:#ff6633;" onclick="shareCard('cardCSD','Where in the World is Carmen SanDieggo?')">🔗 SHARE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- GAME 6: MEDIEVAL MOLT -->
   <div class="card" data-tag="COMING SOON™" id="card6">
     <div class="screen-wrap">
@@ -1547,6 +1581,65 @@ function drawAutoBox(ctx,text,x,y){
   loop();
 })();
 
+
+// ── THUMBNAIL: CARMEN SANDIEGGO ──
+(function(){
+  const canvas=document.getElementById('c14'); if(!canvas) return;
+  const ctx=canvas.getContext('2d'); let fr=0;
+  const W=640,H=200;
+  function redHen(x,y,sc){
+    ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+    // trench coat
+    ctx.fillStyle='#c0202a';ctx.beginPath();ctx.moveTo(-13,0);ctx.lineTo(-10,-30);ctx.lineTo(10,-30);ctx.lineTo(13,0);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#8a1018';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-30);ctx.lineTo(0,0);ctx.stroke();
+    // head shadowed under fedora
+    ctx.fillStyle='#e8d8c0';ctx.beginPath();ctx.arc(0,-36,8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(60,20,20,0.45)';ctx.beginPath();ctx.arc(0,-36,8,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#ffaa33';ctx.beginPath();ctx.moveTo(-2,-33);ctx.lineTo(4,-33);ctx.lineTo(1,-30);ctx.closePath();ctx.fill();
+    // fedora
+    ctx.fillStyle='#c0202a';ctx.beginPath();ctx.ellipse(0,-42,13,3.5,0,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(-7,-50,14,9);
+    ctx.fillStyle='#8a1018';ctx.fillRect(-7,-44,14,2.5);
+    ctx.restore();
+  }
+  function loop(){
+    fr++;
+    ctx.fillStyle='#0a1024';ctx.fillRect(0,0,W,H);
+    for(let i=0;i<40;i++){ctx.globalAlpha=0.3+Math.sin(fr*0.03+i)*0.25;ctx.fillStyle='#cde';ctx.beginPath();ctx.arc((i*67)%W,(i*41)%140,i%4===0?1.3:0.7,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+    // spinning globe
+    ctx.fillStyle='#2a6cb0';ctx.beginPath();ctx.arc(180,110,58,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.arc(180,110,58,0,Math.PI*2);ctx.clip();
+    ctx.fillStyle='#3fae5a';
+    const off=(fr*0.7)%232;
+    [[-30,-20,40,26],[10,15,50,30],[60,-35,36,20],[-70,25,30,18]].forEach(([gx,gy,gw,gh])=>{
+      let lx=180+((gx+off+116)%232)-116;
+      ctx.beginPath();ctx.ellipse(lx,110+gy,gw*0.5,gh*0.5,0.3,0,Math.PI*2);ctx.fill();
+    });
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.ellipse(180,110,58,20,0,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(180,110,58,0,Math.PI*2);ctx.stroke();
+    // corn on globe vanishing
+    if(Math.floor(fr/90)%2===0){ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.ellipse(200,90,5,7,0,0,Math.PI*2);ctx.fill();}
+    // red hen slipping away right, looking back
+    const hx=430+Math.sin(fr*0.02)*8;
+    redHen(hx,168,1.35);
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    for(let i=0;i<4;i++){ctx.fillRect(hx-46-i*16,150+i*3,10,2);}
+    // title bar
+    ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,W,22);
+    ctx.fillStyle='#ff5060';ctx.font='bold 12px Fredoka One';ctx.textAlign='center';
+    ctx.shadowColor='#c02030';ctx.shadowBlur=7;
+    ctx.fillText('🌍 WHERE IN THE WORLD IS CARMEN SANDIEGGO? — COMING SOON™',W/2,15);ctx.shadowBlur=0;
+    const pulse=0.5+Math.sin(fr*0.08)*0.35;
+    ctx.globalAlpha=pulse;ctx.fillStyle='rgba(255,204,2,0.9)';ctx.font='bold 10px Fredoka One';
+    ctx.fillText('The Lucky Kernel is missing. Again. Internationally.',W/2,H-7);
+    ctx.textAlign='left';ctx.globalAlpha=1;
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
 
 // ── THUMBNAIL: MORTAL SQUAWKBAT ──
 (function(){
@@ -4434,6 +4527,123 @@ TRAILER_SCRIPTS['toon'] = (()=>{
   ];
 })();
 
+
+TRAILER_SCRIPTS['carmen'] = (()=>{
+  const GW=640,GH=400;
+  let TF=0;
+  function tStars(c,a=1){for(let i=0;i<60;i++){c.globalAlpha=(0.3+Math.sin(TF*0.03+i)*0.3)*a;c.fillStyle='#cde';c.beginPath();c.arc((i*67)%GW,(i*47)%(GH-60),i%4===0?1.4:0.7,0,Math.PI*2);c.fill();}c.globalAlpha=1;}
+  function tGlobe(c,x,y,r){
+    c.fillStyle='#2a6cb0';c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();
+    c.save();c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.clip();
+    c.fillStyle='#3fae5a';const off=(TF*0.7)%(r*4);
+    [[-r*0.5,-r*0.35,r*0.7,r*0.45],[r*0.2,r*0.25,r*0.85,r*0.5],[r,-r*0.6,r*0.6,r*0.35]].forEach(([gx,gy,gw,gh])=>{
+      let lx=x+(((gx+off+r*2)%(r*4))-r*2);
+      c.beginPath();c.ellipse(lx,y+gy,gw*0.5,gh*0.5,0.3,0,Math.PI*2);c.fill();
+    });
+    c.restore();
+    c.strokeStyle='rgba(255,255,255,0.3)';c.lineWidth=2;
+    c.beginPath();c.ellipse(x,y,r,r*0.34,0,0,Math.PI*2);c.stroke();
+    c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();
+  }
+  function tRedHen(c,x,y,sc){
+    c.save();c.translate(x,y);c.scale(sc,sc);
+    c.fillStyle='#c0202a';c.beginPath();c.moveTo(-13,0);c.lineTo(-10,-30);c.lineTo(10,-30);c.lineTo(13,0);c.closePath();c.fill();
+    c.strokeStyle='#8a1018';c.lineWidth=1.5;c.beginPath();c.moveTo(0,-30);c.lineTo(0,0);c.stroke();
+    c.fillStyle='#e8d8c0';c.beginPath();c.arc(0,-36,8,0,Math.PI*2);c.fill();
+    c.fillStyle='rgba(60,20,20,0.45)';c.beginPath();c.arc(0,-36,8,Math.PI,0);c.fill();
+    c.fillStyle='#ffaa33';c.beginPath();c.moveTo(-2,-33);c.lineTo(4,-33);c.lineTo(1,-30);c.closePath();c.fill();
+    c.fillStyle='#c0202a';c.beginPath();c.ellipse(0,-42,13,3.5,0,0,Math.PI*2);c.fill();
+    c.fillRect(-7,-50,14,9);
+    c.fillStyle='#8a1018';c.fillRect(-7,-44,14,2.5);
+    c.restore();
+  }
+  function tKevinCoat(c,x,y,sc){
+    c.save();c.translate(x,y);c.scale(sc,sc);
+    c.fillStyle='#b8a072';c.beginPath();c.moveTo(-12,0);c.lineTo(-9,-22);c.lineTo(9,-22);c.lineTo(12,0);c.closePath();c.fill();
+    c.fillStyle='#a0714a';c.beginPath();c.arc(4,-27,8,0,Math.PI*2);c.fill();
+    c.fillStyle='#7a5030';c.beginPath();c.ellipse(-1,-33,3,5,0.5,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(8,-33,3,5,-0.5,0,Math.PI*2);c.fill();
+    c.fillStyle='#1a1a2e';c.beginPath();c.arc(3,-28,2,0,Math.PI*2);c.fill();c.beginPath();c.arc(8,-28,2,0,Math.PI*2);c.fill();
+    c.fillStyle='#332211';c.beginPath();c.arc(11,-25,2.5,0,Math.PI*2);c.fill();
+    c.fillStyle='#8a7a5a';c.beginPath();c.ellipse(4,-38,10,2.5,0,0,Math.PI*2);c.fill();c.fillRect(-2,-44,12,7);
+    c.restore();
+  }
+  function capBar(c,text,sub){
+    c.fillStyle='rgba(0,0,0,0.78)';c.fillRect(0,GH-70,GW,70);
+    c.fillStyle='#ff5060';c.font='bold 24px Fredoka One';c.textAlign='center';
+    c.shadowColor='#c02030';c.shadowBlur=12;c.fillText(text,GW/2,GH-38);c.shadowBlur=0;
+    if(sub){c.fillStyle='rgba(255,220,180,0.7)';c.font='14px Fredoka One';c.fillText(sub,GW/2,GH-14);}
+    c.textAlign='left';
+  }
+  return [
+    {dur:280, draw(c,fr){TF=fr;
+      c.fillStyle='#0a1024';c.fillRect(0,0,GW,GH);tStars(c);
+      tGlobe(c,GW/2,190,110);
+      capBar(c,'Somewhere on this globe...','...corn is missing.');
+    }},
+    {dur:280, draw(c,fr){TF=fr;
+      c.fillStyle='#12101c';c.fillRect(0,0,GW,GH);
+      c.fillStyle='#221133';c.fillRect(GW/2-40,240,80,40);c.fillRect(GW/2-50,236,100,10);
+      c.strokeStyle='rgba(255,204,2,0.3)';c.lineWidth=2;c.setLineDash([6,6]);
+      c.beginPath();c.ellipse(GW/2,214,20,26,0,0,Math.PI*2);c.stroke();c.setLineDash([]);
+      c.fillStyle='#ff5060';c.save();c.translate(GW/2+34,258);c.rotate(0.4);
+      c.beginPath();c.ellipse(0,0,3,10,0,0,Math.PI*2);c.fill();c.restore();
+      c.fillStyle='rgba(255,255,255,0.55)';c.font='12px Fredoka One';c.textAlign='center';
+      c.fillText('EVIDENCE: one (1) red feather',GW/2,310);c.textAlign='left';
+      capBar(c,'The Lucky Kernel. GONE.','She left a feather. And attitude.');
+    }},
+    {dur:280, draw(c,fr){TF=fr;
+      const g=c.createLinearGradient(0,0,0,GH);g.addColorStop(0,'#1a1030');g.addColorStop(1,'#3a1838');
+      c.fillStyle=g;c.fillRect(0,0,GW,GH);tStars(c,0.6);
+      c.fillStyle='#e8d0a0';c.beginPath();c.arc(520,90,34,0,Math.PI*2);c.fill();
+      c.fillStyle='#0e0a18';c.fillRect(0,300,GW,100);
+      for(let i=0;i<7;i++){c.fillRect(i*95+10,240+((i*37)%50),70,160);}
+      tRedHen(c,470,300,1.7);
+      capBar(c,'A hen. A red coat. A head start.','CARMEN SANDIEGGO.');
+    }},
+    {dur:280, draw(c,fr){TF=fr;
+      c.fillStyle='#1c1408';c.fillRect(0,0,GW,GH);
+      c.fillStyle='rgba(255,220,150,0.08)';c.beginPath();c.arc(GW/2,150,180,0,Math.PI*2);c.fill();
+      tKevinCoat(c,240,320,2.0);
+      c.fillStyle='#ff9f1c';c.beginPath();c.arc(420,290,26,0,Math.PI*2);c.fill();
+      c.fillStyle='#ff3333';c.beginPath();c.moveTo(408,272);c.lineTo(414,258);c.lineTo(420,270);c.lineTo(426,258);c.lineTo(432,272);c.closePath();c.fill();
+      c.fillStyle='white';c.beginPath();c.arc(413,288,6,0,Math.PI*2);c.fill();c.beginPath();c.arc(429,288,6,0,Math.PI*2);c.fill();
+      c.fillStyle='#1a1a2e';c.beginPath();c.arc(414,289,3,0,Math.PI*2);c.fill();c.beginPath();c.arc(430,289,3,0,Math.PI*2);c.fill();
+      c.strokeStyle='#cc2200';c.lineWidth=2.5;c.beginPath();c.moveTo(406,281);c.lineTo(416,284);c.stroke();c.beginPath();c.moveTo(426,284);c.lineTo(436,281);c.stroke();
+      capBar(c,'One detective. One chief. Zero patience.','"She took the SYMBOLIC ROPE, Kevin."');
+    }},
+    {dur:300, draw(c,fr){TF=fr;
+      c.fillStyle='#e8dcc0';c.fillRect(0,0,GW,GH);
+      c.strokeStyle='rgba(120,90,50,0.25)';c.lineWidth=1;
+      for(let i=0;i<10;i++){c.beginPath();c.moveTo(i*70,0);c.lineTo(i*70,GH);c.stroke();c.beginPath();c.moveTo(0,i*45);c.lineTo(GW,i*45);c.stroke();}
+      c.fillStyle='#3fae5a';[[90,120,70,44],[300,90,90,54],[480,200,80,48],[180,270,66,40]].forEach(([mx,my,mw,mh])=>{c.beginPath();c.ellipse(mx,my,mw*0.5,mh*0.5,0.2,0,Math.PI*2);c.fill();});
+      c.strokeStyle='#c0202a';c.lineWidth=3;c.setLineDash([8,7]);
+      const prog=Math.min(1,fr/200);
+      c.beginPath();c.moveTo(90,120);
+      const pts=[[300,90],[480,200],[180,270],[560,330]];
+      const seg=Math.floor(prog*pts.length);
+      for(let i=0;i<seg;i++)c.lineTo(pts[i][0],pts[i][1]);
+      c.stroke();c.setLineDash([]);
+      if(seg>0&&seg<=pts.length)tRedHen(c,pts[Math.min(seg,pts.length)-1][0],pts[Math.min(seg,pts.length)-1][1]+20,1.0);
+      capBar(c,'Chase her across every zone ever built.','You will accidentally learn geography.');
+    }},
+    {dur:320, draw(c,fr){TF=fr;
+      c.fillStyle='#0a1024';c.fillRect(0,0,GW,GH);tStars(c,0.8);
+      tGlobe(c,GW/2,150,85);
+      tRedHen(c,GW/2+120,190,1.2);
+      const ma=Math.min(1,fr/25);c.globalAlpha=ma;
+      c.fillStyle='#ff5060';c.font='bold 26px Fredoka One';c.textAlign='center';
+      c.shadowColor='#c02030';c.shadowBlur=16;
+      c.fillText('WHERE IN THE WORLD IS',GW/2,270);
+      c.font='bold 40px Fredoka One';
+      c.fillText('CARMEN SANDIEGGO?',GW/2,315);c.shadowBlur=0;
+      if(fr>90){c.globalAlpha=Math.min(1,(fr-90)/30);
+        c.fillStyle='rgba(255,204,2,0.9)';c.font='bold 15px Fredoka One';
+        c.fillText('COMING... EVENTUALLY™ — warrants pending (Form 9-G)',GW/2,352);
+      }
+      c.globalAlpha=1;c.textAlign='left';
+    }},
+  ];
+})();
 
 TRAILER_SCRIPTS['msb'] = (()=>{
   const GW=640,GH=400;
