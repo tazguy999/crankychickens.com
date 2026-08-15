@@ -717,7 +717,13 @@ async function loadSubmissions(){
     currentSha=data.sha||null;
     renderAll();
   }catch(e){
-    showEmpty('Could not load submissions. Check your connection.');
+    // Surface the REAL error — status code and body — right on screen
+    let detail=e.message;
+    try{
+      const r2=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get_submissions'})});
+      detail='HTTP '+r2.status+' — '+(await r2.text()).slice(0,220);
+    }catch(e2){ detail='network: '+e2.message; }
+    showEmpty('⚠️ PROXY ERROR: '+detail);
     console.error(e);
   }
 }
