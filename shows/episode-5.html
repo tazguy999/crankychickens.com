@@ -59,6 +59,27 @@ const C=document.getElementById('c'),ctx=C.getContext('2d');
 const W=640,H=400,GY=310;
 const FF="'Fredoka One',cursive";
 let T=0,playing=false,muted=false,lastTs=null;
+
+// ══ CC WATCH BEACON ══
+// Leaves a breadcrumb the game reads to know what you actually watched.
+// Same origin as games/cc7.html, so this needs no server and no network.
+(function(){
+  var SLUG='episode-5', EP=5, KEY='cc_watched';
+  function rd(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return {};}}
+  function wr(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+  var all=rd();
+  var rec=all[SLUG]||{ep:EP,firstSeen:Date.now(),plays:0,maxProgress:0,finished:false};
+  rec.ep=EP;rec.plays++;rec.lastSeen=Date.now();
+  all[SLUG]=rec;wr(all);
+  window.ccMark=function(t,total){
+    if(!total)return;
+    var p=Math.max(0,Math.min(1,t/total));
+    if(p<=rec.maxProgress+0.005)return;   // throttled
+    rec.maxProgress=p;
+    if(p>=0.97)rec.finished=true;
+    var a=rd();a[SLUG]=rec;wr(a);
+  };
+})();
 let voicesOn=true,lastSpokenLine=null;
 
 // ══ VOICES ══
@@ -951,6 +972,7 @@ function updateUI(){
   document.getElementById('timeLbl').textContent=fmtTime(T)+' / '+fmtTime(TOTAL);
 }
 function loop(ts){
+  if(window.ccMark)ccMark(T,TOTAL);
   if(lastTs===null)lastTs=ts;
   const dt=Math.min(0.1,(ts-lastTs)/1000);
   lastTs=ts;

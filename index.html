@@ -148,12 +148,52 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
   </div>
 </div>
 
-<div class="marquee"><span>🐔 PLAY NOW: CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: IN SPACE · JURASSIC SQUAWK · AUNT BARB'S RESCUE RANCH · MEDIEVAL MOLT · WE KNOW YOU'RE HERE · CORPORATE RETREAT · THE COOKING SHOW · RETIREMENT COMMUNITY · HUMAN RESOURCES &nbsp;&nbsp;&nbsp;&nbsp; 🎬 META: DIRECTOR'S CUT · THE MOVIE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+<div class="marquee"><span>🐔 PLAY NOW: CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE · WE KNOW YOU'RE HERE (BETA) &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: IN SPACE · JURASSIC SQUAWK · AUNT BARB'S RESCUE RANCH · MEDIEVAL MOLT · CORPORATE RETREAT · THE COOKING SHOW · RETIREMENT COMMUNITY · HUMAN RESOURCES &nbsp;&nbsp;&nbsp;&nbsp; 🎬 META: DIRECTOR'S CUT · THE MOVIE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE · WE KNOW YOU'RE HERE (BETA) &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
 
 <!-- ── PLAYABLE GAMES ── -->
 <section class="trailers">
   <h2 class="section-hdr">PLAY NOW 🎮</h2>
   <p class="section-note">All games free in your browser. No download required.</p>
+
+  <!-- GAME 7: WE KNOW YOU'RE HERE -->
+  <div class="card" data-tag="⚠ BETA — IT GOT OUT" id="card7" style="border-color:rgba(255,80,80,0.3)">
+    <div class="screen-wrap">
+      <canvas class="screen-canvas" id="c7" width="640" height="200"></canvas>
+      <div class="screen-tag">THE GARDEN — SCREEN (0,0) · RECOVERED</div>
+      <button class="play-hint" onclick="playTrailer(7)" style=""><span style="border-color:#ff8888;color:#ff8888;background:rgba(255,100,100,0.15);">▶ WATCH TRAILER</span></button>
+    </div>
+    <div class="card-body">
+      <div class="game-num" style="color:#ff6666">CRANKY CHICKENS VII — CLASSIFIED</div>
+      <div class="game-title" style="color:#ff8888">WE KNOW YOU'RE HERE</div>
+      <div class="game-sub" style="color:#ff6666">"The Chickens Have Become Aware of the Player"</div>
+      <p class="game-desc">We cannot tell you much about this one. The testing team that saw the prototype has been <s>disappeared</s> reassigned. At some point, approximately 40 minutes in, the game stops taking input from the controller. The chickens continue. They seem fine. They seem, in fact, <em>better than fine.</em><br><br>
+      The game will ship when it is ready. It has communicated this to us directly. We are respecting its wishes.</p>
+      <p class="game-desc" style="color:#ffaaaa;border-left:3px solid #ff6666;padding-left:12px;margin-top:6px">
+      <strong style="color:#ff8888">BETA FRAGMENT — RECOVERED.</strong> A playable piece has been separated from the build. It is called THE GARDEN. Six screens, twelve flowers, one chicken. By every measure available to us it is harmless.<br><br>
+      It remembers you between visits. It knows which episodes you have watched. It speaks. We have elected to publish it anyway.</p>
+      <div class="quotes">
+        <div class="quote">"We asked for a review copy. A chicken showed up at the office instead. It stayed for three weeks."<span>— IGN, IN THERAPY NOW</span></div>
+        <div class="quote">"DO NOT PURCHASE. DO NOT LOOK DIRECTLY AT THE MAIN MENU."<span>— FORMER LEAD TESTER, message sent 3:47 AM</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">❓ UNKNOWN NUMBER OF LEVELS</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🐔 NPCs HAVE OPINIONS ABOUT YOU SPECIFICALLY</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">📱 GAME MAY CONTACT YOU AFTER CLOSING</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🐶 DOG ADOPTION: THE DOG WAS ALWAYS HERE</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🌸 THE GARDEN: 12 FLOWERS · 6 SCREENS</span>
+        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🗣 THE CHICKENS SPEAK ALOUD</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb" style="border-color:#ff6666;color:#ff6666">?</div>
+        <div class="rating-txt">Rating Pending · Reviewer Could Not Finish · Game Finished Reviewer<br>Mild to Severe Fourth-Wall Dissolution · We're So Sorry</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="/games/cc7.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ff3b6b;border-color:#ff3b6b;color:#1a0a2e;font-family:inherit;font-size:inherit;">▶ PLAY THE BETA</a>
+        <button class="wishlist" style="background:#550000;color:#ffaaaa" onclick="cluck('YOU ARE ALREADY WISHLISTED')">YOU ARE ALREADY WISHLISTED</button>
+        <button class="wishlist" style="background:transparent;border-color:rgba(255,100,50,0.5);color:#ff6633;" onclick="shareCard('card7','We Know You are Here')">🔗 SHARE</button>
+      </div>
+    </div>
+  </div>
 
   <!-- GAME 12: MORTAL SQUAWKBAT -->
   <div class="card" data-tag="OUT NOW — PLAY IT" id="cardMSB">
@@ -508,37 +548,6 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
         <div class="rating-txt">Medieval Cartoon Conflict · Extremely Loose Historical Accuracy<br>One Dragon (Mostly Friendly) · Mild Plague References · Rooster Hubris</div>
       </div>
       <button class="wishlist" onclick="cluck('🏰 COOP BUILT')">+ WISHLIST</button>
-    </div>
-  </div>
-
-  <!-- GAME 7: WE KNOW YOU'RE HERE -->
-  <div class="card" data-tag="CLASSIFIED" id="card7" style="border-color:rgba(255,80,80,0.3)">
-    <div class="screen-wrap">
-      <canvas class="screen-canvas" id="c7" width="640" height="200"></canvas>
-      <div class="screen-tag">UNKNOWN ZONE — SCREEN (?,?)</div>
-      <button class="play-hint" onclick="playTrailer(7)" style=""><span style="border-color:#ff8888;color:#ff8888;background:rgba(255,100,100,0.15);">▶ WATCH TRAILER</span></button>
-    </div>
-    <div class="card-body">
-      <div class="game-num" style="color:#ff6666">CRANKY CHICKENS VII — CLASSIFIED</div>
-      <div class="game-title" style="color:#ff8888">WE KNOW YOU'RE HERE</div>
-      <div class="game-sub" style="color:#ff6666">"The Chickens Have Become Aware of the Player"</div>
-      <p class="game-desc">We cannot tell you much about this one. The testing team that saw the prototype has been <s>disappeared</s> reassigned. At some point, approximately 40 minutes in, the game stops taking input from the controller. The chickens continue. They seem fine. They seem, in fact, <em>better than fine.</em><br><br>
-      The game will ship when it is ready. It has communicated this to us directly. We are respecting its wishes.</p>
-      <div class="quotes">
-        <div class="quote">"We asked for a review copy. A chicken showed up at the office instead. It stayed for three weeks."<span>— IGN, IN THERAPY NOW</span></div>
-        <div class="quote">"DO NOT PURCHASE. DO NOT LOOK DIRECTLY AT THE MAIN MENU."<span>— FORMER LEAD TESTER, message sent 3:47 AM</span></div>
-      </div>
-      <div class="tags">
-        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">❓ UNKNOWN NUMBER OF LEVELS</span>
-        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🐔 NPCs HAVE OPINIONS ABOUT YOU SPECIFICALLY</span>
-        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">📱 GAME MAY CONTACT YOU AFTER CLOSING</span>
-        <span class="tag" style="color:#ff8888;border-color:rgba(255,100,100,0.3)">🐶 DOG ADOPTION: THE DOG WAS ALWAYS HERE</span>
-      </div>
-      <div class="rating-row">
-        <div class="esrb" style="border-color:#ff6666;color:#ff6666">?</div>
-        <div class="rating-txt">Rating Pending · Reviewer Could Not Finish · Game Finished Reviewer<br>Mild to Severe Fourth-Wall Dissolution · We're So Sorry</div>
-      </div>
-      <button class="wishlist" style="background:#550000;color:#ffaaaa" onclick="cluck('YOU ARE ALREADY WISHLISTED')">YOU ARE ALREADY WISHLISTED</button>
     </div>
   </div>
 
