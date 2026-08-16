@@ -1,0 +1,21 @@
+{
+  "_note": "Cranky Chickens VII — We Know You're Here. Kid contributions from the Cannon Master and Dragon Scribe portals land here via Mission Control. Zones mirror the real screen grid in games/cc7.html: screenIndex maps to (sx,sy) as index = sy*3 + sx.",
+  "_version": 1,
+  "game": "cc7",
+  "zones": [
+    { "screenIndex": 0, "grid": [0, 0], "name": "The Garden Gate",  "emoji": "🌿", "note": "Where you arrive. Two flowers, a gentle climb." },
+    { "screenIndex": 1, "grid": [1, 0], "name": "The Long Drop",    "emoji": "🪜", "note": "The pit here falls through to The Climb below." },
+    { "screenIndex": 2, "grid": [2, 0], "name": "The Far Corner",   "emoji": "🌸", "note": "Dead end to the east. Nothing beyond. Yet." },
+    { "screenIndex": 3, "grid": [0, 1], "name": "The Quiet Bed",    "emoji": "🌺", "note": "A side pocket. Easy to miss." },
+    { "screenIndex": 4, "grid": [1, 1], "name": "The Climb",        "emoji": "🍃", "note": "The way back up. Platform alignment here is load-bearing." },
+    { "screenIndex": 5, "grid": [2, 1], "name": "Where It Watches", "emoji": "👁️", "note": "The quietest screen. Named by the chickens, not by us." }
+  ],
+  "enemyVariants": [],
+  "cornPatches": [],
+  "loreEntries": [],
+  "chickenLines": [],
+  "_kidContributions": {
+    "_note": "Dialogue written by the Dragon Scribe and characters drawn by the Cannon Master. Lines added to chickenLines are read by the Chorus in games/cc7.html.",
+    "speakers": ["SCRATCHY", "PEARL", "AUNT BARB", "REGINALD", "NARRATOR"]
+  }
+}

@@ -2,6 +2,47 @@
   "_note": "Add new games here — they appear automatically in kids' pickers",
   "games": [
     {
+      "slug": "cc7",
+      "title": "We Know You're Here",
+      "subtitle": "The Garden (beta fragment)",
+      "emoji": "🌼",
+      "status": "active",
+      "gameUrl": "/games/cc7.html",
+      "configPath": "/configs/cc7.json",
+      "zones": [
+        {
+          "screenIndex": 0,
+          "name": "The Garden Gate",
+          "emoji": "🌿"
+        },
+        {
+          "screenIndex": 1,
+          "name": "The Long Drop",
+          "emoji": "🪜"
+        },
+        {
+          "screenIndex": 2,
+          "name": "The Far Corner",
+          "emoji": "🌸"
+        },
+        {
+          "screenIndex": 3,
+          "name": "The Quiet Bed",
+          "emoji": "🌺"
+        },
+        {
+          "screenIndex": 4,
+          "name": "The Climb",
+          "emoji": "🍃"
+        },
+        {
+          "screenIndex": 5,
+          "name": "Where It Watches",
+          "emoji": "👁️"
+        }
+      ]
+    },
+    {
       "slug": "in-space",
       "title": "In Space",
       "subtitle": "Houston, We Have a Clucking Problem",
@@ -10,10 +51,26 @@
       "gameUrl": "/games/in-space.html",
       "configPath": "/configs/in-space.json",
       "zones": [
-        { "screenIndex": 0, "name": "Landing Zone",   "emoji": "🌕" },
-        { "screenIndex": 1, "name": "Crater Fields",  "emoji": "💥" },
-        { "screenIndex": 2, "name": "Moon Base",      "emoji": "🛸" },
-        { "screenIndex": 3, "name": "Harvester Core", "emoji": "⚡" }
+        {
+          "screenIndex": 0,
+          "name": "Landing Zone",
+          "emoji": "🌕"
+        },
+        {
+          "screenIndex": 1,
+          "name": "Crater Fields",
+          "emoji": "💥"
+        },
+        {
+          "screenIndex": 2,
+          "name": "Moon Base",
+          "emoji": "🛸"
+        },
+        {
+          "screenIndex": 3,
+          "name": "Harvester Core",
+          "emoji": "⚡"
+        }
       ]
     },
     {
@@ -24,9 +81,21 @@
       "status": "active",
       "gameUrl": "/games/mortal-squawkbat.html",
       "zones": [
-        { "screenIndex": 0, "name": "Tournament Ladder", "emoji": "⚔️" },
-        { "screenIndex": 1, "name": "The Egg Pedestal",  "emoji": "🥚" },
-        { "screenIndex": 2, "name": "El Jaguar's Ring",  "emoji": "🐆" }
+        {
+          "screenIndex": 0,
+          "name": "Tournament Ladder",
+          "emoji": "⚔️"
+        },
+        {
+          "screenIndex": 1,
+          "name": "The Egg Pedestal",
+          "emoji": "🥚"
+        },
+        {
+          "screenIndex": 2,
+          "name": "El Jaguar's Ring",
+          "emoji": "🐆"
+        }
       ]
     },
     {
@@ -37,9 +106,21 @@
       "status": "active",
       "gameUrl": "/games/mystery-island.html",
       "zones": [
-        { "screenIndex": 0, "name": "The Beach",  "emoji": "🏖️" },
-        { "screenIndex": 1, "name": "The Jungle", "emoji": "🌿" },
-        { "screenIndex": 2, "name": "The Ruins",  "emoji": "🗿" }
+        {
+          "screenIndex": 0,
+          "name": "The Beach",
+          "emoji": "🏖️"
+        },
+        {
+          "screenIndex": 1,
+          "name": "The Jungle",
+          "emoji": "🌿"
+        },
+        {
+          "screenIndex": 2,
+          "name": "The Ruins",
+          "emoji": "🗿"
+        }
       ]
     },
     {
@@ -50,9 +131,21 @@
       "status": "active",
       "gameUrl": "/games/rescue-ranch.html",
       "zones": [
-        { "screenIndex": 0, "name": "The Barn",     "emoji": "🏚️" },
-        { "screenIndex": 1, "name": "The Pasture",  "emoji": "🌾" },
-        { "screenIndex": 2, "name": "Barb's Porch", "emoji": "🍋" }
+        {
+          "screenIndex": 0,
+          "name": "The Barn",
+          "emoji": "🏚️"
+        },
+        {
+          "screenIndex": 1,
+          "name": "The Pasture",
+          "emoji": "🌾"
+        },
+        {
+          "screenIndex": 2,
+          "name": "Barb's Porch",
+          "emoji": "🍋"
+        }
       ]
     },
     {
@@ -63,9 +156,21 @@
       "status": "active",
       "gameUrl": "/games/tulum-trouble.html",
       "zones": [
-        { "screenIndex": 0, "name": "Beach Zone",  "emoji": "🏖️" },
-        { "screenIndex": 1, "name": "Jungle Zone", "emoji": "🌿" },
-        { "screenIndex": 2, "name": "Ruins Zone",  "emoji": "🛕" }
+        {
+          "screenIndex": 0,
+          "name": "Beach Zone",
+          "emoji": "🏖️"
+        },
+        {
+          "screenIndex": 1,
+          "name": "Jungle Zone",
+          "emoji": "🌿"
+        },
+        {
+          "screenIndex": 2,
+          "name": "Ruins Zone",
+          "emoji": "🛕"
+        }
       ]
     },
     {
@@ -75,8 +180,16 @@
       "emoji": "🦖",
       "status": "active",
       "zones": [
-        { "screenIndex": 0, "name": "Raptor Coop", "emoji": "🦕" },
-        { "screenIndex": 1, "name": "Amber Mine",  "emoji": "💎" }
+        {
+          "screenIndex": 0,
+          "name": "Raptor Coop",
+          "emoji": "🦕"
+        },
+        {
+          "screenIndex": 1,
+          "name": "Amber Mine",
+          "emoji": "💎"
+        }
       ]
     },
     {
@@ -86,8 +199,16 @@
       "emoji": "🏰",
       "status": "active",
       "zones": [
-        { "screenIndex": 0, "name": "The Castle", "emoji": "🏰" },
-        { "screenIndex": 1, "name": "The Moat",   "emoji": "🐊" }
+        {
+          "screenIndex": 0,
+          "name": "The Castle",
+          "emoji": "🏰"
+        },
+        {
+          "screenIndex": 1,
+          "name": "The Moat",
+          "emoji": "🐊"
+        }
       ]
     }
   ]

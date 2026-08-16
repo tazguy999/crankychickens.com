@@ -628,7 +628,7 @@ function populateGameChips(){
   if(!chips)return;
   const games=gamesManifest?.games?.filter(g=>g.status==='active')||[{slug:'in-space',title:'In Space',emoji:'🚀'}];
   chips.innerHTML=games.map(g=>`
-    <div class="lore-chip" onclick="pickGame('${g.slug}','${g.title}','${g.emoji}',this)">${g.emoji} ${g.title}</div>
+    <div class="lore-chip" onclick="pickGame('${jsq(g.slug)}','${jsq(g.title)}','${jsq(g.emoji)}',this)">${g.emoji} ${g.title}</div>
   `).join('');
   // Auto-select if only one game
   if(games.length===1){
@@ -636,6 +636,10 @@ function populateGameChips(){
     if(chip){ chip.classList.add('used'); pickGame(games[0].slug,games[0].title,games[0].emoji,chip,true); }
   }
 }
+
+// Titles can contain apostrophes ("We Know You're Here"), which break
+// single-quoted inline onclick handlers. Escape before interpolating.
+function jsq(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 function pickGame(slug,title,emoji,el,silent=false){
   selectedGame={slug,title,emoji};
@@ -647,7 +651,7 @@ function pickGame(slug,title,emoji,el,silent=false){
   const zoneChips=document.getElementById('zoneChips');
   if(zoneChips){
     zoneChips.innerHTML=`<div class="lore-chip used" onclick="pickZone(null,null,null,this)">🎲 Anywhere</div>`+
-      zones.map(z=>`<div class="lore-chip" onclick="pickZone(${z.screenIndex},'${z.name}','${z.emoji||'📍'}',this)">${z.emoji||'📍'} ${z.name}</div>`).join('');
+      zones.map(z=>`<div class="lore-chip" onclick="pickZone(${z.screenIndex},'${jsq(z.name)}','${jsq(z.emoji||'📍')}',this)">${z.emoji||'📍'} ${z.name}</div>`).join('');
     selectedZone=null; // reset zone when game changes
   }
 }

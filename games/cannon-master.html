@@ -861,7 +861,7 @@ function showGamePicker(fromScreen){
   const grid = document.getElementById('gamePickGrid');
   const games = gamesManifest?.games?.filter(g=>g.status==='active')||[{slug:'in-space',title:'In Space',emoji:'🚀',subtitle:'Houston, We Have a Clucking Problem'}];
   grid.innerHTML = games.map(g=>`
-    <button class="big-btn full" onclick="pickGame('${g.slug}','${g.title}','${g.emoji}')">
+    <button class="big-btn full" onclick="pickGame('${jsq(g.slug)}','${jsq(g.title)}','${jsq(g.emoji)}')">
       <span class="btn-icon">${g.emoji}</span>
       <div>
         <div class="btn-label">${g.title}</div>
@@ -870,6 +870,10 @@ function showGamePicker(fromScreen){
     </button>`).join('');
   goTo('screenGamePick');
 }
+
+// Titles can contain apostrophes ("We Know You're Here"), which break
+// single-quoted inline onclick handlers. Escape before interpolating.
+function jsq(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 function pickGame(slug, title, emoji){
   selectedGame = {slug, title, emoji};
@@ -881,7 +885,7 @@ function showZonePicker(){
   const zones = game?.zones || [{screenIndex:0,name:'Anywhere',emoji:'🎲'}];
   const grid = document.getElementById('zonePickGrid');
   grid.innerHTML = zones.map(z=>`
-    <button class="big-btn" onclick="pickZone(${z.screenIndex},'${z.name}','${z.emoji||'📍'}')">
+    <button class="big-btn" onclick="pickZone(${z.screenIndex},'${jsq(z.name)}','${jsq(z.emoji||'📍')}')">
       <span class="btn-icon">${z.emoji||'📍'}</span>
       <div class="btn-label">${z.name}</div>
     </button>`).join('');
