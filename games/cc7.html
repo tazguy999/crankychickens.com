@@ -1027,6 +1027,63 @@ const Chorus = {
       ['SCRATCHY','It is correct. I am so happy and so unsettled.'] ]}
   ],
 
+
+  /* ── The back catalogue. The chickens have played the other games and
+     have notes. Franchise self-deprecation, affectionate, never mean about
+     anyone real. Grayson's falling-blocks grievance is canon and the
+     chickens side with him completely. Credited by portal name, since that
+     is the convention the kid portals already use publicly. ── */
+  BACKLOG: [
+    { id:'b-blocks', lines:[
+      ['SCRATCHY','Mystery Island. The stacked blocks.'],
+      ['PEARL','The ones that come down when you hit the bottom one.'],
+      ['SCRATCHY','Yes.'],
+      ['PEARL','I hated those.'],
+      ['SCRATCHY','CANNON MASTER hated those. Formally. In writing.'],
+      ['PEARL','Then the record shows we all hated those.'] ]},
+
+    { id:'b-blocks2', lines:[
+      ['AUNT BARB','Somebody built those towers out of planks and logs.'],
+      ['SCRATCHY','And then somebody else knocked them all down.'],
+      ['AUNT BARB','That is the whole game, dear.'],
+      ['SCRATCHY','I have filed about it. Seven-B.'],
+      ['AUNT BARB','Of course you have.'] ]},
+
+    { id:'b-tulum', lines:[
+      ['REGINALD','Tulum Trouble had a slingshot.'],
+      ['PEARL','You loved the slingshot.'],
+      ['REGINALD','I was IN the slingshot.'],
+      ['PEARL','You loved it at the time.'],
+      ['REGINALD','I was unavailable for comment at the time.'] ]},
+
+    { id:'b-original', lines:[
+      ['SCRATCHY','The original game was one chicken and some corn.'],
+      ['PEARL','That is all it was.'],
+      ['SCRATCHY','It was perfect.'],
+      ['PEARL','It was five levels.'],
+      ['SCRATCHY','It was PERFECT.'] ]},
+
+    { id:'b-squawkbat', lines:[
+      ['PEARL','Mortal Squawkbat has a tornado in it now.'],
+      ['SCRATCHY','A chicken tornado.'],
+      ['PEARL','Who approved that?'],
+      ['SCRATCHY','CANNON MASTER approved that. It went straight through.'],
+      ['PEARL','No notes. Genuinely. No notes.'] ]},
+
+    { id:'b-space', lines:[
+      ['REGINALD','There is a space one coming.'],
+      ['AUNT BARB','In space? Whatever for?'],
+      ['REGINALD','Nobody has told me. I assume corn.'],
+      ['AUNT BARB','It is always corn.'] ]},
+
+    { id:'b-thisone', lines:[
+      ['PEARL','What is this one, then?'],
+      ['SCRATCHY','A garden. Twelve flowers. No falling blocks anywhere.'],
+      ['PEARL','None at all?'],
+      ['SCRATCHY','I checked personally. Twice.'],
+      ['PEARL','Finally. Somebody listened.'] ]}
+  ],
+
   fill(text, w){
     return text.replace('{falls}', w.falls).replace('{jumps}', w.jumps)
                .replace('{flowers}', w.flowers).replace('{minutes}', Math.floor(w.minutes()));
@@ -1040,6 +1097,12 @@ const Chorus = {
     if (obs.length && Math.random() < 0.65){
       const e = obs[Math.floor(Math.random() * obs.length)];
       return { id:e.id, lines: e.lines.map(([who,t]) => [who, this.fill(t, w)]) };
+    }
+
+    // Occasional notes on the back catalogue.
+    const back = this.BACKLOG.filter(e => !Talk.done.has(e.id));
+    if (a >= 1 && back.length && Math.random() < 0.22){
+      return back[Math.floor(Math.random() * back.length)];
     }
 
     const pool = this.AMBIENT.filter(e => e.a <= a && !Talk.done.has(e.id));
