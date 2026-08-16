@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cranky Chickens VII — We Know You're Here</title>
+<style>
+  :root{
+    --void:#0d0618;
+    --deep:#1a0b2e;
+    --tile:#2a1450;
+    --tile2:#231044;
+    --pink:#ff3b6b;
+    --pink-dim:#a82246;
+    --ember:#ff8a3d;
+    --bone:#f2e9f7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--void);overflow:hidden;
+    font-family:"Arial Narrow","Helvetica Neue",Impact,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #shell{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:8px}
+  #frame{position:relative;line-height:0}
+  canvas{display:block;image-rendering:pixelated;border:2px solid var(--pink-dim);
+    border-radius:4px;box-shadow:0 0 40px rgba(255,59,107,.18);max-width:100%;height:auto}
+
+  #hud{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;
+    align-items:flex-start;pointer-events:none;line-height:1.2}
+  .tag{font-size:13px;font-weight:700;letter-spacing:.16em;color:var(--pink);
+    text-transform:uppercase;text-shadow:0 0 10px rgba(255,59,107,.5)}
+  .tag small{display:block;font-size:10px;letter-spacing:.22em;color:#8a6ea8;margin-top:3px}
+  #petals{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--ember);
+    text-shadow:0 0 10px rgba(255,138,61,.5)}
+
+  #toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+    font-size:15px;font-weight:700;letter-spacing:.2em;color:var(--bone);text-transform:uppercase;
+    opacity:0;transition:opacity .5s;pointer-events:none;text-align:center;text-shadow:0 0 16px #000}
+
+  /* Subtitles: every spoken line is always readable. Voice is never the only channel. */
+  #sub{position:absolute;left:0;right:0;bottom:10px;padding:0 16px;text-align:center;
+    pointer-events:none;opacity:0;transition:opacity .35s}
+  #sub .who{display:block;font-size:10px;font-weight:700;letter-spacing:.24em;
+    color:var(--ember);text-transform:uppercase;margin-bottom:4px}
+  #sub .said{display:inline-block;font-size:15px;line-height:1.35;color:var(--bone);
+    background:rgba(6,3,12,.86);border-left:3px solid var(--pink);padding:6px 12px;border-radius:3px}
+  #sub.game .who{color:#8a6ea8}
+  #sub.game .said{border-left-color:#8a6ea8;color:#cdbcda}
+
+  #voiceBtn{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--pink);
+    background:rgba(6,3,12,.7);border:1px solid var(--pink-dim);border-radius:4px;
+    padding:4px 9px;cursor:pointer;font-family:inherit}
+  #voiceBtn.off{color:#6b5484;border-color:#3a2b4d}
+
+  #pad{display:flex;gap:10px;align-items:center}
+  .btn{width:74px;height:56px;border:2px solid var(--pink-dim);border-radius:8px;
+    background:rgba(255,59,107,.07);color:var(--pink);font-size:20px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;touch-action:none;cursor:pointer}
+  .btn:active,.btn.on{background:rgba(255,59,107,.28);color:var(--bone)}
+  .btn.jump{width:104px}
+  #hint{font-size:11px;letter-spacing:.18em;color:#6b5484;text-transform:uppercase;text-align:center}
+  @media (hover:hover) and (pointer:fine){#pad{display:none}}
+  @media (prefers-reduced-motion:reduce){#toast{transition:none}}
+  .btn:focus-visible,canvas:focus-visible{outline:2px solid var(--bone);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="frame">
+    <canvas id="c" width="640" height="384" tabindex="0" aria-label="Cranky Chickens VII game"></canvas>
+    <div id="hud">
+      <div class="tag" id="zone">THE GARDEN<small id="coord">SCREEN (0,0)</small></div>
+      <div id="petals">✿ 0 / 12</div>
+    </div>
+    <div id="toast"></div>
+    <button id="voiceBtn" aria-pressed="true">🗣 VOICES: ON</button>
+    <div id="sub" aria-live="polite"><span class="who"></span><span class="said"></span></div>
+  </div>
+  <div id="pad">
+    <div class="btn" data-k="left">◀</div>
+    <div class="btn" data-k="right">▶</div>
+    <div class="btn jump" data-k="jump">JUMP</div>
+  </div>
+  <div id="hint">Arrows or A / D to move · Space to jump · R to restart screen</div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   CRANKY CHICKENS VII — "We Know You're Here"
+   LAYER 1 of 7: The Game Underneath.
+
+   Deliberate seams for the meta layers that come later:
+     Input.driver  -> swap 'human' to 'chickens' for The Handoff
+     Bus.on(...)   -> the Chorus subscribes here, touches no game code
+     Save.*        -> the Ledger takes this over wholesale
+   Nothing below reads the keyboard or localStorage directly.
+   ============================================================ */
+
+/* ---------- Event bus ---------- */
+const Bus = {
+  map: {},
+  on(evt, fn){ (this.map[evt] = this.map[evt] || []).push(fn); return this; },
+  emit(evt, data){ (this.map[evt] || []).forEach(fn => { try { fn(data); } catch(e){ console.warn(e); } }); }
+};
+
+/* ---------- Save adapter (the Ledger will own this) ---------- */
+const Save = {
+  KEY: 'cc7_ledger',
+  data: null,
+  blank(){
+    return {
+      version: 1,
+      firstSeen: Date.now(),
+      lastSeen: Date.now(),
+      sessions: 0,
+      awareness: 0,          // the Awareness Ladder reads/writes this
+      screen: [0,0],
+      picked: [],            // "sx,sy,col,row" of collected flowers
+      respawns: 0,
+      playMs: 0,
+      quitScreen: null,      // where you were when you last vanished
+      voices: true,          // survives sessions
+      spoken: []             // line ids already used — the Chorus never repeats itself
+    };
+  },
+  gapMs: 0,     // time since the previous session — captured before lastSeen is stamped
+  load(){
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      this.data = raw ? Object.assign(this.blank(), JSON.parse(raw)) : this.blank();
+    } catch(e){ this.data = this.blank(); }
+    // Measure the gap BEFORE stamping, or the payoff line can never fire.
+    this.gapMs = this.data.sessions > 0 ? Date.now() - this.data.lastSeen : 0;
+    this.data.sessions++;
+    this.data.lastSeen = Date.now();
+    this.flush();
+    return this.data;
+  },
+  flush(){
+    try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch(e){}
+  },
+  gapDays(){ return Math.floor(this.gapMs / 86400000); }
+};
+
+/* ---------- Input broker ----------
+   The game asks Input for intent. It never asks the hardware.
+   The Handoff sets Input.driver = 'chickens' and writes to Input.auto. */
+const Input = {
+  driver: 'human',
+  human: { left:false, right:false, jump:false },
+  auto:  { left:false, right:false, jump:false },
+  read(){ return this.driver === 'human' ? this.human : this.auto; }
+};
+
+const KEYMAP = {
+  ArrowLeft:'left', KeyA:'left',
+  ArrowRight:'right', KeyD:'right',
+  Space:'jump', ArrowUp:'jump', KeyW:'jump', KeyZ:'jump'
+};
+
+addEventListener('keydown', e => {
+  const k = KEYMAP[e.code];
+  if (k){ Input.human[k] = true; e.preventDefault(); }
+  if (e.code === 'KeyR') respawn();
+});
+addEventListener('keyup', e => {
+  const k = KEYMAP[e.code];
+  if (k){ Input.human[k] = false; e.preventDefault(); }
+});
+
+document.querySelectorAll('#pad .btn').forEach(btn => {
+  const k = btn.dataset.k;
+  const on  = e => { e.preventDefault(); Input.human[k] = true;  btn.classList.add('on'); };
+  const off = e => { e.preventDefault(); Input.human[k] = false; btn.classList.remove('on'); };
+  btn.addEventListener('touchstart', on, {passive:false});
+  btn.addEventListener('touchend', off, {passive:false});
+  btn.addEventListener('touchcancel', off, {passive:false});
+  btn.addEventListener('mousedown', on);
+  addEventListener('mouseup', off);
+});
+
+/* ---------- World ----------
+   '#' solid   '=' one-way platform   '*' flower   '.' air
+   Screens connect by their edges. Walk off the right side of (0,0)
+   and you are standing on the left side of (1,0). Fall out the bottom
+   with nothing below and the screen quietly puts you back. */
+const TILE = 32, COLS = 20, ROWS = 12;
+const W = TILE * COLS, H = TILE * ROWS;
+
+const ZONE = {
+  name: 'THE GARDEN',
+  screens: {
+    '0,0': [
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "..........*.........",
+      ".........====.......",
+      "....................",
+      "......===...........",
+      "..*.................",
+      "..===...............",
+      "....................",
+      "####################"
+    ],
+    '1,0': [
+      "....................",
+      "....................",
+      "....................",
+      "...*................",
+      "..====..............",
+      "....................",
+      ".....===............",
+      "..............*.....",
+      "..===.......====....",
+      "....................",
+      "....................",
+      "#######......#######"
+    ],
+    '2,0': [
+      "....................",
+      "....................",
+      "..........*.........",
+      ".........====.......",
+      "....................",
+      "....*...............",
+      "...====.............",
+      "....................",
+      "..............=====.",
+      "....................",
+      "....................",
+      "####################"
+    ],
+    '0,1': [
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      ".....*..............",
+      "....====............",
+      "....................",
+      "..*.................",
+      "..===...............",
+      "....................",
+      "....................",
+      "####################"
+    ],
+    '1,1': [
+      "....................",
+      "....................",
+      ".........*..........",
+      "........===.........",
+      "....................",
+      "......===...........",
+      "....................",
+      "....===.......*.....",
+      "..............===...",
+      "..===...............",
+      "....................",
+      "####################"
+    ],
+    '2,1': [
+      "....................",
+      "....................",
+      "....................",
+      "......*.............",
+      ".....====...........",
+      "....................",
+      "................*...",
+      "..............====..",
+      "....................",
+      "....................",
+      "....................",
+      "####################"
+    ]
+  }
+};
+
+const TOTAL_FLOWERS = Object.values(ZONE.screens)
+  .reduce((n, s) => n + s.join('').split('*').length - 1, 0);
+
+/* ---------- Game state ---------- */
+const P = {
+  x: 64, y: 300, w: 20, h: 24,
+  vx: 0, vy: 0,
+  face: 1,
+  grounded: false,
+  coyote: 0,
+  buffer: 0,
+  flap: 0
+};
+
+const GRAV = 0.6, JUMP_V = -11.5, RUN = 3.1, FRICTION = .78, MAX_FALL = 13;
+const COYOTE_FRAMES = 8, BUFFER_FRAMES = 8;
+
+let sx = 0, sy = 0;            // current screen coords
+let grid = null;               // current screen tile rows
+let entry = { x:64, y:300 };   // where to put you back
+let picked = new Set();
+let sparks = [];
+let running = true;
+
+/* ---------- Screen management ---------- */
+function key(x, y){ return x + ',' + y; }
+function screenAt(x, y){ return ZONE.screens[key(x,y)] || null; }
+
+function enterScreen(nx, ny, px, py){
+  const s = screenAt(nx, ny);
+  if (!s) return false;
+  sx = nx; sy = ny; grid = s;
+  P.x = px; P.y = py; P.vx = 0;
+  entry = { x: px, y: py };
+  Save.data.screen = [sx, sy];
+  Save.flush();
+  paintHud();
+  Bus.emit('screen:enter', { sx, sy, zone: ZONE.name });
+  return true;
+}
+
+function respawn(){
+  P.x = entry.x; P.y = entry.y; P.vx = 0; P.vy = 0;
+  Save.data.respawns++;
+  Save.flush();
+  Bus.emit('player:respawn', { sx, sy, total: Save.data.respawns });
+}
+
+function tileAt(col, row){
+  if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return '.';
+  return grid[row][col];
+}
+function solidAt(col, row){ return tileAt(col, row) === '#'; }
+function platAt(col, row){ return tileAt(col, row) === '='; }
+
+/* ---------- Physics ---------- */
+function step(){
+  const inp = Input.read();
+
+  if (inp.left)  { P.vx -= 0.9; P.face = -1; }
+  if (inp.right) { P.vx += 0.9; P.face =  1; }
+  if (!inp.left && !inp.right) P.vx *= FRICTION;
+  P.vx = Math.max(-RUN, Math.min(RUN, P.vx));
+  if (Math.abs(P.vx) < 0.05) P.vx = 0;
+
+  if (inp.jump) P.buffer = BUFFER_FRAMES; else if (P.buffer > 0) P.buffer--;
+  if (P.coyote > 0) P.coyote--;
+
+  if (P.buffer > 0 && P.coyote > 0){
+    P.vy = JUMP_V;
+    P.buffer = 0; P.coyote = 0;
+    P.flap = 12;
+    Bus.emit('player:jump', { sx, sy });
+  }
+  if (!inp.jump && P.vy < -3) P.vy = -3;   // variable jump height
+
+  P.vy = Math.min(P.vy + GRAV, MAX_FALL);
+  if (P.flap > 0) P.flap--;
+
+  moveX(P.vx);
+  moveY(P.vy);
+
+  collectFlowers();
+  checkEdges();
+}
+
+function moveX(dx){
+  P.x += dx;
+  const top = Math.floor(P.y / TILE), bot = Math.floor((P.y + P.h - 1) / TILE);
+  if (dx > 0){
+    const col = Math.floor((P.x + P.w - 1) / TILE);
+    for (let r = top; r <= bot; r++){
+      if (solidAt(col, r)){ P.x = col * TILE - P.w; P.vx = 0; break; }
+    }
+  } else if (dx < 0){
+    const col = Math.floor(P.x / TILE);
+    for (let r = top; r <= bot; r++){
+      if (solidAt(col, r)){ P.x = (col + 1) * TILE; P.vx = 0; break; }
+    }
+  }
+}
+
+function moveY(dy){
+  const prevBottom = P.y + P.h;
+  P.y += dy;
+  const left = Math.floor(P.x / TILE), right = Math.floor((P.x + P.w - 1) / TILE);
+  P.grounded = false;
+
+  if (dy > 0){
+    const row = Math.floor((P.y + P.h - 1) / TILE);
+    for (let c = left; c <= right; c++){
+      const landsOnPlatform = platAt(c, row) && prevBottom <= row * TILE + 1;
+      if (solidAt(c, row) || landsOnPlatform){
+        P.y = row * TILE - P.h;
+        P.vy = 0; P.grounded = true; P.coyote = COYOTE_FRAMES;
+        break;
+      }
+    }
+  } else if (dy < 0){
+    const row = Math.floor(P.y / TILE);
+    for (let c = left; c <= right; c++){
+      if (solidAt(c, row)){ P.y = (row + 1) * TILE; P.vy = 0; break; }
+    }
+  }
+}
+
+function collectFlowers(){
+  const c0 = Math.floor(P.x / TILE), c1 = Math.floor((P.x + P.w - 1) / TILE);
+  const r0 = Math.floor(P.y / TILE), r1 = Math.floor((P.y + P.h - 1) / TILE);
+  for (let r = r0; r <= r1; r++){
+    for (let c = c0; c <= c1; c++){
+      if (tileAt(c, r) !== '*') continue;
+      const id = [sx, sy, c, r].join(',');
+      if (picked.has(id)) continue;
+      picked.add(id);
+      Save.data.picked = [...picked];
+      Save.flush();
+      for (let i = 0; i < 10; i++){
+        sparks.push({
+          x: c * TILE + 16, y: r * TILE + 16,
+          vx: (Math.random() - .5) * 4, vy: (Math.random() - .5) * 4 - 1,
+          life: 26
+        });
+      }
+      paintHud();
+      Bus.emit('flower:collect', { sx, sy, count: picked.size, total: TOTAL_FLOWERS });
+      if (picked.size === TOTAL_FLOWERS){
+        toast('EVERY FLOWER FOUND<br>THE GARDEN IS QUIET NOW');
+        Bus.emit('zone:complete', { zone: ZONE.name });
+      }
+    }
+  }
+}
+
+function checkEdges(){
+  if (P.x + P.w > W){
+    if (!enterScreen(sx + 1, sy, 2, P.y)) { P.x = W - P.w; P.vx = 0; }
+  } else if (P.x < 0){
+    if (!enterScreen(sx - 1, sy, W - P.w - 2, P.y)) { P.x = 0; P.vx = 0; }
+  }
+  if (P.y > H){
+    if (!enterScreen(sx, sy + 1, P.x, 4)) respawn();
+  } else if (P.y + P.h < 0){
+    if (!enterScreen(sx, sy - 1, P.x, H - P.h - 4)) { P.y = -P.h + 1; P.vy = 0; }
+  }
+}
+
+/* ---------- Rendering ---------- */
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let t = 0;
+
+function draw(){
+  // backdrop: the purple check from the franchise plates
+  g.fillStyle = '#1a0b2e';
+  g.fillRect(0, 0, W, H);
+  for (let r = 0; r < ROWS; r++){
+    for (let c = 0; c < COLS; c++){
+      if ((r + c) % 2) continue;
+      g.fillStyle = '#200d3a';
+      g.fillRect(c * TILE, r * TILE, TILE, TILE);
+    }
+  }
+
+  for (let r = 0; r < ROWS; r++){
+    for (let c = 0; c < COLS; c++){
+      const ch = grid[r][c];
+      const x = c * TILE, y = r * TILE;
+      if (ch === '#'){
+        g.fillStyle = '#2a1450'; g.fillRect(x, y, TILE, TILE);
+        g.fillStyle = '#3d1f6e'; g.fillRect(x, y, TILE, 4);
+        g.fillStyle = '#160829'; g.fillRect(x, y + TILE - 3, TILE, 3);
+      } else if (ch === '='){
+        g.fillStyle = '#3d1f6e'; g.fillRect(x, y, TILE, 8);
+        g.fillStyle = '#59309b'; g.fillRect(x, y, TILE, 3);
+      } else if (ch === '*'){
+        if (!picked.has([sx, sy, c, r].join(','))) drawFlower(x + 16, y + 18);
+      }
+    }
+  }
+
+  sparks = sparks.filter(s => s.life > 0);
+  sparks.forEach(s => {
+    s.x += s.vx; s.y += s.vy; s.vy += 0.16; s.life--;
+    g.globalAlpha = Math.max(0, s.life / 26);
+    g.fillStyle = '#ff8a3d';
+    g.fillRect(s.x, s.y, 3, 3);
+    g.globalAlpha = 1;
+  });
+
+  drawChicken(P.x + P.w / 2, P.y + P.h, P.face);
+  t++;
+}
+
+function drawFlower(cx, cy){
+  const bob = REDUCED ? 0 : Math.sin(t / 22 + cx) * 2;
+  g.fillStyle = '#2f7d4f';
+  g.fillRect(cx - 1, cy + 2 + bob, 2, 10);
+  g.fillStyle = '#ff3b6b';
+  [[-5,-2],[3,-2],[-1,-7],[-1,3]].forEach(([dx, dy]) => {
+    g.fillRect(cx + dx, cy + dy + bob, 4, 5);
+  });
+  g.fillStyle = '#ffd76b';
+  g.fillRect(cx - 2, cy - 2 + bob, 4, 4);
+}
+
+function drawChicken(cx, footY, face){
+  const walking = Math.abs(P.vx) > 0.4 && P.grounded;
+  const strut = walking && !REDUCED ? Math.sin(t / 4) * 1.6 : 0;
+  const y = footY - 24 + (REDUCED ? 0 : strut * .4);
+
+  if (!REDUCED){
+    g.shadowColor = 'rgba(255,138,61,.75)';
+    g.shadowBlur = 14;
+  }
+
+  g.fillStyle = '#e8802f';                       // legs
+  g.fillRect(cx - 5, y + 20, 3, 5 - Math.abs(strut));
+  g.fillRect(cx + 2, y + 20, 3, 5 - Math.abs(strut));
+
+  g.fillStyle = '#ff9a3c';                       // body
+  g.fillRect(cx - 9, y + 6, 18, 15);
+  g.fillStyle = '#ffb862';
+  g.fillRect(cx - 9, y + 6, 18, 4);
+
+  const wing = P.flap > 0 ? -3 : 0;              // wing
+  g.fillStyle = '#e8712a';
+  g.fillRect(cx + (face > 0 ? -9 : 3), y + 10 + wing, 6, 8);
+
+  g.fillStyle = '#ffa94d';                       // head
+  g.fillRect(cx - 7, y - 2, 14, 10);
+
+  g.fillStyle = '#ff3b6b';                       // comb
+  g.fillRect(cx - 4, y - 7, 3, 5);
+  g.fillRect(cx,     y - 9, 3, 7);
+  g.fillRect(cx + 4, y - 7, 3, 5);
+
+  g.shadowBlur = 0;
+
+  g.fillStyle = '#ffd76b';                       // beak
+  g.fillRect(cx + (face > 0 ? 7 : -10), y + 3, 3, 3);
+
+  g.fillStyle = '#1a0b2e';                       // eye
+  g.fillRect(cx + (face > 0 ? 2 : -4), y + 1, 3, 3);
+  g.fillStyle = '#fff';
+  g.fillRect(cx + (face > 0 ? 3 : -3), y + 1, 1, 1);
+}
+
+/* ---------- HUD ---------- */
+const zoneEl = document.getElementById('zone').firstChild;
+const coordEl = document.getElementById('coord');
+const petalEl = document.getElementById('petals');
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+
+function paintHud(){
+  zoneEl.nodeValue = ZONE.name;
+  coordEl.textContent = 'SCREEN (' + sx + ',' + sy + ')';
+  petalEl.textContent = '✿ ' + picked.size + ' / ' + TOTAL_FLOWERS;
+}
+
+function toast(html, ms){
+  toastEl.innerHTML = html;
+  toastEl.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.style.opacity = '0'; }, ms || 3200);
+}
+
+/* ---------- Observation hooks (the Observer will expand these) ---------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){
+    Save.data.quitScreen = [sx, sy];
+    Save.flush();
+    Bus.emit('player:away', { sx, sy });
+  } else {
+    Bus.emit('player:return', { sx, sy });
+  }
+});
+addEventListener('beforeunload', () => {
+  Save.data.quitScreen = [sx, sy];
+  Save.flush();
+});
+
+/* Console trace so you can watch the seams work while playing. */
+['screen:enter','flower:collect','player:respawn','zone:complete','player:away']
+  .forEach(e => Bus.on(e, d => console.log('[bus]', e, d)));
+
+/* ============================================================
+   VOICE — same engine as the episodes (Web Speech API).
+   Two registers:
+     'chorus' = a named chicken, using the episode pitch/rate profiles
+     'game'   = the game itself. Flat. No personality. Used sparingly,
+                because the shift from a character voice to this one
+                does more work late-game than any line of dialogue.
+   ============================================================ */
+const Voice = {
+  on: true,
+  unlocked: false,
+  pool: [],
+
+  // Ported straight from shows/adventures-pilot.html so the chickens
+  // sound like themselves across the show and the game.
+  PROFILES: {
+    'SCRATCHY':  { pitch:0.7,  rate:0.95 },
+    'PEARL':     { pitch:1.5,  rate:1.15 },
+    'EL JAGUAR': { pitch:0.5,  rate:0.85 },
+    'AUNT BARB': { pitch:1.2,  rate:0.90 },
+    'REGINALD':  { pitch:0.85, rate:0.70 },
+    'NARRATOR':  { pitch:1.0,  rate:0.92 },
+    'THE GAME':  { pitch:1.0,  rate:0.85 }   // deliberately featureless
+  },
+
+  init(){
+    if (!('speechSynthesis' in window)) { this.on = false; return; }
+    const load = () => {
+      this.pool = (speechSynthesis.getVoices() || []).filter(v => v.lang && v.lang.startsWith('en'));
+    };
+    load();
+    speechSynthesis.onvoiceschanged = load;
+
+    // iOS Safari refuses to speak before a user gesture. The episodes got this
+    // free from the PLAY button; the game starts on load, so the player unlocks
+    // it by moving — without ever knowing they did.
+    const unlock = () => {
+      if (this.unlocked) return;
+      this.unlocked = true;
+      try {
+        const u = new SpeechSynthesisUtterance('');
+        u.volume = 0;
+        speechSynthesis.speak(u);
+      } catch(e){}
+      removeEventListener('keydown', unlock);
+      removeEventListener('touchstart', unlock);
+      removeEventListener('mousedown', unlock);
+      Bus.emit('voice:unlocked', {});
+    };
+    addEventListener('keydown', unlock);
+    addEventListener('touchstart', unlock);
+    addEventListener('mousedown', unlock);
+  },
+
+  say(who, text, register){
+    subtitle(who, text, register);              // subtitle fires regardless
+    if (!this.on || !('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(clean(text));
+      const p = this.PROFILES[who] || this.PROFILES['NARRATOR'];
+      u.pitch = p.pitch; u.rate = p.rate;
+      if (this.pool.length) u.voice = this.pool[0];
+      speechSynthesis.speak(u);
+    } catch(e){}
+  },
+
+  stop(){ try { speechSynthesis.cancel(); } catch(e){} },
+
+  toggle(){
+    this.on = !this.on;
+    if (!this.on) this.stop();
+    Save.data.voices = this.on;
+    Save.flush();
+    paintVoiceBtn();
+  }
+};
+
+// Strip stage directions before speaking, same rule the episodes use.
+function clean(s){
+  return String(s).replace(/\([^)]*\)/g, ' ').replace(/\*/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+const subEl = document.getElementById('sub');
+let subTimer = null;
+function subtitle(who, text, register){
+  subEl.className = register === 'game' ? 'game' : '';
+  subEl.querySelector('.who').textContent = who;
+  subEl.querySelector('.said').textContent = text;
+  subEl.style.opacity = '1';
+  clearTimeout(subTimer);
+  const hold = Math.max(2600, clean(text).length * 85);   // 8-year-old reading speed
+  subTimer = setTimeout(() => { subEl.style.opacity = '0'; }, hold);
+}
+
+const voiceBtn = document.getElementById('voiceBtn');
+function paintVoiceBtn(){
+  voiceBtn.textContent = Voice.on ? '🗣 VOICES: ON' : '🗣 VOICES: OFF';
+  voiceBtn.classList.toggle('off', !Voice.on);
+  voiceBtn.setAttribute('aria-pressed', String(Voice.on));
+}
+voiceBtn.addEventListener('click', e => { e.preventDefault(); Voice.toggle(); cv.focus(); });
+
+/* ============================================================
+   LORE — what the game knows about the show.
+
+   Detection contract: the episode players write a breadcrumb to
+   localStorage under CC_WATCH_KEY. Same origin, so the game reads it
+   for free. See the snippet in the handoff notes — until the episodes
+   write it, every lore line degrades gracefully to "never watched".
+   ============================================================ */
+const CC_WATCH_KEY = 'cc_watched';
+
+const Lore = {
+  // EDIT HERE when an episode ships. `slug` MUST match the episode's
+  // filename stem in shows/ or detection silently fails.
+  EPISODES: [
+    { n:1, slug:'adventures-pilot', title:'The Adventures of Cranky Chickens' },
+    { n:2, slug:'episode-2',        title:'Invasion of the Corn Snatchers' },
+    { n:3, slug:'episode-3',        title:'The Pointy-Eared Situation' },
+    { n:4, slug:'episode-4',        title:'The War of the Roses (the flowers) (mostly)' },
+    { n:5, slug:'episode-5',        title:'A Knight to Remember' }
+  ],
+
+  read(){
+    let raw = {};
+    try { raw = JSON.parse(localStorage.getItem(CC_WATCH_KEY) || '{}'); } catch(e){}
+    return this.EPISODES.map(ep => {
+      const r = raw[ep.slug] || null;
+      return {
+        n: ep.n, slug: ep.slug, title: ep.title,
+        seen: !!r,
+        finished: !!(r && r.finished),
+        progress: r ? (r.maxProgress || 0) : 0,
+        plays: r ? (r.plays || 0) : 0
+      };
+    });
+  },
+
+  summary(){
+    const all = this.read();
+    const seen = all.filter(e => e.seen);
+    const finished = all.filter(e => e.finished);
+    // Started it, walked away. The most interesting state of all.
+    const abandoned = all.filter(e => e.seen && !e.finished && e.progress > 0.08);
+    return {
+      all, seen, finished, abandoned,
+      seenCount: seen.length,
+      finishedCount: finished.length,
+      total: all.length,
+      sawRoses: all.some(e => e.n === 4 && e.seen),
+      sawPilot: all.some(e => e.n === 1 && e.seen),
+      sawEverything: finished.length === all.length && all.length > 0,
+      sawNothing: seen.length === 0
+    };
+  }
+};
+
+/* ============================================================
+   CHORUS — lines tagged with conditions, not a script.
+   The most specific matching line wins. That is the entire trick:
+   a generic greeting is forgettable, but "you quit on screen (1,1)
+   six days ago and you still have not finished the roses episode"
+   feels like the game has been paying attention. It has.
+   ============================================================ */
+const Chorus = {
+  said: new Set(),
+
+  LINES: [
+    /* --- arrival, awareness 0: the chickens do not know you exist --- */
+    { id:'a0', w:1, on:'session:start', who:'NARRATOR', reg:'game',
+      when: c => c.sessions === 1,
+      say: () => 'The garden. Same as it ever was. Someone should pick these.' },
+
+    /* --- arrival, returning --- */
+    { id:'r1', w:2, on:'session:start', who:'AUNT BARB',
+      when: c => c.sessions > 1 && c.gapDays < 1,
+      say: () => 'Back already. The watering can has not moved.' },
+
+    { id:'r2', w:5, on:'session:start', who:'SCRATCHY',
+      when: c => c.gapDays >= 1 && c.gapDays < 4,
+      say: c => 'You were gone ' + c.gapDays + (c.gapDays === 1 ? ' day' : ' days') + '. I counted. I count things.' },
+
+    { id:'r3', w:7, on:'session:start', who:'SCRATCHY',
+      when: c => c.gapDays >= 4,
+      say: c => c.gapDays + ' days. That is longer than the corn incident. And we filed a form about that one.' },
+
+    { id:'r4', w:8, on:'session:start', who:'PEARL',
+      when: c => c.quitScreen && c.sessions > 2,
+      say: c => 'You left on screen ' + c.quitScreen[0] + ', ' + c.quitScreen[1] + '. We stayed there a while. Just in case.' },
+
+    /* --- lore: what you have and have not watched --- */
+    { id:'L0', w:3, on:'session:start', who:'PEARL',
+      when: c => c.lore.sawNothing,
+      say: () => 'You have not seen the show. That is alright. We will explain nothing.' },
+
+    { id:'L1', w:6, on:'flower:collect', who:'AUNT BARB',
+      when: c => c.lore.sawRoses && c.flowers === 1,
+      say: () => 'You picked a flower. After the roses episode. After what we all agreed.' },
+
+    { id:'L2', w:6, on:'screen:enter', who:'SCRATCHY',
+      when: c => c.lore.sawPilot && c.sx === 1 && c.sy === 0,
+      say: () => 'Forty-seven pieces of corn. We still count them every Tuesday. Ernesto brings juice boxes.' },
+
+    { id:'L3', w:9, on:'session:start', who:'THE GAME', reg:'game',
+      when: c => c.lore.abandoned.length > 0,
+      say: c => 'You started ' + c.lore.abandoned[0].title + ' and you stopped partway through. We kept going without you.' },
+
+    { id:'L4', w:9, on:'session:start', who:'THE GAME', reg:'game',
+      when: c => c.lore.sawEverything,
+      say: () => 'You have watched everything we have made. That is why there is a garden here now.' },
+
+    { id:'L5', w:4, on:'zone:complete', who:'AUNT BARB',
+      when: c => c.lore.finishedCount > 0,
+      say: c => 'Every flower. You are thorough. You finished ' + c.lore.finishedCount + ' of our episodes too. We check.' },
+
+    /* --- ordinary play --- */
+    { id:'p1', w:1, on:'zone:complete', who:'PEARL',
+      when: () => true,
+      say: () => 'That is all of them. The garden is quiet now. Quieter than we would like.' },
+
+    { id:'p2', w:2, on:'player:respawn', who:'REGINALD',
+      when: c => c.respawns >= 5,
+      say: () => 'You have fallen a number of times. I am not counting. Scratchy is counting.' },
+
+    { id:'p3', w:3, on:'player:return', who:'PEARL',
+      when: c => c.sessions > 1,
+      say: () => 'You came back to the window. We did not go anywhere.' }
+  ],
+
+  ctx(extra){
+    const d = Save.data;
+    return Object.assign({
+      sessions: d.sessions,
+      gapDays: Save.gapDays(),
+      awareness: d.awareness,
+      respawns: d.respawns,
+      quitScreen: d.quitScreen,
+      flowers: picked.size,
+      total: TOTAL_FLOWERS,
+      sx, sy,
+      lore: Lore.summary()
+    }, extra || {});
+  },
+
+  trigger(evt, extra){
+    const c = this.ctx(extra);
+    const pool = this.LINES
+      .filter(l => l.on === evt && !this.said.has(l.id))
+      .filter(l => { try { return l.when(c); } catch(e){ return false; } });
+    if (!pool.length) return;
+
+    // Most specific wins. Ties break randomly so repeat sessions vary.
+    const top = Math.max(...pool.map(l => l.w));
+    const best = pool.filter(l => l.w === top);
+    const line = best[Math.floor(Math.random() * best.length)];
+
+    this.said.add(line.id);
+    Save.data.spoken = [...this.said];
+    Save.flush();
+    Voice.say(line.who, line.say(c), line.reg);
+    Bus.emit('chorus:line', { id: line.id, who: line.who });
+  }
+};
+
+/* The Chorus subscribes to the bus and touches no game code. */
+Bus.on('session:start',   () => setTimeout(() => Chorus.trigger('session:start'), 900));
+Bus.on('screen:enter',    d  => Chorus.trigger('screen:enter', d));
+Bus.on('flower:collect',  d  => Chorus.trigger('flower:collect', d));
+Bus.on('zone:complete',   () => Chorus.trigger('zone:complete'));
+Bus.on('player:respawn',  () => Chorus.trigger('player:respawn'));
+Bus.on('player:return',   () => Chorus.trigger('player:return'));
+Bus.on('player:away',     () => Voice.stop());
+
+/* ---------- Boot ---------- */
+function boot(){
+  const led = Save.load();
+  picked = new Set(led.picked || []);
+  Chorus.said = new Set(led.spoken || []);
+  Voice.on = led.voices !== false;
+  Voice.init();
+  paintVoiceBtn();
+
+  const [rx, ry] = led.screen || [0,0];
+  const start = screenAt(rx, ry) ? [rx, ry] : [0,0];
+  grid = screenAt(start[0], start[1]);
+  sx = start[0]; sy = start[1];
+  P.x = 64; P.y = 300;
+  entry = { x: 64, y: 300 };
+  paintHud();
+
+  if (led.sessions > 1){
+    toast('WELCOME BACK<br>THE GARDEN KEPT YOUR FLOWERS');
+  }
+  Bus.emit('session:start', {
+    sessions: led.sessions,
+    awareness: led.awareness,
+    returning: led.sessions > 1,
+    gapDays: Save.gapDays(),
+    quitScreen: led.quitScreen
+  });
+  // The opening screen must announce itself too, or the Chorus is deaf on arrival.
+  Bus.emit('screen:enter', { sx, sy, zone: ZONE.name });
+
+  cv.focus();
+  requestAnimationFrame(loop);
+}
+
+let last = performance.now(), acc = 0;
+const FRAME = 1000 / 60;
+
+function loop(now){
+  requestAnimationFrame(loop);
+  acc += Math.min(now - last, 100);
+  last = now;
+  while (acc >= FRAME){
+    if (running) step();
+    acc -= FRAME;
+  }
+  draw();
+}
+
+boot();
+</script>
+</body>
+</html>
