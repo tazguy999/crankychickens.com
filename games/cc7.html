@@ -743,6 +743,103 @@ const Lore = {
   }
 };
 
+
+/* ============================================================
+   WATCHER — notices how you play. Kindly.
+   Everything here is ordinary telemetry: jumps, falls, pauses,
+   whether you went back for a flower you missed. The chickens use
+   it to be observant and warm, never to threaten. The joke is that
+   they are paying an uncomfortable amount of attention and using it
+   entirely to be supportive.
+   ============================================================ */
+const Watcher = {
+  jumps: 0, falls: 0, flowers: 0, screens: new Set(),
+  idleMs: 0, movingMs: 0, startedAt: Date.now(),
+  backtracked: false, longestIdle: 0, lastFlowerAt: 0,
+
+  tick(dt, moving){
+    if (moving){ this.movingMs += dt; this.idleMs = 0; }
+    else {
+      this.idleMs += dt;
+      if (this.idleMs > this.longestIdle) this.longestIdle = this.idleMs;
+    }
+  },
+  minutes(){ return (Date.now() - this.startedAt) / 60000; },
+  hour(){ return new Date().getHours(); },
+  lateNight(){ const h = this.hour(); return h >= 22 || h < 5; },
+  earlyMorning(){ const h = this.hour(); return h >= 5 && h < 8; }
+};
+
+Bus.on('player:jump',    () => Watcher.jumps++);
+Bus.on('player:respawn', () => Watcher.falls++);
+Bus.on('flower:collect', () => { Watcher.flowers++; Watcher.lastFlowerAt = Date.now(); });
+Bus.on('screen:enter',   d => {
+  const k = d.sx + ',' + d.sy;
+  if (Watcher.screens.has(k)) Watcher.backtracked = true;   // came back for something
+  Watcher.screens.add(k);
+});
+
+/* ============================================================
+   TALK — conversation scheduler matched to the episodes.
+
+   Measured from shows/episode-4.html: lines land at t=1, 4.5, 9.5,
+   13.5, 18 — about 4s apart, 5-6 lines per scene, then a break.
+   Same rhythm here, except the GAP BETWEEN EXCHANGES tightens as
+   awareness rises. That is the ladder: at first the chickens talk
+   to each other every 70 seconds and ignore you completely. By the
+   end they are talking about you every 25 seconds, and then to you.
+   ============================================================ */
+const Talk = {
+  LINE_GAP: 4000,          // matches episode cadence
+  active: null, idx: 0, nextLineAt: 0, nextExchangeAt: 0,
+  queue: [], done: new Set(),
+
+  gapForAwareness(a){
+    return [70000, 60000, 50000, 40000, 32000, 26000][Math.min(a, 5)];
+  },
+
+  enqueue(ex, urgent){
+    if (urgent) this.queue.unshift(ex); else this.queue.push(ex);
+  },
+
+  tick(now){
+    if (document.hidden) return;
+
+    if (this.active){
+      if (now < this.nextLineAt) return;
+      if (this.idx >= this.active.lines.length){
+        this.active = null;
+        this.nextExchangeAt = now + this.gapForAwareness(Save.data.awareness);
+        return;
+      }
+      const [who, text] = this.active.lines[this.idx++];
+      Voice.say(who, text, who === 'THE GAME' ? 'game' : null);
+      const read = Math.max(this.LINE_GAP, clean(text).length * 95);
+      this.nextLineAt = now + read;
+      return;
+    }
+
+    if (this.queue.length){
+      this.start(this.queue.shift(), now);
+      return;
+    }
+    if (now >= this.nextExchangeAt){
+      const ex = Chorus.pickAmbient();
+      if (ex) this.start(ex, now);
+      else this.nextExchangeAt = now + 12000;   // nothing fits, try again shortly
+    }
+  },
+
+  start(ex, now){
+    this.active = ex; this.idx = 0; this.nextLineAt = now;
+    if (ex.id){
+      this.done.add(ex.id);
+      Save.data.spoken = [...this.done];
+      Save.flush();
+    }
+  }
+};
+
 /* ============================================================
    CHORUS — lines tagged with conditions, not a script.
    The most specific matching line wins. That is the entire trick:
@@ -815,6 +912,144 @@ const Chorus = {
       say: () => 'You came back to the window. We did not go anywhere.' }
   ],
 
+
+  /* ── Ambient exchanges. `a` is the awareness band they belong to.
+     Band 0-1: garden business, you are not in the conversation.
+     Band 2-3: they notice something and discuss it in the third person.
+     Band 4-5: they talk about you plainly, and then to you — kindly. ── */
+  AMBIENT: [
+    { id:'x-count', a:0, lines:[
+      ['SCRATCHY','Flower count. Tuesday. As agreed.'],
+      ['PEARL','There are twelve.'],
+      ['SCRATCHY','There are always twelve.'],
+      ['PEARL','That is why I like counting them.'],
+      ['SCRATCHY','This is the greatest day of my life.'] ]},
+
+    { id:'x-barb', a:0, lines:[
+      ['AUNT BARB','The roses came back, you know. After everything.'],
+      ['REGINALD','Nice roses.'],
+      ['AUNT BARB','Thank you, Reginald.'],
+      ['REGINALD','That was not a threat.'],
+      ['AUNT BARB','I know, dear.'] ]},
+
+    { id:'x-form', a:1, lines:[
+      ['SCRATCHY','I am filing a form about the weather.'],
+      ['PEARL','Which form?'],
+      ['SCRATCHY','Seven-B.'],
+      ['PEARL','Seven-B is for grievances.'],
+      ['SCRATCHY','Yes.'] ]},
+
+    { id:'x-feel', a:2, lines:[
+      ['PEARL','Do you feel that?'],
+      ['SCRATCHY','I feel many things. Be specific.'],
+      ['PEARL','Like the garden is being looked at.'],
+      ['SCRATCHY','...The air is seasoned with ATTENTION.'],
+      ['PEARL','I do not hate it.'] ]},
+
+    { id:'x-third', a:3, lines:[
+      ['SCRATCHY','It is here again.'],
+      ['PEARL','It comes, it picks the flowers, it goes.'],
+      ['AUNT BARB','It always puts them somewhere safe.'],
+      ['SCRATCHY','Noted. In the good column.'] ]},
+
+    { id:'x-direct', a:4, lines:[
+      ['PEARL','I think it can hear us.'],
+      ['SCRATCHY','Then I shall say something worth hearing.'],
+      ['SCRATCHY','Hello.'],
+      ['PEARL','That was not worth hearing.'],
+      ['SCRATCHY','It was my best one.'] ]},
+
+    { id:'x-warm', a:5, lines:[
+      ['AUNT BARB','You have been coming here a while now.'],
+      ['AUNT BARB','You do not have to do anything. You can just stand in the garden.'],
+      ['REGINALD','That is what I do.'],
+      ['AUNT BARB','Reginald has done that for six years.'],
+      ['REGINALD','Best six years of my life.'] ]}
+  ],
+
+  /* ── Observations. The bonus round: the chickens have been watching
+     how you play and have concluded, every time, that you are doing fine. ── */
+  OBSERVED: [
+    { id:'o-falls', need: w => w.falls >= 6, lines:[
+      ['SCRATCHY','It has fallen ' + '{falls}' + ' times.'],
+      ['PEARL','Oh no.'],
+      ['SCRATCHY','It got up ' + '{falls}' + ' times.'],
+      ['PEARL','Oh YES.'],
+      ['SCRATCHY','I am putting that in the good column too.'] ]},
+
+    { id:'o-idle', need: w => w.longestIdle > 25000, lines:[
+      ['PEARL','It has been standing still for a while.'],
+      ['AUNT BARB','Perhaps it is thinking.'],
+      ['REGINALD','Perhaps it is resting.'],
+      ['AUNT BARB','Both are allowed here.'] ]},
+
+    { id:'o-back', need: w => w.backtracked, lines:[
+      ['SCRATCHY','It went back.'],
+      ['PEARL','For the flower it missed?'],
+      ['SCRATCHY','For the flower it missed.'],
+      ['PEARL','That is my favourite kind of person.'] ]},
+
+    { id:'o-jumpy', need: w => w.jumps >= 60 && w.falls <= 2, lines:[
+      ['REGINALD','It jumps a great deal.'],
+      ['SCRATCHY','It has not fallen once.'],
+      ['REGINALD','Then it is not jumping too much. It is jumping correctly.'],
+      ['SCRATCHY','I withdraw my concern.'] ]},
+
+    { id:'o-careful', need: w => w.jumps < 20 && w.minutes() > 3, lines:[
+      ['AUNT BARB','It is being very careful.'],
+      ['PEARL','Is that bad?'],
+      ['AUNT BARB','No, dear. That is just how some people cross a garden.'] ]},
+
+    { id:'o-late', need: w => w.lateNight(), lines:[
+      ['PEARL','It is very late where it is.'],
+      ['AUNT BARB','Oh, that will not do.'],
+      ['AUNT BARB','The flowers will still be here tomorrow. They are quite patient.'],
+      ['SCRATCHY','Go to bed. That is an official recommendation. Form 7-B.'],
+      ['PEARL','Seven-B is for grievances.'],
+      ['SCRATCHY','Yes.'] ]},
+
+    { id:'o-early', need: w => w.earlyMorning(), lines:[
+      ['REGINALD','It is here before the sun.'],
+      ['AUNT BARB','Good morning, then.'],
+      ['REGINALD','I will be asleep for four more hours.'],
+      ['REGINALD','Enjoy the garden. It is nicer when it is empty.'] ]},
+
+    { id:'o-long', need: w => w.minutes() > 12, lines:[
+      ['SCRATCHY','It has been here twelve minutes.'],
+      ['PEARL','Is that a lot?'],
+      ['SCRATCHY','It is more than anyone has ever stayed.'],
+      ['AUNT BARB','Then someone should offer it a juice box.'] ]},
+
+    { id:'o-allflowers', need: w => w.flowers >= 12, lines:[
+      ['AUNT BARB','Every flower. All twelve.'],
+      ['SCRATCHY','I recount. I always recount.'],
+      ['SCRATCHY','...Twelve.'],
+      ['SCRATCHY','It is correct. I am so happy and so unsettled.'] ]}
+  ],
+
+  fill(text, w){
+    return text.replace('{falls}', w.falls).replace('{jumps}', w.jumps)
+               .replace('{flowers}', w.flowers).replace('{minutes}', Math.floor(w.minutes()));
+  },
+
+  pickAmbient(){
+    const a = Save.data.awareness, w = Watcher;
+
+    // Observations outrank ambient chatter — they are the reason to keep playing.
+    const obs = this.OBSERVED.filter(e => !Talk.done.has(e.id) && e.need(w));
+    if (obs.length && Math.random() < 0.65){
+      const e = obs[Math.floor(Math.random() * obs.length)];
+      return { id:e.id, lines: e.lines.map(([who,t]) => [who, this.fill(t, w)]) };
+    }
+
+    const pool = this.AMBIENT.filter(e => e.a <= a && !Talk.done.has(e.id));
+    if (!pool.length) return null;
+    // Prefer the highest band available so the tone tracks awareness.
+    const top = Math.max(...pool.map(e => e.a));
+    const best = pool.filter(e => e.a === top);
+    return best[Math.floor(Math.random() * best.length)];
+  },
+
   ctx(extra){
     const d = Save.data;
     return Object.assign({
@@ -845,7 +1080,7 @@ const Chorus = {
     this.said.add(line.id);
     Save.data.spoken = [...this.said];
     Save.flush();
-    Voice.say(line.who, line.say(c), line.reg);
+    Talk.enqueue({ id: line.id, lines: [[line.who, line.say(c)]] }, true);
     Bus.emit('chorus:line', { id: line.id, who: line.who });
   }
 };
@@ -864,6 +1099,10 @@ function boot(){
   const led = Save.load();
   picked = new Set(led.picked || []);
   Chorus.said = new Set(led.spoken || []);
+  Talk.done  = new Set(led.spoken || []);
+  // Rises only on return visits. Rushing this inside one session kills the payoff.
+  Save.data.awareness = Math.min(5, Math.max(0, led.sessions - 1));
+  Save.flush();
   Voice.on = led.voices !== false;
   Voice.init();
   paintVoiceBtn();
@@ -889,11 +1128,12 @@ function boot(){
   // The opening screen must announce itself too, or the Chorus is deaf on arrival.
   Bus.emit('screen:enter', { sx, sy, zone: ZONE.name });
 
+  Talk.nextExchangeAt = performance.now() + 14000;
   cv.focus();
   requestAnimationFrame(loop);
 }
 
-let last = performance.now(), acc = 0;
+let last = performance.now(), acc = 0, lastTalk = performance.now();
 const FRAME = 1000 / 60;
 
 function loop(now){
@@ -904,6 +1144,9 @@ function loop(now){
     if (running) step();
     acc -= FRAME;
   }
+  Watcher.tick(Math.min(now - lastTalk, 100), Math.abs(P.vx) > 0.4 || !P.grounded);
+  lastTalk = now;
+  Talk.tick(now);
   draw();
 }
 
