@@ -3,19 +3,94 @@
   "_version": 1,
   "game": "cc7",
   "zones": [
-    { "screenIndex": 0, "grid": [0, 0], "name": "The Garden Gate",  "emoji": "🌿", "note": "Where you arrive. Two flowers, a gentle climb." },
-    { "screenIndex": 1, "grid": [1, 0], "name": "The Long Drop",    "emoji": "🪜", "note": "The pit here falls through to The Climb below." },
-    { "screenIndex": 2, "grid": [2, 0], "name": "The Far Corner",   "emoji": "🌸", "note": "Dead end to the east. Nothing beyond. Yet." },
-    { "screenIndex": 3, "grid": [0, 1], "name": "The Quiet Bed",    "emoji": "🌺", "note": "A side pocket. Easy to miss." },
-    { "screenIndex": 4, "grid": [1, 1], "name": "The Climb",        "emoji": "🍃", "note": "The way back up. Platform alignment here is load-bearing." },
-    { "screenIndex": 5, "grid": [2, 1], "name": "Where It Watches", "emoji": "👁️", "note": "The quietest screen. Named by the chickens, not by us." }
+    {
+      "screenIndex": 0,
+      "grid": [
+        0,
+        0
+      ],
+      "name": "The Garden Gate",
+      "emoji": "🌿",
+      "note": "Where you arrive. Two flowers, a gentle climb."
+    },
+    {
+      "screenIndex": 1,
+      "grid": [
+        1,
+        0
+      ],
+      "name": "The Long Drop",
+      "emoji": "🪜",
+      "note": "The pit here falls through to The Climb below."
+    },
+    {
+      "screenIndex": 2,
+      "grid": [
+        2,
+        0
+      ],
+      "name": "The Far Corner",
+      "emoji": "🌸",
+      "note": "Dead end to the east. Nothing beyond. Yet."
+    },
+    {
+      "screenIndex": 3,
+      "grid": [
+        0,
+        1
+      ],
+      "name": "The Quiet Bed",
+      "emoji": "🌺",
+      "note": "A side pocket. Easy to miss."
+    },
+    {
+      "screenIndex": 4,
+      "grid": [
+        1,
+        1
+      ],
+      "name": "The Climb",
+      "emoji": "🍃",
+      "note": "The way back up. Platform alignment here is load-bearing."
+    },
+    {
+      "screenIndex": 5,
+      "grid": [
+        2,
+        1
+      ],
+      "name": "Where It Watches",
+      "emoji": "👁️",
+      "note": "The quietest screen. Named by the chickens, not by us."
+    }
   ],
   "enemyVariants": [],
   "cornPatches": [],
   "loreEntries": [],
-  "chickenLines": [],
+  "chickenLines": [
+    {
+      "id": "gr-blocks",
+      "by": "CANNON MASTER",
+      "speaker": "SCRATCHY",
+      "text": "I hate that the blocks fall down on you in Mystery Island.",
+      "zone": null
+    },
+    {
+      "id": "ds-garden",
+      "by": "DRAGON SCRIBE",
+      "speaker": "PEARL",
+      "text": "The garden should have a place where nothing can reach you.",
+      "zone": 5
+    }
+  ],
   "_kidContributions": {
     "_note": "Dialogue written by the Dragon Scribe and characters drawn by the Cannon Master. Lines added to chickenLines are read by the Chorus in games/cc7.html.",
-    "speakers": ["SCRATCHY", "PEARL", "AUNT BARB", "REGINALD", "NARRATOR"]
+    "speakers": [
+      "SCRATCHY",
+      "PEARL",
+      "AUNT BARB",
+      "REGINALD",
+      "NARRATOR"
+    ]
   }
 }

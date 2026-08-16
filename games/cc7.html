@@ -827,8 +827,8 @@ const Voice = {
     addEventListener('mousedown', unlock);
   },
 
-  say(who, text, register){
-    subtitle(who, text, register);              // subtitle fires regardless
+  say(who, text, register, credit){
+    subtitle(who, text, register, credit);      // subtitle fires regardless
     if (!this.on || !('speechSynthesis' in window)) return;
     try {
       speechSynthesis.cancel();
@@ -858,9 +858,10 @@ function clean(s){
 
 const subEl = document.getElementById('sub');
 let subTimer = null;
-function subtitle(who, text, register){
+function subtitle(who, text, register, credit){
   subEl.className = register === 'game' ? 'game' : '';
-  subEl.querySelector('.who').textContent = who;
+  subEl.querySelector('.who').textContent =
+    credit ? who + '  ·  written by ' + credit : who;
   subEl.querySelector('.said').textContent = text;
   subEl.style.opacity = '1';
   clearTimeout(subTimer);
@@ -1001,7 +1002,8 @@ const Talk = {
         return;
       }
       const [who, text] = this.active.lines[this.idx++];
-      Voice.say(who, text, who === 'THE GAME' ? 'game' : null);
+      const credit = (this.idx === 1 && this.active.credit) ? this.active.credit : null;
+      Voice.say(who, text, who === 'THE GAME' ? 'game' : null, credit);
       const read = Math.max(this.LINE_GAP, clean(text).length * 95);
       this.nextLineAt = now + read;
       return;
@@ -1025,6 +1027,105 @@ const Talk = {
       Save.data.spoken = [...this.done];
       Save.flush();
     }
+  }
+};
+
+
+/* ============================================================
+   KID LINES — dialogue written by the Dragon Scribe and Cannon Master.
+
+   Design rule: their words are NEVER rewritten. Whatever a kid writes
+   is spoken verbatim and credited to them on screen. The positive spin
+   comes from the chickens' RESPONSE, not from sanitising the input.
+   Grayson gets to say he hates the falling blocks, and Scratchy files
+   it formally in the good column. The complaint survives; the feeling
+   turns warm. Rewriting a kid's line to be cheerful would just teach
+   them the portal edits them.
+   ============================================================ */
+const KidLines = {
+  entries: [],
+
+  async load(){
+    try {
+      const res = await fetch('/configs/cc7.json?t=' + Date.now());
+      if (!res.ok) return;
+      const cfg = await res.json();
+      const raw = []
+        .concat(cfg.chickenLines || [])
+        // Mission Control currently writes contributions into other
+        // buckets, so pick up anything line-shaped wherever it landed.
+        .concat((cfg.loreEntries || []).filter(e => e && (e.line || e.text)))
+        .concat((cfg.enemyVariants || []).filter(e => e && (e.line || e.text)));
+
+      this.entries = raw.map(e => this.norm(e)).filter(Boolean).slice(0, 40);
+      Bus.emit('kidlines:loaded', { count: this.entries.length });
+    } catch(e){ /* offline or not deployed yet — game plays fine without */ }
+  },
+
+  norm(e){
+    let text = String(e.line || e.text || '').trim();
+    if (!text) return null;
+    text = text.replace(/\s+/g, ' ').slice(0, 180);   // render-safe, not content-edited
+    const by = String(e.by || e.author || e.portal || '').toUpperCase();
+    const speaker = Voice.PROFILES[String(e.speaker || '').toUpperCase()]
+      ? String(e.speaker).toUpperCase() : 'PEARL';
+    return {
+      id: 'kid-' + (e.id || text.slice(0, 24)),
+      text, speaker,
+      by: by.includes('SCRIBE') ? 'DRAGON SCRIBE'
+        : by.includes('CANNON') ? 'CANNON MASTER' : (by || null),
+      zone: typeof e.zone === 'number' ? e.zone : null
+    };
+  },
+
+  /* Warm responses, bucketed by what the line is doing. Every bucket
+     ends somewhere good — that is the whole brief. */
+  RESPONSES: {
+    complaint: [
+      [['SCRATCHY','Noted. Formally.'],['PEARL','In the good column?'],['SCRATCHY','In the good column.']],
+      [['AUNT BARB','That is a fair point, dear.'],['SCRATCHY','I am filing it. Seven-B.'],['AUNT BARB','Of course you are.']],
+      [['PEARL','Somebody should fix that.'],['SCRATCHY','Somebody just did. They said it out loud.']]
+    ],
+    worry: [
+      [['AUNT BARB','Oh, that is alright.'],['AUNT BARB','Nothing here is in a hurry. Neither are you.']],
+      [['REGINALD','I have felt that.'],['REGINALD','It passes. Usually around lunch.']]
+    ],
+    silly: [
+      [['PEARL','YES.'],['SCRATCHY','I have no notes.'],['PEARL','Nobody has notes. That never happens.']],
+      [['REGINALD','That is the best thing I have heard all week.'],['AUNT BARB','It is Tuesday, dear.'],['REGINALD','Still counts.']]
+    ],
+    neutral: [
+      [['SCRATCHY','I agree with that entirely.'],['PEARL','You never agree with anything.'],['SCRATCHY','Today I do.']],
+      [['AUNT BARB','Well said.'],['REGINALD','Nice one.'],['AUNT BARB','That was not a threat.']]
+    ]
+  },
+
+  bucket(text){
+    const t = text.toLowerCase();
+    if (/\b(hate|worst|annoying|stupid|bad|boring|unfair|too hard|dumb)\b/.test(t)) return 'complaint';
+    if (/\b(scared|scary|afraid|sad|worried|nervous|lonely|creepy)\b/.test(t))       return 'worry';
+    if (/\b(lol|haha|funny|silly|cool|awesome|epic|best|amazing|love)\b/.test(t) ||
+        /!{2,}/.test(text))                                                          return 'silly';
+    return 'neutral';
+  },
+
+  pick(){
+    const usable = this.entries.filter(e => {
+      if (Talk.done.has(e.id)) return false;
+      if (e.zone === null) return true;
+      return e.zone === (sy * 3 + sx);       // same mapping as configs/games.json
+    });
+    if (!usable.length) return null;
+
+    const e = usable[Math.floor(Math.random() * usable.length)];
+    const bank = this.RESPONSES[this.bucket(e.text)];
+    const reply = bank[Math.floor(Math.random() * bank.length)];
+
+    return {
+      id: e.id,
+      credit: e.by,
+      lines: [[e.speaker, e.text]].concat(reply)
+    };
   }
 };
 
@@ -1287,6 +1388,11 @@ const Chorus = {
       return { id:e.id, lines: e.lines.map(([who,t]) => [who, this.fill(t, w)]) };
     }
 
+    // Written by the kids. Highest priority: seeing your own words spoken
+    // by a chicken is the best thing this game does.
+    const kid = KidLines.pick();
+    if (kid && Math.random() < 0.5) return kid;
+
     // Occasional notes on the back catalogue.
     const back = this.BACKLOG.filter(e => !Talk.done.has(e.id));
     if (a >= 1 && back.length && Math.random() < 0.22){
@@ -1379,6 +1485,7 @@ function boot(){
   // The opening screen must announce itself too, or the Chorus is deaf on arrival.
   Bus.emit('screen:enter', { sx, sy, zone: ZONE.name });
 
+  KidLines.load();
   Talk.nextExchangeAt = performance.now() + 14000;
   screenEnteredAt = performance.now();
   cv.focus();
