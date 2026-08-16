@@ -293,6 +293,8 @@ const P = {
 };
 
 const GRAV = 0.6, JUMP_V = -11.5, RUN = 3.1, FRICTION = .78, MAX_FALL = 13;
+// Boosted arc: 13.6^2/(2*0.6) = 154px = 4.8 tiles, vs 110px = 3.4 normally.
+const JUMP_BOOST = -13.6;
 const COYOTE_FRAMES = 8, BUFFER_FRAMES = 8;
 
 let sx = 0, sy = 0;            // current screen coords
@@ -301,6 +303,8 @@ let entry = { x:64, y:300 };   // where to put you back
 let picked = new Set();
 let sparks = [];
 let running = true;
+let assist = { active:false, until:0, tiles:[], screen:null };
+let fallsHere = 0, screenEnteredAt = 0;
 
 /* ---------- Screen management ---------- */
 function key(x, y){ return x + ',' + y; }
@@ -331,7 +335,10 @@ function tileAt(col, row){
   return grid[row][col];
 }
 function solidAt(col, row){ return tileAt(col, row) === '#'; }
-function platAt(col, row){ return tileAt(col, row) === '='; }
+function assistAt(col, row){
+  return assist.active && assist.tiles.some(t => t.c === col && t.r === row);
+}
+function platAt(col, row){ return tileAt(col, row) === '=' || assistAt(col, row); }
 
 /* ---------- Physics ---------- */
 function step(){
@@ -347,7 +354,7 @@ function step(){
   if (P.coyote > 0) P.coyote--;
 
   if (P.buffer > 0 && P.coyote > 0){
-    P.vy = JUMP_V;
+    P.vy = assist.active ? JUMP_BOOST : JUMP_V;
     P.buffer = 0; P.coyote = 0;
     P.flap = 12;
     Bus.emit('player:jump', { sx, sy });
@@ -445,6 +452,149 @@ function checkEdges(){
   }
 }
 
+
+/* ============================================================
+   ASSIST — "Aunt Barb puts down a plank."
+
+   Triggered when a screen is clearly fighting back. It does not just
+   boost the jump and hope: it SOLVES the screen. A ladder of planks is
+   built from the target down to something already standable, spaced at
+   most 2 rows apart, then verified by the same flood-fill the solver
+   used. If verification fails the assist refuses to arm rather than
+   promise help it cannot deliver.
+
+   The boosted arc (4.8 tiles vs 3.4) is slack on top of a geometry
+   guarantee, not the guarantee itself.
+   ============================================================ */
+const Assist = {
+  DURATION: 10000,
+  usedOn: new Set(),
+
+  standable(c, r, extra){
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
+    const here = tileAt(c, r);
+    if (here === '#') return false;
+    const has = (cc, rr) => extra.some(t => t.c === cc && t.r === rr);
+    const below = tileAt(c, r + 1);
+    return below === '#' || below === '=' || has(c, r + 1);
+  },
+
+  // Conservative flood-fill: 3 tiles up, 3 across per hop. Real reach is
+  // 3.4 up / 3.7 across, so anything this finds is comfortably jumpable.
+  reachable(from, extra){
+    const seen = new Set(), stack = [from];
+    const k = (c, r) => c + ',' + r;
+    seen.add(k(from.c, from.r));
+    while (stack.length){
+      const cur = stack.pop();
+      for (let dc = -3; dc <= 3; dc++){
+        for (let dr = -3; dr <= 6; dr++){
+          if (!dc && !dr) continue;
+          if (dr < 0 && Math.abs(dc) > 3) continue;
+          const c = cur.c + dc, r = cur.r + dr;
+          if (seen.has(k(c, r))) continue;
+          if (!this.standable(c, r, extra)) continue;
+          seen.add(k(c, r));
+          stack.push({ c, r });
+        }
+      }
+    }
+    return seen;
+  },
+
+  target(){
+    let best = null, bd = 1e9;
+    const pc = Math.floor((P.x + P.w/2) / TILE), pr = Math.floor((P.y + P.h) / TILE);
+    for (let r = 0; r < ROWS; r++){
+      for (let c = 0; c < COLS; c++){
+        if (tileAt(c, r) !== '*') continue;
+        if (picked.has([sx, sy, c, r].join(','))) continue;
+        const d = Math.abs(c - pc) + Math.abs(r - pr);
+        if (d < bd){ bd = d; best = { c, r }; }
+      }
+    }
+    return best;
+  },
+
+  plan(){
+    const tgt = this.target();
+    if (!tgt) return null;
+    const pc = Math.floor((P.x + P.w/2) / TILE);
+    let pr = Math.floor((P.y + P.h) / TILE);
+    while (pr < ROWS && !this.standable(pc, pr, [])) pr++;
+    const from = { c: Math.max(0, Math.min(COLS-1, pc)), r: Math.min(ROWS-1, pr) };
+
+    // Already reachable? Then the problem is execution, not geometry —
+    // one plank under the target plus the boosted arc removes all doubt.
+    let reach = this.reachable(from, []);
+    const planks = [];
+    const addRow = r => {
+      for (let c = tgt.c - 1; c <= tgt.c + 1; c++){
+        if (c < 0 || c >= COLS) continue;
+        if (tileAt(c, r) !== '.') continue;
+        if (planks.some(t => t.c === c && t.r === r)) continue;
+        planks.push({ c, r });
+      }
+    };
+
+    // Build a ladder downward from the target until it meets solid ground.
+    for (let r = tgt.r + 2; r < ROWS; r += 2){
+      const grounded = ['#','='].includes(tileAt(tgt.c, r));
+      addRow(r);
+      if (grounded) break;
+      if (r + 2 >= ROWS) break;
+    }
+
+    // Verify. If the solver cannot prove the target is now reachable,
+    // do not arm — a broken promise is worse than no help.
+    reach = this.reachable(from, planks);
+    if (!reach.has(tgt.c + ',' + tgt.r)) return null;
+    return { planks, tgt };
+  },
+
+  maybeTrigger(now){
+    if (assist.active) return;
+    const id = sx + ',' + sy;
+    if (this.usedOn.has(id)) return;
+    const stuckByFalls = fallsHere >= 4;
+    const stuckByTime  = (now - screenEnteredAt) > 70000 && this.target();
+    if (!stuckByFalls && !stuckByTime) return;
+
+    const plan = this.plan();
+    if (!plan) { this.usedOn.add(id); return; }
+
+    this.usedOn.add(id);
+    assist.active = true;
+    assist.until  = now + this.DURATION;
+    assist.tiles  = plan.planks;
+    assist.screen = id;
+    Bus.emit('assist:start', { sx, sy, planks: plan.planks.length });
+    Talk.enqueue({ lines: [
+      ['AUNT BARB','Here, dear. I have put a plank down for you.'],
+      ['SCRATCHY','That is not regulation.'],
+      ['AUNT BARB','It is now.']
+    ]}, true);
+  },
+
+  tick(now){
+    this.maybeTrigger(now);
+    if (!assist.active) return;
+    if (now >= assist.until){
+      assist.active = false;
+      assist.tiles = [];
+      Bus.emit('assist:end', {});
+      // If they are standing on a plank when it goes, set them down gently
+      // rather than dropping them into a pit.
+      if (!P.grounded && P.vy >= 0) P.vy = Math.min(P.vy, 2);
+    }
+  },
+
+  remaining(now){ return Math.max(0, Math.ceil((assist.until - now) / 1000)); }
+};
+
+Bus.on('player:respawn', () => fallsHere++);
+Bus.on('screen:enter',  () => { fallsHere = 0; screenEnteredAt = performance.now(); });
+
 /* ---------- Rendering ---------- */
 const cv = document.getElementById('c'), g = cv.getContext('2d');
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -488,8 +638,46 @@ function draw(){
     g.globalAlpha = 1;
   });
 
+  if (assist.active) drawAssist();
   drawChicken(P.x + P.w / 2, P.y + P.h, P.face);
   t++;
+}
+
+
+function drawAssist(){
+  const now = performance.now();
+  const left = Math.max(0, assist.until - now);
+  const frac = left / Assist.DURATION;
+
+  // Barb's planks — warm gold, unmistakably not part of the level.
+  assist.tiles.forEach(tl => {
+    const x = tl.c * TILE, y = tl.r * TILE;
+    const pulse = REDUCED ? 1 : (0.8 + Math.sin(t / 6) * 0.2);
+    g.globalAlpha = frac < 0.25 ? (0.35 + frac * 2.6) : 1;   // fades as it expires
+    if (!REDUCED){ g.shadowColor = 'rgba(255,205,80,.8)'; g.shadowBlur = 12 * pulse; }
+    g.fillStyle = '#c98b3a'; g.fillRect(x, y, TILE, 9);
+    g.fillStyle = '#ffd76b'; g.fillRect(x, y, TILE, 3);
+    g.shadowBlur = 0;
+    g.fillStyle = 'rgba(120,70,20,.55)';
+    g.fillRect(x + 4, y + 4, 2, 4); g.fillRect(x + TILE - 6, y + 4, 2, 4);
+    g.globalAlpha = 1;
+  });
+
+  // Countdown, top-centre, out of the play area.
+  const secs = Math.ceil(left / 1000);
+  g.save();
+  g.globalAlpha = 0.92;
+  g.fillStyle = 'rgba(6,3,12,.8)';
+  g.fillRect(W/2 - 62, 30, 124, 26);
+  g.strokeStyle = '#ffd76b'; g.lineWidth = 2;
+  g.strokeRect(W/2 - 62, 30, 124, 26);
+  g.fillStyle = '#ffd76b';
+  g.fillRect(W/2 - 60, 52, 120 * frac, 3);
+  g.font = 'bold 13px Arial, sans-serif';
+  g.textAlign = 'center';
+  g.fillText('PLANK: ' + secs + 's', W/2, 48);
+  g.restore();
+  g.textAlign = 'left';
 }
 
 function drawFlower(cx, cy){
@@ -1192,6 +1380,7 @@ function boot(){
   Bus.emit('screen:enter', { sx, sy, zone: ZONE.name });
 
   Talk.nextExchangeAt = performance.now() + 14000;
+  screenEnteredAt = performance.now();
   cv.focus();
   requestAnimationFrame(loop);
 }
@@ -1209,6 +1398,7 @@ function loop(now){
   }
   Watcher.tick(Math.min(now - lastTalk, 100), Math.abs(P.vx) > 0.4 || !P.grounded);
   lastTalk = now;
+  Assist.tick(now);
   Talk.tick(now);
   draw();
 }
