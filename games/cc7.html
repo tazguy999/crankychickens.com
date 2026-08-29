@@ -939,6 +939,17 @@ const Lore = {
     });
   },
 
+
+  // Mystery Island's ghost-chicken record, same origin so it reads for free.
+  ghost(){
+    try {
+      const d = JSON.parse(localStorage.getItem('ci_ghost') || 'null');
+      if (!d) return null;
+      return { launches:d.launches|0, phases:d.phases|0, reforms:d.reforms|0,
+               missed:d.missedTaps|0, learned:!!d.taughtOK };
+    } catch(e){ return null; }
+  },
+
   summary(){
     const all = this.read();
     const seen = all.filter(e => e.seen);
@@ -1213,6 +1224,20 @@ const Chorus = {
       when: c => c.lore.finishedCount > 0,
       say: c => 'Every flower. You are thorough. You finished ' + c.lore.finishedCount + ' of our episodes too. We check.' },
 
+
+    { id:'g-learn', w:7, on:'session:start', who:'SCRATCHY',
+      when: c => c.ghost && c.ghost.reforms > 0,
+      say: c => 'You got the ghost one through the blocks ' + c.ghost.reforms +
+                (c.ghost.reforms === 1 ? ' time' : ' times') + '. On Mystery Island. We heard.' },
+
+    { id:'g-try', w:6, on:'session:start', who:'AUNT BARB',
+      when: c => c.ghost && c.ghost.missed >= 2 && c.ghost.reforms === 0,
+      say: () => 'The ghost chicken is tricky, dear. You tap it while it is still in the air.' },
+
+    { id:'g-proud', w:8, on:'zone:complete', who:'PEARL',
+      when: c => c.ghost && c.ghost.learned,
+      say: () => 'You learned the ghost one. Cannon Master made that. He will want to know.' },
+
     /* --- ordinary play --- */
     { id:'p1', w:1, on:'zone:complete', who:'PEARL',
       when: () => true,
@@ -1444,7 +1469,8 @@ const Chorus = {
       flowers: picked.size,
       total: TOTAL_FLOWERS,
       sx, sy,
-      lore: Lore.summary()
+      lore: Lore.summary(),
+      ghost: Lore.ghost()
     }, extra || {});
   },
 

@@ -457,6 +457,7 @@ class Bird {
       this.phaseTicks = 0;
       spawnParticles(this.x, this.y, '#bfe9ff', 16, 4);
       showMsg('👻 GHOST CHICKEN');
+      GhostCoach.onPhase();
       return;
     }
     if (this.type === 'bomb') {
@@ -1650,7 +1651,7 @@ function ghostReform(bird) {
   explodeBombs(bird.x, bird.y, 118);
   bird.exploding = true;
   bird.explodeTimer = 6;
-  showMsg('🐔 BAWK!');
+  GhostCoach.onReform();
 }
 
 function explodeBombs(bx, by, radius) {
@@ -1863,6 +1864,7 @@ function drawSling() {
     drawTrajectoryDots(px, py);
     // Power tooltip — shows above bird on sling
     const type = G.activeBird.type;
+    if (type === 'ghost' && !G.activeBird.launched) GhostCoach.onSlingReady();
     const tipText = type === 'split' ? '🐔 TAP IN FLIGHT TO TRIPLE SPLIT' :
                     type === 'speed' ? '⚡ TAP IN FLIGHT FOR BOOST' :
                     type === 'bomb'  ? '💥 TAP IN FLIGHT TO EXPLODE' :
@@ -2159,6 +2161,98 @@ function drawHUD() {
 }
 
 function showMsg(txt) { G.msg = txt; G.msgTimer = 90; }
+
+/* ══ GHOST COACH ═══════════════════════════════════════════════════════
+   Teaches the ghost, then watches how you use it and says something kind
+   about what it saw. Persists across sessions so a player who already
+   gets it is never lectured again.
+
+   The teaching exists because the mechanic was genuinely undiscoverable:
+   the ability only fires in flight, and there was nothing telling you so
+   until you had already wasted the bird.
+   ═════════════════════════════════════════════════════════════════════ */
+const GhostCoach = {
+  KEY: 'ci_ghost',
+  d: null,
+
+  load(){
+    try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch(e){ this.d = null; }
+    if (!this.d) this.d = { launches:0, phases:0, reforms:0, missedTaps:0, taughtOK:false, seen:{} };
+    return this.d;
+  },
+  save(){ try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch(e){} },
+
+  // Once per message, ever — so nothing nags.
+  once(id, txt){
+    if (!this.d) this.load();
+    if (this.d.seen[id]) return false;
+    this.d.seen[id] = 1; this.save();
+    showMsg(txt);
+    return true;
+  },
+
+  onSlingReady(){
+    if (!this.d) this.load();
+    if (this.d.taughtOK) return;
+    this.once('t1', 'the ghost chicken! pull back and let go, THEN tap.');
+  },
+
+  onLaunch(){
+    if (!this.d) this.load();
+    this.d.launches++;
+    this.hintTick = 0;
+    this.tapped = false;
+    this.save();
+  },
+
+  onPhase(){
+    if (!this.d) this.load();
+    this.tapped = true;
+    this.d.phases++;
+    if (this.d.phases === 1) showMsg('👻 it went straight through! nice.');
+    this.save();
+  },
+
+  onReform(){
+    if (!this.d) this.load();
+    this.d.reforms++;
+    if (this.d.reforms === 1){
+      this.d.taughtOK = true;
+      showMsg('🐔 BAWK! came out the other side. you did the thing.');
+    } else if (this.d.reforms === 5){
+      this.once('r5', 'five ghost landings. cannon master would be proud.');
+    }
+    this.save();
+  },
+
+  // Ghost died without ever phasing — say something warm, not corrective.
+  onGhostLost(){
+    if (!this.d) this.load();
+    if (this.tapped) return;
+    this.d.missedTaps++;
+    this.save();
+    if (this.d.taughtOK) return;
+    if (this.d.missedTaps === 1) showMsg('so close! next time TAP while it is flying.');
+    else if (this.d.missedTaps === 2) showMsg('tap the screen mid-air and it turns see-through.');
+    else if (this.d.missedTaps >= 3) this.once('m3', 'tip: any tap works. anywhere on the screen. while it flies.');
+  },
+
+  // Mid-flight nudge, only while still learning, only near something solid.
+  update(bird){
+    if (!this.d) this.load();
+    if (this.d.taughtOK || !bird || !bird.launched) return;
+    if (bird.type !== 'ghost' || bird.phasing || bird.abilityUsed) return;
+    let near = false;
+    for (const b of G.blocks){
+      if (!b.alive) continue;
+      if (Math.abs((b.wx + b.w/2) - bird.x) < 150 && bird.vx > 0){ near = true; break; }
+    }
+    if (!near) return;
+    this.hintTick = (this.hintTick || 0) + 1;
+    if (this.hintTick % 40 === 12) showMsg('TAP NOW!');
+  }
+};
+
 
 // ─── EGGS ─────────────────────────────────────────────────────────────────────
 function drawEggs() {
@@ -2534,6 +2628,7 @@ function handleUp() {
       G.activeBird.launched = true;
       G.activeBird.launchTick = G.ticks;
       G.activeBird.launchX = G.activeBird.x;
+      if (G.activeBird.type === 'ghost') GhostCoach.onLaunch();
       G.activeBird.launchY = G.activeBird.y;
       G.activeBird.x = G.sling.pullX;
       G.activeBird.y = G.sling.pullY;
@@ -2602,7 +2697,10 @@ function updateLevel() {
   if (G.activeBird && G.activeBird.launched) {
     checkEggs(G.activeBird);
     checkCollisions(G.activeBird);
+    GhostCoach.update(G.activeBird);
+    const _wasGhostAlive = G.activeBird.type === 'ghost' && G.activeBird.alive;
     G.activeBird.update();
+    if (_wasGhostAlive && !G.activeBird.alive) GhostCoach.onGhostLost();
     if (!G.activeBird.alive && G.resultTimer === 9999) {
       G.resultTimer = 180;
     }
