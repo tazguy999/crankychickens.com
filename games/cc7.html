@@ -940,6 +940,13 @@ const Lore = {
   },
 
 
+  pipes(){
+    try {
+      const d = JSON.parse(localStorage.getItem('ci_pipe') || 'null');
+      return d ? { travels: d.travels | 0 } : null;
+    } catch(e){ return null; }
+  },
+
   // Mystery Island's ghost-chicken record, same origin so it reads for free.
   ghost(){
     try {
@@ -1238,6 +1245,16 @@ const Chorus = {
       when: c => c.ghost && c.ghost.learned,
       say: () => 'You learned the ghost one. Cannon Master made that. He will want to know.' },
 
+
+    { id:'p-pipes', w:6, on:'session:start', who:'REGINALD',
+      when: c => c.pipes && c.pipes.travels >= 3,
+      say: c => 'You have been through the beach pipes ' + c.pipes.travels +
+                ' times. Sucked in one end, blown out the other. On purpose.' },
+
+    { id:'p-pipes2', w:7, on:'screen:enter', who:'SCRATCHY',
+      when: c => c.pipes && c.pipes.travels >= 10 && c.sx === 1 && c.sy === 1,
+      say: () => 'There are no pipes in this garden. I checked. I was worried.' },
+
     /* --- ordinary play --- */
     { id:'p1', w:1, on:'zone:complete', who:'PEARL',
       when: () => true,
@@ -1470,7 +1487,8 @@ const Chorus = {
       total: TOTAL_FLOWERS,
       sx, sy,
       lore: Lore.summary(),
-      ghost: Lore.ghost()
+      ghost: Lore.ghost(),
+      pipes: Lore.pipes()
     }, extra || {});
   },
 

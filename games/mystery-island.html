@@ -63,6 +63,7 @@ const G = {
   stars: new Array(12).fill(0),
   birds: [],
   blocks: [],
+  pipes: [],
   jaguars: [],
   eggs: [],
   particles: [],
@@ -319,6 +320,7 @@ function makeLevels() { return [
       {type:'block',x:lx(.68),y:-68,w:34,h:34,mat:'sand'},
       {type:'block',x:lx(.55),y:-102,w:81,h:18,mat:'plank'},
       {type:'jaguar',x:lx(.60)+8,y:-134,jtype:'grunt'},
+      {type:'pipe',x:lx(.38),y:-60,dir:'right', ox:lx(.62),oy:-150,odir:'up'},
       {type:'egg',x:lx(.62),y:-10},
     ]
   },
@@ -338,6 +340,8 @@ function makeLevels() { return [
       {type:'block',x:lx(.70),y:-102,w:34,h:34,mat:'sand'},
       {type:'block',x:lx(.63),y:-136,w:75,h:18,mat:'plank'},
       {type:'jaguar',x:lx(.70)+8,y:-172,jtype:'helmet'},
+      {type:'pipe',x:lx(.33),y:-40,dir:'right', ox:lx(.60),oy:-40,odir:'up'},
+      {type:'pipe',x:lx(.86),y:-170,dir:'up',   ox:lx(.86),oy:-70,odir:'left'},
       {type:'egg',x:lx(.60),y:-10},
     ]
   },
@@ -361,6 +365,8 @@ function makeLevels() { return [
       {type:'jaguar',x:lx(.61),y:-134,jtype:'grunt'},
       {type:'jaguar',x:lx(.69),y:-134,jtype:'helmet'},
       {type:'block',x:lx(.80),y:0,   w:22,h:55,mat:'log'},
+      {type:'pipe',x:lx(.30),y:-90,dir:'right', ox:lx(.69),oy:-200,odir:'down'},
+      {type:'pipe',x:lx(.44),y:-30,dir:'up',    ox:lx(.88),oy:-120,odir:'left'},
       {type:'egg',x:lx(.45),y:-10},
       {type:'egg',x:lx(.76),y:-10},
     ]
@@ -1187,6 +1193,151 @@ class Bird {
   }
 }
 
+
+/* ══ PIPES — suck and blow ═════════════════════════════════════════════
+   Cannon Master's idea. An intake mouth pulls the bird in; the outlet
+   spits it back out somewhere else, pointing wherever the pipe points,
+   and puffs a burst of air that shoves whatever is in front of it.
+
+   One config object defines both ends so levels stay readable:
+     {type:'pipe', x, y, dir:'right', ox, oy, odir:'up'}
+   ═════════════════════════════════════════════════════════════════════ */
+const DIRV = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+
+class Pipe {
+  constructor(cfg, groundY){
+    this.x  = cfg.x;  this.y  = groundY + (cfg.y  || 0);
+    this.ox = cfg.ox; this.oy = groundY + (cfg.oy || 0);
+    this.dir  = cfg.dir  || 'right';
+    this.odir = cfg.odir || 'up';
+    this.r = 26;                 // mouth radius
+    this.pull = cfg.pull || 70;  // suction reach
+    this.cool = 0;               // stops instant re-entry at the outlet
+    this.puff = 0;               // blow animation
+    this.phase = Math.random() * 6.28;
+  }
+
+  // Pull anything nearby toward the intake, then swallow it.
+  suck(bird){
+    if (this.cool > 0) return false;
+    const dx = this.x - bird.x, dy = this.y - bird.y;
+    const d  = Math.hypot(dx, dy);
+    if (d > this.pull) return false;
+    if (d < this.r * 0.75) return this.swallow(bird);
+    const f = (1 - d / this.pull) * 0.9;
+    bird.vx += (dx / d) * f;
+    bird.vy += (dy / d) * f;
+    if (G.ticks % 4 === 0) spawnParticles(bird.x, bird.y, '#cfe9ff', 2, 1);
+    return false;
+  }
+
+  swallow(bird){
+    const [vx, vy] = DIRV[this.odir];
+    const spd = Math.max(11, Math.hypot(bird.vx, bird.vy) * 1.05);
+    bird.x = this.ox + vx * (this.r + 6);
+    bird.y = this.oy + vy * (this.r + 6);
+    bird.vx = vx * spd;
+    bird.vy = vy * spd;
+    bird.trail.length = 0;
+    this.cool = 24;
+    this.puff = 18;
+    spawnParticles(this.x,  this.y,  '#cfe9ff', 14, 3);
+    spawnParticles(this.ox, this.oy, '#ffffff', 18, 5);
+    // The blow half: shove whatever sits in front of the outlet.
+    for (const b of G.blocks){
+      if (!b.alive) continue;
+      const bx = b.wx + b.w/2, by = b.wy + b.h/2;
+      if (Math.hypot(bx - this.ox, by - this.oy) < 96){
+        b.vx += vx * 5; b.vy += vy * 5 - 1;
+        b.rotV += (Math.random()-0.5) * 0.25;
+      }
+    }
+    showMsg('🌀 WHOOSH!');
+    PipeCoach.onTravel();
+    return true;
+  }
+
+  update(){
+    if (this.cool > 0) this.cool--;
+    if (this.puff > 0) this.puff--;
+  }
+
+  drawMouth(mx, my, dir, blowing){
+    const [vx, vy] = DIRV[dir];
+    const ang = Math.atan2(vy, vx);
+    ctx.save(); ctx.translate(mx, my); ctx.rotate(ang);
+    // barrel
+    ctx.fillStyle = '#3f7d8c';
+    ctx.fillRect(-34, -this.r, 34, this.r*2);
+    ctx.fillStyle = '#55a3b4';
+    ctx.fillRect(-34, -this.r, 34, 7);
+    // rim
+    ctx.fillStyle = '#2b5c68';
+    ctx.fillRect(-6, -this.r-4, 12, this.r*2+8);
+    ctx.fillStyle = '#7fd4e4';
+    ctx.fillRect(-3, -this.r-4, 3, this.r*2+8);
+    // dark mouth
+    ctx.fillStyle = 'rgba(6,20,26,0.9)';
+    ctx.beginPath(); ctx.ellipse(2, 0, 6, this.r-3, 0, 0, Math.PI*2); ctx.fill();
+    // airflow rings — outward when blowing, inward when sucking
+    const t = G.ticks * 0.06 + this.phase;
+    for (let i = 0; i < 3; i++){
+      const p = ((t + i/3) % 1);
+      const off = blowing ? 10 + p*44 : 54 - p*44;
+      ctx.globalAlpha = (1 - p) * (blowing ? 0.55 : 0.4);
+      ctx.strokeStyle = blowing ? '#ffffff' : '#bfe9ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(off, 0, 4, (this.r-6) * (0.5 + p*0.5), 0, 0, Math.PI*2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  draw(){
+    this.drawMouth(this.x,  this.y,  this.dir,  false);           // intake
+    this.drawMouth(this.ox, this.oy, this.odir, true);            // outlet
+    if (this.puff > 0){
+      const [vx, vy] = DIRV[this.odir];
+      ctx.globalAlpha = this.puff / 18 * 0.5;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(this.ox + vx*40, this.oy + vy*40, 30 * (1 - this.puff/18) + 10, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+/* Teaches the pipes the same way GhostCoach teaches the ghost:
+   escalate a little, then go quiet forever once it has clicked. */
+const PipeCoach = {
+  KEY: 'ci_pipe',
+  d: null,
+  load(){
+    try { this.d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch(e){ this.d = null; }
+    if (!this.d) this.d = { travels:0, seen:{} };
+    return this.d;
+  },
+  save(){ try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch(e){} },
+  once(id, txt){
+    if (!this.d) this.load();
+    if (this.d.seen[id]) return;
+    this.d.seen[id] = 1; this.save(); showMsg(txt);
+  },
+  onLevelWithPipes(){
+    if (!this.d) this.load();
+    if (this.d.travels > 0) return;
+    this.once('p1', 'pipes! fly close and it SUCKS you in, then blows you out the other end.');
+  },
+  onTravel(){
+    if (!this.d) this.load();
+    this.d.travels++;
+    if (this.d.travels === 1) this.once('p2', 'through the pipe! it shoots you out whichever way the pipe points.');
+    else if (this.d.travels === 10) this.once('p10', 'ten trips through the pipes. you are basically plumbing now.');
+    this.save();
+  }
+};
+
 class Block {
   constructor(cfg, groundY) {
     this.mat = cfg.mat;
@@ -1859,6 +2010,7 @@ function loadLevel(idx) {
   const freshLevels = makeLevels();
   const lvl = freshLevels[idx];
   G.blocks = [];
+  G.pipes = [];
   G.jaguars = [];
   G.eggs = [];
   G.particles = [];
@@ -1890,9 +2042,11 @@ function loadLevel(idx) {
   G.sling.launched = false;
 
   const groundY = G.ground;
+  if (lvl.layout.some(c => c.type === 'pipe')) setTimeout(() => PipeCoach.onLevelWithPipes(), 700);
 
   for (const cfg of lvl.layout) {
-    if (cfg.type === 'block') G.blocks.push(new Block(cfg, groundY));
+    if (cfg.type === 'pipe') G.pipes.push(new Pipe(cfg, groundY));
+    else if (cfg.type === 'block') G.blocks.push(new Block(cfg, groundY));
     else if (cfg.type === 'jaguar') G.jaguars.push(new Jaguar(cfg, groundY - (cfg.h||0)));
     else if (cfg.type === 'egg') G.eggs.push({wx:cfg.x, wy:groundY - 15, r:10, collected:false});
   }
@@ -2854,6 +3008,7 @@ function updateLevel() {
   if (G.activeBird && G.activeBird.launched) {
     checkEggs(G.activeBird);
     checkCollisions(G.activeBird);
+    for (const p of G.pipes) { if (p.suck(G.activeBird)) break; }
     GhostCoach.update(G.activeBird);
     const _wasGhostAlive = G.activeBird.type === 'ghost' && G.activeBird.alive;
     G.activeBird.update();
@@ -2866,6 +3021,7 @@ function updateLevel() {
   // Update split children
   G.splitChildren = (G.splitChildren || []).filter(b => b.alive);
   for (const b of G.splitChildren) {
+    for (const p of G.pipes) { if (p.suck(b)) break; }
     checkEggs(b);
     checkCollisions(b);
     b.update();
@@ -2882,6 +3038,7 @@ function updateLevel() {
 
   // Update blocks & jaguars
   for (const b of G.blocks) b.update();
+  for (const p of G.pipes) p.update();
 
   // Block-on-block stacking — resolve vertical overlaps (multiple passes for stability)
   const liveBlocks = G.blocks.filter(b => b.alive);
@@ -3036,6 +3193,7 @@ function drawLevel() {
   G.sling.y = G.ground - 40;
   drawBG(G.currentBg);
   drawEggs();
+  for (const p of G.pipes) p.draw();
   for (const b of G.blocks) b.draw();
   for (const j of G.jaguars) j.draw();
   drawFallenMasks();
