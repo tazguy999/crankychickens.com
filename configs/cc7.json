@@ -81,6 +81,13 @@
       "speaker": "PEARL",
       "text": "The garden should have a place where nothing can reach you.",
       "zone": 5
+    },
+    {
+      "id": "gr-ghost",
+      "by": "CANNON MASTER",
+      "speaker": "SCRATCHY",
+      "text": "There is a ghost chicken now. It goes straight through the blocks.",
+      "zone": null
     }
   ],
   "_kidContributions": {
