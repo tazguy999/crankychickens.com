@@ -8659,6 +8659,30 @@ function drawFlightAnim(){
 }
 
 
+
+// ── Perf meter (press P). Added after a canvas-state-stack leak made the
+//    player progressively slower; this makes the next report a measurement.
+var _perf={fps:60,ms:16.7,worst:0,show:false,_n:0,_a:0,_last:performance.now()};
+function _perfTick(){
+  var now=performance.now(), raw=now-_perf._last; _perf._last=now;
+  _perf._a+=raw; _perf._n++;
+  if(raw>_perf.worst)_perf.worst=raw;
+  if(_perf._a>=500){_perf.ms=_perf._a/_perf._n;_perf.fps=Math.round(1000/_perf.ms);_perf._a=0;_perf._n=0;}
+  if(!_perf.show)return;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);
+  var rows=['FPS      '+_perf.fps,'FRAME MS '+_perf.ms.toFixed(1),
+            'WORST MS '+_perf.worst.toFixed(0),'PARTS    '+(typeof parts!=='undefined'?parts.length:'-')];
+  ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(6,6,132,rows.length*13+10);
+  ctx.strokeStyle=_perf.fps<45?'#ff5566':'#55cc77';ctx.lineWidth=1;
+  ctx.strokeRect(6,6,132,rows.length*13+10);
+  ctx.font='10px monospace';ctx.fillStyle=_perf.fps<45?'#ff99aa':'#99e6bb';
+  rows.forEach(function(r,i){ctx.fillText(r,13,21+i*13);});
+  ctx.restore();
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='p'||e.key==='P'){_perf.show=!_perf.show;_perf.worst=0;}
+});
+
 function loop(){
   frame++;
   // Screen shake
@@ -8669,7 +8693,7 @@ function loop(){
   if(screenShake>0)ctx.translate(shakeX,shakeY);
   ctx.clearRect(-shakeX,-shakeY,GW,GH);
 
-  if(gameState==='title'){drawTitle();requestAnimationFrame(loop);return;}
+  if(gameState==='title'){drawTitle();ctx.restore();requestAnimationFrame(loop);return;}
 
   updateFlightAnim();
   updateFlightAnim();
@@ -8883,7 +8907,8 @@ function loop(){
 
   if(gameState==='play'&&!inTownZone&&!battleMode&&!activeMap)checkEnd();
   drawAirportUI();
-  if(screenShake>0)ctx.restore();
+  ctx.restore();   // must match the unconditional ctx.save() above
+  _perfTick();
   drawFlightAnim();
   // Cutscene runs over everything (preview or post-battle)
   if(cutscene.active&&!battleMode){ updateCutscene(); drawCutscene(); }
