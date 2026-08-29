@@ -406,7 +406,10 @@ class Bird {
   get armed() {
     // Bomb only arms after traveling 100px from launch point
     if (this.type !== 'bomb' && this.type !== 'ghost') return true;
-    return dist(this.x, this.y, this.launchX, this.launchY) > 100;
+    // Ghost arms almost immediately: phasing early is harmless because the
+    // reform blast only triggers after it has been inside a block.
+    const need = this.type === 'ghost' ? 25 : 100;
+    return dist(this.x, this.y, this.launchX, this.launchY) > need;
   }
   whackMask(impactSpeed) {
     if (this.maskDetached) return;
@@ -433,7 +436,10 @@ class Bird {
   }
   activate() {
     if (this.abilityUsed) return;
-    if (!this.armed) return;
+    if (!this.armed) {
+      if (this.type === 'ghost' && this.launched) showMsg('👻 wait for it to fly!');
+      return;
+    }
     if (this.type === 'tyler') {
       // Don't sit for first 20 frames — prevents sling-release tap from triggering
       if (G.ticks - (this.launchTick || 0) < 20) return;
@@ -1860,7 +1866,7 @@ function drawSling() {
     const tipText = type === 'split' ? '🐔 TAP IN FLIGHT TO TRIPLE SPLIT' :
                     type === 'speed' ? '⚡ TAP IN FLIGHT FOR BOOST' :
                     type === 'bomb'  ? '💥 TAP IN FLIGHT TO EXPLODE' :
-                    type === 'ghost' ? '👻 TAP TO GO GHOST — PASS THROUGH' :
+                    type === 'ghost' ? '👻 TAP IN FLIGHT TO PHASE THROUGH' :
                     type === 'tyler' ? '🐾 TYLER SITS ON FIRST HIT' : '';
     if (tipText) {
       const pulse = 0.75 + Math.sin(G.ticks * 0.1) * 0.25;
@@ -2072,7 +2078,7 @@ function drawHUD() {
 
   // Ability hint
   if (G.activeBird && !G.activeBird.launched) {
-    const hints = { vine:'[CLICK MID-FLIGHT: VINE GRAB]', bomb:'[CLICK MID-FLIGHT: DETONATE]', speed:'[CLICK MID-FLIGHT: SPEED BOOST]', ghost:'[CLICK MID-FLIGHT: PHASE THROUGH]' };
+    const hints = { vine:'[CLICK MID-FLIGHT: VINE GRAB]', bomb:'[CLICK MID-FLIGHT: DETONATE]', speed:'[CLICK MID-FLIGHT: SPEED BOOST]', ghost:'[CLICK MID-FLIGHT: PHASE]' };
     ctx.font = '11px "Courier New"';
     ctx.fillStyle = '#88ff88';
     ctx.fillText(hints[G.activeBird.type] || '', G.W - 300, 28);
@@ -2404,9 +2410,18 @@ function drawResult() {
       W/2, H*0.75);
 
     // Buttons
-    drawButton(W/2 - 100, H*0.82, 90, 32, 'RETRY', '#4cff6a', '#0a2a0a');
-    if (G.level < TOTAL_LEVELS - 1) drawButton(W/2 + 10, H*0.82, 110, 32, 'NEXT LEVEL', '#ffe94a', '#2a1a00');
-    drawButton(W/2 + 130, H*0.82, 60, 32, 'MAP', '#ff8c2a', '#2a0a00');
+    if (G.level >= TOTAL_LEVELS - 1) {
+      // Last level cleared — say so, and make MAP the obvious way out.
+      ctx.font = 'bold 15px "Courier New"';
+      ctx.fillStyle = '#ffe94a';
+      ctx.fillText('🏝  YOU BEAT MYSTERY ISLAND!', W/2, H*0.74);
+      drawButton(W/2 - 105, H*0.82, 90, 32, 'RETRY', '#4cff6a', '#0a2a0a');
+      drawButton(W/2 + 5,  H*0.82, 100, 32, 'MAP', '#ff8c2a', '#2a0a00');
+    } else {
+      drawButton(W/2 - 100, H*0.82, 90, 32, 'RETRY', '#4cff6a', '#0a2a0a');
+      drawButton(W/2 + 10, H*0.82, 110, 32, 'NEXT LEVEL', '#ffe94a', '#2a1a00');
+      drawButton(W/2 + 130, H*0.82, 60, 32, 'MAP', '#ff8c2a', '#2a0a00');
+    }
   } else {
     ctx.font = '13px "Courier New"';
     ctx.fillStyle = '#ff8888';
@@ -2466,7 +2481,7 @@ function handleDown() {
   if (G.state === 'WORLDMAP') {
     const W = G.W, H = G.H;
     for (let i = 0; i < WORLD_NODES.length; i++) {
-      if (i > G.level) continue;
+      if (i > Math.max(G.level, G.unlocked || 0)) continue;
       const n = WORLD_NODES[i];
       if (dist(mouseX, mouseY, n.x*W, n.y*H) < 50) {
         G.level = i; loadLevel(i); G.state = 'LEVEL'; return;
@@ -2551,9 +2566,14 @@ function handleResultClick() {
   const allDead = G.jaguars.every(j => !j.alive);
   if (allDead) {
     // RETRY
+    if (G.level >= TOTAL_LEVELS - 1) {
+      if (inBtn(W/2-105, H*0.82, 90, 32)) { loadLevel(G.level); G.state = 'LEVEL'; return; }
+      if (inBtn(W/2+5,  H*0.82, 100, 32)) { G.state = 'WORLDMAP'; return; }
+      return;
+    }
     if (inBtn(W/2-100, H*0.82, 90, 32)) { loadLevel(G.level); G.state = 'LEVEL'; return; }
     // NEXT
-    if (G.level < TOTAL_LEVELS - 1 && inBtn(W/2+10, H*0.82, 110, 32)) {
+    if (inBtn(W/2+10, H*0.82, 110, 32)) {
       G.level++;
       loadLevel(G.level);
       G.state = 'LEVEL'; return;
@@ -2739,7 +2759,9 @@ function updateLevel() {
       const birdsLeft = G.birdQueue.length + (G.activeBird && G.activeBird.alive ? 1 : 0);
       G.levelStars = birdsLeft >= 2 ? 3 : birdsLeft === 1 ? 2 : 1;
       G.stars[G.level] = Math.max(G.stars[G.level] || 0, G.levelStars);
-      G.level = Math.min(G.level + 1, TOTAL_LEVELS - 1);
+      // Unlock the next node WITHOUT moving the player off the level they
+      // just finished — the RESULT buttons own navigation from here.
+      G.unlocked = Math.max(G.unlocked || 0, Math.min(G.level + 1, TOTAL_LEVELS - 1));
       G.endTimer = 0;
       G.state = 'RESULT';
     }
