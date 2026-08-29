@@ -417,20 +417,20 @@ const MAX_PULL = 110;
 // Tetris drop config per level: [startTick, startInterval, minInterval]
 const DROP_CONFIG = [
   null,             // 0: 1-1  no drops
-  [600, 350, 280],  // 1: 1-2
-  [500, 300, 230],  // 2: 1-3
-  [480, 280, 210],  // 3: 2-1
-  [450, 250, 185],  // 4: 2-2
-  [420, 220, 155],  // 5: 2-3
-  [400, 200, 130],  // 6: 3-1
-  [360, 175, 100],  // 7: 3-2
-  [320, 150,  75],  // 8: 3-3
-  [280, 130,  65],  // 9: 4-1
-  [240, 110,  50],  // 10: 4-2
-  [520, 300, 220],  // 11: BEACH 4-1 — gentle, castles are already busy
-  [460, 260, 190],  // 12: BEACH 4-2
-  [400, 220, 160],  // 13: BEACH 4-3
-  [180,  90,  35],  // 14: Boss
+  [900, 600, 480],  // 1: 1-2
+  [820, 540, 420],  // 2: 1-3
+  [780, 500, 390],  // 3: 2-1
+  [740, 460, 350],  // 4: 2-2
+  [700, 420, 320],  // 5: 2-3
+  [660, 390, 290],  // 6: 3-1
+  [620, 360, 260],  // 7: 3-2
+  [580, 330, 230],  // 8: 3-3
+  [540, 310, 210],  // 9: 4-1
+  [500, 290, 195],  // 10: 4-2
+  [800, 530, 400],  // 11: BEACH 5-1 — gentle, castles are already busy
+  [740, 480, 360],  // 12: BEACH 5-2
+  [680, 440, 330],  // 13: BEACH 5-3
+  [460, 280, 175],  // 14: Boss
 ];
 
 // ─── ENTITY CLASSES ───────────────────────────────────────────────────────────
@@ -1370,7 +1370,14 @@ class Block {
   update() {
     if (!this.alive) return;
     if (this.shakeTick > 0) this.shakeTick--;
-    this.vy += GRAVITY * 0.55;
+    if (this.isDrop && !this.onGround) {
+      // Sky-drops drift down instead of plummeting, and stop accelerating
+      // once they reach a readable speed. Structural blocks are unaffected.
+      this.vy += GRAVITY * 0.16;
+      if (this.vy > 2.4) this.vy = 2.4;
+    } else {
+      this.vy += GRAVITY * 0.55;
+    }
     this.wx += this.vx;
     this.wy += this.vy;
     this.rot += this.rotV;
@@ -3125,8 +3132,8 @@ function updateLevel() {
 
     if (!G.nextDropTick) G.nextDropTick = G.ticks + dropInterval;
 
-    // Warning shadow 60 frames before drop
-    if (G.ticks === G.nextDropTick - 60) {
+    // Warning shadow 100 frames before drop — more time to react
+    if (G.ticks === G.nextDropTick - 100) {
       G.dropWarningX = lx(0.45 + Math.random() * 0.42);
       const jagChance = 0.05 + (G.level / BOSS_LEVEL) * 0.12; // more jaguars on later levels
       G.dropWarningMat = Math.random() < jagChance ? 'jaguar' : (['log','plank','rock'][Math.floor(Math.random()*3)]);
@@ -3141,7 +3148,7 @@ function updateLevel() {
         const jtype = jtypes[Math.floor(Math.random()*jtypes.length)];
         const j = new Jaguar({jtype, x: wx, y: 0}, 0);
         j.wy = -j.r * 2;
-        j.vy = 1.5;
+        j.vy = 0.7;
         G.jaguars.push(j);
         showMsg(["reinforcements.", "they just keep coming.", "oh no not more of them.", "the island is not finished with you."][Math.floor(Math.random()*4)]);
       } else {
@@ -3149,8 +3156,9 @@ function updateLevel() {
         const h = mat === 'log' ? 55 : mat === 'plank' ? 18 : mat === 'sand' ? 34 : 32;
         const b = new Block({mat, x: wx, y: 0, w, h}, 0);
         b.wy = -h - 10;
-        b.vy = 1.2 + Math.random() * 0.6;
-        b.vx = (Math.random() - 0.5) * 1.2;
+        b.isDrop = true;                       // gentle descent, see Block.update
+        b.vy = 0.5 + Math.random() * 0.25;
+        b.vx = (Math.random() - 0.5) * 0.7;
         b.rotV = (Math.random() - 0.5) * 0.04;
         G.blocks.push(b);
       }
