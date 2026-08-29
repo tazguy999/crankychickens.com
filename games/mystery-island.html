@@ -94,8 +94,12 @@ function lx(f) { return Math.round(G.W * f); }
 function makeLevels() { return [
   // ══ WORLD 1: JUNGLE ══ Very easy. Planks + logs only. Grunts only. Lots of birds.
   // 1-1: ONE grunt behind TWO planks. Four birds. Basically impossible to fail.
+  // Ghost goes first so it is the very first chicken anyone ever launches.
+  // Phase through the plank stack, reform past it, and the 118px blast
+  // catches the grunt sitting on top. Tapping is optional — untapped it
+  // simply flies like a normal bird, so there is no way to lose by trying.
   {
-    birds: ['split','split','split','split'],
+    birds: ['ghost','split','split','split'],
     bg: 'jungle',
     layout: [
       {type:'block',x:lx(.60),y:0,w:55,h:18,mat:'plank'},
@@ -105,7 +109,7 @@ function makeLevels() { return [
   },
   // 1-2: Two small towers. Two grunts. Four birds.
   {
-    birds: ['split','split','bomb','split'],
+    birds: ['split','ghost','bomb','split'],
     bg: 'jungle',
     layout: [
       {type:'block',x:lx(.53),y:0,w:22,h:55,mat:'log'},
