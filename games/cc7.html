@@ -163,6 +163,7 @@ addEventListener('keydown', e => {
   const k = KEYMAP[e.code];
   if (k){ Input.human[k] = true; e.preventDefault(); }
   if (e.code === 'KeyR') respawn();
+  if (e.code === 'KeyP'){ Perf.show = !Perf.show; Perf.worst = 0; }
 });
 addEventListener('keyup', e => {
   const k = KEYMAP[e.code];
@@ -640,9 +641,33 @@ function draw(){
 
   if (assist.active) drawAssist();
   drawChicken(P.x + P.w / 2, P.y + P.h, P.face);
+  if (Perf.show) drawPerf();
   t++;
 }
 
+
+
+function drawPerf(){
+  const rows = [
+    'FPS        ' + Perf.fps,
+    'FRAME MS   ' + Perf.frameMs.toFixed(1),
+    'WORST MS   ' + Perf.worst.toFixed(0),
+    'RESYNCS    ' + Perf.dropped,
+    'SPARKS     ' + sparks.length,
+    'KIDLINES   ' + KidLines.entries.length,
+    'SPOKEN     ' + Talk.done.size,
+    'LEDGER B   ' + (JSON.stringify(Save.data).length)
+  ];
+  g.save();
+  g.fillStyle = 'rgba(6,3,12,.82)';
+  g.fillRect(8, 64, 150, rows.length * 13 + 10);
+  g.strokeStyle = Perf.fps < 45 ? '#ff3b6b' : '#3c8a5a';
+  g.lineWidth = 1; g.strokeRect(8, 64, 150, rows.length * 13 + 10);
+  g.font = '10px monospace';
+  g.fillStyle = Perf.fps < 45 ? '#ff8fa8' : '#9ad4b0';
+  rows.forEach((r, i) => g.fillText(r, 15, 79 + i * 13));
+  g.restore();
+}
 
 function drawAssist(){
   const now = performance.now();
@@ -1495,15 +1520,36 @@ function boot(){
 
 let last = performance.now(), acc = 0, lastTalk = performance.now();
 const FRAME = 1000 / 60;
+// step() is a handful of tile lookups, so a wide catch-up window costs
+// nothing and keeps real-time speed constant even on a throttling phone.
+const MAX_STEPS = 16;
+const Perf = { fps: 60, frameMs: 16.7, worst: 0, dropped: 0, show: false, _n: 0, _acc: 0 };
 
 function loop(now){
   requestAnimationFrame(loop);
-  acc += Math.min(now - last, 100);
+  const raw = now - last;
   last = now;
-  while (acc >= FRAME){
+
+  // Track health before clamping so the meter sees the truth.
+  Perf._acc += raw; Perf._n++;
+  if (Perf._acc >= 500){
+    Perf.frameMs = Perf._acc / Perf._n;
+    Perf.fps = Math.round(1000 / Perf.frameMs);
+    Perf._acc = 0; Perf._n = 0;
+  }
+  if (raw > Perf.worst) Perf.worst = raw;
+
+  // Cap the catch-up window at MAX_STEPS frames rather than a fixed 100ms.
+  // Below ~10fps the old clamp silently dropped simulation time, which made
+  // the chicken genuinely move slower in real time the worse things got.
+  acc += Math.min(raw, FRAME * MAX_STEPS);
+  let steps = 0;
+  while (acc >= FRAME && steps < MAX_STEPS){
     if (running) step();
     acc -= FRAME;
+    steps++;
   }
+  if (acc >= FRAME){ Perf.dropped++; acc = 0; }   // truly stalled: resync, don't accumulate debt
   Watcher.tick(Math.min(now - lastTalk, 100), Math.abs(P.vx) > 0.4 || !P.grounded);
   lastTalk = now;
   Assist.tick(now);
