@@ -303,6 +303,68 @@ function makeLevels() { return [
   },
 
   // ══ BOSS: THE DARK HEART ══
+  // ══ WORLD 4: THE BEACH ══ Sandcastles. Soft, tall, and full of towers.
+  // Sand is 1 HP like a plank but there is a LOT of it, so these levels
+  // reward phasing deep and reforming inside rather than chipping away.
+  // 4-1: A first sandcastle. Two turrets, a wall, one grunt on the battlements.
+  {
+    birds: ['ghost','split','split','bomb'],
+    bg: 'beach',
+    layout: [
+      {type:'block',x:lx(.55),y:0,  w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.55),y:-34,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.55),y:-68,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.68),y:0,  w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.68),y:-34,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.68),y:-68,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.55),y:-102,w:81,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.60)+8,y:-134,jtype:'grunt'},
+      {type:'egg',x:lx(.62),y:-10},
+    ]
+  },
+  // 4-2: Twin castles with a moat gap. Two grunts, a helmet up top.
+  {
+    birds: ['split','ghost','bomb','speed','ghost'],
+    bg: 'beach',
+    layout: [
+      {type:'block',x:lx(.48),y:0,  w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.48),y:-34,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.48),y:-68,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.48),y:-102,w:34,h:34,mat:'sand'},
+      {type:'jaguar',x:lx(.48)+8,y:-140,jtype:'grunt'},
+      {type:'block',x:lx(.70),y:0,  w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.70),y:-34,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.70),y:-68,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.70),y:-102,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.63),y:-136,w:75,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.70)+8,y:-172,jtype:'helmet'},
+      {type:'egg',x:lx(.60),y:-10},
+    ]
+  },
+  // 4-3: The big one. A castle wall four wide, three grunts behind it.
+  // Chipping through takes forever. Phasing takes one bird.
+  {
+    birds: ['ghost','split','bomb','ghost','speed'],
+    bg: 'beach',
+    layout: [
+      {type:'block',x:lx(.50),y:0,   w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.50),y:-34, w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.50),y:-68, w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.585),y:0,  w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.585),y:-34,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.585),y:-68,w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.67),y:0,   w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.67),y:-34, w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.67),y:-68, w:34,h:34,mat:'sand'},
+      {type:'block',x:lx(.50),y:-102,w:145,h:18,mat:'plank'},
+      {type:'jaguar',x:lx(.53),y:-134,jtype:'grunt'},
+      {type:'jaguar',x:lx(.61),y:-134,jtype:'grunt'},
+      {type:'jaguar',x:lx(.69),y:-134,jtype:'helmet'},
+      {type:'block',x:lx(.80),y:0,   w:22,h:55,mat:'log'},
+      {type:'egg',x:lx(.45),y:-10},
+      {type:'egg',x:lx(.76),y:-10},
+    ]
+  },
   {
     birds: ['split','bomb','ghost','speed','split','ghost','bomb'],
     bg: 'volcano',
@@ -324,17 +386,18 @@ function makeLevels() { return [
 ];}
 // LEVELS built fresh on each loadLevel call so lx() uses correct G.W
 let LEVELS = [];
-const TOTAL_LEVELS = 12; // 3 worlds × 3 levels + boss
-const BOSS_LEVEL = 11;
+const TOTAL_LEVELS = 15; // 5 worlds (jungle/reef/storm/beach) + boss
+const BOSS_LEVEL = 14;
 
 // ─── COLOURS ──────────────────────────────────────────────────────────────────
 const PAL = {
-  sky:     { jungle:'#1a3a1a', reef:'#0a2a3a', storm:'#1a1a2a', volcano:'#2a0a0a' },
-  ground:  { jungle:'#2d5a1b', reef:'#c8a85a', storm:'#3a3a4a', volcano:'#5a2a1a' },
-  ground2: { jungle:'#1e3d12', reef:'#a07840', storm:'#2a2a3a', volcano:'#3a1a0a' },
-  fog:     { jungle:'#2aff6a22', reef:'#6af0ff22', storm:'#aaaaff22', volcano:'#ff4a2222' },
+  sky:     { jungle:'#1a3a1a', reef:'#0a2a3a', storm:'#1a1a2a', volcano:'#2a0a0a', beach:'#2b6d9c' },
+  ground:  { jungle:'#2d5a1b', reef:'#c8a85a', storm:'#3a3a4a', volcano:'#5a2a1a', beach:'#e0c88a' },
+  ground2: { jungle:'#1e3d12', reef:'#a07840', storm:'#2a2a3a', volcano:'#3a1a0a', beach:'#c2a868' },
+  fog:     { jungle:'#2aff6a22', reef:'#6af0ff22', storm:'#aaaaff22', volcano:'#ff4a2222', beach:'#ffe9a022' },
   mat: {
     log:   { fill:'#8B5E3C', stroke:'#5C3A1E' },
+    sand:  { fill:'#e8cf94', stroke:'#bfa066' },
     plank: { fill:'#C4A35A', stroke:'#8B6914' },
     rock:  { fill:'#8A8A8A', stroke:'#555' },
   }
@@ -358,7 +421,10 @@ const DROP_CONFIG = [
   [320, 150,  75],  // 8: 3-3
   [280, 130,  65],  // 9: 4-1
   [240, 110,  50],  // 10: 4-2
-  [180,  90,  35],  // 11: Boss
+  [520, 300, 220],  // 11: BEACH 4-1 — gentle, castles are already busy
+  [460, 260, 190],  // 12: BEACH 4-2
+  [400, 220, 160],  // 13: BEACH 4-3
+  [180,  90,  35],  // 14: Boss
 ];
 
 // ─── ENTITY CLASSES ───────────────────────────────────────────────────────────
@@ -1127,7 +1193,7 @@ class Block {
     this.wx = cfg.x;
     this.wy = groundY + cfg.y - cfg.h;
     this.w = cfg.w; this.h = cfg.h;
-    this.hp = { log:2, plank:1, rock:3 }[this.mat];
+    this.hp = { log:2, plank:1, rock:3, sand:1 }[this.mat];
     this.maxHP = this.hp;
     this.alive = true;
     this.vx = 0; this.vy = 0;
@@ -1144,8 +1210,10 @@ class Block {
     spawnParticles(this.wx + this.w/2, this.wy + this.h/2, PAL.mat[this.mat].fill, 5, 2);
     if (this.hp <= 0) {
       this.alive = false;
-      G.score += { log:100, plank:80, rock:150 }[this.mat];
-      spawnParticles(this.wx + this.w/2, this.wy + this.h/2, PAL.mat[this.mat].fill, 12, 4);
+      G.score += { log:100, plank:80, rock:150, sand:60 }[this.mat];
+      const n = this.mat === 'sand' ? 22 : 12;
+      const spd = this.mat === 'sand' ? 2.5 : 4;
+      spawnParticles(this.wx + this.w/2, this.wy + this.h/2, PAL.mat[this.mat].fill, n, spd);
     }
   }
   update() {
@@ -1187,6 +1255,30 @@ class Block {
     ctx.lineWidth = 2;
     ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
     ctx.strokeRect(-this.w/2, -this.h/2, this.w, this.h);
+    if (this.mat === 'sand') {
+      // Crenellated top edge — the castle silhouette
+      const merlons = Math.max(2, Math.round(this.w / 12));
+      const mw = this.w / (merlons * 2 - 1);
+      ctx.fillStyle = pal.fill;
+      ctx.strokeStyle = pal.stroke;
+      for (let i = 0; i < merlons; i++) {
+        const mx = -this.w/2 + i * mw * 2;
+        ctx.fillRect(mx, -this.h/2 - mw*0.55, mw, mw*0.55);
+        ctx.strokeRect(mx, -this.h/2 - mw*0.55, mw, mw*0.55);
+      }
+      // Packed-sand grain
+      ctx.fillStyle = 'rgba(150,120,70,0.28)';
+      for (let i = 0; i < 6; i++) {
+        const gx = -this.w/2 + ((i*37) % this.w);
+        const gy = -this.h/2 + ((i*53) % this.h);
+        ctx.fillRect(gx, gy, 2, 2);
+      }
+      // Shell pressed into the wall
+      if ((this.wx + this.wy) % 3 === 0) {
+        ctx.fillStyle = 'rgba(255,240,225,0.75)';
+        ctx.beginPath(); ctx.arc(this.w*0.18, this.h*0.16, Math.min(4, this.w*0.11), 0, Math.PI*2); ctx.fill();
+      }
+    }
     if (ratio < 0.7) {
       ctx.strokeStyle = 'rgba(0,0,0,0.4)';
       ctx.lineWidth = 1;
@@ -1935,6 +2027,7 @@ function drawBG(bg) {
   if (bg === 'reef') drawReefBG();
   if (bg === 'storm') drawStormBG();
   if (bg === 'volcano') drawVolcanoBG();
+  if (bg === 'beach') drawBeachBG();
 
   // Ground
   const g1 = PAL.ground[bg], g2 = PAL.ground2[bg];
@@ -1945,6 +2038,66 @@ function drawBG(bg) {
   // Ground line
   ctx.strokeStyle = shadeColor(g1, 30); ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0, G.ground); ctx.lineTo(W, G.ground); ctx.stroke();
+}
+
+
+function drawBeachBG() {
+  const W = G.W, H = G.H, gy = G.ground, t = G.ticks;
+
+  // Sun low over the water
+  ctx.fillStyle = 'rgba(255,244,200,0.9)';
+  ctx.beginPath(); ctx.arc(W*0.78, gy*0.28, 34, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,244,200,0.18)';
+  ctx.beginPath(); ctx.arc(W*0.78, gy*0.28, 62, 0, Math.PI*2); ctx.fill();
+
+  // Sea filling the back third, with rolling swell lines
+  const seaTop = gy - 96;
+  const sg = ctx.createLinearGradient(0, seaTop, 0, gy);
+  sg.addColorStop(0, '#1f6f9e');
+  sg.addColorStop(1, '#4fb3c8');
+  ctx.fillStyle = sg;
+  ctx.fillRect(0, seaTop, W, gy - seaTop);
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 5; i++) {
+    const y = seaTop + 14 + i*17;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 16) {
+      const yy = y + Math.sin((x*0.02) + t*0.02 + i) * 3;
+      x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+
+  // Foam where the sea meets the sand
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  for (let x = 0; x <= W; x += 12) {
+    const h = 4 + Math.sin(x*0.05 + t*0.04) * 3;
+    ctx.fillRect(x, gy - 6 - h*0.5, 12, h);
+  }
+
+  // Palms on the left headland
+  const palm = (px, py, s) => {
+    ctx.strokeStyle = '#7a5a34'; ctx.lineWidth = 5*s;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.quadraticCurveTo(px+8*s, py-40*s, px+4*s, py-70*s); ctx.stroke();
+    ctx.fillStyle = '#2f7d4f';
+    for (const a of [-1.1,-0.5,0.1,0.7,1.3]) {
+      ctx.save(); ctx.translate(px+4*s, py-70*s); ctx.rotate(a);
+      ctx.beginPath(); ctx.ellipse(22*s, 0, 24*s, 7*s, 0, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+  };
+  palm(W*0.06, gy, 1.0);
+  palm(W*0.15, gy, 0.75);
+
+  // A couple of gulls
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
+  [[0.42,0.18],[0.5,0.13],[0.58,0.2]].forEach(([fx,fy],i) => {
+    const bx = W*fx + Math.sin(t*0.01 + i)*18, by = gy*fy;
+    ctx.beginPath();
+    ctx.moveTo(bx-7, by); ctx.quadraticCurveTo(bx, by-5, bx+7, by);
+    ctx.stroke();
+  });
 }
 
 function drawJungleBG() {
@@ -2374,10 +2527,14 @@ const WORLD_NODES = [
   { name:'3-2: STORM',     x:0.75, y:0.28, world:3 },
   { name:'3-3: STORM',     x:0.82, y:0.36, world:3 },
   // World 4: Volcano
-  { name:'4-1: VOLCANO',   x:0.72, y:0.52, world:4 },
+    { name:'4-1: VOLCANO',   x:0.72, y:0.52, world:4 },
   { name:'4-2: VOLCANO',   x:0.62, y:0.60, world:4 },
   // Boss
-  { name:'⚠ DARK HEART',   x:0.50, y:0.22, world:5 },
+  // World 5: Beach — levels 11-13, must sit after volcano to match indices
+  { name:'5-1: BEACH',     x:0.50, y:0.68, world:5 },
+  { name:'5-2: BEACH',     x:0.38, y:0.60, world:5 },
+  { name:'5-3: BEACH',     x:0.30, y:0.46, world:5 },
+  { name:'⚠ DARK HEART',   x:0.50, y:0.22, world:6 },
 ];
 
 function drawWorldMap() {
@@ -2399,8 +2556,8 @@ function drawWorldMap() {
   ctx.strokeStyle = '#4cff6a44'; ctx.lineWidth = 2; ctx.stroke();
 
   // World color palette
-  const worldColors = { 1:'#4cff6a', 2:'#6af0ff', 3:'#aaaaff', 4:'#ff8844', 5:'#ff4444' };
-  const worldBg    = { 1:'#1a3a1a', 2:'#0a2a3a', 3:'#1a1a3a', 4:'#3a1a0a', 5:'#3a0a0a' };
+  const worldColors = { 1:'#4cff6a', 2:'#6af0ff', 3:'#aaaaff', 4:'#ff8844', 5:'#ffd98a', 6:'#ff4444' };
+  const worldBg    = { 1:'#1a3a1a', 2:'#0a2a3a', 3:'#1a1a3a', 4:'#3a1a0a', 5:'#3a2f14', 6:'#3a0a0a' };
 
   // Paths
   for (let i = 0; i < WORLD_NODES.length - 1; i++) {
@@ -2831,8 +2988,8 @@ function updateLevel() {
         G.jaguars.push(j);
         showMsg(["reinforcements.", "they just keep coming.", "oh no not more of them.", "the island is not finished with you."][Math.floor(Math.random()*4)]);
       } else {
-        const w = mat === 'log' ? 22 : mat === 'plank' ? 65 : 30;
-        const h = mat === 'log' ? 55 : mat === 'plank' ? 18 : 32;
+        const w = mat === 'log' ? 22 : mat === 'plank' ? 65 : mat === 'sand' ? 34 : 30;
+        const h = mat === 'log' ? 55 : mat === 'plank' ? 18 : mat === 'sand' ? 34 : 32;
         const b = new Block({mat, x: wx, y: 0, w, h}, 0);
         b.wy = -h - 10;
         b.vy = 1.2 + Math.random() * 0.6;
