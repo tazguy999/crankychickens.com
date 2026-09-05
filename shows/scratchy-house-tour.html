@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SOLACE COOP — Architectural Visualization | Cranky Chickens</title>
+<style>
+  :root{ --ink:#0d0a14; --paper:#f4ecdd; --line:#2a3f5f; --hot:#ff8a3d; --dim:#7a6a58; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--ink);overflow:hidden;
+    font-family:"Arial Narrow","Helvetica Neue",Impact,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #wrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:10px}
+  #stage{position:relative;line-height:0;max-width:100%}
+  canvas{display:block;border:1px solid #2b2237;border-radius:3px;
+    box-shadow:0 18px 60px rgba(0,0,0,.6);max-width:100%;height:auto;background:#0d0a14}
+  #hud{position:absolute;left:14px;bottom:12px;right:14px;pointer-events:none;
+    font-size:11px;letter-spacing:.2em;color:#8d7ea0;text-transform:uppercase;
+    display:flex;justify-content:space-between}
+  #bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.08)}
+  #fill{height:100%;width:0;background:var(--hot)}
+  #ctr{display:flex;gap:10px;align-items:center}
+  button{font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--hot);background:rgba(255,138,61,.08);
+    border:1px solid rgba(255,138,61,.45);border-radius:4px;padding:9px 16px;cursor:pointer}
+  button:active{background:rgba(255,138,61,.28)}
+  button.off{color:#5f5470;border-color:#332a42}
+  #note{font-size:10px;letter-spacing:.16em;color:#5f5470;text-transform:uppercase;text-align:center}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c" width="800" height="450"></canvas>
+    <div id="hud"><span id="slate">—</span><span id="tc">00:00</span></div>
+    <div id="bar"><div id="fill"></div></div>
+  </div>
+  <div id="ctr">
+    <button id="play">▶ PLAY</button>
+    <button id="vox">🗣 VOICES: ON</button>
+    <button id="again" class="off">↻ REPLAY</button>
+  </div>
+  <div id="note">Cranky Chickens Design Bureau · Visualization only · Not for construction</div>
+</div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════
+   SOLACE COOP — an architectural visualization trailer.
+
+   Follows the same beats as a real archviz workflow: state the brief,
+   draw the floor plan FIRST and validate it, build the rooms, inspect
+   the geometry with the materials off, tour it at eye height, then add
+   the everyday objects that make it look lived in.
+
+   Eye height here is 0.34m, because that is where a chicken's eyes are.
+
+   The 3D is a hand-rolled painter's-algorithm box renderer — no engine,
+   no CDN, one file. Same house, one source of geometry, used for the
+   plan view, the solid-mode pass and the walkthrough.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const C = document.getElementById('c'), g = C.getContext('2d');
+const W = 800, H = 450;
+
+/* ── VOICES: same profiles as the episodes ─────────────────────────── */
+const VOICE = {
+  'NARRATOR':  {pitch:1.00, rate:0.92},
+  'SCRATCHY':  {pitch:0.70, rate:0.95},
+  'PEARL':     {pitch:1.50, rate:1.15},
+  'AUNT BARB': {pitch:1.20, rate:0.90}
+};
+let voicesOn = true, pool = [];
+function loadVoices(){ try{ pool = (speechSynthesis.getVoices()||[]).filter(v=>v.lang&&v.lang.startsWith('en')); }catch(e){} }
+if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function say(who, text){
+  if (!voicesOn || !('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\([^)]*\)/g,' ').trim());
+    const p = VOICE[who] || VOICE['NARRATOR'];
+    u.pitch = p.pitch; u.rate = p.rate;
+    if (pool.length) u.voice = pool[0];
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function stopSpeech(){ try{ speechSynthesis.cancel(); }catch(e){} }
+
+/* ══ THE HOUSE ════════════════════════════════════════════════════════
+   U-shaped, wrapped around a courtyard, single storey. Metres.
+   One definition drives the plan, the solid pass and the tour.
+   ═══════════════════════════════════════════════════════════════════ */
+const ROOMS = [
+  { id:'file',  x:0.2, z:0.2, w:3.8, d:4.8, name:'THE FILING ROOM',  sub:'Form 7-B and relatives' },
+  { id:'nest',  x:0.2, z:5.0, w:3.8, d:4.8, name:'NEST',             sub:'sleeping. eventually.' },
+  { id:'live',  x:4.0, z:0.2, w:3.0, d:3.8, name:'LIVING',           sub:'grievances aired here' },
+  { id:'kit',   x:7.0, z:0.2, w:3.0, d:3.8, name:'KITCHEN',          sub:'juice box storage' },
+  { id:'kevin', x:10.0,z:0.2, w:3.8, d:4.8, name:"KEVIN'S ROOM",     sub:'door stays open' },
+  { id:'corn',  x:10.0,z:5.0, w:3.8, d:4.8, name:'CORN PANTRY',      sub:'inventory: 47' }
+];
+const COURT = { x:4.0, z:4.0, w:6.0, d:5.8 };
+const HOUSE = { w:14.0, d:10.0 };
+const WALL_H = 1.9, WALL_T = 0.18, EYE = 0.34;   // chicken eye height
+
+/* ── Geometry: every wall and object is an axis-aligned box ───────── */
+function box(x,y,z,w,h,d,col,tag){ return {x,y,z,w,h,d,col,tag}; }
+function wall(x1,z1,x2,z2,h,col){
+  const w = Math.max(Math.abs(x2-x1), WALL_T), d = Math.max(Math.abs(z2-z1), WALL_T);
+  return box(Math.min(x1,x2), 0, Math.min(z1,z2), w, h||WALL_H, d, col||'#d8cdb8', 'wall');
+}
+
+function buildHouse(){
+  const S = [];
+  // Ground + courtyard
+  S.push(box(-3, -0.12, -3, HOUSE.w+6, 0.12, HOUSE.d+6, '#6f8f52', 'ground'));
+  S.push(box(0, -0.05, 0, HOUSE.w, 0.06, HOUSE.d, '#9d7f56', 'slab'));
+  S.push(box(COURT.x, 0.01, COURT.z, COURT.w, 0.04, COURT.d, '#cbab6e', 'court'));
+  // The dust bath, where a pool would be
+  S.push(box(COURT.x+1.6, 0.02, COURT.z+1.6, 2.8, 0.05, 2.4, '#b08b52', 'dust'));
+
+  // Perimeter
+  S.push(wall(0, 0, HOUSE.w, 0));                      // north
+  S.push(wall(0, 0, 0, HOUSE.d));                      // west
+  S.push(wall(HOUSE.w-WALL_T, 0, HOUSE.w, HOUSE.d));   // east
+  S.push(wall(0, HOUSE.d-WALL_T, 4.0, HOUSE.d));       // south-west stub
+  S.push(wall(10.0, HOUSE.d-WALL_T, HOUSE.w, HOUSE.d));// south-east stub
+
+  // Internal divisions
+  S.push(wall(4.0, 0, 4.0, HOUSE.d));                  // west wing / centre
+  S.push(wall(10.0, 0, 10.0, HOUSE.d));                // centre / east wing
+  S.push(wall(0, 4.9, 4.0, 4.9));                      // filing | nest
+  S.push(wall(10.0, 4.9, HOUSE.w, 4.9));               // kevin | corn
+  S.push(wall(4.0, 4.0, 10.0, 4.0));                   // pavilion back onto court
+  S.push(wall(7.0, 0, 7.0, 2.1));                      // living | kitchen (partial — open plan)
+
+  // Roof planes over the wings and pavilion (lifted, so interiors read)
+  S.push(box(0, WALL_H, 0, 4.2, 0.14, HOUSE.d, '#efe6d2', 'roof'));
+  S.push(box(9.8, WALL_H, 0, 4.2, 0.14, HOUSE.d, '#efe6d2', 'roof'));
+  S.push(box(4.0, WALL_H, 0, 6.0, 0.14, 4.2, '#efe6d2', 'roof'));
+
+  /* ── Furniture. Modelled as real volumes, like the article's
+        hollow bowls and shaped cushions — just smaller and cornier. ── */
+  // Filing room: cabinets and a desk with Form 7-B on it
+  S.push(box(0.5, 0, 0.6, 0.5, 1.3, 2.2, '#7d6244', 'cabinet'));
+  S.push(box(1.4, 0, 3.4, 1.9, 0.5, 0.8, '#8a6a45', 'desk'));
+  S.push(box(2.0, 0.5, 3.6, 0.32, 0.02, 0.24, '#f6efdd', 'form'));   // Form 7-B
+  S.push(box(2.6, 0.5, 3.6, 0.12, 0.14, 0.12, '#c9552f', 'mug'));
+  // Nest
+  S.push(box(1.0, 0, 6.4, 2.0, 0.34, 1.8, '#c9a24a', 'straw'));
+  S.push(box(1.35,0.34,6.75,1.3, 0.18, 1.1, '#e8cf94', 'nest'));
+  S.push(box(0.4, 0, 8.9, 0.7, 0.9, 0.5, '#7d6244', 'stand'));
+  // Living
+  S.push(box(4.4, 0, 0.6, 2.2, 0.42, 0.85, '#5f7a8c', 'sofa'));
+  S.push(box(4.4, 0.42, 0.6, 2.2, 0.30, 0.28, '#6e8b9e', 'back'));
+  S.push(box(4.9, 0, 1.9, 1.1, 0.32, 0.7, '#8a6a45', 'table'));
+  S.push(box(5.2, 0.32, 2.1, 0.22, 0.03, 0.16, '#f6efdd', 'journal'));
+  S.push(box(5.6, 0.32, 2.1, 0.10, 0.12, 0.10, '#c9552f', 'mug'));
+  // Kitchen: counter, and the juice box dispenser
+  S.push(box(7.3, 0, 0.5, 2.4, 0.62, 0.6, '#cfc3ab', 'counter'));
+  S.push(box(9.2, 0, 0.5, 0.5, 1.5, 0.6, '#8fa88f', 'dispenser'));
+  S.push(box(7.6, 0.62, 0.62, 0.16, 0.22, 0.16, '#ffd44a', 'juice'));
+  S.push(box(7.9, 0.62, 0.62, 0.16, 0.22, 0.16, '#ffd44a', 'juice'));
+  S.push(box(8.2, 0.62, 0.62, 0.16, 0.22, 0.16, '#ffd44a', 'juice'));
+  S.push(box(7.4, 0, 2.2, 1.6, 0.5, 0.9, '#8a6a45', 'dining'));
+  // Kevin's room
+  S.push(box(10.6, 0, 0.7, 1.8, 0.24, 1.4, '#8c5f4a', 'dogbed'));
+  S.push(box(10.9, 0.24, 1.0, 1.2, 0.14, 0.8, '#b8836a', 'blanket'));
+  S.push(box(12.9, 0, 3.6, 0.4, 0.3, 0.4, '#8fa88f', 'bowl'));
+  // Corn pantry: shelves and the inventory
+  for (let s = 0; s < 3; s++) S.push(box(10.4, 0.35 + s*0.45, 5.4, 3.0, 0.06, 0.45, '#7d6244', 'shelf'));
+  for (let i = 0; i < 12; i++){
+    const s = i % 3, k = Math.floor(i/3);
+    S.push(box(10.7 + k*0.62, 0.41 + s*0.45, 5.5, 0.16, 0.2, 0.16, '#ffd44a', 'corn'));
+  }
+  // Courtyard planting
+  [[4.6,4.6],[9.0,4.5],[4.8,9.0],[8.8,9.2],[6.9,4.4]].forEach(([px,pz]) => {
+    S.push(box(px, 0, pz, 0.5, 0.16, 0.5, '#5d7a3c', 'bed'));
+    S.push(box(px+0.14, 0.16, pz+0.14, 0.22, 0.5, 0.22, '#2f7d4f', 'shrub'));
+  });
+  return S;
+}
+const SCENE = buildHouse();
+
+/* ══ RENDERER ════════════════════════════════════════════════════════
+   Painter's algorithm over box faces. Enough for architecture: sort
+   faces back-to-front, fill, shade by orientation.
+   ═══════════════════════════════════════════════════════════════════ */
+const cam = { x:7, y:EYE, z:16, yaw:Math.PI, pitch:0, fov:520 };
+
+function shade(hex, amt){
+  const n = parseInt(hex.slice(1),16);
+  const r = Math.max(0,Math.min(255,((n>>16)&255)+amt));
+  const gg= Math.max(0,Math.min(255,((n>>8)&255)+amt));
+  const b = Math.max(0,Math.min(255,(n&255)+amt));
+  return 'rgb('+r+','+gg+','+b+')';
+}
+
+function project(p){
+  const dx = p.x - cam.x, dy = p.y - cam.y, dz = p.z - cam.z;
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  let X = dx*cy - dz*sy;
+  let Z = dx*sy + dz*cy;
+  const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  let Y = dy*cp - Z*sp;
+  Z = dy*sp + Z*cp;
+  if (Z < 0.05) return null;
+  return { x: W/2 + (X/Z)*cam.fov, y: H/2 - (Y/Z)*cam.fov, z: Z };
+}
+
+// face definitions: indices into the 8 box corners, plus a shade offset
+const FACES = [
+  {i:[0,1,2,3], s:-26},  {i:[4,5,6,7], s:-26},   // z-
+  {i:[0,1,5,4], s:-46},  {i:[3,2,6,7], s:-46},   // x-
+  {i:[1,2,6,5], s: 22},  {i:[0,3,7,4], s:-64}    // top / bottom
+];
+
+function drawScene(opts){
+  const solid = opts && opts.solid;
+  const quads = [];
+  for (const b of SCENE){
+    if (opts && opts.hideRoof && b.tag === 'roof') continue;
+    const v = [
+      {x:b.x,       y:b.y,       z:b.z},       {x:b.x,       y:b.y+b.h, z:b.z},
+      {x:b.x+b.w,   y:b.y+b.h,   z:b.z},       {x:b.x+b.w,   y:b.y,     z:b.z},
+      {x:b.x,       y:b.y,       z:b.z+b.d},   {x:b.x,       y:b.y+b.h, z:b.z+b.d},
+      {x:b.x+b.w,   y:b.y+b.h,   z:b.z+b.d},   {x:b.x+b.w,   y:b.y,     z:b.z+b.d}
+    ];
+    const P = v.map(project);
+    for (const f of FACES){
+      const pts = f.i.map(k => P[k]);
+      if (pts.some(p => !p)) continue;
+      const depth = pts.reduce((a,p)=>a+p.z,0)/4;
+      quads.push({ pts, depth, col: solid ? '#8e8a99' : b.col, s: f.s, solid });
+    }
+  }
+  quads.sort((a,b) => b.depth - a.depth);
+  for (const q of quads){
+    g.beginPath();
+    g.moveTo(q.pts[0].x, q.pts[0].y);
+    for (let i=1;i<4;i++) g.lineTo(q.pts[i].x, q.pts[i].y);
+    g.closePath();
+    g.fillStyle = shade(q.col, q.s);
+    g.fill();
+    if (q.solid){ g.strokeStyle = 'rgba(20,18,28,.55)'; g.lineWidth = 1; g.stroke(); }
+  }
+}
+
+function sky(a, b){
+  const grd = g.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0, a); grd.addColorStop(1, b);
+  g.fillStyle = grd; g.fillRect(0,0,W,H);
+}
+
+/* ══ PLAN VIEW ═══════════════════════════════════════════════════════ */
+const PLAN = { ox:150, oz:60, s:36 };
+function px(x){ return PLAN.ox + x*PLAN.s; }
+function pz(z){ return PLAN.oz + z*PLAN.s; }
+
+function drawPlan(reveal, labels, checks){
+  g.fillStyle = '#f4ecdd'; g.fillRect(0,0,W,H);
+  // drafting grid
+  g.strokeStyle = 'rgba(42,63,95,.09)'; g.lineWidth = 1;
+  for (let i=0;i<=HOUSE.w;i++){ g.beginPath(); g.moveTo(px(i),pz(0)); g.lineTo(px(i),pz(HOUSE.d)); g.stroke(); }
+  for (let i=0;i<=HOUSE.d;i++){ g.beginPath(); g.moveTo(px(0),pz(i)); g.lineTo(px(HOUSE.w),pz(i)); g.stroke(); }
+
+  // courtyard hatch
+  g.fillStyle = 'rgba(200,168,106,.35)';
+  g.fillRect(px(COURT.x), pz(COURT.z), COURT.w*PLAN.s, COURT.d*PLAN.s);
+  g.fillStyle = 'rgba(176,139,82,.5)';
+  g.fillRect(px(COURT.x+1.6), pz(COURT.z+1.6), 2.8*PLAN.s, 2.4*PLAN.s);
+
+  // rooms drawn in, in order, as `reveal` climbs 0..1
+  const n = ROOMS.length;
+  ROOMS.forEach((r, i) => {
+    const t = Math.max(0, Math.min(1, reveal*n - i));
+    if (t <= 0) return;
+    g.fillStyle = 'rgba(42,63,95,.06)';
+    g.fillRect(px(r.x), pz(r.z), r.w*PLAN.s*t, r.d*PLAN.s);
+    g.strokeStyle = '#2a3f5f'; g.lineWidth = 2.5;
+    g.strokeRect(px(r.x), pz(r.z), r.w*PLAN.s*t, r.d*PLAN.s);
+    if (labels && t > 0.98){
+      g.fillStyle = '#2a3f5f';
+      g.font = 'bold 10px "Courier New", monospace';
+      g.textAlign = 'center';
+      g.fillText(r.name, px(r.x + r.w/2), pz(r.z + r.d/2) - 2);
+      g.fillStyle = '#7a6a58';
+      g.font = '9px "Courier New", monospace';
+      g.fillText(r.sub, px(r.x + r.w/2), pz(r.z + r.d/2) + 11);
+    }
+  });
+
+  // outer envelope
+  g.strokeStyle = '#2a3f5f'; g.lineWidth = 3;
+  g.strokeRect(px(0), pz(0), HOUSE.w*PLAN.s, HOUSE.d*PLAN.s);
+
+  // dimension line
+  g.strokeStyle = '#7a6a58'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(px(0), pz(HOUSE.d)+18); g.lineTo(px(HOUSE.w), pz(HOUSE.d)+18); g.stroke();
+  g.fillStyle = '#7a6a58'; g.font = '9px "Courier New", monospace'; g.textAlign='center';
+  g.fillText('14.0 m  (approx. 31 chickens)', px(HOUSE.w/2), pz(HOUSE.d)+31);
+
+  // validation callouts
+  if (checks && checks.length){
+    g.textAlign = 'left';
+    checks.forEach((c, i) => {
+      const y = 300 + i*20;
+      g.fillStyle = '#3c7d52'; g.font = 'bold 11px "Courier New", monospace';
+      g.fillText('✓', 26, y);
+      g.fillStyle = '#2a3f5f'; g.font = '11px "Courier New", monospace';
+      g.fillText(c, 44, y);
+    });
+  }
+  g.textAlign = 'left';
+  g.fillStyle = '#2a3f5f'; g.font = 'bold 13px "Courier New", monospace';
+  g.fillText('SOLACE COOP — CONCEPT PLAN', 26, 34);
+  g.fillStyle = '#7a6a58'; g.font = '10px "Courier New", monospace';
+  g.fillText('single storey · U-plan about a dust court · rev. C', 26, 50);
+}
+
+/* ══ CAPTIONS ════════════════════════════════════════════════════════ */
+let caption = null, capT = 0;
+function setCap(who, text){ caption = {who, text}; capT = 0; say(who, text); }
+function drawCap(){
+  if (!caption) return;
+  const pad = 14;
+  g.font = '15px "Arial Narrow", sans-serif';
+  const tw = Math.min(W - 80, g.measureText(caption.text).width + pad*2);
+  const x = (W - tw)/2, y = H - 74;
+  g.fillStyle = 'rgba(8,6,14,.82)';
+  g.fillRect(x, y, tw, 44);
+  g.fillStyle = '#ff8a3d';
+  g.fillRect(x, y, 3, 44);
+  g.textAlign = 'left';
+  g.fillStyle = '#c9b8dd'; g.font = 'bold 9px "Courier New", monospace';
+  g.fillText(caption.who, x + pad, y + 15);
+  g.fillStyle = '#f2e9f7'; g.font = '14px "Arial Narrow", sans-serif';
+  g.fillText(caption.text, x + pad, y + 33);
+}
+
+function title(main, sub, alpha){
+  g.fillStyle = 'rgba(13,10,20,'+alpha+')';
+  g.fillRect(0,0,W,H);
+  g.textAlign = 'center';
+  g.globalAlpha = alpha;
+  g.fillStyle = '#ff8a3d';
+  g.font = 'bold 40px "Arial Narrow", Impact, sans-serif';
+  g.fillText(main, W/2, H/2 - 4);
+  g.fillStyle = '#8d7ea0';
+  g.font = '12px "Courier New", monospace';
+  g.fillText(sub, W/2, H/2 + 26);
+  g.globalAlpha = 1;
+  g.textAlign = 'left';
+}
+
+/* ══ CAMERA MOVES ════════════════════════════════════════════════════
+   Eased takes, joined by cuts — the same structure as a real camera
+   tour, just 1.3 metres lower.
+   ═══════════════════════════════════════════════════════════════════ */
+const ease = t => t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+function lerpCam(a, b, t){
+  const e = ease(Math.max(0,Math.min(1,t)));
+  cam.x = a.x + (b.x-a.x)*e;
+  cam.y = a.y + (b.y-a.y)*e;
+  cam.z = a.z + (b.z-a.z)*e;
+  cam.yaw = a.yaw + (b.yaw-a.yaw)*e;
+  cam.pitch = a.pitch + (b.pitch-a.pitch)*e;
+}
+
+/* ══ TIMELINE ════════════════════════════════════════════════════════ */
+const SC = [
+  { dur:4.5, slate:'000 · BRIEF', draw(t){
+      sky('#0d0a14','#1a1426');
+      title('SOLACE COOP', 'CRANKY CHICKENS DESIGN BUREAU', Math.min(1, t*1.4));
+    }, cues:[[0.4,'NARRATOR',"A brief was submitted. It was four words long."]] },
+
+  { dur:5.0, slate:'001 · THE BRIEF', draw(t){
+      sky('#0d0a14','#1a1426');
+      g.textAlign='center';
+      g.fillStyle='#f2e9f7'; g.font='italic 26px "Arial Narrow", sans-serif';
+      g.fillText('"a house. for a chicken.', W/2, H/2 - 14);
+      g.fillText('minimalist. good light."', W/2, H/2 + 20);
+      g.textAlign='left';
+    }, cues:[[0.3,'SCRATCHY',"A house. For a chicken. Minimalist. Good light."],
+             [3.0,'NARRATOR',"The bureau asked for a floor plan before anything was built."]] },
+
+  { dur:9.0, slate:'002 · PLAN', draw(t, d){
+      drawPlan(Math.min(1, t/d*1.15), t/d > 0.62, null);
+    }, cues:[[0.3,'NARRATOR',"Draw the plan first. Validate it. Then build."],
+             [4.2,'SCRATCHY',"Six rooms. One of them is entirely for filing."],
+             [7.0,'PEARL',"That is not a room, that is a personality."]] },
+
+  { dur:8.0, slate:'003 · VALIDATE', draw(t){
+      drawPlan(1, true, [
+        'No bedroom is a corridor.',
+        'The corn pantry does not open onto the bath.',
+        'Route to the juice avoids the working aisle.',
+        'Kevin can reach every room. Kevin will.'
+      ].slice(0, Math.floor(t/1.6)+1));
+    }, cues:[[0.3,'NARRATOR',"The plan gave us specific things to check."],
+             [3.4,'SCRATCHY',"Bedrooms should not be corridors. I have lived that."],
+             [6.0,'AUNT BARB',"And the dog can reach every room, dear."]] },
+
+  { dur:7.5, slate:'004 · SOLID MODE', draw(t, d){
+      sky('#151222','#221c33');
+      const a = {x:7, y:9.5, z:22, yaw:Math.PI, pitch:-0.42};
+      const b = {x:7, y:7.0, z:19, yaw:Math.PI+0.5, pitch:-0.34};
+      lerpCam(a, b, t/d);
+      drawScene({solid:true, hideRoof:true});
+      g.fillStyle='#8d7ea0'; g.font='10px "Courier New", monospace';
+      g.fillText('MATERIALS OFF · GEOMETRY ONLY · ROOF HIDDEN', 22, 30);
+    }, cues:[[0.3,'NARRATOR',"With the materials off, you can see the walls doing the work."],
+             [4.2,'SCRATCHY',"It is a shed. A beautifully considered shed."]] },
+
+  { dur:8.0, slate:'005 · APPROACH', draw(t, d){
+      sky('#3f6f9c','#c9b48a');
+      const a = {x:7, y:1.6, z:20, yaw:Math.PI, pitch:-0.14};
+      const b = {x:7, y:EYE, z:13.6, yaw:Math.PI, pitch:0.05};
+      lerpCam(a, b, t/d);
+      drawScene({});
+      g.fillStyle='rgba(255,255,255,.55)'; g.font='10px "Courier New", monospace';
+      g.fillText('CAM 01 · 24mm · descending to 0.34m', 22, 30);
+    }, cues:[[0.4,'NARRATOR',"The camera drops to eye height. Chicken eye height."],
+             [4.0,'SCRATCHY',"Zero point three four metres. It is where my eyes are."]] },
+
+  { dur:9.0, slate:'006 · COURTYARD', draw(t, d){
+      sky('#4d7fa8','#d8c69c');
+      const a = {x:7, y:EYE, z:12.0, yaw:Math.PI, pitch:0.02};
+      const b = {x:7, y:EYE, z:7.0, yaw:Math.PI-0.55, pitch:0.05};
+      lerpCam(a, b, t/d);
+      drawScene({hideRoof:true});
+      g.fillStyle='rgba(255,255,255,.55)'; g.font='10px "Courier New", monospace';
+      g.fillText('CAM 02 · 26mm · through the court', 22, 30);
+    }, cues:[[0.3,'NARRATOR',"The courtyard is the middle of the plan. Everything looks onto it."],
+             [3.6,'PEARL',"There is a pool!"],
+             [5.4,'SCRATCHY',"It is a dust bath, Pearl."],
+             [7.0,'PEARL',"There is a POOL."]] },
+
+  { dur:9.0, slate:'007 · PAVILION', draw(t, d){
+      sky('#54809f','#dcc99e');
+      const a = {x:4.9, y:0.45, z:3.5, yaw:Math.PI - 0.28, pitch:0.05};
+      const b = {x:9.45, y:0.45, z:3.3, yaw:Math.PI + 0.30, pitch:0.03};
+      lerpCam(a, b, t/d);
+      drawScene({hideRoof:true});
+      g.fillStyle='rgba(255,255,255,.55)'; g.font='10px "Courier New", monospace';
+      g.fillText('CAM 03 · 24mm · living, then kitchen', 22, 30);
+    }, cues:[[0.3,'NARRATOR',"Living, dining, kitchen. One room, doing three jobs."],
+             [3.8,'AUNT BARB',"The juice boxes have their own cupboard."],
+             [6.2,'SCRATCHY',"That was non-negotiable."]] },
+
+  { dur:8.5, slate:'008 · LIVED IN', draw(t, d){
+      sky('#5b7f96','#e0c99a');
+      const a = {x:6.5, y:1.05, z:3.9, yaw:Math.PI+0.53, pitch:-0.34};
+      const b = {x:6.0, y:0.82, z:3.4, yaw:Math.PI+0.50, pitch:-0.33};
+      lerpCam(a, b, t/d);
+      drawScene({hideRoof:true});
+      g.fillStyle='rgba(255,255,255,.55)'; g.font='10px "Courier New", monospace';
+      g.fillText('DETAIL PASS · everyday objects', 22, 30);
+    }, cues:[[0.3,'NARRATOR',"Then the everyday things, so the rooms look occupied."],
+             [3.2,'NARRATOR',"An open journal. A mug. A form, half filled in."],
+             [6.0,'SCRATCHY',"Seven-B. It is always Seven-B."]] },
+
+  { dur:8.5, slate:'009 · PANTRY', draw(t, d){
+      sky('#4d7590','#d6bf94');
+      const a = {x:11.9, y:EYE, z:8.6, yaw:Math.PI, pitch:0.12};
+      const b = {x:11.9, y:0.62, z:6.9, yaw:Math.PI, pitch:0.02};
+      lerpCam(a, b, t/d);
+      drawScene({hideRoof:true});
+      g.fillStyle='rgba(255,255,255,.55)'; g.font='10px "Courier New", monospace';
+      g.fillText('CAM 04 · corn pantry · inventory visible', 22, 30);
+    }, cues:[[0.3,'NARRATOR',"The pantry was modelled with its contents."],
+             [3.4,'SCRATCHY',"Twelve on the shelves. Thirty five in reserve."],
+             [6.2,'PEARL',"That is forty seven."],
+             [7.4,'SCRATCHY',"It is always forty seven."]] },
+
+  { dur:8.0, slate:'010 · INTERACTIVE', draw(t, d){
+      sky('#3e6480','#c9b28a');
+      const a = {x:9.0, y:0.70, z:3.4, yaw:Math.PI-0.18, pitch:-0.06};
+      const b = {x:9.2, y:0.62, z:2.4, yaw:Math.PI-0.12, pitch:-0.04};
+      lerpCam(a, b, t/d);
+      drawScene({hideRoof:true});
+      // interaction prompt, like a first-person walkthrough
+      const blink = (Math.sin(t*5) > -0.3);
+      if (blink){
+        g.fillStyle = 'rgba(8,6,14,.78)';
+        g.fillRect(W/2-118, H-140, 236, 30);
+        g.strokeStyle = '#ff8a3d'; g.lineWidth = 1;
+        g.strokeRect(W/2-118, H-140, 236, 30);
+        g.textAlign='center';
+        g.fillStyle='#ffd44a'; g.font='bold 12px "Courier New", monospace';
+        g.fillText('[ E ]  OPERATE JUICE DISPENSER', W/2, H-120);
+        g.textAlign='left';
+      }
+    }, cues:[[0.3,'NARRATOR',"In the walkthrough, some of it works."],
+             [3.0,'AUNT BARB',"Press E, dear."],
+             [5.4,'SCRATCHY',"I have pressed E forty seven times."]] },
+
+  { dur:7.0, slate:'011 · WIDE', draw(t, d){
+      sky('#2f4f78','#b99a72');
+      const a = {x:7, y:2.2, z:17, yaw:Math.PI, pitch:-0.16};
+      const b = {x:2.5, y:6.5, z:19.5, yaw:Math.PI-0.30, pitch:-0.30};
+      lerpCam(a, b, t/d);
+      drawScene({});
+    }, cues:[[0.4,'NARRATOR',"Same house. One model, from plan to tour."],
+             [3.8,'SCRATCHY',"I would like to note that I asked for a shed."]] },
+
+  { dur:7.0, slate:'012 · TITLE', draw(t, d){
+      sky('#0d0a14','#1a1426');
+      const a = {x:2.5, y:6.5, z:19.5, yaw:Math.PI-0.30, pitch:-0.30};
+      const b = {x:2.0, y:7.4, z:21.5, yaw:Math.PI-0.36, pitch:-0.32};
+      lerpCam(a, b, t/d);
+      g.globalAlpha = 0.35; drawScene({}); g.globalAlpha = 1;
+      title('SOLACE COOP', 'PLAN · MODEL · TOUR · ONE SOURCE OF TRUTH', Math.min(1, t/2.2));
+      if (t > 3.4){
+        g.textAlign='center';
+        g.fillStyle='#7a6a58'; g.font='10px "Courier New", monospace';
+        g.fillText('visualization only — not for construction — the dust bath is not a pool', W/2, H-46);
+        g.textAlign='left';
+      }
+    }, cues:[[4.6,'PEARL',"It is a little bit a pool."]] }
+];
+
+const TOTAL = SC.reduce((a,s)=>a+s.dur,0);
+
+/* ══ PLAYBACK ════════════════════════════════════════════════════════ */
+let T = 0, playing = false, lastTs = null, fired = new Set();
+const slateEl = document.getElementById('slate'), tcEl = document.getElementById('tc'),
+      fillEl  = document.getElementById('fill'),  playEl = document.getElementById('play'),
+      voxEl   = document.getElementById('vox'),   againEl= document.getElementById('again');
+
+function sceneAt(t){
+  let acc = 0;
+  for (const s of SC){
+    if (t < acc + s.dur) return { s, local: t - acc, index: SC.indexOf(s) };
+    acc += s.dur;
+  }
+  const last = SC[SC.length-1];
+  return { s: last, local: last.dur, index: SC.length-1 };
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  const dt = lastTs == null ? 0 : Math.min((ts - lastTs)/1000, 0.1);
+  lastTs = ts;
+  if (playing){
+    T += dt;
+    if (T >= TOTAL){ T = TOTAL; playing = false; playEl.textContent = '▶ PLAY'; againEl.classList.remove('off'); }
+  }
+  const { s, local, index } = sceneAt(T);
+  g.clearRect(0,0,W,H);
+  s.draw(local, s.dur);
+
+  if (s.cues){
+    s.cues.forEach((c, i) => {
+      const key = index + ':' + i;
+      if (local >= c[0] && !fired.has(key)){ fired.add(key); setCap(c[1], c[2]); }
+    });
+  }
+  drawCap();
+
+  slateEl.textContent = s.slate;
+  const mm = String(Math.floor(T/60)).padStart(2,'0'), ss = String(Math.floor(T%60)).padStart(2,'0');
+  tcEl.textContent = mm + ':' + ss;
+  fillEl.style.width = (T/TOTAL*100) + '%';
+}
+
+playEl.addEventListener('click', () => {
+  playing = !playing;
+  playEl.textContent = playing ? '⏸ PAUSE' : '▶ PLAY';
+  if (!playing) stopSpeech();
+});
+voxEl.addEventListener('click', () => {
+  voicesOn = !voicesOn;
+  voxEl.textContent = voicesOn ? '🗣 VOICES: ON' : '🗣 VOICES: OFF';
+  voxEl.classList.toggle('off', !voicesOn);
+  if (!voicesOn) stopSpeech();
+});
+againEl.addEventListener('click', () => {
+  T = 0; fired.clear(); caption = null; stopSpeech();
+  playing = true; playEl.textContent = '⏸ PAUSE';
+  againEl.classList.add('off');
+});
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
