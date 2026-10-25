@@ -18,7 +18,7 @@ const ALLOWED_ORIGINS = [
 const rateLimitMap = {};
 const RATE_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT = 20; // max requests per IP per minute
-const CLAUDE_RATE_LIMIT = 6; // claude_complete calls per IP per minute (costs money)
+const CLAUDE_RATE_LIMIT = 15; // claude_complete calls per IP per minute (costs money)
 
 function checkRateLimit(ip) {
   const now = Date.now();
