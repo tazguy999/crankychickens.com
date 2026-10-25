@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Graydorn &amp; Batdorn Cast</title>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: the comic's notebook-paper world as a cast sheet; animated card per character, grouped heroes / stuffy squad / villains / coming soon. Single paper look. */
+:root{--paper:#fbf8ef;--rule:#bcd4ea;--margin:#e8868c;--ink:#1d1a1f;--yellow:#ffe14d;--pink:#ea4f8c;--sky:#cfdde9;
+  --display:"Permanent Marker","Comic Sans MS",cursive;--body:"Patrick Hand","Comic Sans MS",cursive;color-scheme:light}
+html{background:var(--paper)}
+body{background-color:var(--paper);background-image:linear-gradient(90deg,transparent 40px,var(--margin) 40px,var(--margin) 42px,transparent 42px),repeating-linear-gradient(180deg,transparent 0 31px,var(--rule) 31px 32px);
+  color:var(--ink);font-family:var(--body);font-size:19px;line-height:1.3}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:34px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,8vw,4.4rem);margin:0;line-height:1;transform:rotate(-2deg);text-wrap:balance}
+h1 span{color:var(--yellow);text-shadow:3px 0 0 var(--ink),-3px 0 0 var(--ink),0 3px 0 var(--ink),0 -3px 0 var(--ink),2px 2px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink),6px 6px 0 var(--ink)}
+.sub{display:inline-block;margin-top:12px;background:var(--ink);color:var(--yellow);font-family:var(--display);padding:3px 12px;transform:rotate(1deg)}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(1.5rem,5vw,2.2rem);margin:0 0 14px;display:inline-block;background:var(--yellow);border:3px solid var(--ink);padding:0 12px;transform:rotate(-1deg)}
+.lede{margin:-4px 0 14px;max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:22px}
+.card{background:#fff;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);display:flex;flex-direction:column;min-width:0}
+.card:nth-child(odd){transform:rotate(-.6deg)} .card:nth-child(even){transform:rotate(.5deg)}
+.card canvas{display:block;width:100%;height:auto;max-width:100%;border-bottom:4px solid var(--ink);background:var(--sky)}
+.info{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
+h3{font-family:var(--display);font-weight:400;font-size:1.6rem;margin:0;line-height:1.05}
+.real{margin:0;color:#5b5560;font-size:1.05rem}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
+dt{font-family:var(--display);font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding-top:3px}
+dd{margin:0}
+.note{margin:4px 0 0;align-self:flex-start;background:var(--pink);color:#fff;border:2px solid var(--ink);padding:0 8px;font-size:1rem;transform:rotate(-1deg)}
+.soon{display:grid;place-items:center;text-align:center;min-height:250px;border-bottom:4px solid var(--ink);background:repeating-linear-gradient(45deg,#eee9f3 0 14px,#f7f3fa 14px 28px);font-family:var(--display);font-size:5rem;color:#b9aec6}
+</style>
+<div class="wrap">
+<header><h1><span>Graydorn &amp; Batdorn</span><br>Cast of Characters</h1><div class="sub">Official character bible, Issue #1</div></header>
+<section><h2>The Heroes</h2><div class="grid"><article class="card"><canvas data-k="graydorn" width="360" height="250" aria-label="Graydorn animation"></canvas>
+<div class="info"><h3>Graydorn</h3><p class="real">Grayson</p>
+<dl><dt>Look</dt><dd>Grey puffy jacket, black snow pants, fuzzy grey-purple trapper hat with ear flaps.</dd><dt>Power</dt><dd>Never gives up the chase. Double jump!</dd></dl><p class="note">Leader of the crew</p></div></article>
+<article class="card"><canvas data-k="batdorn" width="360" height="250" aria-label="Batdorn animation"></canvas>
+<div class="info"><h3>Batdorn</h3><p class="real">Chris (Dad)</p>
+<dl><dt>Look</dt><dd>Beard, grey cap with blue shades on the brim, blue suit with a yellow B, black bat cape and mask.</dd><dt>Power</dt><dd>Swoops in from the sky and smashes every bark. POW!</dd></dl><p class="note">Signal him with 3 snowballs</p></div></article>
+<article class="card"><canvas data-k="charlie" width="360" height="250" aria-label="Charliescope animation"></canvas>
+<div class="info"><h3>Charliescope</h3><p class="real">Carleigh (Charlie)</p>
+<dl><dt>Look</dt><dd>Long blond hair, big smile, yellow suit, purple belt and leggings, teal cape, pink rainbow-dot mask.</dd><dt>Power</dt><dd>Looks through the Charliescope and turns into one of her stuffies.</dd></dl><p class="note">Weakness: molerats</p></div></article>
+<article class="card"><canvas data-k="dino" width="360" height="250" aria-label="Dino animation"></canvas>
+<div class="info"><h3>Dino</h3><p class="real">Guardian stuffy since birth</p>
+<dl><dt>Look</dt><dd>Grey plush, dark spots on his back, striped corduroy belly, lumpy brown mane, little tan horn.</dd><dt>Power</dt><dd>Guards Graydorn day and night. The whole reason for the chase.</dd></dl><p class="note">Do not dino-nap</p></div></article></div></section>
+<section><h2>Charliescope's Stuffy Squad</h2><p class="lede">Charlie's real stuffed animals. When the Charliescope charges up, she turns into one of them, pink mask and all.</p><div class="grid"><article class="card"><canvas data-k="kitty" width="360" height="250" aria-label="Peaches animation"></canvas>
+<div class="info"><h3>Cinnamon</h3><p class="real">She/her · peachy tabby kitty</p>
+<dl><dt>Look</dt><dd>Peachy-orange tabby kitty with stripes and a pink nose.</dd><dt>Power</dt><dd>POUNCE! Bounces across the screen smashing high and low barks.</dd></dl></div></article>
+<article class="card"><canvas data-k="pink" width="360" height="250" aria-label="Pinky animation"></canvas>
+<div class="info"><h3>Strawberry</h3><p class="real">He/him · pink spotted kitty</p>
+<dl><dt>Look</dt><dd>Pink kitty with darker pink spots. Yes, Strawberry is a boy.</dd><dt>Power</dt><dd>PURR BLAST! Dashes through on a trail of purrs.</dd></dl></div></article>
+<article class="card"><canvas data-k="pup" width="360" height="250" aria-label="Husky Pup animation"></canvas>
+<div class="info"><h3>Sapphire</h3><p class="real">She/her · husky pup</p>
+<dl><dt>Look</dt><dd>Small grey-and-white husky with a black nose.</dd><dt>Power</dt><dd>SNOW ZOOM! The fastest dash, with a snow spray.</dd></dl></div></article>
+<article class="card"><canvas data-k="wolf" width="360" height="250" aria-label="Big Wolf animation"></canvas>
+<div class="info"><h3>Summer</h3><p class="real">She/her · big wolf</p>
+<dl><dt>Look</dt><dd>Big wolf with a fluffy grey head and back, cream chest, belly and legs.</dd><dt>Power</dt><dd>AWOOOOO! Rainbow howl waves with the biggest knockback.</dd></dl></div></article></div></section>
+<section><h2>The Villains</h2><div class="grid"><article class="card"><canvas data-k="bark" width="360" height="250" aria-label="The Bark Lady animation"></canvas>
+<div class="info"><h3>The Bark Lady</h3><p class="real">Chloe the goldendoodle</p>
+<dl><dt>Look</dt><dd>Fluffy golden curls, pink bow, pearl necklace, very angry eyebrows.</dd><dt>Power</dt><dd>Fires BARK! bursts. Stole Dino in Issue #1.</dd></dl><p class="note">Weakness: getting caught</p></div></article>
+<article class="card"><div class="soon" aria-hidden="true">?</div><div class="info"><h3>Captain Molerat</h3><p class="real">Arrives in Issue #2</p><dl><dt>Look</dt><dd>Wrinkly, squinty, pops up out of the snow. Design coming soon.</dd><dt>Power</dt><dd>The one animal Charliescope can't stand.</dd></dl><p class="note">Bark Lady's henchman</p></div></article></div></section>
+<section><h2>Coming Soon</h2><div class="grid"><article class="card"><div class="soon" aria-hidden="true">?</div><div class="info"><h3>Julia</h3><p class="real">Mom</p><dl><dt>Look</dt><dd>Hero name and design coming in Issue #2.</dd><dt>Power</dt><dd>To be decided by the crew.</dd></dl></div></article></div></section>
+</div>
+<script>
+const INK='#1d1a1f', SKIN='#f6d0b5', DADSKIN='#f0c6a4';
+let g, seed=1, boil=0, time=0;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function setSeed(s){seed=(Math.abs(Math.floor(s))%2147483646)+1}
+function rnd(){seed=seed*16807%2147483647;return (seed-1)/2147483646}
+function j(n){return (rnd()-.5)*2*n}
+function strokeIt(w){if(!w)return;g.lineWidth=w;g.strokeStyle=INK;g.lineJoin='round';g.lineCap='round';g.stroke()}
+
+function blob(cx,cy,rx,ry,fill,jit=1.2,n=12,lw=3){
+  const p=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2;p.push([cx+Math.cos(a)*(rx+j(jit)),cy+Math.sin(a)*(ry+j(jit))])}
+  g.beginPath();const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  let s=m(p[n-1],p[0]);g.moveTo(s[0],s[1]);
+  for(let i=0;i<n;i++){const q=m(p[i],p[(i+1)%n]);g.quadraticCurveTo(p[i][0],p[i][1],q[0],q[1])}
+  g.closePath();if(fill){g.fillStyle=fill;g.fill()}strokeIt(lw);
+}
+function poly(pts,fill,jit=1.4,lw=3){
+  g.beginPath();pts.forEach((p,i)=>{const x=p[0]+j(jit),y=p[1]+j(jit);i?g.lineTo(x,y):g.moveTo(x,y)});
+  g.closePath();if(fill){g.fillStyle=fill;g.fill()}strokeIt(lw);
+}
+function line(x1,y1,x2,y2,w=3,col=INK){
+  g.beginPath();g.moveTo(x1+j(.8),y1+j(.8));g.quadraticCurveTo((x1+x2)/2+j(1.5),(y1+y2)/2+j(1.5),x2+j(.8),y2+j(.8));
+  g.lineWidth=w;g.strokeStyle=col;g.lineCap='round';g.stroke();
+}
+function limb(x1,y1,x2,y2,w,col){
+  const a=[x1+j(.8),y1+j(.8)],b=[x2+j(.8),y2+j(.8)],m=[(x1+x2)/2+j(1.5),(y1+y2)/2+j(1.5)];
+  g.lineCap='round';
+  for(const [lw,c] of [[w+6,INK],[w,col]]){g.beginPath();g.moveTo(a[0],a[1]);g.quadraticCurveTo(m[0],m[1],b[0],b[1]);g.lineWidth=lw;g.strokeStyle=c;g.stroke()}
+}
+function txt(s,x,y,size,fill='#fff',stroke=INK,align='center',font='Permanent Marker'){
+  g.font=`${size}px "${font}", "Comic Sans MS", cursive`;g.textAlign=align;g.textBaseline='middle';
+  if(stroke){g.lineWidth=Math.max(3,size/6);g.strokeStyle=stroke;g.lineJoin='round';g.strokeText(s,x,y)}
+  g.fillStyle=fill;g.fillText(s,x,y);
+}
+function burst(x,y,r,s,fill='#ffe14d',size=26,id=0){
+  setSeed(boil*53+id);const n=14,pts=[];
+  for(let i=0;i<n*2;i++){const a=i/(n*2)*Math.PI*2,rr=i%2?r*.68:r;pts.push([x+Math.cos(a)*rr*1.35,y+Math.sin(a)*rr])}
+  poly(pts,fill,2,3);txt(s,x,y+1,size,INK,null);
+}
+function bubble(x,y,w,h,tx,ty,lines,size=20){
+  setSeed(boil*59+x);
+  poly([[x-14,y+h*.35],[x+14,y+h*.35],[tx,ty]],'#fff',1,3);
+  blob(x,y,w,h,'#fff',1.4,16,3);
+  g.fillStyle='#fff';g.beginPath();g.moveTo(x-11,y+h*.3);g.lineTo(x+11,y+h*.3);g.lineTo(x,y+h*.6);g.fill();
+  lines.forEach((l,i)=>txt(l,x,y+(i-(lines.length-1)/2)*size*1.05,size,INK,null,'center','Patrick Hand'));
+}
+
+/* ---------- characters ---------- */
+function graydorn(x,y,s,o={}){
+  const t=o.t||0,mood=o.mood||'happy';setSeed(boil*31+1+(o.id||0));
+  g.save();g.translate(x,y);g.scale(s,s);
+  let f1,f2;
+  if(o.air){f1=[16,-14];f2=[-12,-10]}
+  else if(o.run){const p=t*14;f1=[Math.sin(p)*18,-Math.max(0,Math.cos(p))*8];f2=[-Math.sin(p)*18,-Math.max(0,-Math.cos(p))*8]}
+  else{f1=[9,0];f2=[-9,0]}
+  limb(-5,-40,f2[0]-3,f2[1]-5,15,'#26272e');blob(f2[0]-1,f2[1]-4,11,6,'#16161a',.6,10,2);
+  limb(5,-40,f1[0]+3,f1[1]-5,15,'#26272e');blob(f1[0]+5,f1[1]-4,11,6,'#16161a',.6,10,2);
+  const sw=o.run?Math.sin(t*14)*10:0;
+  limb(-14,-70,-28-sw,-48,11,'#7b8391');blob(-29-sw,-45,6,6,'#16161a',.5,8,2);
+  poly([[-21,-82],[21,-82],[25,-34],[-25,-34]],'#7b8391');
+  line(1,-79,1,-37,2);line(-18,-50,-8,-50,2);line(-22,-36,22,-36,4);
+  if(mood==='shock'){limb(16,-72,30,-104,11,'#7b8391');blob(31,-108,7,7,'#16161a',.5,8,2)}
+  else{limb(16,-72,36,-86,11,'#7b8391');blob(39,-89,7,7,'#16161a',.5,8,2)}
+  blob(-20,-97,7,13,'#8d8396');blob(23,-97,7,13,'#8d8396');
+  blob(2,-102,22,21,SKIN);
+  blob(-11,-95,4,3,'#f4a6a6',.3,8,0);
+  const big=mood==='shock'?1.25:1;
+  blob(10,-104,6*big,7*big,'#fff',.4,10,2);blob(-3,-104,6*big,7*big,'#fff',.4,10,2);
+  g.fillStyle=INK;
+  const px=mood==='shock'?0:2;
+  g.beginPath();g.arc(10+px,-103,2.7,0,7);g.arc(-3+px,-103,2.7,0,7);g.fill();
+  if(mood==='happy'){g.beginPath();g.arc(5,-93,6,.25,Math.PI-.25);strokeIt(2.5)}
+  else if(mood==='shock'){blob(5,-90,4,5,'#7a2630',.3,8,2)}
+  else{line(0,-91,11,-92,2.5)}
+  if(mood==='determined'){line(-9,-115,1,-111,3);line(6,-111,17,-115,3)}
+  if(mood==='shock'){line(-9,-118,1,-119,2.5);line(6,-119,16,-118,2.5)}
+  blob(2,-121,25,14,'#8d8396',1.5,14);
+  blob(2,-112,28,7,'#b7aec0',1.2,14);
+  for(let k=0;k<5;k++){line(-16+k*8,-124+j(2),-13+k*8,-127+j(2),1.5)}
+  g.restore();
+}
+function batdorn(x,y,s,o={}){
+  const t=o.t||0,wv=Math.sin(t*10)*6;setSeed(boil*37+2);
+  g.save();g.translate(x,y);g.scale(s,s);
+  if(o.fly){
+    poly([[22,-142],[-26,-142],[-132,-130+wv],[-110,-114],[-128,-98-wv],[-104,-86],[-120,-70+wv],[-30,-76]],'#2a2533',2);
+    limb(-10,-76,-62,-64,18,'#3a4c70');limb(10,-76,-50,-56,18,'#3a4c70');
+    blob(-70,-64,8,11,'#26222b');blob(-58,-55,8,11,'#26222b');
+  }else{
+    poly([[24,-142],[-24,-142],[-46,-14],[-31,-26],[-16,-10],[0,-24],[16,-10],[31,-26],[46,-14]],'#2a2533',2);
+    limb(-12,-76,-15,-6,18,'#3a4c70');limb(12,-76,15,-6,18,'#3a4c70');
+    blob(-18,-5,14,7,'#26222b');blob(19,-5,14,7,'#26222b');
+  }
+  limb(-26,-136,-36,-96,13,'#2c5ea8');blob(-37,-91,7,7,DADSKIN,.5,8,2);
+  poly([[-30,-147],[30,-147],[33,-72],[-33,-72]],'#2c5ea8');
+  poly([[-33,-82],[33,-82],[33,-72],[-33,-72]],'#f2c230',.8);
+  blob(0,-117,15,11,'#f2c230',.8,12,2.5);txt('B',0,-116,17,INK,null);
+  if(o.fly){limb(26,-136,72,-140,13,'#2c5ea8');blob(78,-140,10,9,DADSKIN,.6,10,2.5)}
+  else{limb(26,-136,48,-112,13,'#2c5ea8');blob(53,-114,9,9,DADSKIN,.5,10,2.5);line(55,-122,56,-131,4)}
+  blob(2,-172,26,27,DADSKIN);
+  blob(4,-155,25,16,'#b07a45',1.4,14);blob(-19,-166,7,12,'#b07a45',.8,10,2);
+  blob(9,-156,9,4,'#fff',.3,10,2);
+  blob(13,-168,5,4,DADSKIN,.3,8,2);
+  blob(5,-179,25,7,'#1f1c26',.5,12,2);
+  blob(-4,-179,5,3,'#fff',.2,8,0);blob(14,-179,5,3,'#fff',.2,8,0);
+  g.fillStyle=INK;g.beginPath();g.arc(-3,-179,1.8,0,7);g.arc(15,-179,1.8,0,7);g.fill();
+  blob(2,-197,25,12,'#99a0a9',1,12);
+  poly([[14,-194],[47,-190],[45,-184],[12,-186]],'#7f868f',.8);
+  blob(8,-206,15,6,'#2db6ec',.6,12,2.5);line(1,-208,8,-209,2,'#fff');
+  g.restore();
+}
+function dino(x,y,s){
+  setSeed(boil*43+4);g.save();g.translate(x,y);g.scale(s,s);
+  const GR='#a2a6ab',DK='#5a5d63',BR='#8b6a45';
+  poly([[-20,-16],[-36,-9],[-18,-8]],GR,1,2.5);
+  blob(-14,-4,6,6,GR,.4,8,2);blob(8,-4,6,6,GR,.4,8,2);
+  blob(-3,-17,23,14,GR,1,12,2.5);
+  blob(-3,-7,17,5,'#767a80',.6,10,2);
+  for(let k=-14;k<10;k+=5)line(k,-10,k+1,-4,1.2);
+  [[-14,-24],[-6,-28],[2,-26],[-10,-18]].forEach(p=>blob(p[0],p[1],2.6,2.2,DK,.3,8,0));
+  for(let k=0;k<7;k++){const a=Math.PI*(.75+k*.21);blob(19+Math.cos(a)*15,-33+Math.sin(a)*14,6,5,BR,.8,8,2)}
+  blob(20,-31,15,13,GR,1,12,2.5);
+  blob(13,-35,2.6,3.6,INK,.2,8,0);blob(27,-35,2.6,3.6,INK,.2,8,0);
+  g.fillStyle='#fff';g.beginPath();g.arc(13.6,-36.5,.9,0,7);g.arc(27.6,-36.5,.9,0,7);g.fill();
+  poly([[17,-26],[20,-35],[23,-26]],'#b08e5f',.4,2);
+  g.fillStyle=INK;g.beginPath();g.arc(13,-27,1.3,0,7);g.arc(27,-27,1.3,0,7);g.fill();
+  g.beginPath();g.arc(20,-25,7,.35,Math.PI-.35);strokeIt(2);
+  g.restore();
+}
+function barkLady(x,y,s,o={}){
+  const t=o.t||0,p=t*13;setSeed(boil*41+3);
+  g.save();g.translate(x,y);g.scale(s,s);
+  const a1=o.run?Math.sin(p)*16:6,a2=o.run?-Math.sin(p)*16:-6;
+  limb(-6,-40,-6+a2,-4,13,'#d9a24c');blob(-8+a2,-4,9,5,'#c88e3d',.5,8,2);
+  blob(32,-60+Math.sin(t*20)*4,11,7,'#e7b762',1,10,2.5);
+  limb(8,-40,8+a1,-4,13,'#d9a24c');blob(6+a1,-4,9,5,'#c88e3d',.5,8,2);
+  blob(4,-62,28,30,'#e3b05b',2.4,16);
+  for(let k=0;k<9;k++){const a=k/9*Math.PI*2;blob(4+Math.cos(a)*25,-62+Math.sin(a)*27,8,7,'#ebbf6c',1,8,2)}
+  if(o.dino!==false)dino(-6,-42,.75);
+  setSeed(boil*41+9);
+  limb(-12,-78,0,-52,11,'#e3b05b');blob(2,-49,7,6,'#e3b05b',.5,8,2);
+  blob(14,-100,9,19,'#c88e3d',1,10);
+  blob(-6,-106,24,23,'#e3b05b',2,14);
+  blob(-16,-128,7,6,'#ebbf6c',1,8,2);blob(-4,-131,7,6,'#ebbf6c',1,8,2);blob(8,-127,7,6,'#ebbf6c',1,8,2);
+  poly([[0,-134],[15,-143],[15,-125]],'#ea4f8c',.6,2.5);poly([[0,-134],[-15,-143],[-15,-125]],'#ea4f8c',.6,2.5);blob(0,-134,4,4,'#ea4f8c',.3,8,2);
+  blob(-29,-98,14,10,'#f0cf92',1,12);
+  blob(-42,-101,5,4,INK,.4,8,1);
+  if(o.bark){blob(-29,-88,8,6,'#7a2630',.6,10,2.5);poly([[-34,-92],[-31,-87],[-28,-92]],'#fff',.3,1)}
+  else{line(-36,-90,-24,-91,2.5)}
+  blob(-14,-111,5,6,'#fff',.4,10,2);blob(-1,-112,4,5,'#fff',.4,10,2);
+  g.fillStyle=INK;g.beginPath();g.arc(-16,-110,2.3,0,7);g.arc(-3,-111,2,0,7);g.fill();
+  line(-22,-122,-8,-115,4);line(-5,-116,6,-122,4);
+  for(let k=0;k<6;k++){g.fillStyle='#fff';g.beginPath();g.arc(-20+k*6,-82+Math.abs(k-2.5)*1.4,3,0,7);g.fill();strokeIt(1.5)}
+  blob(18,-82,6,5,'#e8508a',.5,8,0);
+  g.restore();
+}
+function snowball(x,y,r=14){setSeed(boil*61+Math.floor(x));blob(x,y,r,r,'#fff',1,10,3);blob(x+r*.3,y+r*.35,r*.45,r*.3,'#dbe6f0',.5,8,0)}
+
+const RAINBOW=['#ff6b6b','#ffb84d','#ffe14d','#6fd38b','#5bb8f2','#a77de8'];
+function wedges(x,y,r,spin=0,lw=2.5){
+  for(let k=0;k<6;k++){g.beginPath();g.moveTo(x,y);g.arc(x,y,r,spin+k*Math.PI/3,spin+(k+1)*Math.PI/3);g.closePath();g.fillStyle=RAINBOW[k];g.fill()}
+  g.beginPath();g.arc(x+j(.5),y+j(.5),r,0,7);strokeIt(lw);
+}
+function charlie(x,y,s,o={}){
+  const t=o.t||0;setSeed(boil*47+5);
+  g.save();g.translate(x,y);g.scale(s,s);
+  const sway=Math.sin(t*4)*4;
+  const HR='#e6c47c',HS=()=>{g.translate(2,-101);g.scale(1.5,1.5);g.translate(-2,122)};
+  poly([[16,-122],[-16,-122],[-34,-30+sway],[-20,-38],[-8,-26],[4,-36],[12,-30]],'#2bb3a3',1.6,3);
+  g.save();HS();
+  poly([[-14,-167],[18,-167],[20,-152],[22,-130],[-18,-130],[-16,-152]],HR,.8,2);
+  line(-13,-140,-14,-131,1.2,'#c9a352');line(17,-140,18,-131,1.2,'#c9a352');
+  g.restore();
+  limb(-7,-48,-10,-6,13,'#6b4bb3');limb(7,-48,10,-6,13,'#6b4bb3');
+  blob(-12,-5,11,6,'#2bb3a3',.6,10,2.5);blob(13,-5,11,6,'#2bb3a3',.6,10,2.5);
+  limb(-14,-110,-24,-78,10,'#ffd23d');blob(-25,-74,6,6,SKIN,.5,8,2);
+  poly([[-18,-124],[18,-124],[22,-46],[-22,-46]],'#ffd23d');
+  poly([[-22,-54],[22,-54],[22,-46],[-22,-46]],'#8a5bd6',.6,2.5);
+  wedges(0,-92,12,t*2);
+  g.save();HS();
+  blob(2,-151,14,16,SKIN,.6,14,2);
+  blob(2,-163,15,7,HR,.6,12,2);
+  line(2,-170,2,-160,1.6,'#c9a352');
+  blob(-7,-142,3,2,'#f4a6a6',.3,8,0);blob(11,-142,3,2,'#f4a6a6',.3,8,0);
+  blob(2,-152,14,5,'#ea4f8c',.3,12,1.8);
+  blob(-3,-152,3.2,2.8,'#fff',.15,8,1.1);blob(7,-152,3.2,2.8,'#fff',.15,8,1.1);
+  g.fillStyle=INK;g.beginPath();g.arc(-2.5,-152,1.7,0,7);g.arc(7.5,-152,1.7,0,7);g.fill();
+  line(-7,-155,-9,-158,1.1);line(11,-155,13,-158,1.1);
+  g.beginPath();g.moveTo(-3,-143);g.quadraticCurveTo(2,-136,7,-143);g.closePath();g.fillStyle='#fff';g.fill();strokeIt(1.6);
+  g.restore();
+  if(o.scope){
+    limb(14,-114,24,-128,10,'#ffd23d');
+    g.save();HS();
+    poly([[12,-155],[34,-160],[35,-149],[13,-146]],'#f2c230',.6,2);
+    wedges(36,-154.5,6.5,t*5,2);
+    g.restore();
+  }else{
+    limb(14,-112,34,-96,10,'#ffd23d');blob(37,-94,6,6,SKIN,.5,8,2);
+  }
+  g.restore();
+}
+function cheetah(x,y,s,t){
+  setSeed(boil*67+6);g.save();g.translate(x,y);g.scale(s,s);
+  const p=t*22,a=Math.sin(p)*18,b=-a;
+  line(-48,-44,-80,-60+Math.sin(t*12)*8,6);line(-48,-44,-80,-60+Math.sin(t*12)*8,3,'#f2b33d');
+  limb(-34,-40,-34+b,-4,10,'#e6a52f');limb(30,-40,30+a,-4,10,'#e6a52f');
+  blob(0,-48,50,20,'#f2b33d',1.6,14);
+  limb(-26,-40,-26+a,-4,10,'#f2b33d');limb(36,-40,36+b,-4,10,'#f2b33d');
+  for(let k=0;k<9;k++){g.fillStyle=INK;g.beginPath();g.arc(-36+k*9+j(2),-54+(k%3)*7+j(1),2.4,0,7);g.fill()}
+  blob(56,-64,18,15,'#f2b33d',1,12);
+  blob(48,-80,5,6,'#f2b33d',.5,8,2);blob(62,-80,5,6,'#f2b33d',.5,8,2);
+  blob(71,-60,7,6,'#fbe3b0',.6,8,2);blob(77,-62,3,2.5,INK,.3,8,0);
+  g.fillStyle=INK;g.beginPath();g.arc(60,-68,2.4,0,7);g.fill();
+  line(59,-64,64,-54,2);
+  blob(56,-70,13,4,'#ea4f8c',.4,10,2);
+  g.restore();
+}
+const STUFFIES={
+  kitty:{name:'CINNAMON',move:'POUNCE!',body:'#f3c99c',belly:'#fbe6cc',spot:'#dc9b5c',stripes:true,head:'#f3c99c',snout:'#fbe6cc',nose:'#f28c96',ear:'cat',tail:'cat',s:.95,hop:true,col:'#ffb84d'},
+  pink:{name:'STRAWBERRY',move:'PURR BLAST!',body:'#f4b4cf',belly:'#fbe1ec',spot:'#e27aab',spots:true,head:'#f4b4cf',snout:'#fbe1ec',nose:'#f59a7a',ear:'cat',tail:'cat',s:.95,col:'#ff9ecb'},
+  pup:{name:'SAPPHIRE',move:'SNOW ZOOM!',body:'#9ea3ab',belly:'#ffffff',head:'#9ea3ab',snout:'#ffffff',nose:INK,ear:'dog',tail:'curl',s:.9,face:true,col:'#bfe3ff'},
+  wolf:{name:'SUMMER',move:'AWOOOOO!',body:'#efe6d3',belly:'#f8f3e8',saddle:'#8e8a88',fleck:'#66615f',head:'#8e8a88',snout:'#f2ece0',nose:INK,ear:'dog',tail:'bush',s:1.3,face:true,howl:true,col:'#d9d9e8'}
+};
+let lastStuffy='';
+function stuffy(k,x,y,t){
+  const c=STUFFIES[k];setSeed(boil*73+k.length*7);g.save();g.translate(x,y);g.scale(c.s,c.s);
+  const a=Math.sin(t*20)*14;
+  if(c.tail==='cat')limb(-36,-42,-56,-72+Math.sin(t*10)*5,7,c.body);
+  else if(c.tail==='curl')blob(-40,-58,11,10,c.body,1,10,2.5);
+  else blob(-50,-48,20,9,c.saddle||c.body,1.5,12,2.5);
+  limb(-26,-30,-26-a,-3,9,c.body);limb(22,-30,22+a,-3,9,c.body);
+  blob(0,-38,40,20,c.body,1.4,14);
+  if(c.saddle){blob(-4,-47,37,12,c.saddle,1.4,14,0);for(let i=0;i<9;i++)blob(-30+i*7+j(2),-50+(i%3)*4,3,2,c.fleck,.4,6,0);blob(30,-38,13,15,c.body,1,12,0)}
+  blob(4,-27,26,7,c.belly,.8,12,0);
+  if(c.stripes)for(let i=0;i<4;i++)line(-24+i*12,-57,-21+i*12,-45,3.5,c.spot);
+  if(c.spots)[[-20,-46],[-4,-50],[12,-44],[-14,-34]].forEach(p=>blob(p[0],p[1],5,4,c.spot,.6,8,0));
+  limb(-18,-30,-18+a,-3,9,c.body);limb(30,-30,30-a,-3,9,c.body);
+  g.save();g.translate(38,-48);g.scale(1.45,1.45);g.translate(-38,48);
+  if(c.ear==='dog'){poly([[32,-68],[37,-92],[46,-72]],c.head,.8,2.5);poly([[48,-72],[57,-92],[60,-68]],c.head,.8,2.5);poly([[37,-72],[38,-84],[43,-73]],'#fff',.4,0);poly([[51,-72],[56,-84],[57,-71]],'#fff',.4,0)}
+  else{poly([[33,-68],[37,-86],[46,-71]],c.head,.8,2.5);poly([[48,-71],[57,-86],[59,-66]],c.head,.8,2.5);poly([[37,-71],[38,-80],[43,-72]],'#f4a6b8',.3,0);poly([[51,-71],[55,-80],[56,-69]],'#f4a6b8',.3,0)}
+  blob(46,-58,18,16,c.head,1,12);
+  if(c.face)blob(52,-51,13,11,'#fff',.8,12,0);
+  blob(62,-51,10,7,c.snout,.6,10,2.5);
+  blob(70,-54,4,3.2,c.nose,.3,8,1.5);
+  g.beginPath();g.arc(64,-47,4,.3,Math.PI-.3);strokeIt(1.8);
+  blob(48,-63,14,4.5,'#ea4f8c',.4,10,2);
+  blob(54,-63,3,2.6,'#fff',.2,8,1.2);g.fillStyle=INK;g.beginPath();g.arc(55,-63,1.6,0,7);g.fill();
+  g.restore();
+  g.restore();
+}
+function shard(x,y,id){
+  setSeed(boil*71+id);g.save();g.translate(x,y);g.rotate(time*2+id);
+  poly([[0,-18],[13,0],[0,18],[-13,0]],RAINBOW[id%6],1,3);
+  line(-4,-7,0,-13,2,'#fff');
+  g.restore();
+}
+
+
+const DPR=Math.min(2,window.devicePixelRatio||1);
+const cvs=[...document.querySelectorAll('canvas[data-k]')].map(c=>{c.width=360*DPR;c.height=250*DPR;return {c,ctx:c.getContext('2d'),k:c.dataset.k}});
+const GY=226;
+function ground(){setSeed(boil*7+3);g.fillStyle='#cfdde9';g.fillRect(0,0,360,250);poly([[-10,GY-6],[370,GY-9],[370,260],[-10,260]],'#f7f9fb',1.5,3)}
+const scenes={
+  graydorn:t=>{const ph=t%2.4,air=ph<.6,y=air?-Math.sin(ph/.6*Math.PI)*70:0;graydorn(170,GY+y,1.25,{run:!air,air,t,mood:'determined'})},
+  batdorn:t=>{if(t%6<3)batdorn(180,GY+4,1,{t});else batdorn(200,GY-30+Math.sin(t*3)*8,.85,{fly:true,t})},
+  charlie:t=>{g.save();for(let k=0;k<3;k++){g.beginPath();g.arc(170,GY-90,40+k*22+((t*30)%22),0,7);g.strokeStyle=RAINBOW[(k+boil)%6];g.lineWidth=5;g.globalAlpha=.7;g.stroke()}g.restore();charlie(170,GY,1.15,{scope:true,t})},
+  dino:t=>{const y=-Math.abs(Math.sin(t*4))*30;dino(170,GY+y,2.6)},
+  bark:t=>{const b=Math.floor(t*2)%2===0;barkLady(190,GY,1.3,{run:true,t,bark:b});if(b)burst(80,60,34,'BARK!','#ffe14d',20,5)},
+  kitty:t=>{const y=-Math.abs(Math.sin(t*3.5))*60;stuffy('kitty',140,GY+y,t)},
+  pink:t=>{g.save();g.globalAlpha=.8;for(let k=1;k<4;k++)txt("purr",175-k*40,GY-70-Math.sin(t*6+k)*12,17,'#ff9ecb');g.restore();stuffy('pink',150,GY,t)},
+  pup:t=>{g.fillStyle='#fff';setSeed(boil*3);for(let k=1;k<6;k++){g.beginPath();g.arc(150-k*24,GY-8-rnd()*18,3+rnd()*4,0,7);g.fill()}stuffy('pup',160,GY,t)},
+  wolf:t=>{g.save();for(let k=0;k<3;k++){const r=30+((t*90+k*45)%135);g.beginPath();g.arc(230,GY-110,r*.8,-.7,.7);g.strokeStyle=RAINBOW[k*2];g.lineWidth=5;g.stroke()}g.restore();stuffy('wolf',130,GY+4,t)},
+};
+let last=performance.now();
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!reduce)time+=dt;boil=reduce?0:Math.floor(time*8);
+  for(const v of cvs){g=v.ctx;g.setTransform(DPR,0,0,DPR,0,0);ground();scenes[v.k](time)}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
