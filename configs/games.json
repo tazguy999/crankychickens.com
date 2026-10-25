@@ -1,11 +1,11 @@
 {
-  "_note": "Add new games here — they appear automatically in kids' pickers",
+  "_note": "Add new games here \u2014 they appear automatically in kids' pickers",
   "games": [
     {
       "slug": "cc7",
       "title": "We Know You're Here",
       "subtitle": "The Garden (beta fragment)",
-      "emoji": "🌼",
+      "emoji": "\ud83c\udf3c",
       "status": "active",
       "gameUrl": "/games/cc7.html",
       "configPath": "/configs/cc7.json",
@@ -13,32 +13,32 @@
         {
           "screenIndex": 0,
           "name": "The Garden Gate",
-          "emoji": "🌿"
+          "emoji": "\ud83c\udf3f"
         },
         {
           "screenIndex": 1,
           "name": "The Long Drop",
-          "emoji": "🪜"
+          "emoji": "\ud83e\ude9c"
         },
         {
           "screenIndex": 2,
           "name": "The Far Corner",
-          "emoji": "🌸"
+          "emoji": "\ud83c\udf38"
         },
         {
           "screenIndex": 3,
           "name": "The Quiet Bed",
-          "emoji": "🌺"
+          "emoji": "\ud83c\udf3a"
         },
         {
           "screenIndex": 4,
           "name": "The Climb",
-          "emoji": "🍃"
+          "emoji": "\ud83c\udf43"
         },
         {
           "screenIndex": 5,
           "name": "Where It Watches",
-          "emoji": "👁️"
+          "emoji": "\ud83d\udc41\ufe0f"
         }
       ]
     },
@@ -46,7 +46,7 @@
       "slug": "in-space",
       "title": "In Space",
       "subtitle": "Houston, We Have a Clucking Problem",
-      "emoji": "🚀",
+      "emoji": "\ud83d\ude80",
       "status": "active",
       "gameUrl": "/games/in-space.html",
       "configPath": "/configs/in-space.json",
@@ -54,22 +54,22 @@
         {
           "screenIndex": 0,
           "name": "Landing Zone",
-          "emoji": "🌕"
+          "emoji": "\ud83c\udf15"
         },
         {
           "screenIndex": 1,
           "name": "Crater Fields",
-          "emoji": "💥"
+          "emoji": "\ud83d\udca5"
         },
         {
           "screenIndex": 2,
           "name": "Moon Base",
-          "emoji": "🛸"
+          "emoji": "\ud83d\udef8"
         },
         {
           "screenIndex": 3,
           "name": "Harvester Core",
-          "emoji": "⚡"
+          "emoji": "\u26a1"
         }
       ]
     },
@@ -77,24 +77,24 @@
       "slug": "mortal-squawkbat",
       "title": "Mortal Squawkbat",
       "subtitle": "FINISH THE BIRD",
-      "emoji": "🥋",
+      "emoji": "\ud83e\udd4b",
       "status": "active",
       "gameUrl": "/games/mortal-squawkbat.html",
       "zones": [
         {
           "screenIndex": 0,
           "name": "Tournament Ladder",
-          "emoji": "⚔️"
+          "emoji": "\u2694\ufe0f"
         },
         {
           "screenIndex": 1,
           "name": "The Egg Pedestal",
-          "emoji": "🥚"
+          "emoji": "\ud83e\udd5a"
         },
         {
           "screenIndex": 2,
           "name": "El Jaguar's Ring",
-          "emoji": "🐆"
+          "emoji": "\ud83d\udc06"
         }
       ]
     },
@@ -102,24 +102,24 @@
       "slug": "mystery-island",
       "title": "Mystery Island",
       "subtitle": "The Island Knows Things",
-      "emoji": "🏝️",
+      "emoji": "\ud83c\udfdd\ufe0f",
       "status": "active",
       "gameUrl": "/games/mystery-island.html",
       "zones": [
         {
           "screenIndex": 0,
           "name": "The Beach",
-          "emoji": "🏖️"
+          "emoji": "\ud83c\udfd6\ufe0f"
         },
         {
           "screenIndex": 1,
           "name": "The Jungle",
-          "emoji": "🌿"
+          "emoji": "\ud83c\udf3f"
         },
         {
           "screenIndex": 2,
           "name": "The Ruins",
-          "emoji": "🗿"
+          "emoji": "\ud83d\uddff"
         }
       ]
     },
@@ -127,24 +127,24 @@
       "slug": "rescue-ranch",
       "title": "Rescue Ranch",
       "subtitle": "Aunt Barb Needs You",
-      "emoji": "🐴",
+      "emoji": "\ud83d\udc34",
       "status": "active",
       "gameUrl": "/games/rescue-ranch.html",
       "zones": [
         {
           "screenIndex": 0,
           "name": "The Barn",
-          "emoji": "🏚️"
+          "emoji": "\ud83c\udfda\ufe0f"
         },
         {
           "screenIndex": 1,
           "name": "The Pasture",
-          "emoji": "🌾"
+          "emoji": "\ud83c\udf3e"
         },
         {
           "screenIndex": 2,
           "name": "Barb's Porch",
-          "emoji": "🍋"
+          "emoji": "\ud83c\udf4b"
         }
       ]
     },
@@ -152,62 +152,102 @@
       "slug": "tulum-trouble",
       "title": "Tulum Trouble",
       "subtitle": "The One That Started It All",
-      "emoji": "🌴",
+      "emoji": "\ud83c\udf34",
       "status": "active",
       "gameUrl": "/games/tulum-trouble.html",
       "zones": [
         {
           "screenIndex": 0,
           "name": "Beach Zone",
-          "emoji": "🏖️"
+          "emoji": "\ud83c\udfd6\ufe0f"
         },
         {
           "screenIndex": 1,
           "name": "Jungle Zone",
-          "emoji": "🌿"
+          "emoji": "\ud83c\udf3f"
         },
         {
           "screenIndex": 2,
           "name": "Ruins Zone",
-          "emoji": "🛕"
+          "emoji": "\ud83d\uded5"
         }
       ]
     },
     {
       "slug": "jurassic-squawk",
       "title": "Jurassic Squawk",
-      "subtitle": "COMING SOON — your ideas shape it!",
-      "emoji": "🦖",
+      "subtitle": "COMING SOON \u2014 your ideas shape it!",
+      "emoji": "\ud83e\udd96",
       "status": "active",
       "zones": [
         {
           "screenIndex": 0,
           "name": "Raptor Coop",
-          "emoji": "🦕"
+          "emoji": "\ud83e\udd95"
         },
         {
           "screenIndex": 1,
           "name": "Amber Mine",
-          "emoji": "💎"
+          "emoji": "\ud83d\udc8e"
         }
       ]
     },
     {
       "slug": "medieval-molt",
       "title": "Medieval Molt",
-      "subtitle": "COMING SOON — your ideas shape it!",
-      "emoji": "🏰",
+      "subtitle": "COMING SOON \u2014 your ideas shape it!",
+      "emoji": "\ud83c\udff0",
       "status": "active",
       "zones": [
         {
           "screenIndex": 0,
           "name": "The Castle",
-          "emoji": "🏰"
+          "emoji": "\ud83c\udff0"
         },
         {
           "screenIndex": 1,
           "name": "The Moat",
-          "emoji": "🐊"
+          "emoji": "\ud83d\udc0a"
+        }
+      ]
+    },
+    {
+      "slug": "graydorns-world",
+      "title": "Graydorn's World",
+      "subtitle": "Graydorn & Batdorn open-world adventure",
+      "emoji": "\ud83e\udd95",
+      "status": "active",
+      "gameUrl": "/games/graydorns-world.html",
+      "zones": [
+        {
+          "screenIndex": 0,
+          "name": "Home (the neighborhood)",
+          "emoji": "\ud83c\udfe0"
+        },
+        {
+          "screenIndex": 1,
+          "name": "Snowy Street",
+          "emoji": "\u2744\ufe0f"
+        },
+        {
+          "screenIndex": 2,
+          "name": "The Park",
+          "emoji": "\ud83c\udf33"
+        },
+        {
+          "screenIndex": 3,
+          "name": "Spooky Side",
+          "emoji": "\ud83d\udc7b"
+        },
+        {
+          "screenIndex": 4,
+          "name": "Bark Fortress",
+          "emoji": "\ud83d\udc29"
+        },
+        {
+          "screenIndex": 5,
+          "name": "The Wild World (far from home)",
+          "emoji": "\ud83d\uddfa\ufe0f"
         }
       ]
     }
