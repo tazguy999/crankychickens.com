@@ -410,6 +410,27 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
+// ── MISSION CONTROL KEY ──
+// Writes to the repo require the MC_KEY set in Netlify. Ask once per browser session.
+(function(){
+  const KEY_NAME='mc_key';
+  function getKey(){
+    let k='';try{k=sessionStorage.getItem(KEY_NAME)||''}catch(e){}
+    if(!k){k=prompt('Mission Control key (set as MC_KEY in Netlify):')||'';try{sessionStorage.setItem(KEY_NAME,k)}catch(e){}}
+    return k;
+  }
+  const realFetch=window.fetch.bind(window);
+  window.fetch=function(url,opts){
+    if(typeof url==='string'&&url.includes('github-proxy')&&opts&&opts.body){
+      let action='';try{action=JSON.parse(opts.body).action}catch(e){}
+      if(['save_file','merge_to_main','push_send'].includes(action)){
+        opts=Object.assign({},opts,{headers:Object.assign({},opts.headers||{},{'X-MC-Key':getKey()})});
+      }
+    }
+    return realFetch(url,opts).then(r=>{if(r.status===401){try{sessionStorage.removeItem(KEY_NAME)}catch(e){};alert('Wrong Mission Control key. Reload and try again.')}return r});
+  };
+})();
+
 const PROXY='/.netlify/functions/github-proxy';
 
 async function notifyKids(){

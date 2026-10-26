@@ -18,6 +18,7 @@ const ALLOWED_ORIGINS = [
 const rateLimitMap = {};
 const RATE_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT = 20; // max requests per IP per minute
+const CLAUDE_RATE_LIMIT = 15; // claude_complete calls per IP per minute (costs money)
 
 function checkRateLimit(ip) {
   const now = Date.now();
@@ -104,8 +105,28 @@ exports.handler = async (event) => {
   const { action } = body;
   if (!action) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing action' }) };
 
+  // ── AUTH: anything that writes to the repo (other than the kids' submission
+  // queue) or sends push notifications requires the Mission Control key.
+  // Set MC_KEY in Netlify env vars; Mission Control asks for it once per session.
+  const PROTECTED = ['save_file', 'merge_to_main', 'push_send'];
+  if (PROTECTED.includes(action)) {
+    const MC_KEY = process.env.MC_KEY;
+    if (!MC_KEY) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: 'Server misconfigured — MC_KEY not set' }) };
+    const given = event.headers['x-mc-key'] || event.headers['X-MC-Key'] || '';
+    if (!given || !timingSafeEq(given, MC_KEY)) {
+      return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Mission Control key required' }) };
+    }
+  }
+  // Public writes may only touch the kids-preview branch.
+  if (action === 'save_submissions' && body.branch && body.branch !== BRANCH) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Branch not allowed' }) };
+  }
+
   // ── CLAUDE COMPLETE ──
   if (action === 'claude_complete') {
+    if ((rateLimitMap[ip] || []).length > CLAUDE_RATE_LIMIT) {
+      return { statusCode: 429, headers: CORS, body: JSON.stringify({ error: 'Too many AI requests. Take a breath!' }) };
+    }
     if (!ANTHROPIC_KEY) return err(CORS, 'Server misconfigured — missing ANTHROPIC_API_KEY');
     let { system, messages, max_tokens = 1000 } = body;
 
@@ -315,6 +336,12 @@ function isSafePath(p) {
 }
 
 // ── HELPERS ──
+function timingSafeEq(a, b) {
+  const crypto = require('crypto');
+  const ba = Buffer.from(String(a)), bb = Buffer.from(String(b));
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
 async function ghFetch(path, token, method = 'GET', body) {
   const opts = {
     method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
