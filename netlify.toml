@@ -22,6 +22,12 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
+# Mission Control — never cache, so security updates land immediately
+[[headers]]
+  for = "/mission-control.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
 # Security headers (site-wide)
 [[headers]]
   for = "/*"
