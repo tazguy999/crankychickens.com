@@ -1,5 +1,20 @@
 [
   {
+    "id": 1792974513541,
+    "timestamp": "2026-10-26T00:28:33.541Z",
+    "submissionId": 1792888801600,
+    "kidName": "Cannon Master",
+    "contribType": "drawing",
+    "asked": "A cranky chicken gets launched from a cannon straight into a giant, colorful tangled mess that explodes into a crazy swirl of chaos!",
+    "askedName": "A cranky chicken gets launched from a cannon straight into a",
+    "targetGame": "Mystery Island",
+    "targetZone": "The Jungle",
+    "delivered": "Artwork \"A cranky chicken gets launched from a cannon straight into a\" saved to shows/art-gallery.json",
+    "deliveryType": "artwork_saved",
+    "issues": [],
+    "commitSha": "art-gallery"
+  },
+  {
     "id": 1786800169934,
     "timestamp": "2026-08-15T13:22:49.934Z",
     "submissionId": 1786800094245,
