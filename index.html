@@ -25,6 +25,22 @@ body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hi
   margin-top:8px;letter-spacing:1px;}
 .hero-fine{font-size:10px;color:rgba(255,255,255,0.4);margin-top:16px;font-style:italic;text-align:center;padding:0 20px;line-height:1.7;}
 
+
+/* ── HERO CTA + MERCH ── */
+.hero-cta{text-align:center;padding:14px 16px 6px;}
+.hero-btn{font-family:'Fredoka One',cursive;font-size:clamp(13px,3.2vw,17px);text-decoration:none;margin:4px 6px;padding:11px 22px;}
+.hero-btn.alt{background:#1a0a2e;color:#ffcc02;border:2px solid #ffcc02;}
+.hero-btn.alt:hover{background:#ffcc02;color:#1a0a2e;}
+.hero-ethos{font-size:12px;color:rgba(255,255,255,0.5);font-style:italic;margin-top:8px;}
+.merch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;}
+.merch-card{display:block;background:#120820;border:2px solid rgba(255,204,2,0.2);border-radius:4px;overflow:hidden;text-decoration:none;color:#fff;transition:border-color .3s,transform .2s;}
+.merch-card:hover{border-color:#ffcc02;transform:translateY(-3px);}
+.merch-card img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#1a1a2e;}
+.merch-body{padding:16px 18px 20px;}
+.merch-name{font-family:'Fredoka One',cursive;font-size:20px;color:#ffcc02;letter-spacing:1px;}
+.merch-line{font-size:13px;color:rgba(255,255,255,0.8);margin:6px 0 8px;line-height:1.5;}
+.merch-meta{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+
 /* ── MARQUEE ── */
 .marquee{background:#ffcc02;color:#1a0a2e;font-family:'Fredoka One',cursive;font-size:13px;
   letter-spacing:5px;overflow:hidden;white-space:nowrap;padding:6px 0;}
@@ -128,6 +144,9 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
   <a href="/games/" style="font-family:'Fredoka One',cursive;font-size:clamp(11px,3vw,15px);
     background:#1a0a2e;border:2px solid #ffcc02;color:#ffcc02;padding:4px 14px;
     text-decoration:none;letter-spacing:1px;border-radius:3px;white-space:nowrap;">▶ PLAY</a>
+  <a data-shop href="https://crankychickens-shop.fourthwall.com/" target="_blank" rel="noopener" style="font-family:'Fredoka One',cursive;font-size:clamp(11px,3vw,15px);
+    background:#ffcc02;border:2px solid #ffcc02;color:#1a0a2e;padding:4px 14px;
+    text-decoration:none;letter-spacing:1px;border-radius:3px;white-space:nowrap;">👕 SHOP</a>
   <div class="stats">
     <button id="musicBtn" onclick="toggleMusic()" style="
       font-family:'Fredoka One',cursive;font-size:clamp(12px,3vw,15px);
@@ -143,12 +162,94 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
   <canvas id="heroCanvas" width="640" height="280"></canvas>
   <div class="hero-overlay">
     <div class="hero-title">CRANKY<br>CHICKENS</div>
-    <div class="hero-sub">THE FRANCHISE CONTINUES 🐔</div>
+    <div class="hero-sub">CARTOONS &amp; GAMES BUILT BY ONE DAD AND TWO KIDS 🐔</div>
     <div class="hero-fine">The following previews have been approved for ALL AUDIENCES by the Motion Poultry Rating Board.<br>No actual chickens were harmed. Several were mildly inconvenienced.</div>
   </div>
 </div>
+<div class="hero-cta">
+  <a href="/shows/episode-8.html" class="wishlist hero-btn">▶ WATCH THE NEW EPISODE</a>
+  <a data-shop href="https://crankychickens-shop.fourthwall.com/" target="_blank" rel="noopener" class="wishlist hero-btn alt">👕 GET THE SHIRT</a>
+  <div class="hero-ethos">Free to watch. Free to play. Shirts are how we keep the lights on in the coop.</div>
+</div>
 
-<div class="marquee"><span>🐔 PLAY NOW: GRAYDORN'S WORLD (NEW!) · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE · WE KNOW YOU'RE HERE (BETA) &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: IN SPACE · JURASSIC SQUAWK · AUNT BARB'S RESCUE RANCH · MEDIEVAL MOLT · CORPORATE RETREAT · THE COOKING SHOW · RETIREMENT COMMUNITY · HUMAN RESOURCES &nbsp;&nbsp;&nbsp;&nbsp; 🎬 META: DIRECTOR'S CUT · THE MOVIE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: GRAYDORN'S WORLD (NEW!) · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE · WE KNOW YOU'RE HERE (BETA) &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+<div class="marquee"><span>🎃 NEW EPISODE: THE LONGEST LINE &nbsp;&nbsp;&nbsp;&nbsp; 👕 SHIRTS: HOLLOWBEAK DMV · GOLDEN UNICORNS VARSITY &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: GRAYDORN'S WORLD (NEW!) · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE · WE KNOW YOU'RE HERE (BETA) &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: IN SPACE · JURASSIC SQUAWK · AUNT BARB'S RESCUE RANCH · MEDIEVAL MOLT · CORPORATE RETREAT · THE COOKING SHOW · RETIREMENT COMMUNITY · HUMAN RESOURCES &nbsp;&nbsp;&nbsp;&nbsp; 🎬 META: DIRECTOR'S CUT · THE MOVIE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: GRAYDORN'S WORLD (NEW!) · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE · WE KNOW YOU'RE HERE (BETA) &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+
+<!-- ── NOW STREAMING (the show) ── -->
+<section class="trailers" id="watch" style="padding-bottom:8px;">
+  <h2 class="section-hdr">📺 NOW STREAMING</h2>
+  <p class="section-note">Start here. Five minutes. Then decide if you like us.</p>
+  <!-- SHOW: THE ADVENTURES OF CRANKY CHICKENS -->
+  <div class="card" data-tag="NEW EPISODE 🎃" id="cardTOON">
+    <div class="screen-wrap">
+      <canvas class="screen-canvas" id="c13" width="640" height="200"></canvas>
+      <div class="screen-tag">THE FARM — TUESDAY — CORN COUNT IN PROGRESS</div>
+      <button class="play-hint" onclick="playTrailer('toon')"><span>▶ WATCH TRAILER</span></button>
+    </div>
+    <div class="card-body">
+      <div class="game-num">THE ANIMATED SERIES</div>
+      <div class="game-title">THE ADVENTURES OF CRANKY CHICKENS</div>
+      <div class="game-sub">8 episodes · Latest: Ep 8 "The Longest Line" (Halloween) · Ep 7 "The Longest Wait" (Brewers)</div>
+      <p class="game-desc">The corn is gone. All 47 pieces. Including the lucky one. A note has been left, signed with initials, because drama requires a signature. Now one profoundly cranky chicken, one relentlessly optimistic hen, and one recently deputized dog must cross the beach, the jungle, and the ruins to confront the thief in his lair — and discover that the real crime was the Tuesdays nobody shared along the way.<br><br>
+      <strong style="color:#ffcc02">Eight episodes, zero ads, zero sign-ups.</strong> Every story starts as a kid's idea. With dialogue, a narrator who takes personal offense, an official Cranky Meter™, a formal grievance (Form 7-B, filed), and a juice box resolution. Watch it right here. No subscription. The shoebox is the subscription.</p>
+      <div class="quotes">
+        <div class="quote">"I have never related to anyone more in my entire life."<span>— SCRATCHY, upon hearing the villain's motive</span></div>
+        <div class="quote">"The rope is symbolic."<span>— REGINALD, CHECKPOINT IGUANA #1</span></div>
+      </div>
+      <div class="tags">
+        <span class="tag">📺 15-MINUTE PILOT EPISODE</span>
+        <span class="tag">🌽 47 PIECES (46 RECOVERED)</span>
+        <span class="tag">📋 GRIEVANCE: FILED</span>
+        <span class="tag">🥤 JUICE BOX DIPLOMACY</span>
+      </div>
+      <div class="rating-row">
+        <div class="esrb">E</div>
+        <div class="rating-txt">Mild Cartoon Crankiness · Corn-Based Drama · One Nervous-Eaten Kernel<br>Symbolic Ropes · A Narrator With Feelings · Wisconsin (Mentioned)</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="/shows/episode-8.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ff9a3c;border-color:#ff9a3c;color:#2a0f00;font-family:inherit;font-size:inherit;">🎃 EP 8 — THE LONGEST LINE (NEW)</a>
+        <a href="/shows/episode-7.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffc52f;border-color:#ffc52f;color:#13294b;font-family:inherit;font-size:inherit;">⚾ EP 7 — THE LONGEST WAIT</a>
+        <a href="/shows/adventures-pilot.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffcc02;border-color:#ffcc02;color:#1a0a2e;font-family:inherit;font-size:inherit;">▶ EPISODE 1</a>
+        <a href="/shows/episode-2.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#88ff88;border-color:#88ff88;color:#0a2e0a;font-family:inherit;font-size:inherit;">▶ EPISODE 2</a>
+        <a href="/shows/episode-3.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#8fd4ff;border-color:#8fd4ff;color:#062a3a;font-family:inherit;font-size:inherit;">▶ EPISODE 3</a>
+        <a href="/shows/episode-4.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ff9ab8;border-color:#ff9ab8;color:#3a0a1a;font-family:inherit;font-size:inherit;">▶ EPISODE 4</a>
+        <a href="/shows/episode-5.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffd28f;border-color:#ffd28f;color:#3a2200;font-family:inherit;font-size:inherit;">▶ EPISODE 5</a>
+        <a href="/shows/episode-6.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#9fe8c8;border-color:#9fe8c8;color:#04301f;font-family:inherit;font-size:inherit;">▶ EPISODE 6</a>
+        <a href="/shows/scratchy-house-tour.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#cfc3ab;border-color:#cfc3ab;color:#241c10;font-family:inherit;font-size:inherit;">🏛 SOLACE COOP — ARCHVIZ</a>
+        <button class="wishlist" onclick="cluck('📺 EPISODE QUEUED')">+ WATCHLIST</button>
+        <button class="wishlist" style="background:transparent;border-color:rgba(255,100,50,0.5);color:#ff6633;" onclick="shareCard('cardTOON','The Adventures of Cranky Chickens')">🔗 SHARE</button>
+      </div>
+      <div id="ccSupport"></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ── THE MERCH TABLE ── -->
+<section class="trailers" id="merch" style="padding-top:0;">
+  <h2 class="section-hdr">👕 THE MERCH TABLE</h2>
+  <p class="section-note">Two shirts. Printed when you order them. Every one keeps the coop running (and the kids' idea pipeline funded).<br>Grown-ups only past this point. The chickens do not have credit cards.</p>
+  <div class="merch-grid">
+    <a class="merch-card" data-shop href="https://crankychickens-shop.fourthwall.com/products/hollowbeak-dmv" target="_blank" rel="noopener">
+      <img src="https://cdn.fourthwall.com/customizations/sh_8e4d4588-b3e4-4d07-b0a9-c68f8f6eea02/6f872631-b444-47ac-ade1-545646dd468b.webp" alt="Black t-shirt: Just another 23 years... almost there. The Hollowbeak at the Farm DMV." loading="lazy">
+      <div class="merch-body">
+        <div class="merch-name">HOLLOWBEAK DMV</div>
+        <div class="merch-line">"Just another 23 years… almost there."</div>
+        <div class="merch-meta">Black tee · $28 · back print: crankychickens.com</div>
+        <span class="wishlist">GET THE OWL →</span>
+      </div>
+    </a>
+    <a class="merch-card" data-shop href="https://crankychickens-shop.fourthwall.com/products/beat-em-gu" target="_blank" rel="noopener">
+      <img src="https://cdn.fourthwall.com/customizations/sh_8e4d4588-b3e4-4d07-b0a9-c68f8f6eea02/567f10f5-bc4b-4291-9250-605e0f04617f.webp" alt="Purple t-shirt: Golden Unicorns varsity crest, Beat 'Em G.U." loading="lazy">
+      <div class="merch-body">
+        <div class="merch-name">GOLDEN UNICORNS VARSITY</div>
+        <div class="merch-line">It's from his old high school team. It's definitely just a nickname. Probably.</div>
+        <div class="merch-meta">Heather purple · $28 · jersey back: HOLLOWBEAK 23</div>
+        <span class="wishlist">GET THE JERSEY →</span>
+      </div>
+    </a>
+  </div>
+  <p class="section-note" style="margin-top:18px;margin-bottom:0;">Prefer to just throw corn at us? There's a tip jar at the <a data-shop href="https://crankychickens-shop.fourthwall.com/" target="_blank" rel="noopener" style="color:#ffcc02;">shop</a>. Scratchy says thank you. Grudgingly.</p>
+</section>
 
 <!-- ── PLAYABLE GAMES ── -->
 <section class="trailers">
@@ -498,50 +599,6 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     </div>
   </div>
 
-
-  <!-- SHOW: THE ADVENTURES OF CRANKY CHICKENS -->
-  <div class="card" data-tag="NOW STREAMING™" id="cardTOON">
-    <div class="screen-wrap">
-      <canvas class="screen-canvas" id="c13" width="640" height="200"></canvas>
-      <div class="screen-tag">THE FARM — TUESDAY — CORN COUNT IN PROGRESS</div>
-      <button class="play-hint" onclick="playTrailer('toon')"><span>▶ WATCH TRAILER</span></button>
-    </div>
-    <div class="card-body">
-      <div class="game-num">THE ANIMATED SERIES</div>
-      <div class="game-title">THE ADVENTURES OF CRANKY CHICKENS</div>
-      <div class="game-sub">Ep 1–4 · Ep 5: "A Knight to Remember" — story by Cannon Master, age 8</div>
-      <p class="game-desc">The corn is gone. All 47 pieces. Including the lucky one. A note has been left, signed with initials, because drama requires a signature. Now one profoundly cranky chicken, one relentlessly optimistic hen, and one recently deputized dog must cross the beach, the jungle, and the ruins to confront the thief in his lair — and discover that the real crime was the Tuesdays nobody shared along the way.<br><br>
-      <strong style="color:#ffcc02">A full 15-minute animated pilot.</strong> With dialogue, a narrator who takes personal offense, an official Cranky Meter™, a formal grievance (Form 7-B, filed), and a juice box resolution. Watch it right here. No subscription. The shoebox is the subscription.</p>
-      <div class="quotes">
-        <div class="quote">"I have never related to anyone more in my entire life."<span>— SCRATCHY, upon hearing the villain's motive</span></div>
-        <div class="quote">"The rope is symbolic."<span>— REGINALD, CHECKPOINT IGUANA #1</span></div>
-      </div>
-      <div class="tags">
-        <span class="tag">📺 15-MINUTE PILOT EPISODE</span>
-        <span class="tag">🌽 47 PIECES (46 RECOVERED)</span>
-        <span class="tag">📋 GRIEVANCE: FILED</span>
-        <span class="tag">🥤 JUICE BOX DIPLOMACY</span>
-      </div>
-      <div class="rating-row">
-        <div class="esrb">E</div>
-        <div class="rating-txt">Mild Cartoon Crankiness · Corn-Based Drama · One Nervous-Eaten Kernel<br>Symbolic Ropes · A Narrator With Feelings · Wisconsin (Mentioned)</div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <a href="/shows/adventures-pilot.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffcc02;border-color:#ffcc02;color:#1a0a2e;font-family:inherit;font-size:inherit;">▶ EPISODE 1</a>
-        <a href="/shows/episode-2.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#88ff88;border-color:#88ff88;color:#0a2e0a;font-family:inherit;font-size:inherit;">▶ EPISODE 2</a>
-        <a href="/shows/episode-3.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#8fd4ff;border-color:#8fd4ff;color:#062a3a;font-family:inherit;font-size:inherit;">▶ EPISODE 3</a>
-        <a href="/shows/episode-4.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ff9ab8;border-color:#ff9ab8;color:#3a0a1a;font-family:inherit;font-size:inherit;">▶ EPISODE 4</a>
-        <a href="/shows/episode-5.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffd28f;border-color:#ffd28f;color:#3a2200;font-family:inherit;font-size:inherit;">▶ EPISODE 5</a>
-        <a href="/shows/episode-6.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#9fe8c8;border-color:#9fe8c8;color:#04301f;font-family:inherit;font-size:inherit;">▶ EPISODE 6</a>
-        <a href="/shows/episode-7.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffc52f;border-color:#ffc52f;color:#13294b;font-family:inherit;font-size:inherit;">⚾ EPISODE 7</a>
-        <a href="/shows/episode-8.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ff9a3c;border-color:#ff9a3c;color:#2a0f00;font-family:inherit;font-size:inherit;">🎃 EPISODE 8 — NEW!</a>
-        <a href="/shows/scratchy-house-tour.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#cfc3ab;border-color:#cfc3ab;color:#241c10;font-family:inherit;font-size:inherit;">🏛 SOLACE COOP — ARCHVIZ</a>
-        <button class="wishlist" onclick="cluck('📺 EPISODE QUEUED')">+ WATCHLIST</button>
-        <button class="wishlist" style="background:transparent;border-color:rgba(255,100,50,0.5);color:#ff6633;" onclick="shareCard('cardTOON','The Adventures of Cranky Chickens')">🔗 SHARE</button>
-      </div>
-      <div id="ccSupport"></div>
-    </div>
-  </div>
 
   <!-- GAME 13: CARMEN SANDIEGGO -->
   <div class="card" data-tag="COMING SOON™" id="cardCSD">

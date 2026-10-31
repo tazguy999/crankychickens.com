@@ -31,5 +31,12 @@
     if(merch)h+='<a href="'+merch+'" target="_blank" rel="noopener" style="'+css+'#c79bff;background:rgba(176,108,255,0.14);color:#d8bcff;">'+(cfg.merchLabel||'👕 Merch')+'</a>';
     host.innerHTML=h+'</div>';
   }
-  fetch('/configs/support.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():{};}).then(render).catch(function(){});
+  function decorate(cfg){
+    var merch=safe(cfg.merchUrl);if(!merch)return;
+    var base=merch.replace(/\/$/,'');
+    document.querySelectorAll('a[data-shop]').forEach(function(a){
+      try{var cur=new URL(a.getAttribute('href'),location.href);var path=cur.pathname==='/'?'/':cur.pathname;a.href=withUtm(base+path);}catch(e){a.href=withUtm(merch);}
+    });
+  }
+  fetch('/configs/support.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():{};}).then(function(cfg){render(cfg);decorate(cfg);}).catch(function(){});
 })();
