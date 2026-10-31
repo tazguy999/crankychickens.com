@@ -2,8 +2,25 @@
 // Reads /configs/support.json. Renders nothing until a link is filled in.
 (function(){
   function safe(u){return typeof u==='string'&&/^https:\/\//.test(u)?u:'';}
+  // Campaign tracking: remember utm_* from the first page visited, carry it to the shop link.
+  var UTM_KEY='cc_utm';
+  function readUtm(){
+    try{
+      var q=new URLSearchParams(location.search),found={};
+      q.forEach(function(v,k){if(/^utm_/.test(k)&&/^[\w.-]{1,64}$/.test(v))found[k]=v;});
+      if(Object.keys(found).length){localStorage.setItem(UTM_KEY,JSON.stringify({t:Date.now(),p:found}));return found;}
+      var s=JSON.parse(localStorage.getItem(UTM_KEY)||'null');
+      if(s&&Date.now()-s.t<30*864e5)return s.p;   // remember for 30 days
+    }catch(e){}
+    return null;
+  }
+  function withUtm(u){
+    var p=readUtm();if(!p)return u;
+    try{var url=new URL(u);Object.keys(p).forEach(function(k){url.searchParams.set(k,p[k]);});return url.toString();}catch(e){return u;}
+  }
   function render(cfg){
     var tip=safe(cfg.tipUrl),merch=safe(cfg.merchUrl);
+    if(merch)merch=withUtm(merch);
     if(!tip&&!merch)return;
     var host=document.getElementById('ccSupport');
     if(!host){var home=document.getElementById('homeLink');if(!home)return;host=document.createElement('div');host.id='ccSupport';home.parentNode.insertBefore(host,home);}

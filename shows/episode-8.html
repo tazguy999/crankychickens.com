@@ -827,7 +827,25 @@ const SCENES=[
     {t:27,who:'NARRATOR',text:'Go Golden Unicorns.',d:5},
    ]},
 ];
-const SC=[{dur:14,fx:fxTitleHollow,music:'spooky'},...SCENES,{dur:36,fx:fxCreditsHollow,music:'theme'}];
+function fxShopCard(lt){
+  ctx.fillStyle='#120a1c';ctx.fillRect(0,0,W,H);drawStars(0.6);
+  ctx.fillStyle='#ffb347';ctx.globalAlpha=0.9;ctx.beginPath();ctx.arc(520,80,34,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const a=Math.min(1,lt/1.2);ctx.globalAlpha=a;ctx.textAlign='center';
+  ctx.fillStyle='rgba(230,210,255,0.85)';ctx.font=`bold 14px ${FF}`;ctx.fillText('ONE MORE THING FROM THE HOLLOWBEAK',W/2,70);
+  ctx.fillStyle='#ffcc02';ctx.font=`bold 26px ${FF}`;ctx.fillText('GO GOLDEN UNICORNS.',W/2,112);
+  ctx.fillStyle='#fff';ctx.font=`15px ${FF}`;
+  if(lt>1.5)ctx.fillText('The Hollowbeak jersey and the DMV shirt are real.',W/2,150);
+  if(lt>3)ctx.fillText('Grown-ups: shop.crankychickens.com',W/2,178);
+  if(lt>4.5){
+    ctx.fillStyle='#1d3a7a';ctx.beginPath();ctx.roundRect(W/2-120,200,240,46,8);ctx.fill();ctx.strokeStyle='#cfd8ea';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font=`bold 20px ${FF}`;ctx.fillText('CODE: FLOCK',W/2,231);
+    ctx.fillStyle='#88ff88';ctx.font=`13px ${FF}`;ctx.fillText('$5 off a shirt. The Hollowbeak sent you.',W/2,268);
+  }
+  ctx.globalAlpha=1;ctx.textAlign='left';
+  dHollow(W/2+110,370,fr_g,-1,lt>1&&lt<4);dChicken(W/2-90,370,fr_g,1,false);
+  if(lt>4.5)sfxOnce('pop',4.6,lt);
+}
+const SC=[{dur:14,fx:fxTitleHollow,music:'spooky'},...SCENES,{dur:36,fx:fxCreditsHollow,music:'theme'},{dur:16,fx:fxShopCard,music:'heart'}];
 
 let acc=0;SC.forEach(s=>{s.start=acc;acc+=s.dur;});
 const TOTAL=acc;
