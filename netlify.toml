@@ -42,3 +42,8 @@
   for = "/brand/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/merch/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
