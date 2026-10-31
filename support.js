@@ -30,11 +30,13 @@
     if(tip)h+='<a href="'+tip+'" target="_blank" rel="noopener" style="'+css+'#ffcc02;background:rgba(255,204,2,0.14);color:#ffcc02;">'+(cfg.tipLabel||'🌽 Feed the Chickens')+'</a>';
     if(merch)h+='<a href="'+merch+'" target="_blank" rel="noopener" style="'+css+'#c79bff;background:rgba(176,108,255,0.14);color:#d8bcff;">'+(cfg.merchLabel||'👕 Merch')+'</a>';
     host.innerHTML=h+'</div>';
+    host.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){try{window.gtag&&gtag('event','shop_click',{link_text:(a.textContent||'').trim().slice(0,40),page:location.pathname});}catch(e){}});});
   }
   function decorate(cfg){
     var merch=safe(cfg.merchUrl);if(!merch)return;
     var base=merch.replace(/\/$/,'');
-    document.querySelectorAll('a[data-shop]').forEach(function(a){
+    function track(a){a.addEventListener('click',function(){try{window.gtag&&gtag('event','shop_click',{link_text:(a.textContent||'').trim().slice(0,40),page:location.pathname});}catch(e){}});}
+    document.querySelectorAll('a[data-shop]').forEach(function(a){track(a);
       try{var cur=new URL(a.getAttribute('href'),location.href);var path=cur.pathname==='/'?'/':cur.pathname;a.href=withUtm(base+path);}catch(e){a.href=withUtm(merch);}
     });
   }
