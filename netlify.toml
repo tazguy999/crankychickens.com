@@ -36,3 +36,9 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Brand assets — allow cross-origin fetch (used by the merch shop)
+[[headers]]
+  for = "/brand/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
