@@ -248,6 +248,11 @@
           "screenIndex": 5,
           "name": "The Wild World (far from home)",
           "emoji": "\ud83d\uddfa\ufe0f"
+        },
+        {
+          "screenIndex": 6,
+          "name": "Crankytown (the chickens' coop)",
+          "emoji": "\ud83d\udc14"
         }
       ]
     }
