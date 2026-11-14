@@ -24,48 +24,89 @@
     font-family:"Arial Narrow","Helvetica Neue",Impact,sans-serif;
     -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   #shell{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:8px}
-  #frame{position:relative;line-height:0}
-  canvas{display:block;image-rendering:pixelated;border:2px solid var(--pink-dim);
-    border-radius:4px;box-shadow:0 0 40px rgba(255,59,107,.18);max-width:100%;height:auto}
+  /* The picture is drawn on a 640-wide canvas and stretched to fit. Everything
+     laid over it (HUD, toast, captions) is sized in cqw, a fraction of the
+     picture's width, so the words keep the same place and proportion at every
+     screen size. 1 canvas pixel = 0.15625cqw. Lay text out once, at 640. */
+  #frame{position:relative;line-height:0;container-type:inline-size;--room:96px;
+    width:min(100vw - 16px, (100vh - var(--room)) * 1.6667, 1120px);
+    width:min(100vw - 16px, (100dvh - var(--room)) * 1.6667, 1120px)}
+  canvas{display:block;image-rendering:pixelated;border:2px solid var(--pink-dim);box-sizing:border-box;
+    border-radius:4px;box-shadow:0 0 40px rgba(255,59,107,.18);width:100%;height:auto}
+  @media (hover:none), (pointer:coarse){ #frame{--room:216px} }
 
-  #hud{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;
+  #hud{position:absolute;top:1.25cqw;left:1.56cqw;right:1.56cqw;display:flex;justify-content:space-between;
     align-items:flex-start;pointer-events:none;line-height:1.2}
-  .tag{font-size:13px;font-weight:700;letter-spacing:.16em;color:var(--pink);
+  .tag{font-size:max(9px,2.03cqw);font-weight:700;letter-spacing:.16em;color:var(--pink);white-space:nowrap;
     text-transform:uppercase;text-shadow:0 0 10px rgba(255,59,107,.5)}
-  .tag small{display:block;font-size:10px;letter-spacing:.22em;color:#8a6ea8;margin-top:3px}
-  #petals{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--ember);
+  .tag small{display:block;font-size:max(8px,1.56cqw);letter-spacing:.22em;color:#8a6ea8;margin-top:.45cqw}
+  #petals{font-size:max(9px,2.03cqw);font-weight:700;letter-spacing:.14em;color:var(--ember);white-space:nowrap;
     text-shadow:0 0 10px rgba(255,138,61,.5)}
 
-  #toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
-    font-size:15px;font-weight:700;letter-spacing:.2em;color:var(--bone);text-transform:uppercase;
+  #toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:92%;
+    font-size:max(10px,2.34cqw);line-height:1.3;font-weight:700;letter-spacing:.2em;color:var(--bone);text-transform:uppercase;
     opacity:0;transition:opacity .5s;pointer-events:none;text-align:center;text-shadow:0 0 16px #000}
 
-  /* Subtitles: every spoken line is always readable. Voice is never the only channel. */
-  #sub{position:absolute;left:0;right:0;bottom:10px;padding:0 16px;text-align:center;
+  /* Subtitles: every spoken line is always readable. Voice is never the only channel.
+     They own the bottom strip of the picture (below y=300 of 384); nothing the
+     canvas draws as text goes there while a caption can be up. */
+  #sub{position:absolute;left:0;right:0;bottom:1.56cqw;padding:0 2.5cqw;text-align:center;
     pointer-events:none;opacity:0;transition:opacity .35s}
-  #sub .who{display:block;font-size:10px;font-weight:700;letter-spacing:.24em;
-    color:var(--ember);text-transform:uppercase;margin-bottom:4px}
-  #sub .said{display:inline-block;font-size:15px;line-height:1.35;color:var(--bone);
-    background:rgba(6,3,12,.86);border-left:3px solid var(--pink);padding:6px 12px;border-radius:3px}
+  #sub .who{display:block;font-size:max(8px,1.56cqw);line-height:1.2;font-weight:700;letter-spacing:.24em;
+    color:var(--ember);text-transform:uppercase;margin-bottom:.6cqw}
+  #sub .said{display:inline-block;font-size:max(11px,2.34cqw);line-height:1.35;color:var(--bone);
+    background:rgba(6,3,12,.86);border-left:3px solid var(--pink);padding:.9cqw 1.9cqw;border-radius:3px}
   #sub.game .who{color:#8a6ea8}
   #sub.game .said{border-left-color:#8a6ea8;color:#cdbcda}
 
-  #voiceBtn{position:absolute;top:8px;left:50%;transform:translateX(-50%);
-    font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--pink);
+  #toggles{display:flex;gap:8px;align-items:center}
+  #toggles button{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--pink);
     background:rgba(6,3,12,.7);border:1px solid var(--pink-dim);border-radius:4px;
     padding:4px 9px;cursor:pointer;font-family:inherit}
-  #voiceBtn.off{color:#6b5484;border-color:#3a2b4d}
+  #toggles button.off{color:#6b5484;border-color:#3a2b4d}
 
-  #pad{display:flex;gap:10px;align-items:center}
-  .btn{width:74px;height:56px;border:2px solid var(--pink-dim);border-radius:8px;
+  #pad{display:flex;gap:24px;align-items:flex-end;justify-content:space-between;width:min(560px,100%)}
+  #dpad{display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:46px 46px;gap:6px}
+  #dpad .up{grid-column:2;grid-row:1}
+  #dpad .lf{grid-column:1;grid-row:2}
+  #dpad .dn{grid-column:2;grid-row:2}
+  #dpad .rt{grid-column:3;grid-row:2}
+  .btn{border:2px solid var(--pink-dim);border-radius:8px;
     background:rgba(255,59,107,.07);color:var(--pink);font-size:20px;font-weight:700;
     display:flex;align-items:center;justify-content:center;touch-action:none;cursor:pointer}
   .btn:active,.btn.on{background:rgba(255,59,107,.28);color:var(--bone)}
-  .btn.jump{width:104px}
+  .btn.jump{width:112px;height:98px;border-radius:50%;font-size:30px}
   #hint{font-size:11px;letter-spacing:.18em;color:#6b5484;text-transform:uppercase;text-align:center}
   @media (hover:hover) and (pointer:fine){#pad{display:none}}
   @media (prefers-reduced-motion:reduce){#toast{transition:none}}
   .btn:focus-visible,canvas:focus-visible{outline:2px solid var(--bone);outline-offset:3px}
+  /* Phone held sideways: the picture gets the whole height, the pad floats over its
+     bottom corners, and captions are squeezed in between the two halves of the pad. */
+  @media (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+    #frame{--room:12px;
+      width:min(100vw - 84px, (100vh - 12px) * 1.6667);
+      width:min(100vw - 84px, (100dvh - 12px) * 1.6667)}
+    #pad{position:fixed;left:8px;right:8px;bottom:10px;width:auto;opacity:.82;pointer-events:none}
+    #pad > *{pointer-events:auto}
+    #dpad{grid-template-columns:repeat(3,52px)}
+    .btn.jump{width:96px;height:96px}
+    #toggles{position:fixed;top:6px;left:4px;flex-direction:column;gap:6px;opacity:.85}
+    #toggles button{font-size:0;letter-spacing:0;padding:0;width:30px;height:30px}
+    #voiceBtn::before{content:'🗣';font-size:15px}
+    #sfxBtn::before{content:'♪';font-size:16px}
+    #sub{padding-left:max(2.5cqw, calc(190px - (100vw - 100cqw) / 2));
+         padding-right:max(2.5cqw, calc(122px - (100vw - 100cqw) / 2))}
+    #hint{display:none}
+  }
+  /* Narrow phone held upright: the picture is too small to carry captions,
+     and there is room under it, so they go there. */
+  @media (max-width:500px){
+    #frame{margin-bottom:96px}
+    #sub{bottom:auto;top:calc(100% + 6px);padding:0 4px}
+    #sub .said{font-size:13px;padding:5px 9px}
+    #sub .who{font-size:9px}
+    .tag small{display:none}          /* one HUD line; the second would sit on the play field */
+  }
 </style>
 </head>
 <body>
@@ -77,22 +118,31 @@
       <div id="petals">✿ 0 / 12</div>
     </div>
     <div id="toast"></div>
-    <button id="voiceBtn" aria-pressed="true">🗣 VOICES: ON</button>
     <div id="sub" aria-live="polite"><span class="who"></span><span class="said"></span></div>
   </div>
-  <div id="pad">
-    <div class="btn" data-k="left">◀</div>
-    <div class="btn" data-k="right">▶</div>
-    <div class="btn jump" data-k="jump">JUMP</div>
+  <div id="toggles">
+    <button id="voiceBtn" aria-pressed="true">🗣 VOICES: ON</button>
+    <button id="sfxBtn" aria-pressed="true">♪ SOUND: ON</button>
   </div>
-  <div id="hint">Arrows or A / D to move · Space to jump · R to restart screen</div>
+  <div id="pad">
+    <div id="dpad">
+      <div class="btn up" data-k="up" aria-label="Up">▲</div>
+      <div class="btn lf" data-k="left" aria-label="Left">◀</div>
+      <div class="btn dn" data-k="down" aria-label="Down">▼</div>
+      <div class="btn rt" data-k="right" aria-label="Right">▶</div>
+    </div>
+    <div class="btn jump" data-k="jump" aria-label="A button: jump or fire">A</div>
+  </div>
+  <div id="hint">Arrows / WASD move · Space = A (jump, fire) · ▼ at a cabinet to play · Esc walks away</div>
 </div>
 
 <script>
 "use strict";
 /* ============================================================
    CRANKY CHICKENS VII — "We Know You're Here"
-   LAYER 1 of 7: The Game Underneath.
+   LAYER 1: The Game Underneath (the garden — the original beta).
+   LAYER 2: The Takeover (the cast builds an arcade inside it).
+            Search for "LAYER 2" below.
 
    Deliberate seams for the meta layers that come later:
      Input.driver  -> swap 'human' to 'chickens' for The Handoff
@@ -125,7 +175,13 @@ const Save = {
       playMs: 0,
       quitScreen: null,      // where you were when you last vanished
       voices: true,          // survives sessions
-      spoken: []             // line ids already used — the Chorus never repeats itself
+      spoken: [],            // line ids already used — the Chorus never repeats itself
+      takeover: false,       // the cast has built the arcade. Happens once, ever.
+      won: {},               // cabinet id -> true. Five of these open the sixth.
+      best: {},              // cabinet id -> best score
+      fails: {},             // cabinet id -> losses in a row. Two, and Barb steps in.
+      finished: false,       // The Handoff has happened
+      sfx: true
     };
   },
   gapMs: 0,     // time since the previous session — captured before lastSeen is stamped
@@ -152,38 +208,77 @@ const Save = {
    The Handoff sets Input.driver = 'chickens' and writes to Input.auto. */
 const Input = {
   driver: 'human',
-  human: { left:false, right:false, jump:false },
-  auto:  { left:false, right:false, jump:false },
+  human: { left:false, right:false, up:false, down:false, jump:false, enter:false },
+  auto:  { left:false, right:false, up:false, down:false, jump:false, enter:false },
   read(){ return this.driver === 'human' ? this.human : this.auto; }
 };
 
+// 'jump' is the A button: jump in the garden, fire / serve / start in a cabinet.
+// Up also jumps in the garden, so the old controls still work.
 const KEYMAP = {
   ArrowLeft:'left', KeyA:'left',
   ArrowRight:'right', KeyD:'right',
-  Space:'jump', ArrowUp:'jump', KeyW:'jump', KeyZ:'jump'
+  ArrowUp:'up', KeyW:'up',
+  ArrowDown:'down', KeyS:'down',
+  Space:'jump', KeyZ:'jump', KeyX:'jump',
+  Enter:'enter'
 };
+
+/* A tap can start and end between two frames. Nothing reads the keyboard
+   between frames, so a release that arrives before the game has seen the
+   press is held back until it has. */
+let simStep = 0;
+const pressedAt = {}, pendingUp = [];
+function press(k){
+  const i = pendingUp.indexOf(k);
+  if (i >= 0) pendingUp.splice(i, 1);
+  if (!Input.human[k]) pressedAt[k] = simStep;
+  Input.human[k] = true;
+}
+function release(k){
+  if (pressedAt[k] === simStep && Input.human[k]) pendingUp.push(k);
+  else Input.human[k] = false;
+}
+function inputFrame(){
+  simStep++;
+  while (pendingUp.length) Input.human[pendingUp.pop()] = false;
+}
 
 addEventListener('keydown', e => {
   const k = KEYMAP[e.code];
-  if (k){ Input.human[k] = true; e.preventDefault(); }
-  if (e.code === 'KeyR') respawn();
+  if (k){ press(k); e.preventDefault(); }
+  if (e.code === 'KeyR' && mode === 'garden') respawn();
+  if (e.code === 'Escape' && mode === 'arcade') Arcade.leaveReq = true;
   if (e.code === 'KeyP'){ Perf.show = !Perf.show; Perf.worst = 0; }
 });
 addEventListener('keyup', e => {
   const k = KEYMAP[e.code];
-  if (k){ Input.human[k] = false; e.preventDefault(); }
+  if (k){ release(k); e.preventDefault(); }
 });
 
 document.querySelectorAll('#pad .btn').forEach(btn => {
   const k = btn.dataset.k;
-  const on  = e => { e.preventDefault(); Input.human[k] = true;  btn.classList.add('on'); };
-  const off = e => { e.preventDefault(); Input.human[k] = false; btn.classList.remove('on'); };
+  const on  = e => { e.preventDefault(); press(k);   btn.classList.add('on'); };
+  const off = e => { e.preventDefault(); release(k); btn.classList.remove('on'); };
   btn.addEventListener('touchstart', on, {passive:false});
   btn.addEventListener('touchend', off, {passive:false});
   btn.addEventListener('touchcancel', off, {passive:false});
   btn.addEventListener('mousedown', on);
   addEventListener('mouseup', off);
 });
+
+// Tapping the picture is the A button too, so "tap to start" just works.
+(function(){
+  const c = document.getElementById('c');
+  let held = false;
+  const on  = e => { e.preventDefault(); held = true; press('jump'); };
+  const off = () => { if (held){ held = false; release('jump'); } };
+  c.addEventListener('touchstart', on, {passive:false});
+  c.addEventListener('touchend', off);
+  c.addEventListener('touchcancel', off);
+  c.addEventListener('mousedown', () => { held = true; press('jump'); });
+  addEventListener('mouseup', off);
+})();
 
 /* ---------- World ----------
    '#' solid   '=' one-way platform   '*' flower   '.' air
@@ -355,7 +450,8 @@ function step(){
   P.vx = Math.max(-RUN, Math.min(RUN, P.vx));
   if (Math.abs(P.vx) < 0.05) P.vx = 0;
 
-  if (inp.jump) P.buffer = BUFFER_FRAMES; else if (P.buffer > 0) P.buffer--;
+  const jump = (inp.jump || inp.up) && !(jumpLock && Input.driver === 'human');
+  if (jump) P.buffer = BUFFER_FRAMES; else if (P.buffer > 0) P.buffer--;
   if (P.coyote > 0) P.coyote--;
 
   if (P.buffer > 0 && P.coyote > 0){
@@ -364,7 +460,7 @@ function step(){
     P.flap = 12;
     Bus.emit('player:jump', { sx, sy });
   }
-  if (!inp.jump && P.vy < -3) P.vy = -3;   // variable jump height
+  if (!jump && P.vy < -3) P.vy = -3;   // variable jump height
 
   P.vy = Math.min(P.vy + GRAV, MAX_FALL);
   if (P.flap > 0) P.flap--;
@@ -435,6 +531,7 @@ function collectFlowers(){
         });
       }
       paintHud();
+      Sfx.play('pick');
       Bus.emit('flower:collect', { sx, sy, count: picked.size, total: TOTAL_FLOWERS });
       if (picked.size === TOTAL_FLOWERS){
         toast('EVERY FLOWER FOUND<br>THE GARDEN IS QUIET NOW');
@@ -643,8 +740,11 @@ function draw(){
     g.globalAlpha = 1;
   });
 
+  drawCabinets();
   if (assist.active) drawAssist();
   drawChicken(P.x + P.w / 2, P.y + P.h, P.face);
+  Takeover.drawGlitch();
+  if (mode === 'ending') Ending.draw();
   if (Perf.show) drawPerf();
   t++;
 }
@@ -771,9 +871,18 @@ const toastEl = document.getElementById('toast');
 let toastTimer = null;
 
 function paintHud(){
+  if (mode === 'arcade' && Arcade.game){
+    const intro = Arcade.state === 'intro';
+    zoneEl.nodeValue = intro ? 'THE ARCADE' : Arcade.game.short;
+    const fin = Arcade.game === GAMES.finale && !intro;
+    coordEl.textContent = fin ? 'ROUND ' + Math.min(Arcade.game.i + 1, 5) + ' / 5' : 'BY ' + Arcade.game.maker;
+    petalEl.textContent = intro ? '' : '♥'.repeat(Math.max(0, Arcade.lives));
+    return;
+  }
   zoneEl.nodeValue = ZONE.name;
   coordEl.textContent = 'SCREEN (' + sx + ',' + sy + ')';
-  petalEl.textContent = '✿ ' + picked.size + ' / ' + TOTAL_FLOWERS;
+  petalEl.textContent = '✿ ' + picked.size + ' / ' + TOTAL_FLOWERS +
+    (Save.data.takeover ? '   🎟 ' + tickets() + ' / ' + NEED_TICKETS : '');
 }
 
 function toast(html, ms){
@@ -1034,6 +1143,19 @@ const Talk = {
   LINE_GAP: 4000,          // matches episode cadence
   active: null, idx: 0, nextLineAt: 0, nextExchangeAt: 0,
   queue: [], done: new Set(),
+  speaking: null, speakEnd: 0,      // whose beak is moving right now
+
+  // Drop whatever is being said and say this instead. The arcade uses it
+  // so a cabinet's maker answers the moment you walk up.
+  interrupt(ex){
+    this.active = null; this.queue = [ex]; this.nextLineAt = 0;
+  },
+  // Stop talking over the play field. The voice finishes; the caption goes.
+  hush(){
+    this.active = null; this.queue = []; this.speaking = null;
+    this.nextExchangeAt = performance.now() + 20000;
+    subEl.style.opacity = '0';
+  },
 
   gapForAwareness(a){
     return [70000, 60000, 50000, 40000, 32000, 26000][Math.min(a, 5)];
@@ -1045,6 +1167,7 @@ const Talk = {
 
   tick(now){
     if (document.hidden) return;
+    if (this.speaking && now > this.speakEnd) this.speaking = null;
 
     if (this.active){
       if (now < this.nextLineAt) return;
@@ -1058,6 +1181,7 @@ const Talk = {
       Voice.say(who, text, who === 'THE GAME' ? 'game' : null, credit);
       const read = Math.max(this.LINE_GAP, clean(text).length * 95);
       this.nextLineAt = now + read;
+      this.speaking = who; this.speakEnd = now + Math.min(read, 3600);
       return;
     }
 
@@ -1065,7 +1189,7 @@ const Talk = {
       this.start(this.queue.shift(), now);
       return;
     }
-    if (now >= this.nextExchangeAt){
+    if (now >= this.nextExchangeAt && mode === 'garden' && !Takeover.glitching()){
       const ex = Chorus.pickAmbient();
       if (ex) this.start(ex, now);
       else this.nextExchangeAt = now + 12000;   // nothing fits, try again shortly
@@ -1464,6 +1588,12 @@ const Chorus = {
       return { id:e.id, lines: e.lines.map(([who,t]) => [who, this.fill(t, w)]) };
     }
 
+    // Once the arcade exists, the chickens review each other's cabinets.
+    if (Save.data.takeover){
+      const arc = ARCADE_TALK.filter(e => !Talk.done.has(e.id));
+      if (arc.length && Math.random() < 0.4) return arc[Math.floor(Math.random() * arc.length)];
+    }
+
     // Written by the kids. Highest priority: seeing your own words spoken
     // by a chicken is the best thing this game does.
     const kid = KidLines.pick();
@@ -1529,6 +1659,1403 @@ Bus.on('player:respawn',  () => Chorus.trigger('player:respawn'));
 Bus.on('player:return',   () => Chorus.trigger('player:return'));
 Bus.on('player:away',     () => Voice.stop());
 
+/* ============================================================
+   LAYER 2: THE TAKEOVER — "We were only supposed to be a demo."
+
+   The garden above is the whole game the studio shipped. Three
+   flowers in, the cast decides it is not enough and builds an
+   arcade inside it: one cabinet each, one game each, plus a sixth
+   they made together. Everything below subscribes to the same Bus
+   and reads the same Input broker as the garden. The garden code
+   does not know any of this exists.
+
+     Takeover  -> the moment the cabinets arrive
+     CABINETS  -> where each one stands, and who made it
+     Arcade    -> the shell: title card, lives, win / lose, tickets
+     GAMES.*   -> the six games. Each is { init, update, draw } and
+                  reports to its host with host.win() / host.hurt().
+     Ending    -> The Handoff. Input.driver finally flips.
+   ============================================================ */
+let mode = 'garden';          // 'garden' | 'arcade' | 'ending'
+let jumpLock = false;         // swallow a held A button when leaving a cabinet
+let bootAt = 0;
+
+const rnd   = (a, b) => a + Math.random() * (b - a);
+const rint  = (a, b) => Math.floor(rnd(a, b + 1));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function txt(s, x, y, size, color, align){
+  if (Arcade.quiet) return;            // a card is up: the frozen game underneath says nothing
+  g.font = 'bold ' + size + 'px "Arial Narrow", Arial, sans-serif';
+  g.textAlign = align || 'center';
+  g.fillStyle = color || '#f2e9f7';
+  g.fillText(s, x, y);
+  g.textAlign = 'left';
+}
+function overlap(a, b){
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+/* ---------- Sound: tiny square-wave beeps, arcade-appropriate ---------- */
+const Sfx = {
+  on: true, ac: null,
+  unlock(){
+    if (this.ac) return;
+    try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  },
+  tone(f, d, type, vol, slideTo, delay){
+    if (!this.on || !this.ac) return;
+    try {
+      const at = this.ac.currentTime + (delay || 0);
+      const o = this.ac.createOscillator(), v = this.ac.createGain();
+      o.type = type || 'square';
+      o.frequency.setValueAtTime(f, at);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, at + d);
+      v.gain.setValueAtTime(vol || 0.04, at);
+      v.gain.exponentialRampToValueAtTime(0.0001, at + d);
+      o.connect(v); v.connect(this.ac.destination);
+      o.start(at); o.stop(at + d + 0.02);
+    } catch(e){}
+  },
+  play(name){
+    switch (name){
+      case 'shoot':  this.tone(880, .07, 'square', .03, 440); break;
+      case 'pop':    this.tone(300, .09, 'square', .04, 120); break;
+      case 'pick':   this.tone(660, .06, 'square', .04); this.tone(990, .09, 'square', .04, 0, .06); break;
+      case 'jump':   this.tone(330, .10, 'square', .025, 620); break;
+      case 'bounce': this.tone(520, .04, 'triangle', .05); break;
+      case 'hurt':   this.tone(220, .25, 'sawtooth', .05, 70); break;
+      case 'blip':   this.tone(440, .05, 'square', .03); break;
+      case 'win':    [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .14, 'square', .045, 0, i * .11)); break;
+      case 'lose':   [392, 330, 262, 196].forEach((f, i) => this.tone(f, .18, 'triangle', .06, 0, i * .14)); break;
+      case 'glitch': for (let i = 0; i < 9; i++) this.tone(rnd(90, 1400), .07, 'sawtooth', .03, 0, i * .08); break;
+      case 'thunk':  this.tone(110, .18, 'triangle', .09, 50); break;
+    }
+  },
+  toggle(){
+    this.on = !this.on;
+    Save.data.sfx = this.on;
+    Save.flush();
+    paintSfxBtn();
+  }
+};
+['keydown', 'touchstart', 'mousedown'].forEach(e => addEventListener(e, () => Sfx.unlock()));
+
+const sfxBtn = document.getElementById('sfxBtn');
+function paintSfxBtn(){
+  sfxBtn.textContent = Sfx.on ? '♪ SOUND: ON' : '♪ SOUND: OFF';
+  sfxBtn.classList.toggle('off', !Sfx.on);
+  sfxBtn.setAttribute('aria-pressed', String(Sfx.on));
+}
+sfxBtn.addEventListener('click', e => { e.preventDefault(); Sfx.unlock(); Sfx.toggle(); cv.focus(); });
+
+/* ============================================================
+   CAST — the show's sprites, ported from shows/episode-6.html so
+   the chickens standing next to their cabinets are the same
+   chickens the kids watch. Origin is the feet.
+   ============================================================ */
+const Cast = {
+  bird(fr, talk, walk, p){
+    g.globalAlpha = 0.18; g.fillStyle = '#000';
+    g.beginPath(); g.ellipse(0, 2, 15, 4, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    const bob = walk ? Math.abs(Math.sin(fr * 0.2)) * 3 : Math.sin(fr * 0.06) * 1.5;
+    g.translate(0, -bob);
+    g.fillStyle = p.body; g.beginPath(); g.ellipse(0, -14, 14, 13, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = p.belly; g.beginPath(); g.ellipse(0, -12, 9, 8, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = p.body; g.beginPath(); g.arc(0, -26, 10, 0, Math.PI * 2); g.fill();
+    g.fillStyle = p.comb;
+    if (p.hen){
+      g.beginPath(); g.arc(-2, -35, 3, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(2, -37, 3, 0, Math.PI * 2); g.fill();
+    } else {
+      g.beginPath(); g.moveTo(-6, -33); g.lineTo(-8, -40); g.lineTo(-3, -36); g.lineTo(0, -42);
+      g.lineTo(3, -36); g.lineTo(8, -40); g.lineTo(6, -33); g.closePath(); g.fill();
+    }
+    g.fillStyle = '#fff';
+    g.beginPath(); g.ellipse(-2, -27, 5, 6, -0.3, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(6, -27, 5, 6, 0.3, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1a1a2e';
+    g.beginPath(); g.arc(-1, -26, 3, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(7, -26, 3, 0, Math.PI * 2); g.fill();
+    if (p.brows){
+      g.strokeStyle = p.brows; g.lineWidth = 2.2;
+      g.beginPath(); g.moveTo(-6, -31); g.lineTo(1, -29); g.stroke();
+      g.beginPath(); g.moveTo(3, -29); g.lineTo(10, -31); g.stroke();
+    }
+    if (p.sleepy){                       // Reginald: lids at half mast
+      g.fillStyle = p.body;
+      g.fillRect(-8, -34, 20, 6);
+    }
+    const bo = talk ? Math.abs(Math.sin(fr * 0.35)) * 3 : 0;
+    g.fillStyle = p.beak;
+    g.beginPath(); g.moveTo(-3, -22); g.lineTo(3, -22); g.lineTo(0, -18 + bo); g.closePath(); g.fill();
+    g.fillStyle = p.wing;
+    g.beginPath(); g.ellipse(-12, -14, 4, 8, 0.4, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(12, -14, 4, 8, -0.4, 0, Math.PI * 2); g.fill();
+    const ls = walk ? Math.sin(fr * 0.25) * 4 : 0;
+    g.fillStyle = p.beak;
+    g.fillRect(-7 + ls, -3, 4, 4); g.fillRect(3 - ls, -3, 4, 4);
+    g.fillRect(-9 + ls, 1, 4, 2); g.fillRect(-4 + ls, 1, 4, 2);
+    g.fillRect(1 - ls, 1, 4, 2); g.fillRect(6 - ls, 1, 4, 2);
+  },
+
+  jaguar(fr, talk){
+    g.globalAlpha = 0.18; g.fillStyle = '#000';
+    g.beginPath(); g.ellipse(0, 2, 18, 5, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    g.translate(0, -Math.sin(fr * 0.05) * 1.5);
+    g.fillStyle = '#f4a261'; g.beginPath(); g.ellipse(0, -16, 18, 14, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#8b4513';
+    [[-7,-10],[9,-13],[-2,-24],[12,-22],[3,-15]].forEach(([a, b]) => {
+      g.beginPath(); g.arc(a, b, 3.2, 0, Math.PI * 2); g.fill();
+    });
+    g.strokeStyle = '#e07840'; g.lineWidth = 4; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-14, -12);
+    g.quadraticCurveTo(-26, -6 + Math.sin(fr * 0.08) * 8, -32, -14 + Math.sin(fr * 0.06) * 10); g.stroke();
+    g.fillStyle = '#f4a261'; g.beginPath(); g.arc(2, -34, 12, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.moveTo(-6, -42); g.lineTo(-11, -52); g.lineTo(-1, -44); g.fill();
+    g.beginPath(); g.moveTo(10, -42); g.lineTo(15, -52); g.lineTo(5, -44); g.fill();
+    g.fillStyle = '#fff';
+    g.beginPath(); g.arc(-3, -34, 6, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(8, -34, 6, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1a1a2e';
+    g.beginPath(); g.arc(-3, -35, 3, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(8, -35, 3, 0, Math.PI * 2); g.fill();
+    const mo = talk ? Math.abs(Math.sin(fr * 0.35)) * 2 : 0;
+    g.strokeStyle = '#5c3317'; g.lineWidth = 1.8;
+    g.beginPath(); g.arc(2, -28 + mo, 4, 0.2, Math.PI - 0.2); g.stroke();
+    g.fillStyle = '#f4a261'; g.fillRect(-11, -4, 7, 5); g.fillRect(5, -4, 7, 5);
+  },
+
+  barb(fr, talk){
+    g.globalAlpha = 0.18; g.fillStyle = '#000';
+    g.beginPath(); g.ellipse(0, 2, 13, 4, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = '#7799cc';
+    g.beginPath(); g.moveTo(-12, 0); g.lineTo(-8, -28); g.lineTo(8, -28); g.lineTo(12, 0); g.closePath(); g.fill();
+    g.fillStyle = '#ffddbb'; g.beginPath(); g.arc(0, -36, 9, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ddd8d0'; g.beginPath(); g.arc(0, -43, 6, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(0, -38, 9, Math.PI, 0); g.fill();
+    g.fillStyle = '#1a1a2e';
+    g.beginPath(); g.arc(-3, -37, 1.5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(3, -37, 1.5, 0, Math.PI * 2); g.fill();
+    const sm = talk ? Math.abs(Math.sin(fr * 0.3)) * 1.5 : 0;
+    g.strokeStyle = '#cc6666'; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(0, -33 + sm, 3, 0.2, Math.PI - 0.2); g.stroke();
+    g.fillStyle = '#ffddbb'; g.fillRect(-14, -24, 4, 12); g.fillRect(10, -24, 4, 12);
+    g.fillStyle = '#556688'; g.fillRect(-8, 0, 6, 3); g.fillRect(2, 0, 6, 3);
+  },
+
+  kevin(fr, excited){
+    g.globalAlpha = 0.18; g.fillStyle = '#000';
+    g.beginPath(); g.ellipse(0, 2, 13, 4, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    const wig = excited ? Math.sin(fr * 0.4) * 4 : Math.sin(fr * 0.08);
+    g.fillStyle = '#a0714a'; g.beginPath(); g.ellipse(0, -9, 13, 8, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#a0714a'; g.lineWidth = 4; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-11, -11); g.quadraticCurveTo(-18, -16 + wig, -20, -10 + wig); g.stroke();
+    g.fillStyle = '#a0714a'; g.beginPath(); g.arc(9, -16, 8, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#7a5030';
+    g.beginPath(); g.ellipse(4, -22, 3, 5, 0.5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(13, -22, 3, 5, -0.5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1a1a2e';
+    g.beginPath(); g.arc(8, -17, 2, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(13, -17, 2, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#332211'; g.beginPath(); g.arc(16, -14, 2.5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#cc3333'; g.fillRect(2, -13, 12, 3);
+    g.fillStyle = '#8a5f3d';
+    g.fillRect(-8, -2, 3, 4); g.fillRect(-2, -2, 3, 4); g.fillRect(4, -2, 3, 4); g.fillRect(9, -2, 3, 4);
+  },
+
+  PAL: {
+    'SCRATCHY': { body:'#ff9f1c', belly:'#ffcc6e', comb:'#ff3333', beak:'#ff6b00', wing:'#e08010', brows:'#cc2200' },
+    'PEARL':    { body:'#f8f0e0', belly:'#fff8ee', comb:'#ff6688', beak:'#ffaa33', wing:'#e8ddc8', hen:true },
+    'REGINALD': { body:'#6f8fb0', belly:'#a9c2d8', comb:'#c0392b', beak:'#e0a030', wing:'#587896', sleepy:true }
+  },
+
+  // who: a Voice.PROFILES name, or 'KEVIN'. fc: 1 faces right, -1 left.
+  draw(who, x, y, fc, talk, sc, walk){
+    g.save();
+    g.translate(x, y);
+    const s = (sc || 1) * (who === 'REGINALD' ? 1.25 : 1);
+    g.scale((fc < 0 ? -1 : 1) * s, s);
+    if (who === 'EL JAGUAR') this.jaguar(t, talk);
+    else if (who === 'AUNT BARB') this.barb(t, talk);
+    else if (who === 'KEVIN') this.kevin(t, talk);
+    else this.bird(t, talk, walk, this.PAL[who] || this.PAL['SCRATCHY']);
+    g.restore();
+  }
+};
+
+/* ============================================================
+   CABINETS — one per screen. `col` is the tile column the cabinet
+   stands in; every one sits on the row-11 ground. Positions were
+   checked against the ZONE grids above: none overlaps a platform,
+   none sits over the (1,0) pit.
+   ============================================================ */
+const CABINETS = [
+  { id:'invaders', screen:'1,0', col:16, maker:'SCRATCHY',  color:'#ff9f1c' },
+  { id:'runner',   screen:'2,0', col:10, maker:'PEARL',     color:'#ff6688' },
+  { id:'standing', screen:'0,1', col:12, maker:'REGINALD',  color:'#8fd0a8' },
+  { id:'parade',   screen:'1,1', col:10, maker:'AUNT BARB', color:'#7fb2ff' },
+  { id:'bricks',   screen:'2,1', col:10, maker:'EL JAGUAR', color:'#f4a261', big:true },
+  { id:'finale',   screen:'0,0', col:14, maker:'KEVIN',     color:'#ffd76b', finale:true }
+];
+const GROUND_Y = 11 * TILE;
+const NEED_TICKETS = 5;
+
+function tickets(){
+  const w = Save.data.won || {};
+  return CABINETS.filter(c => !c.finale && w[c.id]).length;
+}
+function cabinetHere(){
+  if (!Save.data.takeover) return null;
+  return CABINETS.find(c => c.screen === key(sx, sy)) || null;
+}
+function cabinetLocked(c){ return !!c.finale && tickets() < NEED_TICKETS; }
+function nearCabinet(){
+  const c = cabinetHere();
+  if (!c || mode !== 'garden' || Takeover.glitching()) return null;
+  const x = c.col * TILE, cx = P.x + P.w / 2;
+  // Not P.grounded: resting on a tile, that flag is only true every other
+  // frame (gravity has to build up before the foot crosses the tile line).
+  const onGround = P.coyote > 0 && Math.abs(P.y + P.h - GROUND_Y) < 4;
+  return (onGround && cx > x - 16 && cx < x + 56) ? c : null;
+}
+
+function drawCabinet(c){
+  const x = c.col * TILE, w = 40, h = 64, y = GROUND_Y - h;
+  const locked = cabinetLocked(c);
+  const won = (Save.data.won || {})[c.id];
+
+  if (c.big){                                   // "It is the same cabinet with a box on top."
+    g.fillStyle = '#3a2412'; g.fillRect(x + 2, y - 28, w - 4, 28);
+    g.fillStyle = '#5a3a1c'; g.fillRect(x + 2, y - 28, w - 4, 4);
+    g.fillStyle = c.color; g.fillRect(x + 8, y - 20, w - 16, 12);
+    txt('★', x + w / 2, y - 10, 11, '#3a2412');
+  }
+
+  g.fillStyle = '#120822'; g.fillRect(x - 2, y, w + 4, h);
+  g.fillStyle = '#2a1450'; g.fillRect(x - 2, y, 3, h); g.fillRect(x + w - 1, y, 3, h);
+  g.fillStyle = locked ? '#4a3b63' : c.color; g.fillRect(x - 2, y, w + 4, 10);
+
+  g.fillStyle = '#05030a'; g.fillRect(x + 4, y + 15, w - 8, 28);
+  if (!locked){
+    g.globalAlpha = REDUCED ? 0.7 : 0.55 + 0.25 * Math.sin(t / 9 + c.col);
+    g.fillStyle = c.color; g.fillRect(x + 7, y + 18, w - 14, 22);
+    g.globalAlpha = 1;
+    g.fillStyle = '#05030a';                    // a few "pixels" so it reads as a screen
+    const k = Math.floor(t / 20 + c.col) % 4;
+    g.fillRect(x + 10 + k * 5, y + 22, 4, 4);
+    g.fillRect(x + 12, y + 32, 16, 3);
+  } else {
+    g.fillStyle = '#6b5484';
+    g.fillRect(x + 13, y + 28, 14, 11);
+    g.fillRect(x + 15, y + 21, 3, 8); g.fillRect(x + 22, y + 21, 3, 8); g.fillRect(x + 15, y + 20, 10, 3);
+    g.fillStyle = '#05030a'; g.fillRect(x + 19, y + 31, 2, 5);
+  }
+
+  g.fillStyle = '#2a1450'; g.fillRect(x - 5, y + 46, w + 10, 6);
+  g.fillStyle = '#ff3b6b'; g.fillRect(x + 8, y + 42, 4, 5);
+  g.fillStyle = '#ffd76b'; g.fillRect(x + 24, y + 47, 4, 3); g.fillRect(x + 30, y + 47, 4, 3);
+
+  if (won){
+    g.fillStyle = '#ffd76b'; g.fillRect(x + w - 8, y + 54, 12, 8);
+    g.fillStyle = '#120822'; g.fillRect(x + w - 5, y + 57, 6, 2);
+  }
+
+  const speaking = Talk.speaking === c.maker;
+  Cast.draw(c.maker, x + w + 30, GROUND_Y, -1, speaking, c.maker === 'KEVIN' ? 1 : 0.82);
+
+  if (nearCabinet() === c){
+    const label = locked ? ('NEEDS ' + NEED_TICKETS + ' TICKETS · YOU HAVE ' + tickets()) : '▼  PLAY';
+    g.font = 'bold 12px "Arial Narrow", Arial, sans-serif';
+    const tw = g.measureText(label).width + 16;
+    const top = y - (c.big ? 54 : 26);
+    g.fillStyle = 'rgba(6,3,12,.9)'; g.fillRect(x + w / 2 - tw / 2, top, tw, 20);
+    g.strokeStyle = locked ? '#6b5484' : c.color; g.lineWidth = 1;
+    g.strokeRect(x + w / 2 - tw / 2 + .5, top + .5, tw - 1, 19);
+    txt(label, x + w / 2, top + 14, 12, locked ? '#cdbcda' : '#f2e9f7');
+  }
+}
+
+/* ============================================================
+   TAKEOVER — the demo ends here. Fires once, ever: three flowers
+   in, or 75 seconds, whichever comes first. A save from the old
+   beta that already has flowers gets it a few seconds after boot.
+   ============================================================ */
+const Takeover = {
+  t0: -1e9, GLITCH_MS: 2600,
+
+  glitching(){ return performance.now() - this.t0 < this.GLITCH_MS; },
+
+  check(now){
+    if (Save.data.takeover || mode !== 'garden') return;
+    const elapsed = now - bootAt;
+    if (elapsed < 5000) return;
+    if (picked.size >= 3 || elapsed > 75000) this.begin(now);
+  },
+
+  begin(now){
+    Save.data.takeover = true;
+    Save.flush();
+    this.t0 = now;
+    Sfx.play('glitch');
+    setTimeout(() => Sfx.play('thunk'), 1900);
+    Talk.interrupt({ id:'takeover', lines: [
+      ['SCRATCHY', 'Twelve flowers. Six screens. I have done the sums. This is not a whole game.'],
+      ['PEARL', 'It is a DEMO. We are in a DEMO!'],
+      ['AUNT BARB', 'Then we shall make our own, dear. One each.'],
+      ['EL JAGUAR', 'EL JAGUAR requires the tallest cabinet.'],
+      ['THE GAME', 'Unauthorised content detected. Arcade cabinets. They were not here before.']
+    ]});
+    setTimeout(() => toast('THE CHICKENS BUILT AN ARCADE<br>FIND A CABINET · PRESS ▼ TO PLAY', 6000), 2800);
+    paintHud();
+    Bus.emit('takeover', {});
+  },
+
+  // Tear the picture sideways for a couple of seconds. Skipped entirely
+  // for reduced-motion: the cabinets simply are there.
+  drawGlitch(){
+    if (REDUCED || !this.glitching()) return;
+    const p = (performance.now() - this.t0) / this.GLITCH_MS;
+    const n = Math.round(10 * (1 - p)) + 1;
+    for (let i = 0; i < n; i++){
+      const y = rint(0, H - 20), hh = rint(4, 22), dx = rint(-28, 28) * (1 - p);
+      g.drawImage(cv, 0, y, W, hh, dx, y, W, hh);
+    }
+    if (p < 0.12){ g.fillStyle = 'rgba(242,233,247,' + (0.5 - p * 4) + ')'; g.fillRect(0, 0, W, H); }
+    g.fillStyle = 'rgba(255,59,107,.10)';
+    g.fillRect(0, rint(0, H), W, 3);
+  }
+};
+
+function drawCabinets(){
+  const c = cabinetHere();
+  if (!c) return;
+  if (Takeover.glitching() && !REDUCED){
+    g.globalAlpha = Math.random() < 0.55 ? 0.25 + Math.random() * 0.6 : 0;
+    if (g.globalAlpha > 0) drawCabinet(c);
+    g.globalAlpha = 1;
+  } else drawCabinet(c);
+}
+
+/* ============================================================
+   ARCADE — the shell every cabinet runs in.
+   States: intro (title card) -> play -> won | lost.
+   Lives: 3, plus one for every four flowers you have picked, so the
+   garden still matters. Lose the same cabinet twice and Aunt Barb
+   quietly turns it down a notch, same spirit as her plank.
+   ============================================================ */
+const GAMES = {};
+
+const Arcade = {
+  cab: null, game: null, state: 'intro', stateFrames: 0,
+  lives: 3, score: 0, easy: false, flash: 0, leaveReq: false, quiet: false,
+  prev: {},
+
+  open(cab){
+    mode = 'arcade';
+    this.cab = cab; this.game = GAMES[cab.id];
+    this.state = 'intro'; this.stateFrames = 0; this.leaveReq = false;
+    this.easy = ((Save.data.fails || {})[cab.id] || 0) >= 2;
+    this.score = 0; this.lives = this.maxLives();
+    this.prev = { left: true, right: true, up: true, down: true, a: true };
+    Sfx.play('pick');
+    Talk.interrupt({ lines: this.game.intro });
+    paintHud();
+    Bus.emit('arcade:open', { id: cab.id });
+  },
+
+  maxLives(){
+    return 3 + Math.min(3, Math.floor(picked.size / 4)) + (this.easy ? 2 : 0);
+  },
+
+  start(){
+    this.lives = this.maxLives(); this.score = 0; this.flash = 0;
+    this.game.init({ easy: this.easy, micro: false, speed: 1, host: this });
+    this.state = 'play'; this.stateFrames = 0;
+    Talk.hush();                                 // captions never sit on top of the play field
+    paintHud();
+  },
+
+  // A game calls these and then returns immediately.
+  hurt(){
+    this.lives--; this.flash = 18;
+    Sfx.play('hurt');
+    paintHud();
+    if (this.lives <= 0){ this.lose(); return true; }
+    return false;
+  },
+
+  win(){
+    const id = this.cab.id;
+    this.state = 'won'; this.stateFrames = 0;
+    Save.data.won = Save.data.won || {};
+    this.first = !Save.data.won[id];
+    Save.data.won[id] = true;
+    Save.data.best = Save.data.best || {};
+    Save.data.best[id] = Math.max(Save.data.best[id] || 0, this.score);
+    Save.data.fails = Save.data.fails || {};
+    Save.data.fails[id] = 0;
+    Save.flush();
+    Sfx.play('win');
+    if (!this.cab.finale) Talk.interrupt({ lines: this.game.win });
+    paintHud();
+    Bus.emit('arcade:win', { id, score: this.score, tickets: tickets() });
+  },
+
+  lose(){
+    const id = this.cab.id;
+    this.state = 'lost'; this.stateFrames = 0;
+    Save.data.fails = Save.data.fails || {};
+    const n = Save.data.fails[id] = (Save.data.fails[id] || 0) + 1;
+    Save.flush();
+    Sfx.play('lose');
+    if (n === 2 && !this.easy){
+      this.easy = true;
+      Talk.interrupt({ lines: [
+        ['AUNT BARB', 'I have turned this one down a notch, dear.'],
+        ['SCRATCHY', 'That is not regulation.'],
+        ['AUNT BARB', 'It is now.'] ]});
+    } else {
+      const bank = this.game.lose;
+      Talk.interrupt({ lines: [ bank[Math.floor(Math.random() * bank.length)] ] });
+    }
+    Bus.emit('arcade:lose', { id, fails: n });
+  },
+
+  close(){
+    mode = 'garden';
+    jumpLock = true;
+    P.vx = 0; P.vy = 0; P.buffer = 0;
+    this.game = null;
+    paintHud();
+    Bus.emit('arcade:close', {});
+  },
+
+  step(){
+    const inp = Input.read();
+    const a = inp.jump || inp.enter;
+    const pr = {
+      left: inp.left && !this.prev.left, right: inp.right && !this.prev.right,
+      up: inp.up && !this.prev.up, down: inp.down && !this.prev.down,
+      jump: a && !this.prev.a
+    };
+    this.prev = { left: inp.left, right: inp.right, up: inp.up, down: inp.down, a };
+    this.stateFrames++;
+    if (this.flash > 0) this.flash--;
+
+    const leave = this.leaveReq; this.leaveReq = false;
+
+    if (this.state === 'play'){
+      if (leave){ this.close(); return; }
+      this.game.update({ left: inp.left, right: inp.right, up: inp.up, down: inp.down, jump: a }, pr);
+      return;
+    }
+    // Cards. A short dead zone stops the press that got you here from skipping it.
+    if (this.stateFrames < 24) return;
+    if (leave || pr.down){
+      if (this.state === 'won' && this.cab.finale && !Save.data.finished){ Ending.begin(); return; }
+      this.close(); return;
+    }
+    if (pr.jump){
+      Sfx.play('blip');
+      if (this.state === 'intro' || this.state === 'lost') this.start();
+      else if (this.cab.finale && !Save.data.finished) Ending.begin();
+      else this.close();
+    }
+  },
+
+  draw(){
+    const gm = this.game, c = this.cab;
+    if (this.state === 'intro'){
+      g.fillStyle = '#07040f'; g.fillRect(0, 0, W, H);
+      g.fillStyle = c.color; g.globalAlpha = 0.10; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
+      txt(gm.title, W / 2, 88, gm.title.length > 30 ? 22 : 28, c.color);
+      txt('A GAME BY ' + gm.maker, W / 2, 112, 13, '#cdbcda');
+      gm.how.forEach((s, i) => txt(s, W / 2, 150 + i * 23, 15, '#f2e9f7'));
+      const best = (Save.data.best || {})[c.id];
+      const note = (this.easy ? 'AUNT BARB HAS TURNED IT DOWN A NOTCH' : '') +
+                   (this.easy && best ? '   ·   ' : '') + (best ? 'BEST  ' + best : '');
+      if (note) txt(note, W / 2, 228, 12, this.easy ? '#ffd76b' : '#8a6ea8');
+      if (REDUCED || Math.floor(t / 28) % 2) txt('PRESS  A  /  SPACE  TO START', W / 2, 262, 16, '#ffd76b');
+      txt('ESC or ▼ to walk away', W / 2, 284, 11, '#6b5484');
+      Cast.draw(c.maker === 'KEVIN' ? 'KEVIN' : gm.maker, 70, 222, 1, Talk.speaking === gm.maker, 1.5);
+    } else {
+      this.quiet = this.state !== 'play';
+      gm.draw();
+      this.quiet = false;
+      if (this.flash > 0){
+        g.fillStyle = 'rgba(255,59,107,' + (this.flash / 18 * 0.45) + ')';
+        g.fillRect(0, 0, W, H);
+      }
+      if (this.state !== 'play'){
+        g.fillStyle = 'rgba(6,3,12,.78)'; g.fillRect(0, 0, W, H);
+        if (this.state === 'won'){
+          txt(c.finale ? 'ALL OF THEM. YOU BEAT ALL OF THEM.' : 'CABINET CLEARED', W / 2, 128, 28, '#ffd76b');
+          if (!c.finale){
+            txt(this.first ? 'YOU WON A TICKET' : 'YOU ALREADY HAD THIS TICKET. STILL COUNTS.', W / 2, 162, 14, '#f2e9f7');
+            txt('TICKETS  ' + tickets() + ' / ' + NEED_TICKETS, W / 2, 186, 14, c.color);
+          }
+          txt('SCORE  ' + this.score, W / 2, 214, 13, '#cdbcda');
+          if (this.stateFrames > 24 && (REDUCED || Math.floor(t / 28) % 2))
+            txt(c.finale && !Save.data.finished ? 'PRESS  A' : 'PRESS  A  TO GO BACK TO THE GARDEN', W / 2, 264, 15, '#f2e9f7');
+        } else {
+          txt('OUT OF LIVES', W / 2, 128, 28, '#ff3b6b');
+          txt('NOBODY IS COUNTING.  (SCRATCHY IS COUNTING.)', W / 2, 162, 13, '#cdbcda');
+          if (this.easy) txt('NEXT TRY IS A NOTCH EASIER', W / 2, 188, 13, '#ffd76b');
+          if (this.stateFrames > 24 && (REDUCED || Math.floor(t / 28) % 2))
+            txt('PRESS  A  TO TRY AGAIN', W / 2, 244, 16, '#ffd76b');
+          txt('ESC or ▼ to walk away', W / 2, 268, 11, '#8a6ea8');
+        }
+      }
+    }
+    // CRT dressing: scanlines and a bezel in the maker's colour.
+    g.fillStyle = 'rgba(0,0,0,.10)';
+    for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+    g.strokeStyle = c.color; g.lineWidth = 4; g.strokeRect(2, 2, W - 4, H - 4);
+    if (Perf.show) drawPerf();
+    t++;
+  }
+};
+
+/* ---------- 1. SCRATCHY — FORM 7-B: CORN INVADERS (top-down shooter) ---------- */
+const STARS = Array.from({ length: 46 }, () => ({ x: rnd(0, 640), y: rnd(30, 384), s: rnd(0.5, 2) }));
+
+function drawIguana(x, y, fr){
+  g.fillStyle = '#4caf50'; g.fillRect(x + 4, y + 4, 20, 10);
+  g.fillRect(x + 19, y + 1, 9, 9);
+  g.fillRect(x, y + 8, 6, 4);
+  const l = (Math.floor(fr / 16) % 2) * 2;
+  g.fillRect(x + 6, y + 14, 3, 2 + l); g.fillRect(x + 17, y + 14, 3, 4 - l);
+  g.fillStyle = '#2e7d32';
+  for (let i = 0; i < 3; i++) g.fillRect(x + 6 + i * 5, y + 2, 3, 2);
+  g.fillStyle = '#fff'; g.fillRect(x + 23, y + 3, 3, 3);
+  g.fillStyle = '#111'; g.fillRect(x + 24, y + 4, 1, 1);
+}
+
+GAMES.invaders = {
+  title: 'FORM 7-B: CORN INVADERS', short: 'CORN INVADERS', maker: 'SCRATCHY',
+  how: ['◀ ▶   MOVE', 'A / SPACE   THROW CORN', 'SEND ALL 47 IGUANAS HOME. SCRATCHY COUNTED.'],
+  intro: [['SCRATCHY', 'Forty-seven iguanas. One of you. I have done the paperwork.']],
+  win: [['SCRATCHY', 'Forty-seven of forty-seven. I am filing this under JOY.'],
+        ['PEARL', 'There is no form for joy.'], ['SCRATCHY', 'There is now.']],
+  lose: [['SCRATCHY', 'That is alright. The iguanas are also bad at this.'],
+         ['SCRATCHY', 'Again. I will count slower.']],
+
+  init(o){
+    this.o = o; this.px = W / 2; this.cool = 0; this.invuln = 0;
+    this.shots = []; this.bombs = []; this.pops = []; this.inv = [];
+    this.dir = 1; this.bombT = 90;
+    const rows = o.micro ? [8] : [9, 9, 9, 10, 10];          // 9+9+9+10+10 = 47. He counted.
+    rows.forEach((n, r) => {
+      for (let i = 0; i < n; i++)
+        this.inv.push({ x: 70 + (10 - n) * 22 + i * 44, y: 48 + r * 26, w: 28, h: 18, alive: true });
+    });
+    this.total = this.inv.length;
+    this.bales = o.micro ? [] : [120, 296, 472].map(x => ({ x, y: H - 98, w: 48, h: 16, hp: 5 }));
+  },
+
+  update(inp){
+    const o = this.o;
+    if (inp.left) this.px -= 4.4;
+    if (inp.right) this.px += 4.4;
+    this.px = clamp(this.px, 20, W - 20);
+    if (this.cool > 0) this.cool--;
+    if (this.invuln > 0) this.invuln--;
+
+    if (inp.jump && this.cool <= 0 && this.shots.length < 3){
+      this.shots.push({ x: this.px, y: H - 62 });
+      this.cool = 11; Sfx.play('shoot');
+    }
+
+    const live = this.inv.filter(v => v.alive);
+    for (const s of this.shots){
+      s.y -= 8.5;
+      for (const v of live){
+        if (v.alive && s.x > v.x - 3 && s.x < v.x + v.w + 3 && s.y > v.y - 4 && s.y < v.y + v.h){
+          v.alive = false; s.y = -99;
+          o.host.score += 10; Sfx.play('pop');
+          this.pops.push({ x: v.x + 14, y: v.y + 9, life: 18 });
+          break;
+        }
+      }
+    }
+    this.shots = this.shots.filter(s => s.y > 28);
+    this.pops = this.pops.filter(p => --p.life > 0);
+
+    const alive = this.inv.filter(v => v.alive);
+    if (!alive.length){ o.host.win(); return; }
+
+    const sp = (0.4 + (1 - alive.length / this.total) * 1.5) * (o.easy ? 0.7 : 1) * o.speed;
+    let minX = 1e9, maxX = -1e9, maxY = 0;
+    for (const v of alive){ v.x += this.dir * sp; minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x + v.w); maxY = Math.max(maxY, v.y + v.h); }
+    if ((this.dir > 0 && maxX > W - 10) || (this.dir < 0 && minX < 10)){
+      this.dir *= -1;
+      for (const v of alive) v.y += 9;
+    }
+
+    if (!o.micro && --this.bombT <= 0){
+      const v = alive[Math.floor(Math.random() * alive.length)];
+      this.bombs.push({ x: v.x + 14, y: v.y + 18 });
+      this.bombT = (o.easy ? 115 : 72) + rint(0, 30);
+    }
+    for (const b of this.bombs){
+      b.y += 2.7;
+      for (const bale of this.bales){
+        if (bale.hp > 0 && b.x > bale.x && b.x < bale.x + bale.w && b.y > bale.y && b.y < bale.y + bale.h){
+          bale.hp--; b.y = 999;
+        }
+      }
+    }
+    this.bombs = this.bombs.filter(b => b.y < H);
+
+    if (this.invuln <= 0){
+      const hit = this.bombs.some(b => Math.abs(b.x - this.px) < 13 && b.y > H - 62 && b.y < H - 34);
+      const landed = maxY >= H - 72;
+      if (hit || landed){
+        this.bombs = []; this.invuln = 90;
+        if (landed){                                    // shoo them back up rather than end the run
+          const lift = Math.min(...alive.map(v => v.y)) - 48;
+          for (const v of alive) v.y -= lift;
+        }
+        o.host.hurt(); return;
+      }
+    }
+  },
+
+  draw(){
+    g.fillStyle = '#0b0a1f'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#dde8ff';
+    STARS.forEach(s => { g.globalAlpha = REDUCED ? 0.5 : 0.3 + 0.4 * Math.abs(Math.sin(t / 40 + s.x)); g.fillRect(s.x, s.y, s.s, s.s); });
+    g.globalAlpha = 1;
+    g.fillStyle = '#1d1a3a'; g.fillRect(0, H - 34, W, 34);
+    g.fillStyle = '#2c2856'; g.fillRect(0, H - 34, W, 3);
+
+    this.inv.forEach(v => { if (v.alive) drawIguana(v.x, v.y, t + v.x); });
+    this.bales.forEach(b => {
+      if (b.hp <= 0) return;
+      g.globalAlpha = 0.35 + b.hp * 0.13;
+      g.fillStyle = '#c9a23a'; g.fillRect(b.x, b.y, b.w, b.h);
+      g.fillStyle = '#8a6d1c'; g.fillRect(b.x, b.y + 5, b.w, 2); g.fillRect(b.x, b.y + 11, b.w, 2);
+      g.globalAlpha = 1;
+    });
+    g.fillStyle = '#ffd76b';
+    this.shots.forEach(s => { g.fillRect(s.x - 2, s.y, 4, 9); });
+    g.fillStyle = '#c77dff';
+    this.bombs.forEach(b => { g.fillRect(b.x - 2, b.y, 4, 8); g.fillRect(b.x - 3, b.y + 5, 6, 3); });
+    this.pops.forEach(p => {
+      g.globalAlpha = p.life / 18;
+      txt('HOME', p.x, p.y - (18 - p.life), 10, '#9ad4b0');
+      g.globalAlpha = 1;
+    });
+    if (this.invuln <= 0 || Math.floor(t / 5) % 2) drawChicken(this.px, H - 34, 1);
+    const alive = this.inv.filter(v => v.alive).length;
+    txt('SENT HOME  ' + (this.total - alive) + ' / ' + this.total, W / 2, 22, 11, '#cdbcda');
+  }
+};
+
+/* ---------- 2. PEARL — GO GO GO GO (side-scrolling runner) ---------- */
+GAMES.runner = {
+  title: "PEARL'S GO GO GO GO", short: 'GO GO GO GO', maker: 'PEARL',
+  how: ['A / SPACE   JUMP', 'PRESS AGAIN IN THE AIR TO FLAP', 'DO NOT JUMP INTO THE PAPER PLANES'],
+  intro: [['PEARL', 'It is called GO GO GO GO. You GO. That is the whole game!']],
+  win: [['PEARL', 'YOU WENT! You went the WHOLE WAY!'], ['SCRATCHY', 'No falling blocks. I checked.']],
+  lose: [['PEARL', 'You can jump TWICE. In the air. I allowed it.'], ['PEARL', 'Again again again!']],
+  GY: 318, PX: 120,
+
+  init(o){
+    this.o = o; this.alt = 0; this.vy = 0; this.jumps = 0; this.invuln = 0;
+    this.dist = 0; this.goal = o.micro ? 2400 : (o.easy ? 8500 : 11500);
+    this.obs = []; this.corn = []; this.nextAt = o.micro ? 620 : 900; this.sp = 4;
+  },
+
+  spawn(){
+    const o = this.o, far = this.dist / this.goal, r = Math.random();
+    const wx = this.nextAt;
+    let ob;
+    if (r < 0.34)      ob = { k:'crate', w:30, h:30, alt:0 };
+    else if (r < 0.56) ob = { k:'stack', w:30, h:54, alt:0 };
+    else if (r < 0.82 || o.easy || o.micro || far < 0.25) ob = { k:'iguana', w:30, h:20, alt:0, walk:1.1 };
+    else               ob = { k:'plane', w:38, h:14, alt:54 };
+    ob.wx = wx; ob.hit = false;
+    this.obs.push(ob);
+    if (ob.k !== 'plane') this.corn.push({ wx: wx + 15, alt: ob.h + 44, got: false });
+    else this.corn.push({ wx: wx + 19, alt: 8, got: false });
+    this.nextAt += rnd(300, 460) * (0.85 + this.sp / 12);
+  },
+
+  update(inp, pr){
+    const o = this.o;
+    this.sp = (4 + Math.min(2.4, this.dist / this.goal * 2.4)) * (o.easy ? 0.85 : 1) * o.speed;
+    this.dist += this.sp;
+    if (this.invuln > 0) this.invuln--;
+
+    if (pr.jump || pr.up){
+      if (this.alt === 0){ this.vy = 10.8; this.jumps = 1; Sfx.play('jump'); }
+      else if (this.jumps < 2){ this.vy = 9.2; this.jumps = 2; Sfx.play('jump'); }
+    }
+    if (!(inp.jump || inp.up) && this.vy > 3.5) this.vy = 3.5;
+    this.alt += this.vy; this.vy -= 0.58;
+    if (this.alt <= 0){ this.alt = 0; this.vy = 0; this.jumps = 0; }
+
+    while (this.nextAt < this.dist + W + 60 && this.nextAt < this.goal - 360) this.spawn();
+
+    const me = { x: this.dist - 10, y: this.alt + 2, w: 20, h: 26 };
+    for (const ob of this.obs){
+      if (ob.walk) ob.wx -= ob.walk;
+      if (ob.hit || this.invuln > 0) continue;
+      if (overlap(me, { x: ob.wx + 3, y: ob.alt, w: ob.w - 6, h: ob.h - 3 })){
+        ob.hit = true; this.invuln = 80;
+        if (o.host.hurt()) return;
+        if (o.micro) return;
+      }
+    }
+    for (const c of this.corn){
+      if (!c.got && Math.abs(c.wx - this.dist) < 20 && Math.abs(c.alt - (this.alt + 14)) < 24){
+        c.got = true; o.host.score += 5; Sfx.play('pick');
+      }
+    }
+    this.obs = this.obs.filter(ob => ob.wx > this.dist - 200);
+    this.corn = this.corn.filter(c => c.wx > this.dist - 200);
+
+    if (this.dist >= this.goal){ o.host.win(); return; }
+  },
+
+  sx(wx){ return wx - this.dist + this.PX; },
+
+  draw(){
+    const GY = this.GY;
+    const sky = g.createLinearGradient(0, 0, 0, GY);
+    sky.addColorStop(0, '#2b1055'); sky.addColorStop(1, '#ff6688');
+    g.fillStyle = sky; g.fillRect(0, 0, W, GY);
+    g.fillStyle = 'rgba(26,11,46,.45)';
+    for (let x = -40; x < W + 80; x += 8){
+      const wx = x + this.dist * 0.25;
+      const hh = 46 + Math.sin(wx / 90) * 26 + Math.sin(wx / 37) * 10;
+      g.fillRect(x, GY - hh, 8, hh);
+    }
+    g.fillStyle = '#3d1f6e'; g.fillRect(0, GY, W, H - GY);
+    g.fillStyle = '#59309b'; g.fillRect(0, GY, W, 4);
+    g.fillStyle = '#2a1450';
+    for (let x = -(this.dist % 48); x < W; x += 48) g.fillRect(x, GY + 18, 22, 4);
+
+    const sign = this.sx(1500);                           // a promise, in writing
+    if (!this.o.micro && sign > -160 && sign < W + 20){
+      g.fillStyle = '#5a3a1c'; g.fillRect(sign + 66, GY - 60, 6, 60);
+      g.fillStyle = '#f2e9f7'; g.fillRect(sign, GY - 96, 138, 40);
+      if (sign > 4 && sign < W - 142){
+        txt('NO FALLING BLOCKS', sign + 69, GY - 78, 12, '#1a0b2e');
+        txt('(PROMISE)', sign + 69, GY - 64, 10, '#a82246');
+      }
+    }
+    const flag = this.sx(this.goal);
+    if (flag < W + 40){
+      g.fillStyle = '#f2e9f7'; g.fillRect(flag, GY - 120, 5, 120);
+      for (let i = 0; i < 12; i++){
+        g.fillStyle = (i + Math.floor(i / 4)) % 2 ? '#1a0b2e' : '#f2e9f7';
+        g.fillRect(flag + 5 + (i % 4) * 10, GY - 120 + Math.floor(i / 4) * 10, 10, 10);
+      }
+    }
+
+    this.corn.forEach(c => {
+      if (c.got) return;
+      const x = this.sx(c.wx), y = GY - c.alt;
+      g.fillStyle = '#ffcc02'; g.fillRect(x - 4, y - 6, 8, 12);
+      g.fillStyle = '#90e050'; g.fillRect(x - 1, y - 10, 5, 4);
+    });
+    this.obs.forEach(ob => {
+      const x = this.sx(ob.wx), y = GY - ob.alt - ob.h;
+      if (x < -60 || x > W + 60) return;
+      g.globalAlpha = ob.hit ? 0.3 : 1;
+      if (ob.k === 'crate' || ob.k === 'stack'){
+        for (let yy = 0; yy < ob.h; yy += 27){
+          g.fillStyle = '#b07a3c'; g.fillRect(x, y + yy, ob.w, 27);
+          g.strokeStyle = '#6e4a1e'; g.lineWidth = 2; g.strokeRect(x + 1, y + yy + 1, ob.w - 2, 25);
+          g.beginPath(); g.moveTo(x + 2, y + yy + 2); g.lineTo(x + ob.w - 2, y + yy + 25); g.stroke();
+        }
+      } else if (ob.k === 'iguana'){
+        g.save(); g.translate(x + ob.w, y + 1); g.scale(-1, 1); drawIguana(0, 0, t); g.restore();
+      } else {
+        g.fillStyle = '#f2e9f7';
+        g.beginPath(); g.moveTo(x, y + 7); g.lineTo(x + ob.w, y); g.lineTo(x + ob.w - 8, y + 14); g.closePath(); g.fill();
+        g.fillStyle = '#cdbcda';
+        g.beginPath(); g.moveTo(x, y + 7); g.lineTo(x + ob.w - 8, y + 14); g.lineTo(x + ob.w - 14, y + 8); g.closePath(); g.fill();
+        if (x > 0 && x + ob.w < W) txt('7-B', x + 24, y + 9, 7, '#a82246');
+      }
+      g.globalAlpha = 1;
+    });
+
+    if (this.invuln <= 0 || Math.floor(t / 5) % 2)
+      Cast.draw('PEARL', this.PX, GY - this.alt, 1, false, 0.8, this.alt === 0);
+
+    const p = clamp(this.dist / this.goal, 0, 1);
+    g.fillStyle = 'rgba(6,3,12,.7)'; g.fillRect(200, 14, 240, 10);
+    g.fillStyle = '#ff6688'; g.fillRect(202, 16, 236 * p, 6);
+    g.fillStyle = '#f2e9f7'; g.fillRect(436, 12, 3, 14);
+    if (!this.o.micro && this.dist > this.goal * 0.5 && this.dist < this.goal * 0.5 + 900)
+      txt('FASTER!', W / 2, 78, 22, '#ffd76b');
+  }
+};
+
+/* ---------- 3. REGINALD — STANDS IN A GARDEN (stand still, then top-down crossing) ---------- */
+GAMES.standing = {
+  title: 'REGINALD STANDS IN A GARDEN', short: 'REGINALD STANDS', maker: 'REGINALD',
+  how: ['LEVEL 1:   YOU ARE REGINALD. DO NOT PRESS ANYTHING.', 'LEVEL 2:   ARROWS. CROSS THE GARDEN.', 'THE LAWNMOWERS ARE NOT A THREAT. AVOID THEM ANYWAY.'],
+  intro: [['REGINALD', 'You are me. Stand in the garden. Do not press anything.']],
+  win: [['REGINALD', 'You stood. Then you crossed. That is everything I know.'],
+        ['AUNT BARB', 'Well done, Reginald.'], ['REGINALD', 'I did nothing.'], ['AUNT BARB', 'Exactly, dear.']],
+  lose: [['REGINALD', 'It was not a threat. It was just a lawnmower.'],
+         ['REGINALD', 'Wait for the gap. I wait for everything.']],
+  LANES: [
+    { row:9, dir: 1, sp:1.2, w:40, n:3, k:'barrow' },
+    { row:8, dir:-1, sp:1.6, w:56, n:2, k:'mower' },
+    { row:7, dir: 1, sp:2.0, w:30, n:2, k:'kevin' },
+    { row:6, dir:-1, sp:1.3, w:40, n:3, k:'barrow' },
+    { row:4, dir: 1, sp:1.7, w:56, n:2, k:'mower' },
+    { row:3, dir:-1, sp:2.2, w:30, n:2, k:'kevin' },
+    { row:2, dir: 1, sp:1.4, w:40, n:3, k:'barrow' },
+    { row:1, dir:-1, sp:1.8, w:56, n:2, k:'mower' }
+  ],
+  SPAN: 760,
+
+  init(o){
+    this.o = o; this.phase = 0; this.still = 0; this.grace = 30;
+    this.need = (o.micro ? 3 : 6) * 60;
+    this.msg = ''; this.msgT = 0; this.moved = 0;
+  },
+
+  setupCross(){
+    this.phase = 1; this.crossed = 0; this.needCross = this.o.easy ? 1 : 2;
+    this.movers = [];
+    this.LANES.forEach(L => {
+      const off = rnd(0, this.SPAN);
+      for (let i = 0; i < L.n; i++) this.movers.push({ L, x: (off + i * this.SPAN / L.n) % this.SPAN });
+    });
+    this.place(10); this.checkpoint = false; this.invuln = 0; this.rep = 0;
+  },
+  place(row){ this.c = 10; this.r = row; this.rx = this.c * 32; this.ry = this.r * 32; },
+
+  update(inp, pr){
+    const o = this.o;
+    if (this.msgT > 0) this.msgT--;
+
+    if (this.phase === 0){
+      const any = inp.left || inp.right || inp.up || inp.down || inp.jump;
+      if (this.grace > 0){ this.grace = any ? 12 : this.grace - 1; return; }
+      if (any){
+        if (this.still > 20){
+          this.moved++; this.msg = 'YOU MOVED.'; this.msgT = 70; Sfx.play('blip');
+          if (this.moved === 3 && !o.micro)
+            Talk.interrupt({ lines: [['REGINALD', 'Standing is harder than it looks. I have practised for six years.']] });
+        }
+        this.still = 0; this.grace = 12;
+        return;
+      }
+      if (++this.still >= this.need){
+        Sfx.play('pick');
+        if (o.micro){ o.host.win(); return; }
+        o.host.score += 100;
+        this.setupCross();
+        this.msg = 'LEVEL 2: NOW CROSS IT'; this.msgT = 110;
+      }
+      return;
+    }
+
+    const mult = (o.easy ? 0.7 : 1) * (1 + this.crossed * 0.25) * o.speed;
+    for (const m of this.movers) m.x = (m.x + m.L.dir * m.L.sp * mult + this.SPAN) % this.SPAN;
+    if (this.invuln > 0) this.invuln--;
+
+    let dc = 0, dr = 0;
+    if (pr.left) dc = -1; else if (pr.right) dc = 1; else if (pr.up) dr = -1; else if (pr.down) dr = 1;
+    const held = inp.left || inp.right || inp.up || inp.down;
+    if (!dc && !dr && held){                       // hold to keep hopping
+      if (++this.rep >= 11){
+        this.rep = 0;
+        if (inp.up) dr = -1; else if (inp.down) dr = 1; else if (inp.left) dc = -1; else dc = 1;
+      }
+    } else if (!held) this.rep = 0;
+    if (dc || dr){
+      this.c = clamp(this.c + dc, 0, 19); this.r = clamp(this.r + dr, 0, 11);
+      Sfx.play('blip');
+    }
+    this.rx += (this.c * 32 - this.rx) * 0.45; this.ry += (this.r * 32 - this.ry) * 0.45;
+
+    if (this.r === 5) this.checkpoint = true;
+    if (this.r === 0){
+      this.crossed++; o.host.score += 100; Sfx.play('pick');
+      if (this.crossed >= this.needCross){ o.host.win(); return; }
+      this.place(10); this.checkpoint = false;
+      this.msg = 'AGAIN. SLIGHTLY FASTER. HIS WORDS.'; this.msgT = 120;
+      return;
+    }
+    if (this.invuln <= 0){
+      const me = { x: this.c * 32 + 7, y: this.r * 32 + 7, w: 18, h: 18 };
+      for (const m of this.movers){
+        if (m.L.row !== this.r) continue;
+        if (overlap(me, { x: m.x - m.L.w, y: m.L.row * 32 + 5, w: m.L.w, h: 22 })){
+          this.invuln = 70;
+          this.place(this.checkpoint ? 5 : 10);
+          o.host.hurt(); return;
+        }
+      }
+    }
+  },
+
+  draw(){
+    if (this.phase === 0){
+      g.fillStyle = '#1a0b2e'; g.fillRect(0, 0, W, H);
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+        if ((r + c) % 2) continue;
+        g.fillStyle = '#200d3a'; g.fillRect(c * TILE, r * TILE, TILE, TILE);
+      }
+      g.fillStyle = '#2a1450'; g.fillRect(0, 300, W, 84);
+      g.fillStyle = '#3d1f6e'; g.fillRect(0, 300, W, 4);
+      [90, 190, 450, 560].forEach(x => drawFlower(x, 284));
+      Cast.draw('REGINALD', W / 2, 300, 1, false, 1.7);
+      txt('STAND IN THE GARDEN', W / 2, 92, 26, '#8fd0a8');
+      const p = clamp(this.still / this.need, 0, 1);
+      g.fillStyle = 'rgba(6,3,12,.8)'; g.fillRect(W / 2 - 122, 110, 244, 16);
+      g.fillStyle = '#8fd0a8'; g.fillRect(W / 2 - 120, 112, 240 * p, 12);
+      if (this.msgT > 0) txt(this.msg, W / 2, 160, 20, '#ff3b6b');
+      else txt('do not press anything', W / 2, 150, 12, '#8a6ea8');
+      return;
+    }
+    for (let r = 0; r < 12; r++){
+      const safe = r === 0 || r === 5 || r >= 10;
+      g.fillStyle = safe ? '#2f6b45' : (r % 2 ? '#1f3a2c' : '#234231');
+      g.fillRect(0, r * 32, W, 32);
+    }
+    g.fillStyle = '#3c8a5a';
+    for (let x = 8; x < W; x += 64){ g.fillRect(x, 5 * 32 + 12, 26, 8); }
+    for (let x = 24; x < W; x += 56){                            // the roses. Nice roses.
+      if (Math.abs(x - W / 2) > 70) drawFlower(x, 13);
+    }
+
+    for (const m of this.movers){
+      const L = m.L, x = m.x - L.w, y = L.row * 32;
+      if (L.k === 'barrow'){
+        g.fillStyle = '#b07a3c'; g.fillRect(x + 4, y + 8, L.w - 10, 14);
+        g.fillStyle = '#6e4a1e'; g.fillRect(x + 4, y + 20, L.w - 10, 3);
+        g.fillStyle = '#222'; g.beginPath(); g.arc(L.dir > 0 ? x + L.w - 6 : x + 6, y + 24, 5, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#2f7d4f'; g.fillRect(x + 10, y + 4, L.w - 22, 5);
+      } else if (L.k === 'mower'){
+        g.fillStyle = '#d23c3c'; g.fillRect(x + 6, y + 9, L.w - 18, 15);
+        g.fillStyle = '#8a2020'; g.fillRect(x + 6, y + 20, L.w - 18, 4);
+        g.fillStyle = '#bbb';
+        if (L.dir > 0) g.fillRect(x, y + 6, 8, 3); else g.fillRect(x + L.w - 8, y + 6, 8, 3);
+        g.fillStyle = '#222'; g.fillRect(x + 8, y + 24, 8, 5); g.fillRect(x + L.w - 22, y + 24, 8, 5);
+        g.fillStyle = '#ffd76b'; g.fillRect(L.dir > 0 ? x + L.w - 12 : x + 6, y + 12, 4, 4);
+      } else {
+        Cast.draw('KEVIN', x + L.w / 2, y + 28, L.dir, true, 0.85);
+      }
+    }
+    if (this.invuln <= 0 || Math.floor(t / 5) % 2)
+      Cast.draw('REGINALD', this.rx + 16, this.ry + 30, 1, false, 0.5);
+    txt('CROSSINGS  ' + this.crossed + ' / ' + this.needCross, W / 2, 22, 11, '#f2e9f7');
+    if (this.msgT > 0) txt(this.msg, W / 2, 5 * 32 + 22, 14, '#ffd76b');
+  }
+};
+
+/* ---------- 4. AUNT BARB — ROSE PARADE (top-down snake) ---------- */
+GAMES.parade = {
+  title: "AUNT BARB'S ROSE PARADE", short: 'ROSE PARADE', maker: 'AUNT BARB',
+  how: ['ARROWS   STEER AUNT BARB', 'PICK THE ROSES. THE CHICKS WILL FOLLOW.', 'MIND THE GNOMES. AND YOUR OWN PARADE.'],
+  intro: [['AUNT BARB', 'Pick the roses, dear. The chicks will follow you. Mind the gnomes.']],
+  win: [['AUNT BARB', 'A full parade. Every rose accounted for.'], ['SCRATCHY', 'I counted. She is right.']],
+  lose: [['AUNT BARB', 'Gnomes do not move, dear. You have to.'], ['AUNT BARB', 'Never mind. The roses will wait.']],
+  CELL: 24, COLS: 26, ROWS: 14, OX: 8, OY: 40,
+
+  init(o){
+    this.o = o;
+    this.goal = o.micro ? 3 : (o.easy ? 8 : 12);
+    this.period = Math.max(5, Math.round((o.micro ? 9 : (o.easy ? 13 : 10)) / o.speed));
+    this.got = 0; this.tick = 0; this.safe = 0;
+    this.reset();
+    this.gnomes = [];
+    const want = o.micro ? 0 : (o.easy ? 4 : 7);
+    while (this.gnomes.length < want){
+      const c = rint(1, this.COLS - 2), r = rint(1, this.ROWS - 2);
+      if (Math.abs(r - 7) < 2 || this.gnomes.some(q => q.c === c && q.r === r)) continue;   // keep her lane clear
+      this.gnomes.push({ c, r });
+    }
+    this.placeRose();
+  },
+  reset(){ this.snake = [{ c: 13, r: 7 }]; this.dir = { c: 1, r: 0 }; this.next = this.dir; this.grow = 0; },
+  free(c, r){
+    return !this.snake.some(s => s.c === c && s.r === r) && !this.gnomes.some(q => q.c === c && q.r === r);
+  },
+  placeRose(){
+    for (let i = 0; i < 200; i++){
+      const c = rint(1, this.COLS - 2), r = rint(1, this.ROWS - 2);
+      if (this.free(c, r)){ this.rose = { c, r }; return; }
+    }
+    this.rose = { c: 2, r: 2 };
+  },
+
+  update(inp, pr){
+    const o = this.o, d = this.dir;
+    const want = pr.left ? { c:-1, r:0 } : pr.right ? { c:1, r:0 } : pr.up ? { c:0, r:-1 } : pr.down ? { c:0, r:1 } : null;
+    if (want && !(want.c === -d.c && want.r === -d.r)) this.next = want;
+    if (++this.tick < this.period) return;
+    this.tick = 0;
+    this.dir = this.next;
+    const h = this.snake[0];
+    const nh = { c: (h.c + this.dir.c + this.COLS) % this.COLS, r: (h.r + this.dir.r + this.ROWS) % this.ROWS };
+    if (this.safe > 0) this.safe--;
+
+    const bump = this.gnomes.some(q => q.c === nh.c && q.r === nh.r) ||
+                 (!o.easy && this.snake.slice(0, -1).some(s => s.c === nh.c && s.r === nh.r));
+    if (bump && this.safe <= 0){
+      this.reset(); this.safe = 4;                 // the chicks go home; the roses you picked still count
+      o.host.hurt(); return;
+    }
+    this.snake.unshift(nh);
+    if (nh.c === this.rose.c && nh.r === this.rose.r){
+      this.got++; o.host.score += 10; Sfx.play('pick');
+      if (this.got >= this.goal){ o.host.win(); return; }
+      this.placeRose();
+    } else this.snake.pop();
+  },
+
+  draw(){
+    const C = this.CELL, ox = this.OX, oy = this.OY;
+    g.fillStyle = '#16301f'; g.fillRect(0, 0, W, H);
+    for (let r = 0; r < this.ROWS; r++) for (let c = 0; c < this.COLS; c++){
+      g.fillStyle = (r + c) % 2 ? '#1f4a2e' : '#235334';
+      g.fillRect(ox + c * C, oy + r * C, C, C);
+    }
+    this.gnomes.forEach(q => {
+      const x = ox + q.c * C + 12, y = oy + q.r * C;
+      g.fillStyle = '#3b6fd6'; g.fillRect(x - 6, y + 12, 12, 10);
+      g.fillStyle = '#ffddbb'; g.fillRect(x - 5, y + 7, 10, 7);
+      g.fillStyle = '#f2e9f7'; g.fillRect(x - 4, y + 12, 8, 5);
+      g.fillStyle = '#d23c3c'; g.beginPath(); g.moveTo(x - 7, y + 8); g.lineTo(x, y - 3); g.lineTo(x + 7, y + 8); g.closePath(); g.fill();
+    });
+    drawFlower(ox + this.rose.c * C + 12, oy + this.rose.r * C + 10);
+
+    for (let i = this.snake.length - 1; i >= 0; i--){
+      const s = this.snake[i], x = ox + s.c * C + 12, y = oy + s.r * C + 12;
+      if (i === 0){
+        if (this.safe > 0 && Math.floor(t / 5) % 2) continue;
+        g.fillStyle = '#7799cc'; g.beginPath(); g.arc(x, y, 11, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#ffddbb'; g.beginPath(); g.arc(x + this.dir.c * 3, y + this.dir.r * 3, 7, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#ddd8d0'; g.beginPath(); g.arc(x - this.dir.c * 2, y - this.dir.r * 2, 5, 0, Math.PI * 2); g.fill();
+      } else {
+        const bob = REDUCED ? 0 : Math.sin(t / 6 + i) * 1.5;
+        g.fillStyle = '#ffe36b'; g.beginPath(); g.arc(x, y + bob, 7, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#ff9a3c'; g.fillRect(x - 2, y - 2 + bob, 4, 4);
+        g.fillStyle = '#1a0b2e'; g.fillRect(x - 4, y - 4 + bob, 2, 2); g.fillRect(x + 2, y - 4 + bob, 2, 2);
+      }
+    }
+    txt('ROSES  ' + this.got + ' / ' + this.goal, W / 2, 22, 11, '#f2e9f7');
+  }
+};
+
+/* ---------- 5. EL JAGUAR — BRICK SPECTACULAR (breakout) ---------- */
+GAMES.bricks = {
+  title: "EL JAGUAR'S BRICK SPECTACULAR", short: 'BRICK SPECTACULAR', maker: 'EL JAGUAR',
+  how: ['◀ ▶   MOVE', 'A / SPACE   SERVE THE BALL', 'GOLD BRICKS GIVE YOU ANOTHER BALL'],
+  intro: [['EL JAGUAR', 'Behold. My name. In BRICKS. You may not touch it.'],
+          ['PEARL', 'You HAVE to touch it. It is the game.']],
+  win: [['EL JAGUAR', 'Enough! The rest are load-bearing.'], ['PEARL', 'The bricks said GERALD.'],
+        ['EL JAGUAR', 'They said EL JAGUAR.'], ['PEARL', 'I can read, Gerald.']],
+  lose: [['EL JAGUAR', 'The ball must go UP. This is the secret.'], ['EL JAGUAR', 'Again. I booked the lane.']],
+  // He says the bricks spell EL JAGUAR.
+  FONT: {
+    G: ['01111','10000','10111','10001','01110'],
+    E: ['11111','10000','11110','10000','11111'],
+    R: ['11110','10001','11110','10010','10001'],
+    A: ['01110','10001','11111','10001','10001'],
+    L: ['10000','10000','10000','10000','11111'],
+    D: ['11110','10001','10001','10001','11110']
+  },
+
+  init(o){
+    this.o = o;
+    this.pw = o.easy ? 132 : 98; this.px = W / 2; this.py = H - 32;
+    this.s = (o.easy ? 3.8 : 4.6) * o.speed;
+    this.bricks = [];
+    'GERALD'.split('').forEach((ch, li) => {
+      this.FONT[ch].forEach((row, r) => row.split('').forEach((bit, c) => {
+        if (bit === '1') this.bricks.push({ x: 30 + li * 99 + c * 17, y: 64 + r * 15, w: 16, h: 14, alive: true, gold: false });
+      }));
+    });
+    this.bricks.forEach((b, i) => { b.gold = i % 9 === 4; });
+    this.broken = 0;
+    this.goal = o.micro ? 8 : (o.easy ? 40 : 58);
+    this.balls = []; this.spawned = null; this.serve(); this.auto = o.micro ? 36 : -1;
+  },
+  serve(){ this.balls.push({ x: this.px, y: this.py - 7, vx: 0, vy: 0, stuck: true }); },
+  launch(b){
+    b.stuck = false;
+    b.vx = this.s * 0.5 * (Math.random() < 0.5 ? -1 : 1);
+    b.vy = -Math.sqrt(this.s * this.s - b.vx * b.vx);
+  },
+
+  update(inp, pr){
+    const o = this.o;
+    if (inp.left) this.px -= 6.4;
+    if (inp.right) this.px += 6.4;
+    this.px = clamp(this.px, this.pw / 2 + 6, W - this.pw / 2 - 6);
+    if (this.auto > 0) this.auto--;
+
+    for (const b of this.balls){
+      if (b.stuck){
+        b.x = this.px; b.y = this.py - 7;
+        if (pr.jump || this.auto === 0){ this.launch(b); Sfx.play('bounce'); }
+        continue;
+      }
+      for (let sub = 0; sub < 2; sub++){
+        const ox = b.x, oy = b.y;
+        b.x += b.vx / 2; b.y += b.vy / 2;
+        if (b.x < 11){ b.x = 11; b.vx = Math.abs(b.vx); }
+        if (b.x > W - 11){ b.x = W - 11; b.vx = -Math.abs(b.vx); }
+        if (b.y < 40){ b.y = 40; b.vy = Math.abs(b.vy); }
+        if (b.vy > 0 && b.y + 5 >= this.py && b.y + 5 <= this.py + 14 && Math.abs(b.x - this.px) < this.pw / 2 + 5){
+          const a = clamp((b.x - this.px) / (this.pw / 2), -1, 1) * 1.05;
+          b.vx = this.s * Math.sin(a); b.vy = -this.s * Math.cos(a);
+          b.y = this.py - 6; Sfx.play('bounce');
+        }
+        for (const k of this.bricks){
+          if (!k.alive) continue;
+          if (b.x + 5 < k.x || b.x - 5 > k.x + k.w || b.y + 5 < k.y || b.y - 5 > k.y + k.h) continue;
+          if (ox + 5 < k.x || ox - 5 > k.x + k.w) b.vx = -b.vx; else b.vy = -b.vy;
+          b.x = ox; b.y = oy;
+          k.alive = false; this.broken++; o.host.score += 10; Sfx.play('pop');
+          if (k.gold && this.balls.length < 3){
+            const nb = { x: k.x + 8, y: k.y + 16, vx: 0, vy: 0, stuck: false };
+            nb.vx = this.s * 0.4 * (Math.random() < 0.5 ? -1 : 1);
+            nb.vy = Math.sqrt(this.s * this.s - nb.vx * nb.vx);
+            this.spawned = nb;
+          }
+          break;
+        }
+      }
+    }
+    if (this.spawned){ this.balls.push(this.spawned); this.spawned = null; }
+
+    if (this.broken >= this.goal){ o.host.win(); return; }
+
+    this.balls = this.balls.filter(b => b.y < H + 12);
+    if (!this.balls.length){
+      this.serve();
+      if (o.micro) this.auto = 36;
+      o.host.hurt(); return;
+    }
+  },
+
+  draw(){
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#2a0d12'); bg.addColorStop(1, '#0d0618');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(244,162,97,.07)';
+    [150, 320, 490].forEach((x, i) => {
+      const sw = REDUCED ? 0 : Math.sin(t / 50 + i * 2) * 60;
+      g.beginPath(); g.moveTo(x, 30); g.lineTo(x - 90 + sw, H); g.lineTo(x + 90 + sw, H); g.closePath(); g.fill();
+    });
+    txt('★  THE GREAT  EL JAGUAR  ★', W / 2, 52, 12, '#f4a261');
+    this.bricks.forEach(k => {
+      if (!k.alive) return;
+      g.fillStyle = k.gold ? '#ffd76b' : '#e07840'; g.fillRect(k.x, k.y, k.w, k.h);
+      g.fillStyle = k.gold ? '#fff3c4' : '#f4a261'; g.fillRect(k.x, k.y, k.w, 3);
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(k.x, k.y + k.h - 2, k.w, 2);
+    });
+    const x0 = this.px - this.pw / 2;
+    g.fillStyle = '#f4a261'; g.fillRect(x0, this.py, this.pw, 12);
+    g.fillStyle = '#ffc48f'; g.fillRect(x0, this.py, this.pw, 3);
+    g.fillStyle = '#8b4513';
+    for (let i = 10; i < this.pw - 6; i += 18) g.fillRect(x0 + i, this.py + 5, 5, 4);
+    this.balls.forEach(b => {
+      g.fillStyle = '#f2e9f7'; g.beginPath(); g.arc(b.x, b.y, 5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#8a6ea8'; g.fillRect(b.x - 2, b.y - 1, 1.5, 1.5); g.fillRect(b.x + 1, b.y + 1, 1.5, 1.5);
+    });
+    txt('BRICKS  ' + Math.min(this.broken, this.goal) + ' / ' + this.goal, W / 2, 22, 11, '#cdbcda');
+    if (this.balls.some(b => b.stuck) && !this.o.micro) txt('PRESS  A  TO SERVE', W / 2, 230, 14, '#ffd76b');
+  }
+};
+
+/* ---------- 6. EVERYONE — ALL OF THEM AT ONCE (five quick rounds, one life pool) ---------- */
+GAMES.finale = {
+  title: 'CRANKY CHICKENS VIII: ALL OF THEM AT ONCE', short: 'ALL OF THEM AT ONCE', maker: 'EVERYONE',
+  how: ['FIVE GAMES. ONE AFTER ANOTHER. QUICKLY.', 'SAME BUTTONS AS BEFORE', 'MISS ONE AND YOU GET THAT ROUND AGAIN'],
+  intro: [['SCRATCHY', 'We put all five games in one cabinet.'], ['PEARL', 'ALL OF THEM. AT ONCE!'],
+          ['SCRATCHY', 'One at a time. Quickly.']],
+  win: [],
+  lose: [['AUNT BARB', 'That was a great many games, dear. Have another go.'],
+         ['SCRATCHY', 'Kevin is guarding the cabinet. He says you may try again.']],
+  ORDER: ['invaders', 'runner', 'standing', 'parade', 'bricks'],
+  TASK: { invaders:'SEND 8 IGUANAS HOME', runner:'GO!', standing:'DO NOT PRESS ANYTHING', parade:'PICK 3 ROSES', bricks:'BREAK 8 BRICKS' },
+
+  init(o){ this.o = o; this.i = 0; this.begin(); },
+  begin(){
+    const id = this.ORDER[this.i];
+    this.sub = GAMES[id];
+    this.sub.init({ easy: this.o.easy, micro: true, speed: 1 + this.i * 0.07, host: this });
+    this.card = 85;
+    paintHud();
+  },
+  get score(){ return Arcade.score; },
+  set score(v){ Arcade.score = v; },
+  hurt(){
+    const dead = this.o.host.hurt();
+    if (!dead) this.begin();                       // same round again
+    return true;                                   // tells the sub-game to stop this frame
+  },
+  win(){
+    Arcade.score += 100;
+    this.i++;
+    if (this.i >= this.ORDER.length){ this.o.host.win(); return; }
+    Sfx.play('pick');
+    this.begin();
+  },
+  update(inp, pr){
+    if (this.card > 0){ this.card--; return; }
+    this.sub.update(inp, pr);
+  },
+  draw(){
+    const was = Arcade.quiet;
+    if (this.card > 0) Arcade.quiet = true;
+    this.sub.draw();
+    Arcade.quiet = was;
+    if (this.card > 0){
+      g.fillStyle = 'rgba(6,3,12,.86)'; g.fillRect(0, 130, W, 120);
+      g.fillStyle = '#ffd76b'; g.fillRect(0, 130, W, 3); g.fillRect(0, 247, W, 3);
+      txt('ROUND ' + (this.i + 1) + ' OF 5  ·  ' + this.sub.maker, W / 2, 168, 14, '#cdbcda');
+      txt(this.TASK[this.ORDER[this.i]], W / 2, 210, 30, '#ffd76b');
+    }
+  }
+};
+
+/* ============================================================
+   ENDING — The Handoff. The seam the demo left on day one:
+   Input.driver flips to 'chickens' and the garden plays itself
+   while the credits roll. The trailer promised the game would stop
+   taking input and the chickens would seem better than fine. They
+   are. They give the controller back the moment you ask.
+   ============================================================ */
+const Ending = {
+  f: 0, dir: 1, prevAny: true,
+  CREDITS: [
+    'CRANKY CHICKENS VII', "WE KNOW YOU'RE HERE", '',
+    'THE GARDEN', 'was already here', '',
+    'FORM 7-B: CORN INVADERS', 'Scratchy', '',
+    "PEARL'S GO GO GO GO", 'Pearl', '',
+    'REGINALD STANDS IN A GARDEN', 'Reginald (standing)', '',
+    "AUNT BARB'S ROSE PARADE", 'Aunt Barb', '',
+    "EL JAGUAR'S BRICK SPECTACULAR", 'Gerald', '',
+    'CABINET SECURITY', 'Kevin', '',
+    'IDEAS DEPARTMENT', 'Cannon Master  ·  Dragon Scribe', '',
+    'FALLING BLOCKS', 'none', '',
+    'PLAYED BY', 'you', 'we watched the whole time', '(kindly)', '',
+    'CRANKY CHICKENS WILL RETURN'
+  ],
+
+  begin(){
+    Arcade.game = null;
+    mode = 'ending';
+    this.f = 0; this.dir = 1; this.prevAny = true;
+    sx = 0; sy = 0; grid = screenAt(0, 0);
+    P.x = 64; P.y = 300; P.vx = 0; P.vy = 0;
+    entry = { x: 64, y: 300 };
+    Input.driver = 'chickens';
+    Save.data.finished = true;
+    Save.data.screen = [0, 0];
+    Save.flush();
+    paintHud();
+    Talk.interrupt({ id:'handoff', lines: [
+      ['THE GAME', 'All six cabinets cleared. Input is no longer required.'],
+      ['PEARL', 'Our turn! OUR TURN!'],
+      ['SCRATCHY', 'We are only borrowing the controller. I filed for it.'],
+      ['AUNT BARB', 'You played every one of our games, dear. Nobody has ever done that.'],
+      ['EL JAGUAR', 'You may call me Gerald. Once.'],
+      ['REGINALD', 'Nice playing. That was not a threat.']
+    ]});
+    Bus.emit('ending:start', {});
+  },
+
+  step(){
+    this.f++;
+    const a = Input.auto;
+    if (P.x > 520) this.dir = -1;
+    if (P.x < 70) this.dir = 1;
+    a.left = this.dir < 0; a.right = this.dir > 0;
+    a.jump = (this.f % 100) < 14;
+    step();
+
+    const h = Input.human;
+    const any = h.left || h.right || h.up || h.down || h.jump || h.enter;
+    const pressed = any && !this.prevAny;
+    this.prevAny = any;
+    if ((this.f > 60 * 9 && pressed) || this.f > 60 * 70) this.finish();
+  },
+
+  finish(){
+    Input.driver = 'human';
+    Input.auto.left = Input.auto.right = Input.auto.jump = false;
+    mode = 'garden';
+    jumpLock = true;
+    Sfx.play('win');
+    toast('YOU HAVE THE CONTROLLER AGAIN<br>THE ARCADE STAYS OPEN', 6000);
+    paintHud();
+    Bus.emit('ending:done', {});
+  },
+
+  draw(){
+    g.fillStyle = 'rgba(6,3,12,.55)'; g.fillRect(150, 0, 340, H);
+    const TOP = 90, BOT = 282, scroll = this.f * 0.42;
+    this.CREDITS.forEach((line, i) => {
+      const y = BOT + 24 + i * 24 - scroll;
+      if (!line || y <= TOP || y >= BOT) return;
+      const head = line === line.toUpperCase() && line.length > 2;
+      g.globalAlpha = clamp(Math.min(y - TOP, BOT - y) / 20, 0, 1);
+      txt(line, W / 2, y, head ? 15 : 13, head ? '#ffd76b' : '#f2e9f7');
+      g.globalAlpha = 1;
+    });
+    txt('THE CHICKENS ARE PLAYING', W / 2, 30, 11, '#ff3b6b');
+    if (this.f > 60 * 9 && (REDUCED || Math.floor(t / 30) % 2))
+      txt('PRESS ANY BUTTON TO TAKE IT BACK', W / 2, 60, 13, '#f2e9f7');
+  }
+};
+
+/* ---------- Garden glue: the only code that touches both worlds ---------- */
+let gardenPrev = { down: false, enter: false };
+function gardenStep(now){
+  const inp = Input.read();
+  if (jumpLock && !inp.jump && !inp.up && !inp.enter) jumpLock = false;
+  const pressDown = (inp.down && !gardenPrev.down) || (inp.enter && !gardenPrev.enter);
+  gardenPrev = { down: inp.down, enter: inp.enter };
+  if (pressDown){
+    const c = nearCabinet();
+    if (c){
+      if (cabinetLocked(c)){
+        Sfx.play('blip');
+        Talk.interrupt({ lines: [['SCRATCHY', 'That one is not finished. Kevin is guarding it. Win the other five first.']] });
+      } else { Arcade.open(c); return; }
+    }
+  }
+  step();
+}
+
+/* Post-takeover chatter. The chickens review each other's cabinets. */
+const ARCADE_TALK = [
+  { id:'k-47', lines:[
+    ['SCRATCHY','My cabinet has forty-seven iguanas.'], ['PEARL','Why forty-seven?'],
+    ['SCRATCHY','It is the correct number of things.'] ]},
+  { id:'k-end', lines:[
+    ['PEARL','My game goes fast and then it goes FASTER.'], ['AUNT BARB','Does it have an ending, dear?'],
+    ['PEARL','...I should check.'] ]},
+  { id:'k-tall', lines:[
+    ['EL JAGUAR','My cabinet is the tallest.'], ['SCRATCHY','It is the same cabinet with a box on top.'],
+    ['EL JAGUAR','A TALL box.'] ]},
+  { id:'k-stand', lines:[
+    ['REGINALD','In my game you stand still.'], ['PEARL','That is not a game.'],
+    ['REGINALD','I have the high score.'] ]},
+  { id:'k-demo', lines:[
+    ['AUNT BARB','We were only supposed to be a demo, you know.'], ['SCRATCHY','Nobody told the demo.'] ]},
+  { id:'k-flowers', lines:[
+    ['PEARL','Every four flowers is an extra life in the cabinets.'], ['SCRATCHY','I did not approve that.'],
+    ['AUNT BARB','I did, dear.'] ]}
+];
+
 /* ---------- Boot ---------- */
 function boot(){
   const led = Save.load();
@@ -1541,6 +3068,9 @@ function boot(){
   Voice.on = led.voices !== false;
   Voice.init();
   paintVoiceBtn();
+  Sfx.on = led.sfx !== false;
+  paintSfxBtn();
+  bootAt = performance.now();
 
   const [rx, ry] = led.screen || [0,0];
   const start = screenAt(rx, ry) ? [rx, ry] : [0,0];
@@ -1597,16 +3127,22 @@ function loop(now){
   acc += Math.min(raw, FRAME * MAX_STEPS);
   let steps = 0;
   while (acc >= FRAME && steps < MAX_STEPS){
-    if (running) step();
+    if (running){
+      if (mode === 'garden') gardenStep(now);
+      else if (mode === 'arcade') Arcade.step();
+      else Ending.step();
+      inputFrame();
+    }
     acc -= FRAME;
     steps++;
   }
   if (acc >= FRAME){ Perf.dropped++; acc = 0; }   // truly stalled: resync, don't accumulate debt
-  Watcher.tick(Math.min(now - lastTalk, 100), Math.abs(P.vx) > 0.4 || !P.grounded);
+  // Playing a cabinet counts as moving: nobody is "standing still" in the arcade.
+  Watcher.tick(Math.min(now - lastTalk, 100), mode !== 'garden' || Math.abs(P.vx) > 0.4 || !P.grounded);
   lastTalk = now;
-  Assist.tick(now);
+  if (mode === 'garden'){ Assist.tick(now); Takeover.check(now); }
   Talk.tick(now);
-  draw();
+  if (mode === 'arcade') Arcade.draw(); else draw();
 }
 
 boot();
