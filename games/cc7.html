@@ -181,7 +181,11 @@ const Save = {
       best: {},              // cabinet id -> best score
       fails: {},             // cabinet id -> losses in a row. Two, and Barb steps in.
       finished: false,       // The Handoff has happened
-      sfx: true
+      sfx: true,
+      told: {},              // LAYER 3: which leaks / hidden screens have been announced
+      extra: {},             // the flowers that should not exist: sky, under, outside
+      wallHits: 0,           // headbutts into El Jaguar's wall
+      wallDown: false
     };
   },
   gapMs: 0,     // time since the previous session — captured before lastSeen is stamped
@@ -408,7 +412,10 @@ let fallsHere = 0, screenEnteredAt = 0;
 
 /* ---------- Screen management ---------- */
 function key(x, y){ return x + ',' + y; }
-function screenAt(x, y){ return ZONE.screens[key(x,y)] || null; }
+function screenAt(x, y){
+  const k = key(x, y), s = SECRET[k];                 // LAYER 3: three screens off the map
+  return ZONE.screens[k] || (s && s.open() ? s.rows : null);
+}
 
 function enterScreen(nx, ny, px, py){
   const s = screenAt(nx, ny);
@@ -454,13 +461,21 @@ function step(){
   if (jump) P.buffer = BUFFER_FRAMES; else if (P.buffer > 0) P.buffer--;
   if (P.coyote > 0) P.coyote--;
 
+  const jumpEdge = jump && !P.wasJump; P.wasJump = jump;
   if (P.buffer > 0 && P.coyote > 0){
     P.vy = assist.active ? JUMP_BOOST : JUMP_V;
     P.buffer = 0; P.coyote = 0;
     P.flap = 12;
     Bus.emit('player:jump', { sx, sy });
+  } else if (jumpEdge && P.coyote <= 0 && !P.flapUsed && Leak.on('runner')){
+    // LAYER 3: Pearl left the flapping on. One more jump, in the air.
+    P.vy = -9.8; P.flapUsed = true; P.flap = 12;
+    Sfx.play('jump');
+    for (let i = 0; i < 5; i++)
+      sparks.push({ x: P.x + P.w / 2, y: P.y + P.h, vx: (Math.random() - .5) * 3, vy: 1 + Math.random(), life: 14 });
   }
-  if (!jump && P.vy < -3) P.vy = -3;   // variable jump height
+  if (P.launch > 0) P.launch--;        // LAYER 3: being thrown is not a jump; letting go does not cut it
+  else if (!jump && P.vy < -3) P.vy = -3;   // variable jump height
 
   P.vy = Math.min(P.vy + GRAV, MAX_FALL);
   if (P.flap > 0) P.flap--;
@@ -500,7 +515,7 @@ function moveY(dy){
       const landsOnPlatform = platAt(c, row) && prevBottom <= row * TILE + 1;
       if (solidAt(c, row) || landsOnPlatform){
         P.y = row * TILE - P.h;
-        P.vy = 0; P.grounded = true; P.coyote = COYOTE_FRAMES;
+        P.vy = 0; P.grounded = true; P.coyote = COYOTE_FRAMES; P.flapUsed = false;
         break;
       }
     }
@@ -731,6 +746,8 @@ function draw(){
     }
   }
 
+  Leak.drawUnder();
+
   sparks = sparks.filter(s => s.life > 0);
   sparks.forEach(s => {
     s.x += s.vx; s.y += s.vy; s.vy += 0.16; s.life--;
@@ -743,6 +760,8 @@ function draw(){
   drawCabinets();
   if (assist.active) drawAssist();
   drawChicken(P.x + P.w / 2, P.y + P.h, P.face);
+  Leak.drawOver();
+  Hint.draw();
   Takeover.drawGlitch();
   if (mode === 'ending') Ending.draw();
   if (Perf.show) drawPerf();
@@ -879,9 +898,10 @@ function paintHud(){
     petalEl.textContent = intro ? '' : '♥'.repeat(Math.max(0, Arcade.lives));
     return;
   }
-  zoneEl.nodeValue = ZONE.name;
-  coordEl.textContent = 'SCREEN (' + sx + ',' + sy + ')';
-  petalEl.textContent = '✿ ' + picked.size + ' / ' + TOTAL_FLOWERS +
+  const sec = secretHere();
+  zoneEl.nodeValue = sec ? sec.name : ZONE.name;
+  coordEl.textContent = sec ? 'NOT ON THE MAP' : 'SCREEN (' + sx + ',' + sy + ')';
+  petalEl.textContent = '✿ ' + flowerCount() + ' / ' + TOTAL_FLOWERS +
     (Save.data.takeover ? '   🎟 ' + tickets() + ' / ' + NEED_TICKETS : '');
 }
 
@@ -2115,6 +2135,8 @@ const Arcade = {
         ['AUNT BARB', 'I have turned this one down a notch, dear.'],
         ['SCRATCHY', 'That is not regulation.'],
         ['AUNT BARB', 'It is now.'] ]});
+    } else if (n >= 3 && this.game.tip){
+      Talk.interrupt({ lines: [ this.game.tip ] });          // stuck: stop being coy and say how
     } else {
       const bank = this.game.lose;
       Talk.interrupt({ lines: [ bank[Math.floor(Math.random() * bank.length)] ] });
@@ -2240,6 +2262,7 @@ GAMES.invaders = {
         ['PEARL', 'There is no form for joy.'], ['SCRATCHY', 'There is now.']],
   lose: [['SCRATCHY', 'That is alright. The iguanas are also bad at this.'],
          ['SCRATCHY', 'Again. I will count slower.']],
+  tip: ['SCRATCHY', 'An official tip. Hold the button down and never let go. The hay bales are on your side.'],
 
   init(o){
     this.o = o; this.px = W / 2; this.cool = 0; this.invuln = 0;
@@ -2360,6 +2383,7 @@ GAMES.runner = {
   intro: [['PEARL', 'It is called GO GO GO GO. You GO. That is the whole game!']],
   win: [['PEARL', 'YOU WENT! You went the WHOLE WAY!'], ['SCRATCHY', 'No falling blocks. I checked.']],
   lose: [['PEARL', 'You can jump TWICE. In the air. I allowed it.'], ['PEARL', 'Again again again!']],
+  tip: ['PEARL', 'TIP! Jump EARLY! Then jump AGAIN in the air! And stay on the ground for the paper planes!'],
   GY: 318, PX: 120,
 
   init(o){
@@ -2505,6 +2529,7 @@ GAMES.standing = {
         ['AUNT BARB', 'Well done, Reginald.'], ['REGINALD', 'I did nothing.'], ['AUNT BARB', 'Exactly, dear.']],
   lose: [['REGINALD', 'It was not a threat. It was just a lawnmower.'],
          ['REGINALD', 'Wait for the gap. I wait for everything.']],
+  tip: ['REGINALD', 'A tip. The dogs are fast. The wheelbarrows are slow. The middle path is safe. Rest there.'],
   LANES: [
     { row:9, dir: 1, sp:1.2, w:40, n:3, k:'barrow' },
     { row:8, dir:-1, sp:1.6, w:56, n:2, k:'mower' },
@@ -2546,6 +2571,10 @@ GAMES.standing = {
           this.moved++; this.msg = 'YOU MOVED.'; this.msgT = 70; Sfx.play('blip');
           if (this.moved === 3 && !o.micro)
             Talk.interrupt({ lines: [['REGINALD', 'Standing is harder than it looks. I have practised for six years.']] });
+          if (this.moved === 6 && !o.micro)
+            Talk.interrupt({ lines: [['THE GAME', 'A hint. The game is called STANDS. Take your hands off everything.']] });
+          if (this.moved === 10 && !o.micro)
+            Talk.interrupt({ lines: [['PEARL', 'LET GO OF THE BUTTONS! ALL OF THEM! I cannot watch!']] });
         }
         this.still = 0; this.grace = 12;
         return;
@@ -2662,6 +2691,7 @@ GAMES.parade = {
   intro: [['AUNT BARB', 'Pick the roses, dear. The chicks will follow you. Mind the gnomes.']],
   win: [['AUNT BARB', 'A full parade. Every rose accounted for.'], ['SCRATCHY', 'I counted. She is right.']],
   lose: [['AUNT BARB', 'Gnomes do not move, dear. You have to.'], ['AUNT BARB', 'Never mind. The roses will wait.']],
+  tip: ['AUNT BARB', 'A tip, dear. The edges wrap around. Walk off one side and you come back on the other.'],
   CELL: 24, COLS: 26, ROWS: 14, OX: 8, OY: 40,
 
   init(o){
@@ -2759,6 +2789,7 @@ GAMES.bricks = {
   win: [['EL JAGUAR', 'Enough! The rest are load-bearing.'], ['PEARL', 'The bricks said GERALD.'],
         ['EL JAGUAR', 'They said EL JAGUAR.'], ['PEARL', 'I can read, Gerald.']],
   lose: [['EL JAGUAR', 'The ball must go UP. This is the secret.'], ['EL JAGUAR', 'Again. I booked the lane.']],
+  tip: ['EL JAGUAR', 'A tip, from ME. Catch the ball on the END of the paddle. It goes sideways. The bricks are sideways.'],
   // He says the bricks spell EL JAGUAR.
   FONT: {
     G: ['01111','10000','10111','10001','01110'],
@@ -2882,6 +2913,7 @@ GAMES.finale = {
   win: [],
   lose: [['AUNT BARB', 'That was a great many games, dear. Have another go.'],
          ['SCRATCHY', 'Kevin is guarding the cabinet. He says you may try again.']],
+  tip: ['SCRATCHY', 'A tip. Miss a round and you get the same round again. Nothing is wasted. I checked.'],
   ORDER: ['invaders', 'runner', 'standing', 'parade', 'bricks'],
   TASK: { invaders:'SEND 8 IGUANAS HOME', runner:'GO!', standing:'DO NOT PRESS ANYTHING', parade:'PICK 3 ROSES', bricks:'BREAK 8 BRICKS' },
 
@@ -3021,6 +3053,7 @@ let gardenPrev = { down: false, enter: false };
 function gardenStep(now){
   const inp = Input.read();
   if (jumpLock && !inp.jump && !inp.up && !inp.enter) jumpLock = false;
+  if (Leak.busy()){ Leak.scripted(); return; }           // Reginald's lift is moving
   const pressDown = (inp.down && !gardenPrev.down) || (inp.enter && !gardenPrev.enter);
   gardenPrev = { down: inp.down, enter: inp.enter };
   if (pressDown){
@@ -3032,7 +3065,10 @@ function gardenStep(now){
       } else { Arcade.open(c); return; }
     }
   }
+  if (Leak.towerStep(inp)) return;                       // standing on a stack of chicks
+  Leak.pre();
   step();
+  Leak.post(inp);
 }
 
 /* Post-takeover chatter. The chickens review each other's cabinets. */
@@ -3051,10 +3087,749 @@ const ARCADE_TALK = [
     ['REGINALD','I have the high score.'] ]},
   { id:'k-demo', lines:[
     ['AUNT BARB','We were only supposed to be a demo, you know.'], ['SCRATCHY','Nobody told the demo.'] ]},
+  { id:'k-edge', lines:[
+    ['PEARL','What is past the edge of the screen?'], ['SCRATCHY','Nothing. It is a demo.'],
+    ['EL JAGUAR','I have seen it. It is grey.'] ]},
+  { id:'k-under', lines:[
+    ['REGINALD','I stood in one place so long the ground gave up.'], ['AUNT BARB','Where did you go, dear?'],
+    ['REGINALD','Down.'] ]},
   { id:'k-flowers', lines:[
     ['PEARL','Every four flowers is an extra life in the cabinets.'], ['SCRATCHY','I did not approve that.'],
     ['AUNT BARB','I did, dear.'] ]}
 ];
+
+/* ============================================================
+   LAYER 3: THE LEAKS — "The games got out of the cabinets."
+
+   The garden had six screens and a lot of air nobody could reach:
+   two screens' worth of platforms sat higher than the chicken can
+   jump, and every outer edge was an invisible wall. The cast does
+   not add a staircase. Each cabinet you win leaks its one idea back
+   into the garden, and each idea is a way to go somewhere the demo
+   never meant you to go.
+
+     PEARL      Go Go Go Go        -> you can flap (a second jump, in the air)
+     AUNT BARB  Rose Parade        -> the chicks follow you; hold ▼ and they stack into a ladder
+     SCRATCHY   Corn Invaders      -> the iguanas run a lift up out of the Long Drop
+     REGINALD   Stands in a Garden -> a spot in the Quiet Bed. Stand on it. Do nothing.
+     EL JAGUAR  Brick Spectacular  -> the edge of the demo is a brick wall now. Run at it.
+
+   Three screens exist off the map. Each holds a flower that should
+   not exist, so the count goes 13, 14, 15 of 12. Scratchy copes.
+
+     (1,-1) ABOVE THE GARDEN   up, out of the top of the Long Drop
+     (0, 2) UNDER THE GARDEN   down, through Reginald's spot
+     (3, 1) OUTSIDE THE DEMO   through the wall at Where It Watches
+
+   Nothing here edits the garden's physics. The flap is three lines
+   in step(); everything else runs before or after it in gardenStep.
+   ============================================================ */
+const SECRET = {
+  '1,-1': {
+    name: 'ABOVE THE GARDEN', extra: { id: 'sky', c: 11, r: 2 },
+    open(){ return !!Save.data.takeover; },
+    rows: [
+      "....................",
+      "....................",
+      "....................",
+      "..........===.......",
+      "....................",
+      "......===.....===...",
+      "....................",
+      "..===......===......",
+      "....................",
+      "....................",
+      ".==================.",
+      "...................."
+    ]
+  },
+  '0,2': {
+    name: 'UNDER THE GARDEN', extra: { id: 'under', c: 16, r: 6 },
+    open(){ return true; },                 // only the lift comes here: (0,1) has a solid floor
+    rows: [
+      "####################",
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "...............===..",
+      "....................",
+      "....................",
+      "....................",
+      "####################"
+    ]
+  },
+  '3,1': {
+    name: 'OUTSIDE THE DEMO', extra: { id: 'outside', c: 15, r: 6 },
+    open(){ return !!Save.data.wallDown; },
+    rows: [
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "....................",
+      "..............==....",
+      "....................",
+      "...........==.......",
+      "....................",
+      "##########.........."              // the ground stops. Nobody built the rest.
+    ]
+  }
+};
+function secretHere(){ return SECRET[key(sx, sy)] || null; }
+function extraCount(){ return Object.keys(Save.data.extra || {}).length; }
+function flowerCount(){ return picked.size + extraCount(); }
+
+const Leak = {
+  on(id){ return !!(Save.data.takeover && (Save.data.won || {})[id]); },
+  chicks(){ return this.on('parade') ? Math.min(15, flowerCount()) : 0; },
+
+  /* ---------- telling the player, once each ---------- */
+  TELL: {
+    runner:   { toast: "PEARL'S GAME LEAKED OUT<br>JUMP AGAIN IN THE AIR TO FLAP",
+                lines: [['PEARL', 'I left the flapping on. Everywhere. You are welcome!']] },
+    parade:   { toast: 'THE CHICKS FOLLOWED YOU OUT<br>HOLD ▼ AND THEY STACK UP',
+                lines: [['AUNT BARB', 'They will follow you anywhere now, dear. Hold still and they make a ladder.']] },
+    invaders: { toast: 'THE IGUANAS CAME BACK<br>THEY RUN A LIFT IN THE LONG DROP',
+                lines: [['SCRATCHY', 'The iguanas are grateful. They are giving rides. I did not authorise rides.']] },
+    standing: { toast: 'REGINALD LEFT A SPOT IN THE QUIET BED<br>STAND ON IT · DO NOTHING',
+                lines: [['REGINALD', 'There is a spot. Stand on it. Wait. That is all I will say.']] },
+    bricks:   { toast: 'THERE IS A WALL AT THE EDGE NOW<br>WHERE IT WATCHES · RUN AT IT',
+                lines: [['EL JAGUAR', 'I built a wall at the edge of the game. Do NOT run into it. Repeatedly.']] }
+  },
+  nextTellAt: 0,
+  tell(now){
+    if (mode !== 'garden' || secretHere() || Takeover.glitching() || Talk.active || now < this.nextTellAt) return;
+    const told = Save.data.told = Save.data.told || {};
+    const id = Object.keys(this.TELL).find(k => this.on(k) && !told[k]);
+    if (!id) return;
+    told[id] = true; Save.flush();
+    toast(this.TELL[id].toast, 6500);
+    Talk.interrupt({ lines: this.TELL[id].lines });
+    Sfx.play('glitch');
+    this.nextTellAt = now + 15000;
+  },
+  firstVisit(id, lines){
+    const told = Save.data.told = Save.data.told || {};
+    if (told[id]) return;
+    told[id] = true; Save.flush();
+    Talk.interrupt({ lines });
+  },
+
+  /* ---------- AUNT BARB: the parade, and the ladder ---------- */
+  trail: [],
+  tower: { active: false, h: 0, baseY: 0, x: 0, hold: 0 },
+  resetTrail(){ this.trail = []; },
+  follow(){
+    const last = this.trail[0];
+    if (!last || Math.abs(last.x - P.x) + Math.abs(last.y - P.y) > 1.5){
+      this.trail.unshift({ x: P.x + P.w / 2, y: P.y + P.h });
+      if (this.trail.length > 15 * 7 + 2) this.trail.pop();
+    }
+  },
+  // Returns true when the tower handled the frame and physics should not run.
+  towerStep(inp){
+    const T = this.tower, n = this.chicks();
+    if (!T.active){
+      const ok = n > 0 && inp.down && !inp.left && !inp.right && P.coyote > 0 &&
+                 Math.abs(P.vx) < 0.5 && !nearCabinet() && !this.onSpot() && !this.onPad();
+      if (!ok){ T.hold = 0; return false; }
+      if (++T.hold < 8) return false;
+      T.active = true; T.h = 0; T.baseY = P.y + P.h; T.x = P.x;
+      Sfx.play('jump');
+    }
+    const jump = (inp.jump || inp.up) && !jumpLock;
+    if (jump || inp.left || inp.right){            // hop off: ordinary physics takes it from here
+      T.active = false; T.hold = 0;
+      if (jump) P.coyote = COYOTE_FRAMES;
+      this.resetTrail();
+      return false;
+    }
+    if (inp.down){
+      const before = T.h;
+      T.h = Math.min(n * 14, T.h + 2.5);
+      if (Math.floor(T.h / 14) > Math.floor(before / 14)) Sfx.play('blip');
+    }
+    let y = T.baseY - T.h - P.h;
+    const row = Math.floor(y / TILE);
+    if (solidAt(Math.floor((T.x + P.w / 2) / TILE), row)){ y = (row + 1) * TILE; T.h = T.baseY - P.h - y; }
+    P.x = T.x; P.y = y; P.vx = 0; P.vy = 0;
+    P.grounded = true; P.coyote = COYOTE_FRAMES; P.flapUsed = false;
+    collectFlowers(); this.collectExtra(); checkEdges();
+    return true;
+  },
+
+  /* ---------- SCRATCHY: the iguana lift in (1,0) ---------- */
+  // It comes up out of the pit, waits level with the ground so you can
+  // simply walk on (and across), then carries on up and out of the top.
+  lift: { x: 7 * TILE, w: 6 * TILE, y: 420, prevY: 420, wait: 0, dwell: 150 },
+  prevFeet: 0, lastKey: '0,0',
+  liftRunning(){ return key(sx, sy) === '1,0' && this.on('invaders'); },
+
+  /* ---------- REGINALD: the spot, and the stage lift under it ---------- */
+  SPOT_X: 9 * TILE, SPOT_W: 2 * TILE, STILL_NEED: 240,
+  still: 0, padArmed: false, padStill: 0, script: null,
+  inSpotColumn(){
+    const cx = P.x + P.w / 2;
+    return cx > this.SPOT_X + 4 && cx < this.SPOT_X + this.SPOT_W - 4;
+  },
+  overSpot(){ return this.inSpotColumn() && P.coyote > 0 && Math.abs(P.y + P.h - GROUND_Y) < 4; },
+  onSpot(){ return key(sx, sy) === '0,1' && this.on('standing') && this.overSpot(); },
+  onPad(){ return key(sx, sy) === '0,2' && this.overSpot(); },
+  busy(){ return !!this.script; },
+  scripted(){                                   // the lift is moving; nobody is driving
+    const S = this.script;
+    S.f++;
+    P.vx = 0; P.vy = 0;
+    if (S.kind === 'down'){
+      P.y += 0.9;
+      if (S.f >= 46){
+        this.script = null; this.still = 0; this.padArmed = false;
+        enterScreen(0, 2, P.x, 40);
+        this.firstVisit('under', [
+          ['THE GAME', 'This screen is under the garden. It is not on the map. Please do not touch the props.'],
+          ['REGINALD', 'Nice basement.'] ]);
+      }
+    } else {
+      P.y -= 3.2;
+      if (P.y < 36){
+        this.script = null; this.still = 0; this.padStill = 0;
+        enterScreen(0, 1, P.x, GROUND_Y - P.h);
+        Sfx.play('thunk');
+      }
+    }
+  },
+
+  /* ---------- EL JAGUAR: the wall at the edge of (2,1) ---------- */
+  WALL_X: W - TILE, WALL_HITS: 6, wallCool: 0,
+  wallHere(){ return key(sx, sy) === '2,1' && this.on('bricks'); },
+
+  /* ---------- the three flowers that should not exist ---------- */
+  collectExtra(){
+    const sec = secretHere();
+    if (!sec) return;
+    const ex = Save.data.extra = Save.data.extra || {};
+    if (ex[sec.extra.id]) return;
+    const fx = sec.extra.c * TILE, fy = sec.extra.r * TILE;
+    if (!overlap({ x: P.x, y: P.y, w: P.w, h: P.h }, { x: fx + 4, y: fy + 4, w: 24, h: 26 })) return;
+    ex[sec.extra.id] = true; Save.flush();
+    for (let i = 0; i < 16; i++)
+      sparks.push({ x: fx + 16, y: fy + 16, vx: (Math.random() - .5) * 5, vy: (Math.random() - .5) * 5 - 1, life: 26 });
+    Sfx.play('win');
+    paintHud();
+    const n = flowerCount(), over = extraCount();
+    const lines = over === 1 ? [['SCRATCHY', 'That is flower number ' + n + '. Of twelve. I need to sit down.'], ['PEARL', 'There was a SPARE one!']]
+                : over === 2 ? [['SCRATCHY', 'Another one. I am going to stop counting.'], ['AUNT BARB', 'You are not, dear.'], ['SCRATCHY', 'No. I am not.']]
+                :              [['THE GAME', 'Flower count exceeds flower count.'], ['SCRATCHY', 'I have filed a new form. It is called Form 15 of 12.']];
+    Talk.interrupt({ lines });
+    Bus.emit('flower:extra', { id: sec.extra.id, count: n });
+  },
+
+  /* ---------- per-frame, either side of step() ---------- */
+  pre(){
+    const L = this.lift;
+    if (this.liftRunning()){
+      L.prevY = L.y;
+      if (L.wait > 0){ if (--L.wait === 0){ L.y = L.prevY = H + 36; L.dwell = 150; } }
+      else if (L.y > GROUND_Y) L.y = Math.max(GROUND_Y, L.y - 2);
+      else if (L.y === GROUND_Y && L.dwell > 0) L.dwell--;
+      else { L.y -= 1.3; if (L.y < -40){ L.wait = 60; L.y = L.prevY = -999; } }
+    }
+    this.prevFeet = P.y + P.h;
+    if (this.wallCool > 0) this.wallCool--;
+  },
+
+  post(inp){
+    // ride the iguanas
+    const L = this.lift;
+    if (this.liftRunning() && L.y > -900){
+      const feet = P.y + P.h;
+      const within = P.x + P.w > L.x + 3 && P.x < L.x + L.w - 3;
+      if (within && P.vy >= 0 && feet >= L.y - 1 && this.prevFeet <= L.prevY + 8){
+        P.y = L.y - P.h; P.vy = 0; P.grounded = true; P.coyote = COYOTE_FRAMES; P.flapUsed = false;
+        if (P.y + P.h < 0) checkEdges();
+      }
+    }
+
+    // the wall
+    if (this.wallHere()){
+      const down = !!Save.data.wallDown;
+      const blocked = !down || P.y < GROUND_Y - 52;         // the hole is only at ground height
+      if (blocked && P.x + P.w > this.WALL_X){
+        P.x = this.WALL_X - P.w;
+        if (!down && inp.right && this.wallCool <= 0 && P.y > GROUND_Y - 60){   // lean on it: one headbutt
+          const n = Save.data.wallHits = (Save.data.wallHits || 0) + 1;
+          this.wallCool = 26; P.vx = -5; P.vy = -3.5;
+          Bus.emit('wall:hit', { n });
+          Sfx.play('pop');
+          for (let i = 0; i < 8; i++)
+            sparks.push({ x: this.WALL_X, y: P.y + 10, vx: -Math.random() * 4, vy: (Math.random() - .5) * 5, life: 22 });
+          if (n === 1) Talk.interrupt({ lines: [['EL JAGUAR', 'That is MY wall. Stop that. ...Do it again.']] });
+          if (n >= this.WALL_HITS){
+            Save.data.wallDown = true;
+            Sfx.play('win');
+            Talk.interrupt({ lines: [['EL JAGUAR', 'You broke the edge of the demo. I respect it.'],
+                                     ['SCRATCHY', 'There is nothing out there. I checked the paperwork.'],
+                                     ['PEARL', 'Then why is there a HOLE?']] });
+          }
+          Save.flush();
+        } else P.vx = 0;
+      }
+    }
+
+    // Reginald's spot, and the lift pad underneath it
+    const idle = !inp.left && !inp.right && !inp.jump && !inp.up && !inp.down && Math.abs(P.vx) < 0.2;
+    if (this.onSpot()){
+      this.still = idle ? this.still + 1 : 0;
+      if (this.still >= this.STILL_NEED){ this.script = { kind: 'down', f: 0 }; Sfx.play('thunk'); toastEl.style.opacity = '0'; }
+    } else this.still = 0;
+    if (key(sx, sy) === '0,2'){
+      // You arrive on the pad. It only takes you back up once you have stepped off it.
+      if (!this.inSpotColumn()){ this.padArmed = true; this.padStill = 0; }
+      else if (this.padArmed && this.overSpot()){
+        this.padStill = idle ? this.padStill + 1 : 0;
+        if (this.padStill >= 70){ this.script = { kind: 'up', f: 0 }; Sfx.play('jump'); }
+      }
+    }
+
+    this.collectExtra();
+    if (this.chicks()) this.follow();
+    this.lastKey = key(sx, sy);
+  },
+
+  /* ---------- drawing ---------- */
+  drawChick(x, y, i){
+    const bob = REDUCED ? 0 : Math.sin(t / 6 + i) * 1.2;
+    g.fillStyle = '#ffe36b'; g.beginPath(); g.arc(x, y - 7 + bob, 7, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ff9a3c'; g.fillRect(x - 2, y - 8 + bob, 4, 4);
+    g.fillStyle = '#1a0b2e'; g.fillRect(x - 4, y - 11 + bob, 2, 2); g.fillRect(x + 2, y - 11 + bob, 2, 2);
+  },
+
+  bubble(label, cx, top, color, frac){
+    g.font = 'bold 12px "Arial Narrow", Arial, sans-serif';
+    const tw = Math.max(g.measureText(label).width + 16, 96);
+    g.fillStyle = 'rgba(6,3,12,.9)'; g.fillRect(cx - tw / 2, top, tw, frac == null ? 20 : 27);
+    g.strokeStyle = color; g.lineWidth = 1;
+    g.strokeRect(cx - tw / 2 + .5, top + .5, tw - 1, (frac == null ? 20 : 27) - 1);
+    txt(label, cx, top + 14, 12, '#f2e9f7');
+    if (frac != null){ g.fillStyle = color; g.fillRect(cx - tw / 2 + 6, top + 19, (tw - 12) * clamp(frac, 0, 1), 4); }
+  },
+
+  // Called from draw() after the garden's own tiles. On a secret screen it
+  // repaints the whole picture; on a garden screen it adds what leaked in.
+  drawUnder(){
+    const k = key(sx, sy), sec = secretHere();
+    if (sec) this['paint_' + sec.extra.id](sec);
+
+    if (k === '0,1' && this.on('standing')){               // the spot: a patch worn smooth
+      const x = this.SPOT_X, sink = this.script && this.script.kind === 'down' ? this.script.f * 0.9 : 0;
+      g.fillStyle = '#160829'; g.fillRect(x, GROUND_Y, this.SPOT_W, 6 + sink);
+      g.fillStyle = '#8fd0a8'; g.fillRect(x, GROUND_Y + sink, this.SPOT_W, 4);
+      g.fillStyle = '#5c8f73';
+      g.fillRect(x + 14, GROUND_Y + sink + 1, 6, 2); g.fillRect(x + 40, GROUND_Y + sink + 1, 6, 2);
+    }
+    if (k === '0,2'){                                      // the pad: same place, one floor down
+      const x = this.SPOT_X;
+      g.fillStyle = '#8fd0a8'; g.fillRect(x, GROUND_Y, this.SPOT_W, 4);
+      g.fillStyle = '#3c2a1c'; g.fillRect(x + 28, 32, 8, GROUND_Y - 32);      // the pole it rides
+      g.fillStyle = '#8fd0a8';
+      for (let i = 0; i < 3; i++){
+        const yy = GROUND_Y - 40 - i * 70 - (REDUCED ? 0 : (t % 70));
+        if (yy > 40){ g.beginPath(); g.moveTo(x + 32, yy); g.lineTo(x + 24, yy + 10); g.lineTo(x + 40, yy + 10); g.closePath(); g.fill(); }
+      }
+    }
+    if (this.liftRunning() && this.lift.y > -900){         // six iguanas, wings out, going up
+      const L = this.lift;
+      for (let i = 0; i < 6; i++){
+        const x = L.x + i * 32 + 2, y = L.y;
+        drawIguana(x, y, t + i * 9);
+        g.fillStyle = '#9ad4b0';
+        const fl = REDUCED ? 0 : Math.sin(t / 4 + i) * 4;
+        g.fillRect(x + 8, y - 4 - fl, 10, 3); g.fillRect(x + 8, y + 16 + fl, 10, 3);
+      }
+      g.fillStyle = '#c9a23a'; g.fillRect(L.x, L.y - 3, L.w, 4);             // the plank they carry
+    }
+    if (this.wallHere()){
+      const hits = Save.data.wallHits || 0, x0 = this.WALL_X;
+      for (let r = 0; r < 22; r++) for (let c = 0; c < 2; c++){
+        const fromBottom = 21 - r;
+        if (fromBottom < 3 && (fromBottom * 2 + c) < hits) continue;        // knocked out, bottom-up
+        const x = x0 + c * 16, y = r * 16;
+        g.fillStyle = (r + c) % 5 === 0 ? '#ffd76b' : '#e07840'; g.fillRect(x, y, 15, 15);
+        g.fillStyle = '#f4a261'; g.fillRect(x, y, 15, 3);
+        g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x, y + 13, 15, 2);
+      }
+    }
+
+    if (sec && !(Save.data.extra || {})[sec.extra.id]){
+      const fx = sec.extra.c * TILE + 16, fy = sec.extra.r * TILE + 18;
+      g.globalAlpha = REDUCED ? 0.3 : 0.2 + 0.15 * Math.sin(t / 12);
+      g.fillStyle = '#ffd76b'; g.beginPath(); g.arc(fx, fy, 16, 0, Math.PI * 2); g.fill();
+      g.globalAlpha = 1;
+      drawFlower(fx, fy);
+    }
+
+    // the parade
+    const n = this.chicks(), T = this.tower;
+    if (n && mode !== 'ending'){
+      if (T.active){
+        const stacked = Math.ceil(T.h / 14);
+        for (let i = 0; i < stacked; i++){
+          const wob = REDUCED ? 0 : Math.sin(t / 9 + i * 0.9) * Math.min(3, i * 0.35);
+          this.drawChick(T.x + P.w / 2 + wob, T.baseY - i * 14, i);
+        }
+        for (let i = stacked; i < n; i++) this.drawChick(T.x + P.w / 2 - 18 - (i - stacked) * 13, T.baseY, i);
+      } else {
+        for (let i = n - 1; i >= 0; i--){
+          const p = this.trail[Math.min(this.trail.length - 1, (i + 1) * 7)];
+          if (p) this.drawChick(p.x, p.y, i);
+        }
+      }
+    }
+  },
+
+  // After the chicken is drawn.
+  drawOver(){
+    if (mode !== 'garden') return;
+    if (this.script && this.script.kind === 'down'){        // the ground swallows the chicken
+      const x = this.SPOT_X - 6;
+      g.fillStyle = '#2a1450'; g.fillRect(x, GROUND_Y + 4 + this.script.f * 0.9, this.SPOT_W + 12, TILE);
+      g.fillStyle = '#2a1450'; g.fillRect(x, GROUND_Y, 6, TILE); g.fillRect(x + this.SPOT_W + 6, GROUND_Y, 6, TILE);
+    }
+    if (this.onSpot() && !this.script)
+      this.bubble(this.still > 20 ? 'KEEP DOING NOTHING' : 'STAND STILL', this.SPOT_X + this.SPOT_W / 2, GROUND_Y - 92, '#8fd0a8', this.still / this.STILL_NEED);
+    if (this.onPad() && this.padArmed && !this.script)
+      this.bubble('STAND STILL TO GO UP', this.SPOT_X + this.SPOT_W / 2, GROUND_Y - 92, '#8fd0a8', this.padStill / 70);
+  },
+
+  /* ----- (1,-1) ABOVE THE GARDEN: where the weather would go ----- */
+  paint_sky(sec){
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#150a33'); sky.addColorStop(0.55, '#6a2c70'); sky.addColorStop(1, '#ff8a6b');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#f2e9f7';
+    STARS.forEach(s => { if (s.y < 190){ g.globalAlpha = REDUCED ? 0.5 : 0.3 + 0.5 * Math.abs(Math.sin(t / 50 + s.x)); g.fillRect(s.x, s.y - 28, s.s, s.s); } });
+    g.globalAlpha = 1;
+    g.fillStyle = '#ffd76b'; g.beginPath(); g.arc(520, 300, 46, 0, Math.PI * 2); g.fill();       // a sun nobody asked for
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+      if (sec.rows[r][c] !== '=') continue;
+      const x = c * TILE, y = r * TILE, drift = REDUCED ? 0 : Math.sin(t / 60 + c) * 1.5;
+      g.fillStyle = 'rgba(242,233,247,.95)';
+      g.beginPath(); g.arc(x + 9, y + 9 + drift, 10, 0, Math.PI * 2); g.arc(x + 23, y + 8 + drift, 11, 0, Math.PI * 2); g.fill();
+      g.fillRect(x, y + 6 + drift, TILE, 10);
+      g.fillStyle = 'rgba(205,188,218,.9)'; g.fillRect(x, y + 14 + drift, TILE, 3);
+    }
+  },
+
+  /* ----- (0,2) UNDER THE GARDEN: backstage ----- */
+  paint_under(sec){
+    g.fillStyle = '#140c0a'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#1d120e';
+    for (let x = 0; x < W; x += 64) g.fillRect(x, 32, 6, GROUND_Y - 32);                         // studs
+    for (let c = 0; c < COLS; c++){                                                              // the garden, from below
+      const x = c * TILE;
+      g.fillStyle = '#2a1450'; g.fillRect(x, 0, TILE, TILE);
+      g.fillStyle = '#160829'; g.fillRect(x, TILE - 4, TILE, 4);
+      g.fillStyle = '#5c8f73';                                                                   // roots
+      const len = 10 + ((c * 37) % 26);
+      g.fillRect(x + 8, TILE, 2, len); g.fillRect(x + 21, TILE, 2, len * 0.6);
+      g.fillStyle = '#3c2a1c'; g.fillRect(x, GROUND_Y, TILE, TILE);                              // floorboards
+      g.fillStyle = '#5a3a1c'; g.fillRect(x, GROUND_Y, TILE, 4);
+      g.fillStyle = '#2a1c12'; g.fillRect(x, GROUND_Y, 1, TILE);
+    }
+    for (let c = 15; c <= 17; c++){ g.fillStyle = '#5a3a1c'; g.fillRect(c * TILE, 7 * TILE, TILE, 8); g.fillStyle = '#8a5f3d'; g.fillRect(c * TILE, 7 * TILE, TILE, 3); }
+
+    // The falling blocks. They are locked up. Cannon Master can relax.
+    const cx = 44, cy = 232, cw = 150, ch = GROUND_Y - cy;
+    [[62, 304], [104, 296], [146, 308]].forEach(([bx, by], i) => {
+      const jig = REDUCED ? 0 : Math.round(Math.sin(t / 7 + i * 2) * 1.5);
+      g.fillStyle = '#6b6b7a'; g.fillRect(bx + jig, by, 34, GROUND_Y - by);
+      g.fillStyle = '#8a8a9a'; g.fillRect(bx + jig, by, 34, 5);
+      g.fillStyle = '#fff'; g.fillRect(bx + 7 + jig, by + 14, 7, 7); g.fillRect(bx + 20 + jig, by + 14, 7, 7);
+      g.fillStyle = '#111'; g.fillRect(bx + 10 + jig, by + 17, 3, 3); g.fillRect(bx + 23 + jig, by + 17, 3, 3);
+      g.fillRect(bx + 6 + jig, by + 11, 9, 2); g.fillRect(bx + 19 + jig, by + 11, 9, 2);        // cross little brows
+    });
+    g.fillStyle = '#bbb';
+    for (let x = cx; x <= cx + cw; x += 15) g.fillRect(x, cy, 3, ch);
+    g.fillRect(cx, cy, cw + 3, 4); g.fillRect(cx, GROUND_Y - 4, cw + 3, 4);
+    g.fillStyle = '#ffd76b'; g.fillRect(cx + cw - 22, cy + 46, 12, 14);                           // padlock
+    g.font = 'bold 11px "Arial Narrow", Arial, sans-serif';
+    const sw = g.measureText('FALLING BLOCKS  ·  LOCKED UP').width + 18;
+    g.fillStyle = '#f2e9f7'; g.fillRect(cx + cw / 2 + 1 - sw / 2, cy - 30, sw, 22);
+    txt('FALLING BLOCKS  ·  LOCKED UP', cx + cw / 2 + 1, cy - 15, 11, '#a82246');
+
+    // spare flowers, in a crate, in case
+    g.fillStyle = '#b07a3c'; g.fillRect(404, 312, 76, 40);
+    g.strokeStyle = '#6e4a1e'; g.lineWidth = 2; g.strokeRect(405, 313, 74, 38);
+    [416, 432, 448, 464].forEach(x => drawFlower(x, 300));
+    Cast.draw('KEVIN', 566, GROUND_Y, -1, false, 1);                                              // off duty
+  },
+
+  /* ----- (3,1) OUTSIDE THE DEMO: nothing has textures yet ----- */
+  paint_outside(sec){
+    g.fillStyle = '#b9b9c6'; g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(60,60,80,.22)'; g.lineWidth = 1;
+    for (let x = 0; x <= W; x += TILE){ g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+    for (let y = 0; y <= H; y += TILE){ g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+    const fade = g.createLinearGradient(10 * TILE, 0, W, 0);
+    fade.addColorStop(0, 'rgba(242,242,248,0)'); fade.addColorStop(1, 'rgba(242,242,248,.95)');
+    g.fillStyle = fade; g.fillRect(10 * TILE, 0, W - 10 * TILE, H);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+      const ch = sec.rows[r][c], x = c * TILE, y = r * TILE;
+      if (ch === '#'){                                         // the missing-texture checker
+        for (let i = 0; i < 4; i++){ g.fillStyle = (i === 0 || i === 3) ? '#ff00dc' : '#16161c'; g.fillRect(x + (i % 2) * 16, y + (i >> 1) * 16, 16, 16); }
+      } else if (ch === '='){
+        g.strokeStyle = '#3c3c50'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, TILE - 2, 7);
+      }
+    }
+    g.strokeStyle = '#3c3c50'; g.lineWidth = 2;
+    g.strokeRect(100, 250, 60, 102);                                         // a tree, eventually
+    g.beginPath(); g.moveTo(100, 250); g.lineTo(160, 352); g.moveTo(160, 250); g.lineTo(100, 352); g.stroke();
+    txt('TREE (TODO)', 130, 240, 11, '#3c3c50');
+    txt('LEVEL 2 GOES HERE  →', 250, 96, 13, '#3c3c50');
+    txt('GROUND: NOT BUILT', 490, 286, 11, '#7a7a90');
+    txt('flower_13_FINAL_v2.png', 496, 172, 10, '#7a7a90');
+  }
+};
+
+/* Screen changes: the lift throws you clear of the Long Drop, the parade
+   regroups, and a toast never follows you somewhere it was not written for. */
+Bus.on('screen:enter', () => {
+  Leak.tower.active = false; Leak.tower.hold = 0;
+  Leak.resetTrail();
+  Leak.still = 0;
+  const k = key(sx, sy);
+  if (SECRET[k]) toastEl.style.opacity = '0';
+  if (k === '1,-1' && Leak.lastKey === '1,0'){
+    P.vy = JUMP_V; P.launch = 40; P.flapUsed = false;     // thrown clear; not a jump you can cut short
+    Leak.firstVisit('sky', [
+      ['THE GAME', 'You are above the garden. Nothing was placed here. Please disregard the flower.'],
+      ['PEARL', 'You are in the SKY!'] ]);
+  }
+  if (k === '3,1'){
+    Leak.firstVisit('outside', [
+      ['THE GAME', 'You have left the demo. This area has no textures. It was not expecting company.'],
+      ['EL JAGUAR', 'It was a load-bearing wall. Emotionally.'] ]);
+  }
+  if (k === '1,0'){ Leak.lift.y = Leak.lift.prevY = H + 36; Leak.lift.wait = 0; Leak.lift.dwell = 150; }
+});
+
+/* ============================================================
+   LAYER 4: THE HINTS — "We have run out of subtle."
+
+   If you go a while in the garden without getting anywhere, the cast
+   notices, and helps, and gets steadily less dignified about it:
+
+     level 1  ~40s   whoever owns the thing you have not found sulks about it
+     level 2  ~75s   Scratchy approves Form H-1 (Request for Hint): a direction
+     level 3  ~110s  THE GAME gives the answer outright and installs an arrow
+     level 4  ~160s  Pearl shouts about the arrow; the arrow gets bigger
+     level 5  ~215s  Form H-2 (Request for a Bigger Arrow) is approved
+     after           somebody mentions the arrow about once a minute
+
+   "Getting somewhere" is picking a flower, opening or winning a
+   cabinet, or chipping the wall. Wandering between screens does not
+   count: that is what being stuck looks like. Time inside a cabinet
+   does not count either; cabinets have their own tips (see Arcade.lose).
+
+   The goal is always the next thing in this order: a cabinet you have
+   not won (nearest first), the sixth cabinet, a garden flower, then
+   the flowers off the map. Directions come from a tiny map of how the
+   nine screens connect, so "left" is always actually left.
+   ============================================================ */
+const Hint = {
+  ms: 0, level: 0, goalId: null, nagAt: 0, complimented: false,
+  AT: [40000, 75000, 110000, 160000, 215000],
+
+  /* ---------- the map: every way from one screen to the next ---------- */
+  edges(from){
+    const [x, y] = from.split(',').map(Number), out = [];
+    const L = { x: 36, y: 210, dir: 'left', say: 'to the left' };
+    const R = { x: W - 36, y: 210, dir: 'right', say: 'to the right' };
+    if (y === 0 || y === 1){
+      if (x > 0) out.push(Object.assign({ to: key(x - 1, y) }, L));
+      if (x < 2) out.push(Object.assign({ to: key(x + 1, y) }, R));
+    }
+    if (from === '1,0'){
+      out.push({ to: '1,1', x: 320, y: 292, dir: 'down', say: 'down the big hole in the Long Drop' });
+      if (Leak.on('invaders')) out.push({ to: '1,-1', x: 320, y: 236, dir: 'up', say: 'up, on the iguana lift' });
+    }
+    if (from === '1,1') out.push({ to: '1,0', x: 304, y: 44, dir: 'up', say: 'up, off the very top of the Climb' });
+    if (from === '1,-1') out.push({ to: '1,0', x: 22, y: 292, dir: 'down', say: 'off the edge of the cloud' });
+    if (from === '0,1' && Leak.on('standing')) out.push({ to: '0,2', x: 320, y: 232, dir: 'down', say: "down, through Reginald's spot" });
+    if (from === '0,2') out.push({ to: '0,1', x: 320, y: 232, dir: 'down', say: 'back up, on the lift pad' });
+    if (from === '2,1' && Leak.on('bricks')) out.push({ to: '3,1', x: Leak.WALL_X - 40, y: GROUND_Y - 14, dir: 'right', say: 'through the brick wall on the right' });
+    if (from === '3,1') out.push(Object.assign({ to: '2,1' }, L));
+    return out;
+  },
+  // First step of the shortest way from here to `to`, and how many screens away it is.
+  route(to){
+    const from = key(sx, sy);
+    if (from === to) return { steps: 0, first: null };
+    const seen = new Set([from]);
+    let frontier = this.edges(from).map(e => ({ at: e.to, first: e, steps: 1 }));
+    while (frontier.length){
+      const next = [];
+      for (const n of frontier){
+        if (seen.has(n.at)) continue;
+        seen.add(n.at);
+        if (n.at === to) return n;
+        this.edges(n.at).forEach(e => next.push({ at: e.to, first: n.first, steps: n.steps + 1 }));
+      }
+      frontier = next;
+    }
+    return null;
+  },
+
+  /* ---------- what should the player be doing next? ---------- */
+  goal(){
+    if (!Save.data.takeover) return null;
+    const won = Save.data.won || {};
+    const nearest = list => list
+      .map(gl => Object.assign(gl, { r: this.route(gl.screen) }))
+      .filter(gl => gl.r)
+      .sort((a, b) => a.r.steps - b.r.steps)[0] || null;
+
+    const cabs = CABINETS.filter(c => !c.finale && !won[c.id]).map(c => (
+      { id: 'cab:' + c.id, kind: 'cabinet', screen: c.screen, x: c.col * TILE + 20, top: GROUND_Y - (c.big ? 150 : 118), maker: c.maker }));
+    if (cabs.length) return nearest(cabs);
+
+    if (!won.finale){
+      const c = CABINETS.find(q => q.finale);
+      return nearest([{ id: 'cab:finale', kind: 'finale', screen: c.screen, x: c.col * TILE + 20, top: GROUND_Y - 118 }]);
+    }
+
+    const flowers = [];
+    Object.keys(ZONE.screens).forEach(k => ZONE.screens[k].forEach((row, r) => {
+      for (let c = 0; c < COLS; c++)
+        if (row[c] === '*' && !picked.has(k + ',' + c + ',' + r))
+          flowers.push({ id: 'flower:' + k + ',' + c + ',' + r, kind: 'flower', screen: k, x: c * TILE + 16, top: r * TILE - 26 });
+    }));
+    if (flowers.length) return nearest(flowers);
+
+    const ex = Save.data.extra || {};
+    const hidden = [['sky', '1,-1', 'invaders'], ['under', '0,2', 'standing'], ['outside', '3,1', 'bricks']]
+      .filter(([id, , leak]) => !ex[id] && Leak.on(leak))
+      .map(([id, k]) => ({ id: 'extra:' + id, kind: id, screen: k, x: SECRET[k].extra.c * TILE + 16, top: SECRET[k].extra.r * TILE - 26 }));
+    if (hidden.length) return nearest(hidden);
+    return null;
+  },
+
+  /* ---------- what gets said ---------- */
+  SULK: {
+    'SCRATCHY':  'My cabinet is unattended. I am not upset. I have filed that I am not upset.',
+    'PEARL':     'Nobody has played my game yet! It is RIGHT THERE! Sort of!',
+    'REGINALD':  'My cabinet is where it is. I have not moved it.',
+    'AUNT BARB': 'My cabinet is feeling a little lonely, dear. No rush.',
+    'EL JAGUAR': 'The TALLEST cabinet awaits. It will not wait forever. It will. But still.'
+  },
+  LINES: {
+    cabinet: [ null,
+      ['SCRATCHY', "Form H-1, Request for Hint: approved. {MAKER}'s cabinet is {dir}."],
+      ['THE GAME', 'Hint level three. Go {dir}. Find the cabinet. Press ▼. I have installed an arrow.'] ],
+    finale: [
+      ['PEARL', 'Kevin is guarding something and he looks BORED.'],
+      ['SCRATCHY', 'Form H-1: approved. You hold five tickets. The sixth cabinet is {dir}.'],
+      ['THE GAME', 'Hint level three. Go {dir}. Kevin will let you through. Press ▼. I have installed an arrow.'] ],
+    flower: [
+      ['AUNT BARB', 'There is still a flower about, dear. I can smell it.'],
+      ['SCRATCHY', 'Form H-1: approved. One uncollected flower is {dir}. My count is off until you fix it.'],
+      ['THE GAME', 'Hint level three. A flower is {dir}. {reach} I have installed an arrow.'] ],
+    sky: [
+      ['SCRATCHY', 'The iguanas keep leaving through the roof. I asked them to stop. They gave me a timetable.'],
+      ['PEARL', 'There is something UP there! The way is {dir}!'],
+      ['THE GAME', 'Hint level three. Go {dir}. Stand on the iguanas. Let them carry you. I have installed an arrow.'] ],
+    under: [
+      ['REGINALD', 'I have a spot. I am not saying where. It is in the Quiet Bed.'],
+      ['AUNT BARB', 'Reginald went somewhere, dear. The way is {dir}. You stand, and then you keep standing.'],
+      ['THE GAME', 'Hint level three. Go {dir}. Stand on the green patch. Press nothing for four seconds. That is the entire puzzle.'] ],
+    outside: [
+      ['EL JAGUAR', 'Nobody has run into my wall today. Good. GOOD. ...Why not?'],
+      ['PEARL', 'He said do NOT run at the wall! So the way is {dir}! RUN AT IT!'],
+      ['THE GAME', 'Hint level three. Go {dir}. Walk into the bricks. Keep walking into them. Six times. I have installed an arrow.'] ]
+  },
+  SHOUT:  ['PEARL', 'THE ARROW! FOLLOW THE ARROW! It is {dir}!'],
+  BIGGER: ['SCRATCHY', 'I have filed Form H-2, Request for a Bigger Arrow. It was approved immediately.'],
+  NAG: [
+    ['AUNT BARB', 'Take your time, dear. The arrow is not going anywhere.'],
+    ['EL JAGUAR', 'EL JAGUAR would simply go {dir}. That was not help. EL JAGUAR does not help.'],
+    ['REGINALD', 'I would follow the arrow. Slowly.'],
+    ['THE GAME', 'The arrow remains installed. It is {dir}. It is my best work.']
+  ],
+
+  line(gl, level){
+    let pair;
+    if (level === 1) pair = gl.kind === 'cabinet' ? [gl.maker, this.SULK[gl.maker]] : this.LINES[gl.kind][0];
+    else if (level <= 3) pair = this.LINES[gl.kind][level - 1];
+    else if (level === 4) pair = this.SHOUT;
+    else if (level === 5) pair = this.BIGGER;
+    else pair = this.NAG[Math.floor(Math.random() * this.NAG.length)];
+    const dir = gl.r.steps === 0 ? 'right here on this screen' : gl.r.first.say;
+    const reach = Leak.on('runner') ? 'If it is high, jump, then jump again in the air.'
+                : Leak.chicks() ? 'If it is high, hold ▼ and stand on the chicks.'
+                : 'If it is high, keep trying. Aunt Barb brings a plank.';
+    return [pair[0], pair[1].replace('{dir}', dir).replace('{MAKER}', (gl.maker || '').toLowerCase().replace(/\b[a-z]/g, ch => ch.toUpperCase())).replace('{reach}', reach)];
+  },
+
+  reset(){ this.ms = 0; this.level = 0; this.nagAt = 0; },
+
+  tick(dt){
+    if (mode !== 'garden' || document.hidden || Takeover.glitching() || Leak.busy()) return;
+    const gl = this.goal();
+    if (!gl){
+      if (Save.data.takeover && !this.complimented && (this.ms += dt) > 60000 && !Talk.active){
+        this.complimented = true;
+        Talk.interrupt({ lines: [['THE GAME', 'There is nothing left to find. This is not a hint. This is a compliment.']] });
+      }
+      return;
+    }
+    if (gl.id !== this.goalId){ this.goalId = gl.id; this.reset(); }
+    this.ms += dt;
+    const due = this.level < this.AT.length ? this.AT[this.level] : this.nagAt;
+    if (this.ms < due || Talk.active) return;            // never talk over somebody
+    this.level++;
+    if (this.level >= this.AT.length) this.nagAt = this.ms + 65000;
+    Talk.interrupt({ lines: [this.line(gl, this.level)] });
+    if (this.level === 3) Sfx.play('thunk');
+    if (this.level === 5) Sfx.play('pick');
+    Bus.emit('hint', { goal: gl.id, level: this.level });
+  },
+
+  /* ---------- the arrow. It is not subtle. It was not meant to be. ---------- */
+  arrow(){
+    if (this.level < 3 || mode !== 'garden') return null;
+    const gl = this.goal();
+    if (!gl || gl.id !== this.goalId) return null;
+    if (gl.r.steps > 0) return gl.r.first;
+    return gl.top > 70 ? { x: gl.x, y: gl.top, dir: 'down' } : { x: gl.x, y: gl.top + 96, dir: 'up' };
+  },
+  draw(){
+    const a = this.arrow();
+    if (!a) return;
+    const s = this.level >= 5 ? 1.9 : this.level === 4 ? 1.45 : 1;
+    const bob = REDUCED ? 0 : Math.sin(t / 7) * 6;
+    const rot = { down: 0, left: Math.PI / 2, up: Math.PI, right: -Math.PI / 2 }[a.dir];
+    g.save();
+    g.translate(clamp(a.x, 30, W - 30), clamp(a.y, 40, GROUND_Y - 8));
+    g.rotate(rot);
+    g.translate(0, bob - 26 * s);                        // the tip sits on the spot; the body trails behind
+    g.scale(s, s);
+    const shape = () => { g.beginPath(); g.moveTo(-9, -34); g.lineTo(9, -34); g.lineTo(9, -6); g.lineTo(20, -6); g.lineTo(0, 22); g.lineTo(-20, -6); g.lineTo(-9, -6); g.closePath(); };
+    g.lineJoin = 'round';
+    shape(); g.lineWidth = 7; g.strokeStyle = '#1a0b2e'; g.stroke();
+    shape(); g.fillStyle = (REDUCED || Math.floor(t / 14) % 2) ? '#ffd76b' : '#ff3b6b'; g.fill();
+    shape(); g.lineWidth = 2; g.strokeStyle = '#f2e9f7'; g.stroke();
+    g.fillStyle = '#f2e9f7';                              // marquee bulbs, because of course
+    for (let i = 0; i < 3; i++) if (REDUCED || (Math.floor(t / 8) + i) % 3) g.fillRect(-2, -30 + i * 9, 4, 4);
+    g.restore();
+  }
+};
+['flower:collect', 'flower:extra', 'wall:hit', 'arcade:open', 'arcade:close', 'arcade:win', 'takeover', 'ending:done']
+  .forEach(evt => Bus.on(evt, () => Hint.reset()));
 
 /* ---------- Boot ---------- */
 function boot(){
@@ -3073,7 +3848,7 @@ function boot(){
   bootAt = performance.now();
 
   const [rx, ry] = led.screen || [0,0];
-  const start = screenAt(rx, ry) ? [rx, ry] : [0,0];
+  const start = ZONE.screens[key(rx, ry)] ? [rx, ry] : [0,0];   // never wake up off the map
   grid = screenAt(start[0], start[1]);
   sx = start[0]; sy = start[1];
   P.x = 64; P.y = 300;
@@ -3138,9 +3913,10 @@ function loop(now){
   }
   if (acc >= FRAME){ Perf.dropped++; acc = 0; }   // truly stalled: resync, don't accumulate debt
   // Playing a cabinet counts as moving: nobody is "standing still" in the arcade.
-  Watcher.tick(Math.min(now - lastTalk, 100), mode !== 'garden' || Math.abs(P.vx) > 0.4 || !P.grounded);
+  const dtTalk = Math.min(now - lastTalk, 100);
+  Watcher.tick(dtTalk, mode !== 'garden' || Math.abs(P.vx) > 0.4 || !P.grounded);
   lastTalk = now;
-  if (mode === 'garden'){ Assist.tick(now); Takeover.check(now); }
+  if (mode === 'garden'){ Assist.tick(now); Takeover.check(now); Leak.tell(now); Hint.tick(dtTalk); }
   Talk.tick(now);
   if (mode === 'arcade') Arcade.draw(); else draw();
 }

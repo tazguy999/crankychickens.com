@@ -29,7 +29,7 @@ for who in NAMES:
     for m in re.finditer(r"\[\s*'" + re.escape(who) + r"'\s*,\s*\"((?:[^\"\\]|\\.)*)\"\s*\]", src):
         pairs.append((who, m.group(1)))
 pairs = sorted(set(pairs), key=lambda p: -len(p[1]))
-LONGEST = pairs[:6]
+LONGEST_BASE = pairs[:6]
 KID = ('PEARL', 'I think the chickens should have a trampoline and a slide and also a very big cake for everybody', 'Cannon Master')
 TOASTS = sorted(set(re.findall(r"toast\('([^']+)'", src)))
 
@@ -85,10 +85,26 @@ async def run_viewport(b, name, w, h, touch):
         await pg.wait_for_timeout(60)
 
     # stop the game talking on its own schedule: the eval says every line itself
-    await pg.evaluate("() => { Talk.tick = () => {}; Voice.say = () => {}; subEl.style.transition='none'; toastEl.style.transition='none'; }")
+    await pg.evaluate("() => { Talk.tick = () => {}; Voice.say = () => {}; Leak.tell = () => {}; subEl.style.transition='none'; toastEl.style.transition='none'; }")
     await hush()
 
+    # LAYER 4: hint lines are built from templates, so render them and add the longest to the pool
+    hints = await pg.evaluate('''() => {
+      const out = [], dirs = ['down the big hole in the Long Drop', 'through the brick wall on the right', 'right here on this screen'];
+      const wonSets = [{}, {runner:1}];
+      for (const kind of Object.keys(Hint.LINES)) for (const say of dirs) for (const won of wonSets) for (let lv = 1; lv <= 6; lv++) for (let rep = 0; rep < (lv === 6 ? 6 : 1); rep++){
+        Save.data.won = won;
+        const l = Hint.line({ kind, maker: 'AUNT BARB', r: { steps: 2, first: { say } } }, lv);
+        out.push(l);
+      }
+      Save.data.won = {};
+      const seen = new Set(); return out.filter(l => !seen.has(l[1]) && seen.add(l[1])).sort((a, b) => b[1].length - a[1].length).slice(0, 5);
+    }''')
+    tips = await pg.evaluate("Object.values(GAMES).map(g => g.tip).filter(Boolean)")
+    LONGEST = sorted(LONGEST_BASE + [tuple(h) for h in hints], key=lambda p: -len(p[1]))[:8]
+
     # ---- garden: HUD + every toast + the longest lines anyone can say ----
+    await pg.evaluate("() => { Hint.tick = () => {}; Hint.arrow = function(){ const g = this.goal(); if (!g) return null; this.level = 5; return g.r.steps ? g.r.first : { x: g.x, y: g.top, dir: 'down' }; }; }")
     await scene('garden')
     await say(LONGEST, credit_case=True)
     for tx in TOASTS:
@@ -117,6 +133,37 @@ async def run_viewport(b, name, w, h, touch):
     await say([tuple(l) for l in tk])
     await hush()
 
+    # ---- LAYER 3: leak announcements, Reginald's spot, and the three screens off the map ----
+    await pg.evaluate("() => { Save.data.won = {invaders:1,runner:1,standing:1,parade:1,bricks:1}; Save.data.wallDown = true; Save.data.wallHits = 6; Save.data.extra = {}; }")
+    tells = await pg.evaluate("Object.values(Leak.TELL).map(t => ({toast: t.toast, lines: t.lines}))")
+    await pg.evaluate("() => { mode = 'garden'; enterScreen(0, 0, 100, 328); }")
+    for tl in tells:
+        await scene('leak toast "' + tl['toast'].split('<br>')[0] + '"')
+        await pg.evaluate("t => toast(t, 60000)", tl['toast'])
+        await say([tuple(l) for l in tl['lines']] + LONGEST[:3], credit_case=True)
+    await hush()
+    extra_lines = [('SCRATCHY', 'That is flower number 13. Of twelve. I need to sit down.'), ('PEARL', 'There was a SPARE one!'),
+                   ('SCRATCHY', 'I have filed a new form. It is called Form 15 of 12.'), ('THE GAME', 'Flower count exceeds flower count.')]
+    await scene("garden on Reginald's spot")
+    await pg.evaluate("() => { enterScreen(0, 1, 9*32+22, 328); }")
+    await pg.wait_for_timeout(700)
+    await say([('REGINALD', 'There is a spot. Stand on it. Wait. That is all I will say.')] + LONGEST[:3], credit_case=True)
+    await pg.evaluate("t => toast(t, 60000)", tells[3]['toast'])
+    await say(LONGEST[:2]); await hush()
+    for (x, y, px, name, lines) in [
+        (1, -1, 300, 'above the garden', [('THE GAME', 'You are above the garden. Nothing was placed here. Please disregard the flower.'), ('PEARL', 'You are in the SKY!')]),
+        (0, 2, 120, 'under the garden', [('THE GAME', 'This screen is under the garden. It is not on the map. Please do not touch the props.'), ('REGINALD', 'Nice basement.')]),
+        (0, 2, 9*32+22, 'under the garden, on the lift pad', [('REGINALD', 'Nice basement.')]),
+        (3, 1, 60, 'outside the demo', [('THE GAME', 'You have left the demo. This area has no textures. It was not expecting company.'), ('EL JAGUAR', 'It was a load-bearing wall. Emotionally.')]),
+        (2, 1, 560, 'garden at the wall', [('EL JAGUAR', 'That is MY wall. Stop that. ...Do it again.'), ('EL JAGUAR', 'You broke the edge of the demo. I respect it.'), ('SCRATCHY', 'There is nothing out there. I checked the paperwork.')]),
+    ]:
+        await pg.evaluate("([x,y,px]) => { Leak.script = null; enterScreen(x, y, px, y === -1 ? 290 : 328); Leak.padArmed = true; }", [x, y, px])
+        await scene('hidden screen: ' + name)
+        await pg.wait_for_timeout(500)
+        await say(lines + extra_lines + LONGEST[:3], credit_case=True)
+        await hush()
+    await pg.evaluate("() => { enterScreen(0, 0, 64, 300); Save.data.won = {}; paintHud(); }")
+
     # ---- every cabinet: title card, play, won card, lost card ----
     await pg.evaluate("() => { Save.data.won = {invaders:1,runner:1,standing:1,parade:1,bricks:1}; }")
     for c in cabs:
@@ -135,7 +182,7 @@ async def run_viewport(b, name, w, h, touch):
             await pg.wait_for_timeout(1500)
             if gid == 'standing':
                 await pg.evaluate("() => { const g = Arcade.game; g.msg='YOU MOVED.'; g.msgT=200; }")
-                await say([('REGINALD', 'Standing is harder than it looks. I have practised for six years.')])
+                await say([('REGINALD', 'Standing is harder than it looks. I have practised for six years.'), ('THE GAME', 'A hint. The game is called STANDS. Take your hands off everything.'), ('PEARL', 'LET GO OF THE BUTTONS! ALL OF THEM! I cannot watch!')])
                 await pg.wait_for_timeout(300); await hush()
                 await pg.evaluate("() => { const g = Arcade.game; g.still = g.need; }")
                 await pg.wait_for_timeout(1200)
@@ -169,7 +216,7 @@ async def run_viewport(b, name, w, h, touch):
             await pg.evaluate("() => { Arcade.lives = 1; Arcade.hurt(); }")
             await scene('lost card: ' + tag)
             await pg.wait_for_timeout(650)
-            await say([tuple(l) for l in (lines.get('lose') or [])] + [('AUNT BARB', 'I have turned this one down a notch, dear.'), ('SCRATCHY', 'That is not regulation.'), ('AUNT BARB', 'It is now.')])
+            await say([tuple(l) for l in (lines.get('lose') or [])] + [tuple(t) for t in tips] + [('AUNT BARB', 'I have turned this one down a notch, dear.'), ('SCRATCHY', 'That is not regulation.'), ('AUNT BARB', 'It is now.')])
             await hush()
             await pg.evaluate("() => { Arcade.close(); }")
     await pg.evaluate("() => { Save.data.fails = {}; }")
