@@ -894,8 +894,9 @@ function paintHud(){
     const intro = Arcade.state === 'intro';
     zoneEl.nodeValue = intro ? 'THE ARCADE' : Arcade.game.short;
     const fin = Arcade.game === GAMES.finale && !intro;
-    coordEl.textContent = fin ? 'ROUND ' + Math.min(Arcade.game.i + 1, 5) + ' / 5' : 'BY ' + Arcade.game.maker;
-    petalEl.textContent = intro ? '' : '♥'.repeat(Math.max(0, Arcade.lives));
+    coordEl.textContent = fin ? 'ROUND ' + Math.min(Arcade.game.i + 1, 5) + ' / 5'
+                        : (!intro && Arcade.game.hud) ? Arcade.game.hud() : 'BY ' + Arcade.game.maker;
+    petalEl.textContent = (intro || Arcade.game.noLives) ? '' : '♥'.repeat(Math.max(0, Arcade.lives));
     return;
   }
   const sec = secretHere();
@@ -1924,16 +1925,22 @@ const NEED_TICKETS = 5;
 
 function tickets(){
   const w = Save.data.won || {};
-  return CABINETS.filter(c => !c.finale && w[c.id]).length;
+  return CABINETS.filter(c => !c.finale && !c.extra && w[c.id]).length;
 }
 function cabinetHere(){
   if (!Save.data.takeover) return null;
   return CABINETS.find(c => c.screen === key(sx, sy)) || null;
 }
+// A screen can hold more than one thing to walk up to (LAYER 5 adds a headset).
+function cabinetsHere(){
+  return Save.data.takeover ? CABINETS.filter(c => c.screen === key(sx, sy)) : [];
+}
 function cabinetLocked(c){ return !!c.finale && tickets() < NEED_TICKETS; }
 function nearCabinet(){
-  const c = cabinetHere();
-  if (!c || mode !== 'garden' || Takeover.glitching()) return null;
+  if (mode !== 'garden' || Takeover.glitching()) return null;
+  return cabinetsHere().find(c => nearThis(c)) || null;
+}
+function nearThis(c){
   const x = c.col * TILE, cx = P.x + P.w / 2;
   // Not P.grounded: resting on a tile, that flag is only true every other
   // frame (gravity has to build up before the foot crosses the tile line).
@@ -1942,6 +1949,7 @@ function nearCabinet(){
 }
 
 function drawCabinet(c){
+  if (c.headset){ drawHeadsetStand(c); return; }
   const x = c.col * TILE, w = 40, h = 64, y = GROUND_Y - h;
   const locked = cabinetLocked(c);
   const won = (Save.data.won || {})[c.id];
@@ -2049,13 +2057,13 @@ const Takeover = {
 };
 
 function drawCabinets(){
-  const c = cabinetHere();
-  if (!c) return;
-  if (Takeover.glitching() && !REDUCED){
-    g.globalAlpha = Math.random() < 0.55 ? 0.25 + Math.random() * 0.6 : 0;
-    if (g.globalAlpha > 0) drawCabinet(c);
-    g.globalAlpha = 1;
-  } else drawCabinet(c);
+  cabinetsHere().forEach(c => {
+    if (Takeover.glitching() && !REDUCED){
+      g.globalAlpha = Math.random() < 0.55 ? 0.25 + Math.random() * 0.6 : 0;
+      if (g.globalAlpha > 0) drawCabinet(c);
+      g.globalAlpha = 1;
+    } else drawCabinet(c);
+  });
 }
 
 /* ============================================================
@@ -2213,8 +2221,9 @@ const Arcade = {
       if (this.state !== 'play'){
         g.fillStyle = 'rgba(6,3,12,.78)'; g.fillRect(0, 0, W, H);
         if (this.state === 'won'){
-          txt(c.finale ? 'ALL OF THEM. YOU BEAT ALL OF THEM.' : 'CABINET CLEARED', W / 2, 128, 28, '#ffd76b');
-          if (!c.finale){
+          txt(c.finale ? 'ALL OF THEM. YOU BEAT ALL OF THEM.' : (gm.winTitle || 'CABINET CLEARED'), W / 2, 128, 28, '#ffd76b');
+          if (c.extra) txt(gm.winSub || '', W / 2, 162, 13, '#f2e9f7');
+          else if (!c.finale){
             txt(this.first ? 'YOU WON A TICKET' : 'YOU ALREADY HAD THIS TICKET. STILL COUNTS.', W / 2, 162, 14, '#f2e9f7');
             txt('TICKETS  ' + tickets() + ' / ' + NEED_TICKETS, W / 2, 186, 14, c.color);
           }
@@ -2232,8 +2241,10 @@ const Arcade = {
       }
     }
     // CRT dressing: scanlines and a bezel in the maker's colour.
-    g.fillStyle = 'rgba(0,0,0,.10)';
-    for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+    if (!(gm.noScan && this.state === 'play' && gm.mode === 'map')){     // paper has no scanlines
+      g.fillStyle = 'rgba(0,0,0,.10)';
+      for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+    }
     g.strokeStyle = c.color; g.lineWidth = 4; g.strokeRect(2, 2, W - 4, H - 4);
     if (Perf.show) drawPerf();
     t++;
@@ -3094,6 +3105,9 @@ const ARCADE_TALK = [
   { id:'k-under', lines:[
     ['REGINALD','I stood in one place so long the ground gave up.'], ['AUNT BARB','Where did you go, dear?'],
     ['REGINALD','Down.'] ]},
+  { id:'k-headset', lines:[
+    ['PEARL','I found a headset! It is by my cabinet! It goes somewhere ELSE!'], ['SCRATCHY','We do not have a budget for somewhere else.'],
+    ['PEARL','It is PRETEND somewhere else!'] ]},
   { id:'k-flowers', lines:[
     ['PEARL','Every four flowers is an extra life in the cabinets.'], ['SCRATCHY','I did not approve that.'],
     ['AUNT BARB','I did, dear.'] ]}
@@ -3181,6 +3195,18 @@ const SECRET = {
     ]
   }
 };
+/* Two repairs to the garden itself, found by play-testing the full game.
+   The demo's Long Drop was a one-way trip: the only crossing was a jump with
+   a four-frame window, and nothing could jump back out of the Climb. That
+   was fine when the garden was the whole game. It is not fine now that three
+   cabinets sit below the pit and three things sit beyond it.
+     1. A stepping stone in the middle of the pit. Two easy hops across. It
+        sits one tile above the ground, so walking off the edge still passes
+        under it and drops you into the Climb.
+     2. An updraft: jump up out of the top of the Climb and you are carried
+        clear of the pit's lip (see the screen:enter handler at the bottom). */
+ZONE.screens['1,0'][10] = '........====........';
+
 function secretHere(){ return SECRET[key(sx, sy)] || null; }
 function extraCount(){ return Object.keys(Save.data.extra || {}).length; }
 function flowerCount(){ return picked.size + extraCount(); }
@@ -3617,6 +3643,14 @@ Bus.on('screen:enter', () => {
       ['EL JAGUAR', 'It was a load-bearing wall. Emotionally.'] ]);
   }
   if (k === '1,0'){ Leak.lift.y = Leak.lift.prevY = H + 36; Leak.lift.wait = 0; Leak.lift.dwell = 150; }
+  if (k === '1,0' && Leak.lastKey === '1,1' && P.vy < 0){        // the updraft: always, ticket or no ticket
+    P.vy = JUMP_V; P.launch = 40; P.flapUsed = false;
+    for (let i = 0; i < 10; i++)
+      sparks.push({ x: P.x + P.w / 2 + (Math.random() - .5) * 30, y: H - 4, vx: (Math.random() - .5), vy: -3 - Math.random() * 3, life: 26 });
+    Sfx.play('jump');
+    Leak.firstVisit('updraft', [['THE GAME', 'Updraft detected in the Long Drop. Nobody installed an updraft.'],
+                               ['AUNT BARB', 'I opened a window, dear.']]);
+  }
 });
 
 /* ============================================================
@@ -3638,7 +3672,7 @@ Bus.on('screen:enter', () => {
    does not count either; cabinets have their own tips (see Arcade.lose).
 
    The goal is always the next thing in this order: a cabinet you have
-   not won (nearest first), the sixth cabinet, a garden flower, then
+   not won (nearest first), the sixth cabinet, Pearl's headset, a garden flower, then
    the flowers off the map. Directions come from a tiny map of how the
    nine screens connect, so "left" is always actually left.
    ============================================================ */
@@ -3695,13 +3729,18 @@ const Hint = {
       .filter(gl => gl.r)
       .sort((a, b) => a.r.steps - b.r.steps)[0] || null;
 
-    const cabs = CABINETS.filter(c => !c.finale && !won[c.id]).map(c => (
+    const cabs = CABINETS.filter(c => !c.finale && !c.extra && !won[c.id]).map(c => (
       { id: 'cab:' + c.id, kind: 'cabinet', screen: c.screen, x: c.col * TILE + 20, top: GROUND_Y - (c.big ? 150 : 118), maker: c.maker }));
     if (cabs.length) return nearest(cabs);
 
     if (!won.finale){
       const c = CABINETS.find(q => q.finale);
       return nearest([{ id: 'cab:finale', kind: 'finale', screen: c.screen, x: c.col * TILE + 20, top: GROUND_Y - 118 }]);
+    }
+
+    if (!won.meta){                                       // LAYER 5: the headset, once the arcade is beaten
+      const c = CABINETS.find(q => q.headset);
+      return nearest([{ id: 'cab:meta', kind: 'headset', screen: c.screen, x: c.col * TILE + 16, top: GROUND_Y - 104 }]);
     }
 
     const flowers = [];
@@ -3736,6 +3775,10 @@ const Hint = {
       ['PEARL', 'Kevin is guarding something and he looks BORED.'],
       ['SCRATCHY', 'Form H-1: approved. You hold five tickets. The sixth cabinet is {dir}.'],
       ['THE GAME', 'Hint level three. Go {dir}. Kevin will let you through. Press ▼. I have installed an arrow.'] ],
+    headset: [
+      ['PEARL', 'There is a headset by my cabinet and NOBODY has tried it on!'],
+      ['SCRATCHY', "Form H-1: approved. The headset is {dir}. It goes to Graydorn's world. Allegedly."],
+      ['THE GAME', 'Hint level three. Go {dir}. Find the headset. Press ▼. I have installed an arrow.'] ],
     flower: [
       ['AUNT BARB', 'There is still a flower about, dear. I can smell it.'],
       ['SCRATCHY', 'Form H-1: approved. One uncollected flower is {dir}. My count is off until you fix it.'],
@@ -3831,6 +3874,514 @@ const Hint = {
 };
 ['flower:collect', 'flower:extra', 'wall:hit', 'arcade:open', 'arcade:close', 'arcade:win', 'takeover', 'ending:done']
   .forEach(evt => Bus.on(evt, () => Hint.reset()));
+
+/* ============================================================
+   LAYER 5: THE HEADSET — "Augmented reality, inside virtual reality,
+   inside a demo."
+
+   Pearl found a headset. It goes to Graydorn's World — the kids' own
+   open-world game — or rather to a pretend copy of it the chickens
+   built from memory, on notebook paper, the way the real one is drawn.
+
+   Two views, one game:
+     the MAP   top-down. Walk the seven places of Graydorn's World
+               (Home, Snowy Street, the Park, Spooky Side, Bark
+               Fortress, the Wild World, Crankytown). Lost things are
+               out there: four stuffies, a yarn ball, a loaf, a bat,
+               a ghost, and one of the Bark Lady's barks.
+     the LENS  bump into one and the headset switches to passthrough:
+               you are looking at the garden you are actually standing
+               in, with a paper creature floating in it. Time a blanket
+               throw to tuck it in.
+
+   Nine entries in the Field Guide. Nobody can lose: same rule as
+   Graydorn's World itself. Progress is kept in the ledger, so you can
+   take the headset off and come back.
+
+   It is not a cabinet and does not count toward the five tickets.
+   ============================================================ */
+CABINETS.push({ id:'meta', screen:'2,0', col:6, maker:'PEARL', color:'#5bb8f2', extra:true, headset:true });
+
+const INK = '#1d1a1f';
+function inked(fill, lw){ g.fillStyle = fill; g.fill(); g.lineWidth = lw || 2.5; g.strokeStyle = INK; g.lineJoin = 'round'; g.stroke(); }
+function oval(x, y, rx, ry, fill, lw){ g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); inked(fill, lw); }
+function tri(a, b, c, fill, lw){ g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.closePath(); inked(fill, lw); }
+function hash2(x, y){ let h = (x | 0) * 374761393 + (y | 0) * 668265263; h = (h ^ (h >>> 13)) * 1274126177; h ^= h >>> 16; return (h >>> 0) / 4294967295; }
+
+/* The nine. Colours for the stuffies come from games/graydorns-world.html. */
+const CRITTERS = {
+  cinnamon:   { name:'CINNAMON',         tag:'LOST STUFFY  ·  POUNCE!',      col:'#f3c99c', spot:'#dc9b5c', ear:'cat', speed:.014, band:.30,
+                line:['PEARL', 'Cinnamon! She pounced INTO the blanket!'] },
+  strawberry: { name:'STRAWBERRY',       tag:'LOST STUFFY  ·  PURR BLAST!',  col:'#f4b4cf', spot:'#e27aab', ear:'cat', speed:.015, band:.28,
+                line:['AUNT BARB', 'Strawberry is purring, dear. Through the blanket.'] },
+  sapphire:   { name:'SAPPHIRE',         tag:'LOST STUFFY  ·  SNOW ZOOM!',   col:'#9ea3ab', spot:'#ffffff', ear:'dog', speed:.017, band:.26,
+                line:['SCRATCHY', 'Sapphire: recovered. One pup. Slightly snowy.'] },
+  summer:     { name:'SUMMER',           tag:'LOST STUFFY  ·  AWOOOOO!',     col:'#efe6d3', spot:'#8e8a88', ear:'dog', speed:.018, band:.24, big:true,
+                line:['EL JAGUAR', 'The wolf howls. EL JAGUAR howls back. We understand each other.'] },
+  yarn:       { name:'A YARN BALL',      tag:'IT ROLLS AWAY',                col:'#ffb84d', speed:.020, band:.24, rolls:true,
+                line:['PEARL', 'It rolled away for SO long!'] },
+  loaf:       { name:'A SOURDOUGH LOAF', tag:'STILL WARM',                   col:'#c98a4b', speed:.012, band:.34,
+                line:['AUNT BARB', 'A sourdough loaf, dear. Do not ask how it got out.'] },
+  bat:        { name:'A BAT',            tag:'SPOOKY SIDE',                  col:'#4a3b63', speed:.022, band:.22, flies:true,
+                line:['REGINALD', 'A bat. Nice bat.'] },
+  ghost:      { name:'A GHOST',          tag:'ALREADY UNDER A SHEET',        col:'#f6f4ff', speed:.016, band:.26, flies:true,
+                line:['SCRATCHY', 'You put a blanket on a ghost. It is now two ghosts. I am not counting it twice.'] },
+  bark:       { name:'A BARK',           tag:'ESCAPED FROM THE BARK LADY',   col:'#ffe14d', speed:.021, band:.22, flies:true,
+                line:['EL JAGUAR', 'You caught a BARK. It is a sound. You caught a SOUND.'] }
+};
+const GUIDE = Object.keys(CRITTERS);
+
+// s: scale. tt: animation clock. Origin is the feet (or the middle, for things that fly).
+function drawCritter(type, x, y, s, tt, word){
+  const c = CRITTERS[type];
+  g.save(); g.translate(x, y); g.scale(s, s);
+  if (c.ear){                                              // a stuffy: body, legs, head, ears, tail
+    const hop = Math.abs(Math.sin(tt / 9)) * 3, k = c.big ? 1.2 : 1;
+    g.scale(k, k); g.translate(0, -hop);
+    g.beginPath(); g.moveTo(-17, -16); g.quadraticCurveTo(-30, -22, -27, -32 + Math.sin(tt / 6) * 3); g.lineWidth = 6; g.strokeStyle = INK; g.lineCap = 'round'; g.stroke();
+    g.lineWidth = 3; g.strokeStyle = c.col; g.stroke();
+    [-12, -4, 6, 13].forEach((lx, i) => { g.beginPath(); g.rect(lx - 2.5, -8, 5, 8 + (i % 2 ? hop * .3 : 0)); inked(c.col, 2); });
+    oval(0, -15, 19, 10, c.col);
+    if (type === 'cinnamon') [-9, -1, 7].forEach(sx2 => { g.fillStyle = c.spot; g.fillRect(sx2, -23, 3, 9); });
+    else if (type === 'strawberry') [[-9, -17], [1, -19], [-2, -11]].forEach(p => oval(p[0], p[1], 3, 2.4, c.spot, 0.01));
+    else oval(-2, -19, 13, 5, c.spot, 0.01);
+    if (c.ear === 'cat'){ tri([9, -32], [12, -43], [17, -33], c.col, 2); tri([19, -33], [25, -43], [27, -31], c.col, 2); }
+    else { tri([8, -31], [9, -44], [16, -34], c.col, 2); tri([20, -34], [27, -44], [28, -30], c.col, 2); }
+    oval(18, -27, 10, 9, c.col);
+    oval(25, -24, 5, 3.6, '#fff', 1.5);
+    g.fillStyle = INK; g.beginPath(); g.arc(28, -25.5, 1.6, 0, Math.PI * 2); g.arc(20, -29, 1.6, 0, Math.PI * 2); g.fill();
+    oval(14, -35, 5, 2, '#ea4f8c', 1.2);                    // the bow every stuffy wears
+  } else if (type === 'yarn'){
+    const roll = tt / 8;
+    g.beginPath(); g.moveTo(-10, -2); g.quadraticCurveTo(-22, 4, -30, -3 + Math.sin(tt / 7) * 3); g.lineWidth = 2; g.strokeStyle = '#e0892a'; g.stroke();
+    oval(0, -12, 12, 12, c.col);
+    g.strokeStyle = '#e0892a'; g.lineWidth = 2;
+    for (let i = 0; i < 3; i++){ g.beginPath(); g.arc(0, -12, 9 - i * 3, roll + i * .9, roll + i * .9 + 2.2); g.stroke(); }
+  } else if (type === 'loaf'){
+    oval(0, -10, 18, 10, c.col);
+    g.strokeStyle = '#f4dcb8'; g.lineWidth = 2.5; g.lineCap = 'round';
+    [-8, 0, 8].forEach(lx => { g.beginPath(); g.moveTo(lx - 3, -15); g.lineTo(lx + 3, -8); g.stroke(); });
+    g.strokeStyle = 'rgba(29,26,31,.35)'; g.lineWidth = 1.5;
+    [-6, 5].forEach((lx, i) => { const w = Math.sin(tt / 10 + i) * 2; g.beginPath(); g.moveTo(lx, -24); g.quadraticCurveTo(lx + 4 + w, -30, lx + w, -36); g.stroke(); });
+  } else if (type === 'bat'){
+    const fl = Math.sin(tt / 3) * 9;
+    tri([-6, -2], [-30, -8 - fl], [-18, 8], c.col); tri([6, -2], [30, -8 - fl], [18, 8], c.col);
+    oval(0, 0, 9, 11, c.col);
+    tri([-7, -8], [-5, -17], [-1, -9], c.col, 2); tri([7, -8], [5, -17], [1, -9], c.col, 2);
+    g.fillStyle = '#fff'; g.fillRect(-5, -3, 3, 3); g.fillRect(2, -3, 3, 3);
+  } else if (type === 'ghost'){
+    const w = Math.sin(tt / 7) * 3;
+    g.beginPath(); g.moveTo(-18, 18); g.lineTo(-18, -4); g.quadraticCurveTo(-16, -24, 0, -24); g.quadraticCurveTo(16, -24, 18, -4);
+    g.lineTo(18, 18); g.lineTo(11, 11 + w); g.lineTo(5, 19); g.lineTo(-1, 11 - w); g.lineTo(-7, 19); g.lineTo(-13, 11 + w); g.closePath(); inked(c.col);
+    oval(-6, -7, 3, 4.5, INK, 0.01); oval(5, -7, 3, 4.5, INK, 0.01); oval(-1, 3, 3.5, 4.5, INK, 0.01);
+  } else {                                                  // a bark: a loud yellow star
+    const pulse = 1 + Math.sin(tt / 5) * .08;
+    g.scale(pulse, pulse);
+    g.beginPath();
+    for (let i = 0; i < 20; i++){ const a = i / 20 * Math.PI * 2, r = i % 2 ? 15 : 27; g.lineTo(Math.cos(a) * r * 1.25, Math.sin(a) * r * .85); }
+    g.closePath(); inked(c.col);
+    if (word){
+      g.font = 'bold 13px "Arial Narrow", Arial, sans-serif'; g.textAlign = 'center'; g.fillStyle = INK;
+      g.fillText('BARK!', 0, 5); g.textAlign = 'left';
+    } else { g.fillStyle = INK; g.fillRect(-2, -8, 4, 10); g.fillRect(-2, 5, 4, 4); }
+  }
+  g.restore();
+}
+
+function drawHeadsetStand(c){
+  const x = c.col * TILE, y = GROUND_Y, done = (Save.data.won || {}).meta;
+  g.fillStyle = '#2a1450'; g.fillRect(x + 8, y - 30, 16, 30);
+  g.fillStyle = '#3d1f6e'; g.fillRect(x + 2, y - 34, 28, 6); g.fillRect(x + 4, y - 4, 24, 4);
+  const bob = REDUCED ? 0 : Math.sin(t / 14) * 2;
+  g.fillStyle = '#120822'; g.fillRect(x + 3, y - 50 + bob, 26, 13);                    // the visor
+  g.fillStyle = c.color; g.globalAlpha = REDUCED ? .8 : .6 + .3 * Math.sin(t / 8);
+  g.fillRect(x + 6, y - 47 + bob, 20, 7); g.globalAlpha = 1;
+  g.fillStyle = '#6b5484'; g.fillRect(x, y - 46 + bob, 3, 5); g.fillRect(x + 29, y - 46 + bob, 3, 5);
+  if (done){ g.fillStyle = '#ffd76b'; g.fillRect(x + 12, y - 60 + bob, 8, 6); }        // a little gold star-ish tag
+  if (nearCabinet() === c){
+    const label = '▼  PUT ON THE HEADSET';
+    g.font = 'bold 12px "Arial Narrow", Arial, sans-serif';
+    const tw = g.measureText(label).width + 16, top = y - 90;
+    g.fillStyle = 'rgba(6,3,12,.9)'; g.fillRect(x + 16 - tw / 2, top, tw, 20);
+    g.strokeStyle = c.color; g.lineWidth = 1; g.strokeRect(x + 16 - tw / 2 + .5, top + .5, tw - 1, 19);
+    txt(label, x + 16, top + 14, 12, '#f2e9f7');
+  }
+}
+
+GAMES.meta = {
+  title: "GRAYDORN'S WORLD: VIRTUALLY THERE", short: 'VIRTUALLY THERE', maker: 'PEARL',
+  noLives: true, noScan: true, winTitle: 'FIELD GUIDE COMPLETE', winSub: 'ALL NINE ARE TUCKED IN AND BACK WHERE THEY BELONG',
+  how: ["ARROWS   WALK AROUND GRAYDORN'S WORLD", 'BUMP INTO ANYTHING LOST   ·   A   THROWS A BLANKET', 'FIND ALL NINE. NOBODY CAN LOSE IN HERE.'],
+  intro: [['PEARL', "I found a headset! It goes to Graydorn's world! But PRETEND!"],
+          ['SCRATCHY', 'Augmented reality, inside virtual reality, inside a demo. I am out of forms.']],
+  win: [['SCRATCHY', 'Nine of nine. The Field Guide is complete. Filed under G, for Graydorn.'],
+        ['PEARL', 'Can we keep them?'], ['AUNT BARB', "They live in Graydorn's world, dear. We only tucked them in."]],
+  lose: [['PEARL', 'Nobody loses in here!']],
+  MW: 1920, MH: 1152,
+  SPAWNS: [
+    ['cinnamon', 860, 520], ['cinnamon', 1110, 660], ['loaf', 1010, 450], ['loaf', 720, 610],
+    ['yarn', 300, 900], ['yarn', 520, 1040], ['strawberry', 180, 1040], ['strawberry', 430, 800],
+    ['sapphire', 250, 200], ['sapphire', 480, 330], ['summer', 120, 430], ['summer', 900, 1040],
+    ['bat', 1500, 150], ['bat', 1750, 330], ['ghost', 1400, 300], ['ghost', 1650, 120],
+    ['bark', 1500, 900], ['bark', 1750, 1040]
+  ],
+  PLACES: { snow:'SNOWY STREET', crank:'CRANKYTOWN', spooky:'SPOOKY SIDE', home:'HOME', park:'THE PARK', wild:'THE WILD WORLD', fort:'BARK FORTRESS' },
+  TINT:   { snow:'#eaf3fb', crank:'#fdefd2', spooky:'#e6dff0', home:'#fbf8ef', park:'#e0f0d8', wild:'#f1ebcb', fort:'#f2ddcd' },
+
+  place(x, y){
+    const c = Math.floor(x / 640), r = Math.floor(y / 384);
+    if (c === 1) return r === 0 ? 'crank' : r === 1 ? 'home' : 'wild';
+    if (c <= 0) return (r === 0 || (r === 1 && y < 576)) ? 'snow' : 'park';
+    return (r === 0 || (r === 1 && y < 576)) ? 'spooky' : 'fort';
+  },
+  hud(){ return this.mode === 'lens' ? 'PASSTHROUGH · THE GARDEN' : this.PLACES[this.place(this.x, this.y)]; },
+  caughtCount(){ return GUIDE.filter(k => this.guide[k]).length; },
+
+  init(o){
+    this.o = o;
+    Save.data.guide = Save.data.guide || {};
+    if (GUIDE.every(k => Save.data.guide[k])) Save.data.guide = {};        // a finished guide starts a fresh walk
+    this.guide = Save.data.guide;
+    this.x = 960; this.y = 600; this.face = 1; this.walking = false;
+    this.mode = 'map'; this.f = 0; this.lastPlace = '';
+    this.spawns = this.SPAWNS.map(([type, x, y], i) => ({ type, x, y, hx: x, hy: y, i }));
+    this.said = Save.data.metaSaid = Save.data.metaSaid || {};
+    this.enc = null; this.cool = 60;
+  },
+  once(id, lines){
+    if (this.said[id]) return;
+    this.said[id] = true;
+    Talk.interrupt({ lines });
+  },
+
+  /* ---------- the map ---------- */
+  updateMap(inp){
+    let dx = (inp.right ? 1 : 0) - (inp.left ? 1 : 0), dy = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
+    this.walking = !!(dx || dy);
+    if (dx && dy){ dx *= .707; dy *= .707; }
+    const sp = 2.7 * this.o.speed;
+    const nx = this.x + dx * sp, ny = this.y + dy * sp;
+    if (nx < 24 || nx > this.MW - 24 || ny < 40 || ny > this.MH - 16)
+      this.once('edge', [['THE GAME', 'End of metaverse. The real one goes further. This one had a budget.']]);
+    this.x = clamp(nx, 24, this.MW - 24); this.y = clamp(ny, 40, this.MH - 16);
+    if (dx) this.face = dx > 0 ? 1 : -1;
+    if (this.cool > 0) this.cool--;
+
+    const here = this.place(this.x, this.y);
+    if (here !== this.lastPlace){
+      this.lastPlace = here; paintHud();
+      if (here === 'crank') this.once('crank', [['AUNT BARB', 'Oh, that is our coop, dear. The pretend one. From when the sky tore open.']]);
+    }
+    if (Math.hypot(this.x - 1010, this.y - 560) < 80)
+      this.once('graydorn', [['PEARL', 'That is Graydorn! And Batdorn! We crashed a coop into their world once.'],
+                             ['SCRATCHY', "It was the sky's fault. I have the paperwork."]]);
+
+    for (const s of this.spawns){
+      if (this.guide[s.type]) continue;
+      const c = CRITTERS[s.type], d = Math.hypot(s.x - this.x, s.y - this.y);
+      if (c.rolls && d < 110 && d > 1){                     // the yarn ball rolls away, but not far, and not fast
+        const ax = (s.x - this.x) / d, ay = (s.y - this.y) / d;
+        s.x = clamp(s.x + ax * 1.5, s.hx - 150, s.hx + 150); s.y = clamp(s.y + ay * 1.5, s.hy - 110, s.hy + 110);
+      } else if (c.flies){ s.x = s.hx + Math.cos(this.f / 50 + s.i) * 34; s.y = s.hy + Math.sin(this.f / 38 + s.i) * 18; }
+      if (d < 24 && this.cool <= 0){ this.startLens(s); return; }
+    }
+  },
+
+  startLens(s){
+    const c = CRITTERS[s.type];
+    this.mode = 'lens';
+    this.enc = { s, type: s.type, state: 'aim', f: 0, m: Math.random(), dir: 1, misses: 0, almost: 0,
+                 centre: rnd(0.3, 0.7), band: c.band, result: '', rf: 0 };
+    Sfx.play('glitch');
+    paintHud();
+    this.once('lens', [['THE GAME', 'Passthrough enabled. That is the garden. The creature is not really there. Neither is the garden.']]);
+  },
+
+  updateLens(inp, pr){
+    const e = this.enc, c = CRITTERS[e.type];
+    e.f++;
+    if (e.rf > 0) e.rf--;
+    if (e.state === 'aim'){
+      e.m += e.dir * c.speed * this.o.speed;
+      if (e.m > 1){ e.m = 1; e.dir = -1; } if (e.m < 0){ e.m = 0; e.dir = 1; }
+      if (pr.jump && e.f > 20){
+        const off = Math.abs(e.m - e.centre), half = e.band / 2;
+        e.hit = off <= half; e.perfect = off <= half / 3;
+        e.state = 'fly'; e.f = 0; Sfx.play('jump');
+      }
+    } else if (e.state === 'fly'){
+      if (e.f >= 20){
+        if (!e.hit){
+          e.state = 'aim'; e.f = 0; e.misses++; e.result = 'MISSED. IT DODGED.'; e.rf = 70;
+          e.band = Math.min(0.5, e.band + 0.06); e.centre = rnd(0.3, 0.7);        // every miss makes the next one easier
+          Sfx.play('blip');
+        } else { e.state = 'cover'; e.f = 0; Sfx.play('thunk'); }
+      }
+    } else if (e.state === 'cover'){
+      if (e.f >= 70){
+        const keep = e.perfect || e.almost >= 1 || Math.random() < 0.6;
+        if (keep){
+          e.state = 'caught'; e.f = 0; e.result = 'TUCKED IN!'; e.rf = 90;
+          this.guide[e.type] = true; Save.flush();
+          this.o.host.score += 100; Sfx.play('win');
+          Talk.interrupt({ lines: [c.line] });
+        } else {
+          e.state = 'aim'; e.f = 0; e.almost++; e.result = 'ALMOST! IT WRIGGLED OUT.'; e.rf = 80;
+          e.band = Math.min(0.5, e.band + 0.06); e.centre = rnd(0.3, 0.7);
+          Sfx.play('pop');
+        }
+      }
+    } else if (e.state === 'caught'){
+      if (e.f >= 80){ e.state = 'card'; e.f = 0; }
+    } else if (e.state === 'card'){
+      if ((pr.jump && e.f > 30) || e.f > 200){
+        this.mode = 'map'; this.enc = null; this.cool = 40; paintHud();
+        if (this.caughtCount() >= GUIDE.length){ this.o.host.win(); return; }
+      }
+    }
+  },
+
+  update(inp, pr){
+    this.f++;
+    if (this.mode === 'map') this.updateMap(inp); else this.updateLens(inp, pr);
+  },
+
+  /* ---------- drawing: the map ---------- */
+  drawGround(cx, cy){
+    const x0 = Math.floor(cx / 32) * 32, y0 = Math.floor(cy / 32) * 32;
+    for (let wy = y0; wy < cy + H; wy += 32) for (let wx = x0; wx < cx + W; wx += 32){
+      g.fillStyle = this.TINT[this.place(wx + 16, wy + 16)];
+      g.fillRect(wx - cx, wy - cy, 32, 32);
+    }
+    // the roads home
+    g.fillStyle = '#ddd3bd'; g.fillRect(-cx, 560 - cy, this.MW, 36); g.fillRect(942 - cx, -cy, 36, this.MH);
+    g.fillStyle = '#fbf8ef';
+    for (let wx = x0 - 64; wx < cx + W; wx += 64) g.fillRect(wx - cx + 8, 576 - cy, 28, 3);
+    for (let wy = y0 - 64; wy < cy + H; wy += 64) g.fillRect(958 - cx, wy - cy + 8, 3, 28);
+    // notebook paper: blue rules, one pink margin
+    g.fillStyle = 'rgba(120,160,210,.38)';
+    for (let wy = y0; wy < cy + H; wy += 32) g.fillRect(0, wy - cy + 31, W, 1);
+    g.fillStyle = 'rgba(232,134,140,.7)'; g.fillRect(48 - cx, 0, 2, H);
+  },
+
+  decor(list, cx, cy){
+    const x0 = Math.floor(cx / 64) - 1, y0 = Math.floor(cy / 64) - 1;
+    for (let gy = y0; gy <= y0 + 8; gy++) for (let gx = x0; gx <= x0 + 12; gx++){
+      const h = hash2(gx, gy), wx = gx * 64 + 14 + hash2(gx + 9, gy) * 36, wy = gy * 64 + 20 + hash2(gx, gy + 7) * 36;
+      if (wx < 20 || wy < 30 || wx > this.MW - 20 || wy > this.MH - 10) continue;
+      if (Math.abs(wy - 578) < 34 || Math.abs(wx - 960) < 34) continue;                  // keep the roads clear
+      const p = this.place(wx, wy), dens = { snow:.30, park:.42, spooky:.34, fort:.26, wild:.38, home:.10, crank:.24 }[p];
+      if (h > dens) continue;
+      list.push({ y: wy, kind: p, v: Math.floor(h / dens * 3), x: wx });
+    }
+  },
+  drawDecor(d, cx, cy){
+    const x = d.x - cx, y = d.y - cy;
+    if (d.kind === 'park' || (d.kind === 'home' && d.v)){
+      g.beginPath(); g.rect(x - 3, y - 14, 6, 14); inked('#8b6a45', 2);
+      oval(x, y - 24, 15, 14, d.v === 2 ? '#6fb36a' : '#8fcf7a');
+    } else if (d.kind === 'snow'){
+      if (d.v === 0){ oval(x, y - 9, 11, 9, '#fff'); oval(x, y - 23, 8, 7, '#fff'); g.fillStyle = INK; g.fillRect(x - 3, y - 25, 2, 2); g.fillRect(x + 2, y - 25, 2, 2); g.fillStyle = '#ff8a3d'; g.fillRect(x, y - 22, 5, 2); }
+      else tri([x - 12, y], [x, y - 30], [x + 12, y], '#7fb08a');
+    } else if (d.kind === 'spooky'){
+      if (d.v === 0){ oval(x, y - 8, 11, 9, '#f28a2e'); g.fillStyle = '#4f9a52'; g.fillRect(x - 2, y - 20, 4, 5); g.fillStyle = INK; g.fillRect(x - 5, y - 11, 3, 3); g.fillRect(x + 2, y - 11, 3, 3); }
+      else if (d.v === 1){ g.beginPath(); g.moveTo(x - 8, y); g.lineTo(x - 8, y - 16); g.quadraticCurveTo(x, y - 26, x + 8, y - 16); g.lineTo(x + 8, y); g.closePath(); inked('#b9b4c6', 2); }
+      else { g.strokeStyle = INK; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 24); g.moveTo(x, y - 14); g.lineTo(x - 10, y - 24); g.moveTo(x, y - 18); g.lineTo(x + 9, y - 28); g.stroke(); }
+    } else if (d.kind === 'fort'){
+      if (d.v === 0) oval(x, y - 6, 12, 7, '#b7a89a');
+      else { g.beginPath(); g.rect(x - 9, y - 4, 18, 4); inked('#fff8ee', 1.5); oval(x - 10, y - 2, 3, 4, '#fff8ee', 1.5); oval(x + 10, y - 2, 3, 4, '#fff8ee', 1.5); }
+    } else if (d.kind === 'wild'){
+      g.strokeStyle = '#7a9a4a'; g.lineWidth = 2.5; g.lineCap = 'round';
+      [-6, 0, 6].forEach((ox, i) => { g.beginPath(); g.moveTo(x + ox, y); g.quadraticCurveTo(x + ox + (i - 1) * 3, y - 10, x + ox + (i - 1) * 6, y - 16 - (i === 1 ? 4 : 0)); g.stroke(); });
+    } else if (d.kind === 'crank'){
+      g.fillStyle = '#7a9a4a'; g.fillRect(x - 1, y - 22, 3, 22);
+      oval(x + 1, y - 18, 4, 7, '#ffcc02', 1.5);
+    }
+  },
+  drawHouse(x, y, wall, roof){
+    g.beginPath(); g.rect(x - 34, y - 40, 68, 40); inked(wall);
+    tri([x - 42, y - 40], [x, y - 72], [x + 42, y - 40], roof);
+    g.beginPath(); g.rect(x - 8, y - 22, 16, 22); inked('#8b6a45', 2);
+    g.beginPath(); g.rect(x + 14, y - 30, 12, 12); inked('#bfe3ff', 2);
+  },
+  drawKid(x, y){                                            // Graydorn: grey beanie, grey hoodie
+    g.fillStyle = '#26272e'; g.fillRect(x - 6, y - 12, 5, 12); g.fillRect(x + 1, y - 12, 5, 12);
+    g.beginPath(); g.rect(x - 9, y - 28, 18, 18); inked('#7b8391', 2);
+    oval(x, y - 35, 8, 8, '#f6d0b5', 2);
+    g.beginPath(); g.ellipse(x, y - 40, 9, 6, 0, Math.PI, 0); inked('#8d8396', 2);
+    g.fillStyle = INK; g.fillRect(x - 3, y - 36, 2, 2); g.fillRect(x + 2, y - 36, 2, 2);
+    const wave = REDUCED ? 0 : Math.sin(this.f / 8) * 4;
+    g.strokeStyle = INK; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x + 9, y - 24); g.lineTo(x + 17, y - 34 + wave); g.stroke();
+    g.strokeStyle = '#7b8391'; g.lineWidth = 3; g.stroke();
+  },
+  drawBat(x, y){                                            // Batdorn: blue suit, yellow badge, dark cape
+    tri([x - 16, y - 2], [x, y - 44], [x + 16, y - 2], '#2a2533', 2);
+    g.fillStyle = '#3a4c70'; g.fillRect(x - 6, y - 14, 5, 14); g.fillRect(x + 1, y - 14, 5, 14);
+    g.beginPath(); g.rect(x - 10, y - 36, 20, 24); inked('#2c5ea8', 2);
+    oval(x, y - 26, 5, 4, '#f2c230', 1.5);
+    oval(x, y - 44, 9, 9, '#f0c6a4', 2);
+    g.beginPath(); g.ellipse(x, y - 49, 10, 5, 0, Math.PI, 0); inked('#99a0a9', 2);
+    g.fillStyle = INK; g.fillRect(x - 6, y - 46, 12, 3);
+  },
+
+  drawMap(){
+    const cx = clamp(this.x - W / 2, 0, this.MW - W), cy = clamp(this.y - H / 2, 0, this.MH - H);
+    this.drawGround(cx, cy);
+    const list = [];
+    this.decor(list, cx, cy);
+    // fixed landmarks
+    list.push({ y: 500, draw: () => this.drawHouse(900 - cx, 500 - cy, '#fff8ee', '#ea4f8c') });
+    list.push({ y: 505, draw: () => this.drawHouse(1090 - cx, 505 - cy, '#fff8ee', '#2c5ea8') });
+    list.push({ y: 548, draw: () => this.drawKid(1000 - cx, 548 - cy) });
+    list.push({ y: 550, draw: () => this.drawBat(1030 - cx, 550 - cy) });
+    list.push({ y: 210, draw: () => {                       // the crashed coop, tilted, in Crankytown
+      g.save(); g.translate(960 - cx, 210 - cy); g.rotate(-0.16);
+      g.beginPath(); g.rect(-50, -46, 100, 46); inked('#c0392b');
+      tri([-60, -46], [0, -84], [60, -46], '#8a2020');
+      g.beginPath(); g.rect(-10, -24, 20, 24); inked('#3a2412', 2);
+      g.restore();
+    }});
+    list.push({ y: 1010, draw: () => {                      // Bark Fortress: a wall with teeth
+      const fx = 1620 - cx, fy = 1010 - cy;
+      g.beginPath(); g.rect(fx - 90, fy - 54, 180, 54); inked('#b7a89a');
+      for (let i = 0; i < 6; i++){ g.beginPath(); g.rect(fx - 90 + i * 32, fy - 70, 20, 16); inked('#b7a89a', 2); }
+      g.beginPath(); g.arc(fx, fy, 22, Math.PI, 0); g.lineTo(fx + 22, fy); g.lineTo(fx - 22, fy); g.closePath(); inked('#3a2412', 2);
+    }});
+    for (const s of this.spawns){
+      if (this.guide[s.type]) continue;
+      const fly = CRITTERS[s.type].flies;
+      list.push({ y: s.y, draw: () => drawCritter(s.type, s.x - cx, s.y - cy - (fly ? 26 : 0), 0.8, this.f + s.i * 13) });
+    }
+    list.push({ y: this.y, draw: () => {
+      const px = this.x - cx, py = this.y - cy;
+      g.fillStyle = 'rgba(29,26,31,.18)'; g.beginPath(); g.ellipse(px, py, 11, 4, 0, 0, Math.PI * 2); g.fill();
+      const keep = P.vx; P.vx = this.walking ? 2 : 0;
+      drawChicken(px, py, this.face);
+      P.vx = keep;
+      g.fillStyle = '#120822'; g.fillRect(px - 8, py - 20, 16, 7);                       // the headset
+      g.fillStyle = '#5bb8f2'; g.fillRect(px - 6, py - 18, 12, 3);
+    }});
+    list.sort((a, b) => a.y - b.y);
+    list.forEach(d => { if (d.draw) d.draw(); else this.drawDecor(d, cx, cy); });
+
+    // a "!" over anything close, drawn as a shape
+    for (const s of this.spawns){
+      if (this.guide[s.type]) continue;
+      const d = Math.hypot(s.x - this.x, s.y - this.y);
+      if (d < 120){
+        const bx = s.x - cx, by = s.y - cy - 52 - (REDUCED ? 0 : Math.abs(Math.sin(this.f / 8)) * 5);
+        oval(bx, by, 9, 9, '#ffe14d', 2); g.fillStyle = INK; g.fillRect(bx - 1.5, by - 6, 3, 7); g.fillRect(bx - 1.5, by + 3, 3, 3);
+      }
+    }
+    // the metaverse part: a perspective grid that does nothing, and pointers to what is still lost
+    g.strokeStyle = 'rgba(91,184,242,.16)'; g.lineWidth = 1;
+    for (let i = -6; i <= 6; i++){ g.beginPath(); g.moveTo(W / 2 + i * 22, 30); g.lineTo(W / 2 + i * 120, H); g.stroke(); }
+    const need = this.spawns.filter(s => !this.guide[s.type])
+      .map(s => ({ s, d: Math.hypot(s.x - this.x, s.y - this.y) })).sort((a, b) => a.d - b.d);
+    const shown = new Set();
+    for (const n of need){
+      if (shown.has(n.s.type) || shown.size >= 3) continue;
+      const sx2 = n.s.x - cx, sy2 = n.s.y - cy;
+      if (sx2 > 20 && sx2 < W - 20 && sy2 > 46 && sy2 < H - 96) { shown.add(n.s.type); continue; }   // already on screen
+      shown.add(n.s.type);
+      const a = Math.atan2(n.s.y - this.y, n.s.x - this.x);
+      const ex = clamp(W / 2 + Math.cos(a) * 400, 150, W - 150), ey = clamp(H / 2 + Math.sin(a) * 240, 58, H - 104);
+      oval(ex, ey, 13, 13, '#fbf8ef', 2);
+      g.save(); g.beginPath(); g.arc(ex, ey, 11, 0, Math.PI * 2); g.clip();
+      drawCritter(n.s.type, ex - (CRITTERS[n.s.type].ear ? 4 : 0), ey + (CRITTERS[n.s.type].flies ? 0 : 8), 0.42, 0);
+      g.restore();
+      g.save(); g.translate(ex + Math.cos(a) * 19, ey + Math.sin(a) * 19); g.rotate(a);
+      tri([6, 0], [-4, -5], [-4, 5], '#5bb8f2', 1.5); g.restore();
+    }
+    g.fillStyle = 'rgba(251,248,239,.92)'; g.fillRect(W / 2 - 62, 10, 124, 17);            // a paper tab so scenery never muddies it
+    g.strokeStyle = INK; g.lineWidth = 1.5; g.strokeRect(W / 2 - 62 + .5, 10.5, 123, 16);
+    txt('FIELD GUIDE  ' + this.caughtCount() + ' / ' + GUIDE.length, W / 2, 22, 11, INK);
+  },
+
+  /* ---------- drawing: the lens ---------- */
+  drawLens(){
+    const e = this.enc, c = CRITTERS[e.type];
+    // passthrough: the garden screen you are really standing in
+    g.fillStyle = '#1a0b2e'; g.fillRect(0, 0, W, H);
+    for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++){
+      const ch = grid[r][cc], x = cc * TILE, y = r * TILE;
+      if (!((r + cc) % 2)){ g.fillStyle = '#200d3a'; g.fillRect(x, y, TILE, TILE); }
+      if (ch === '#'){ g.fillStyle = '#2a1450'; g.fillRect(x, y, TILE, TILE); g.fillStyle = '#3d1f6e'; g.fillRect(x, y, TILE, 4); }
+      else if (ch === '='){ g.fillStyle = '#3d1f6e'; g.fillRect(x, y, TILE, 8); g.fillStyle = '#59309b'; g.fillRect(x, y, TILE, 3); }
+    }
+    g.fillStyle = 'rgba(91,184,242,.07)'; g.fillRect(0, 0, W, H);
+    const scan = REDUCED ? -10 : (e.f * 2.2) % (H + 40) - 20;
+    g.fillStyle = 'rgba(91,184,242,.16)'; g.fillRect(0, scan, W, 3);
+    g.strokeStyle = '#5bb8f2'; g.lineWidth = 3;                                           // viewfinder corners
+    [[70, 74, 1, 1], [W - 70, 74, -1, 1], [70, 244, 1, -1], [W - 70, 244, -1, -1]].forEach(([x, y, a, b]) => {
+      g.beginPath(); g.moveTo(x + 22 * a, y); g.lineTo(x, y); g.lineTo(x, y + 22 * b); g.stroke(); });
+
+    // the creature, as a paper sticker floating in a place it has never been
+    const sway = REDUCED ? 0 : Math.sin(e.f / 26) * 120, bob = REDUCED ? 0 : Math.sin(e.f / 11) * 6;
+    const jit = (!REDUCED && e.f % 90 < 4) ? rint(-5, 5) : 0;                             // tracking is not great
+    const kx = W / 2 + sway + jit, ky = (c.flies ? 150 : 200) + bob;
+    const dodge = (e.state === 'aim' && e.rf > 40 && e.result[0] === 'M') ? -34 : 0;
+    const covered = e.state === 'cover' || e.state === 'caught';
+    if (!covered && e.state !== 'card'){
+      g.save(); g.shadowColor = 'rgba(255,255,255,.95)'; g.shadowBlur = 7;
+      drawCritter(e.type, kx, ky + dodge, c.ear ? 2.1 : 2.3, e.f, true);
+      g.restore();
+    }
+    const blanket = (x, y, w, h, rot) => {
+      g.save(); g.translate(x, y); g.rotate(rot);
+      g.beginPath(); g.rect(-w / 2, -h / 2, w, h); inked('#ea4f8c');
+      g.fillStyle = '#ffe14d';
+      for (let i = 1; i < 4; i++){ g.fillRect(-w / 2 + i * w / 4 - 2, -h / 2 + 2, 4, h - 4); }
+      g.fillStyle = 'rgba(44,94,168,.75)';
+      for (let i = 1; i < 3; i++){ g.fillRect(-w / 2 + 2, -h / 2 + i * h / 3 - 2, w - 4, 4); }
+      g.restore();
+    };
+    if (e.state === 'fly'){
+      const p = e.f / 20, tx = e.hit ? kx : kx + 90, ty = ky - 20;
+      blanket(W / 2 + (tx - W / 2) * p, 300 + (ty - 300) * p - Math.sin(p * Math.PI) * 70, 30 + p * 40, 22 + p * 30, p * 5);
+    } else if (covered){
+      const wig = e.state === 'cover' && !REDUCED ? Math.sin(e.f / 3) * (e.f % 26 < 12 ? 7 : 0) : 0;
+      g.fillStyle = 'rgba(29,26,31,.25)'; g.beginPath(); g.ellipse(kx, ky + 8, 46, 9, 0, 0, Math.PI * 2); g.fill();
+      blanket(kx + wig, ky - 16, 96, 58, wig * 0.012);
+      if (e.state === 'caught') for (let i = 0; i < 6; i++){
+        const a = i / 6 * Math.PI * 2 + e.f / 20, r = 60 + Math.sin(e.f / 6 + i) * 8;
+        oval(kx + Math.cos(a) * r, ky - 16 + Math.sin(a) * r * .6, 4, 4, '#ffe14d', 1.5);
+      }
+    }
+
+    txt(c.name + '  ·  ' + c.tag, W / 2, 58, 12, '#f2e9f7');
+    if (e.rf > 0 && e.state !== 'card') txt(e.result, W / 2, 96, 20, e.result[0] === 'T' ? '#ffd76b' : '#ff8a3d');
+
+    if (e.state === 'aim' || e.state === 'fly'){
+      const bx = 170, bw = 300, by = 262;
+      if (e.state === 'aim') txt('PRESS  A  WHEN THE LINE IS IN THE BLUE', W / 2, 250, 12, '#f2e9f7');
+      g.fillStyle = 'rgba(6,3,12,.85)'; g.fillRect(bx - 4, by - 4, bw + 8, 22);
+      g.fillStyle = '#3d1f6e'; g.fillRect(bx, by, bw, 14);
+      g.fillStyle = '#5bb8f2'; g.fillRect(bx + (e.centre - e.band / 2) * bw, by, e.band * bw, 14);
+      g.fillStyle = '#ffd76b'; g.fillRect(bx + (e.centre - e.band / 6) * bw, by, e.band / 3 * bw, 14);
+      g.fillStyle = '#f2e9f7'; g.fillRect(bx + e.m * bw - 2, by - 4, 4, 22);
+    }
+
+    if (e.state === 'card'){
+      g.fillStyle = 'rgba(251,248,239,.97)'; g.fillRect(150, 70, 340, 222);
+      g.strokeStyle = INK; g.lineWidth = 3; g.strokeRect(150.5, 70.5, 339, 221);
+      g.fillStyle = 'rgba(120,160,210,.4)'; for (let y = 102; y < 288; y += 20) g.fillRect(152, y, 336, 1);
+      txt('FIELD GUIDE   ' + this.caughtCount() + ' / ' + GUIDE.length, W / 2, 94, 15, INK);
+      GUIDE.forEach((k, i) => {
+        const gx = 205 + (i % 3) * 115, gy = 150 + Math.floor(i / 3) * 52, got = this.guide[k], cc = CRITTERS[k];
+        if (k === e.type){ g.strokeStyle = '#ea4f8c'; g.lineWidth = 3; g.strokeRect(gx - 44, gy - 40, 88, 48); }
+        if (got) drawCritter(k, gx - (cc.ear ? 5 : 0), gy + (cc.flies ? -14 : 0), 0.95, k === e.type ? e.f : 0);
+        else { g.fillStyle = 'rgba(29,26,31,.16)'; g.beginPath(); g.ellipse(gx, gy - 14, 20, 14, 0, 0, Math.PI * 2); g.fill();
+               g.fillStyle = 'rgba(29,26,31,.3)'; g.fillRect(gx - 1.5, gy - 21, 3, 9); g.fillRect(gx - 1.5, gy - 10, 3, 3); }
+      });
+      txt(c.name + '  ·  ' + c.tag, W / 2, 282, 11, '#a82246');
+    }
+  },
+
+  draw(){
+    if (this.mode === 'map') this.drawMap(); else this.drawLens();
+  }
+};
 
 /* ---------- Boot ---------- */
 function boot(){

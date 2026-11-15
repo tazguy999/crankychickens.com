@@ -199,6 +199,31 @@ async def run_viewport(b, name, w, h, touch):
                     await pg.wait_for_timeout(500)       # round card
                     await pg.evaluate("() => { Arcade.game.card = 0; }")
                     await pg.wait_for_timeout(900)
+            if gid == 'meta':
+                crit = await pg.evaluate("GUIDE.map(k => ({k, line: CRITTERS[k].line}))")
+                lens_line = [('THE GAME', 'Passthrough enabled. That is the garden. The creature is not really there. Neither is the garden.'),
+                             ('PEARL', 'That is Graydorn! And Batdorn! We crashed a coop into their world once.'),
+                             ('AUNT BARB', 'Oh, that is our coop, dear. The pretend one. From when the sky tore open.'),
+                             ('THE GAME', 'End of metaverse. The real one goes further. This one had a budget.')]
+                await scene('playing: meta map' + (' easy' if easy else ''))
+                for (mx, my) in [(960, 600), (250, 230), (1500, 200), (1620, 990), (300, 950), (960, 240), (30, 50), (1890, 1130)]:
+                    await pg.evaluate("([x,y]) => { const g = Arcade.game; g.mode = 'map'; g.enc = null; g.x = x; g.y = y; g.cool = 9999; }", [mx, my])
+                    await say(lens_line[1:])
+                await hush()
+                for cr in crit:
+                    await pg.evaluate("k => { const g = Arcade.game; g.cool = 0; g.startLens(g.spawns.find(s => s.type === k)); }", cr['k'])
+                    await scene('playing: meta lens ' + cr['k'] + (' easy' if easy else ''))
+                    await say(lens_line[:1])
+                    for res in ['MISSED. IT DODGED.', 'ALMOST! IT WRIGGLED OUT.']:
+                        await pg.evaluate("r => { const e = Arcade.game.enc; e.state = 'aim'; e.result = r; e.rf = 9999; }", res)
+                        await say([tuple(cr['line'])])
+                    await pg.evaluate("() => { const e = Arcade.game.enc; e.state = 'caught'; e.f = 0; e.result = 'TUCKED IN!'; e.rf = 9999; }")
+                    await say([tuple(cr['line'])])
+                    await pg.evaluate("k => { const g = Arcade.game; g.guide[k] = true; g.enc.state = 'card'; g.enc.f = -9999; }", cr['k'])
+                    await scene('playing: meta guide card ' + cr['k'] + (' easy' if easy else ''))
+                    await say([tuple(cr['line'])] + lens_line[:1])
+                    await hush()
+                await pg.evaluate("() => { const g = Arcade.game; g.mode = 'map'; g.enc = null; Save.data.guide = {}; g.guide = Save.data.guide; }")
             if gid == 'invaders':
                 await pg.evaluate("() => { const g = Arcade.game; g.inv.slice(0, 40).forEach(v => { v.alive = false; g.pops.push({x:v.x+14,y:v.y+9,life:18}); }); }")
                 await pg.wait_for_timeout(500)
