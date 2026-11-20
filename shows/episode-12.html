@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GP4SZY2B0Z"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GP4SZY2B0Z');</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Adventures of Cranky Chickens — Episode 12: Q.E.Cluck</title>
+<meta property="og:title" content="Episode 12: Q.E.Cluck">
+<meta property="og:description" content="Pearl's arcade machine solves the great mystery of corn. Nobody can read the proof. So they build a machine to check the machine.">
+<meta property="og:type" content="video.episode">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:#140c24;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'Fredoka One',cursive;padding:10px;}
+#wrap{width:100%;max-width:720px;}
+h1{color:#ffcc02;font-size:clamp(15px,4vw,22px);text-align:center;margin:8px 0 2px;letter-spacing:1px;text-shadow:0 0 18px rgba(255,150,0,0.4);}
+#epTitle{color:rgba(180,255,180,0.8);font-size:clamp(11px,3vw,14px);text-align:center;margin-bottom:2px;}
+#epCredit{color:rgba(255,220,180,0.55);font-size:clamp(10px,2.5vw,12px);text-align:center;margin-bottom:10px;}
+canvas{display:block;width:100%;border-radius:12px;background:#000;box-shadow:0 8px 40px rgba(0,0,0,0.6);}
+#controls{display:flex;align-items:center;gap:10px;padding:10px 4px;flex-wrap:wrap;}
+button{font-family:'Fredoka One',cursive;background:rgba(255,204,2,0.12);border:2px solid rgba(255,204,2,0.4);color:#ffcc02;border-radius:9px;padding:8px 14px;font-size:14px;cursor:pointer;}
+button:active{transform:scale(0.96);}
+#seekWrap{flex:1;min-width:150px;height:22px;display:flex;align-items:center;cursor:pointer;}
+#seekBar{width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;position:relative;overflow:hidden;}
+#seekFill{height:100%;background:#8f8;width:0%;border-radius:4px;}
+#timeLbl{color:rgba(255,255,255,0.6);font-size:12px;min-width:88px;text-align:center;}
+#chapters{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding-bottom:8px;}
+#chapters button{font-size:11px;padding:6px 10px;background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);}
+#notifyRow{text-align:center;padding-bottom:12px;}
+#notifyBtn{font-size:12px;background:rgba(120,255,120,0.1);border-color:rgba(120,255,120,0.4);color:#9f9;}
+#homeLink{color:rgba(255,255,255,0.35);font-size:11px;text-decoration:none;display:block;text-align:center;padding:8px;}
+#homeLink:hover{color:rgba(255,255,255,0.7);}
+</style>
+</head>
+<body>
+<div id="wrap">
+<h1>THE ADVENTURES OF CRANKY CHICKENS</h1>
+<div id="epTitle">Episode 12 · "Q.E.Cluck" · 🌽 THE MACHINES AGREE. NOBODY CHECKED.</div>
+<div id="epCredit">Smart is good. Smart you can check is better.</div>
+<canvas id="c" width="640" height="400"></canvas>
+<div id="controls">
+  <button id="playBtn">▶ PLAY</button>
+  <div id="seekWrap"><div id="seekBar"><div id="seekFill"></div></div></div>
+  <div id="timeLbl">0:00 / 12:03</div>
+  <button id="muteBtn">🔊</button>
+  <button id="voiceBtn">🗣 VOICES: ON</button>
+</div>
+<div id="chapters"></div>
+<div id="notifyRow"><button id="notifyBtn">🔔 Tell me when new episodes are ready!</button></div>
+<a id="homeLink" href="/">← back to crankychickens.com</a>
+</div>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=640,H=400,GY=310;
+const FF="'Fredoka One',cursive";
+let T=0,playing=false,muted=false,lastTs=null;
+// ══ CC WATCH BEACON ══
+// Leaves a breadcrumb the game reads to know what you actually watched.
+// Same origin as games/cc7.html, so this needs no server and no network.
+(function(){
+  var SLUG='episode-12', EP=12, KEY='cc_watched';
+  function rd(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return {};}}
+  function wr(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+  var all=rd();
+  var rec=all[SLUG]||{ep:EP,firstSeen:Date.now(),plays:0,maxProgress:0,finished:false};
+  rec.ep=EP;rec.plays++;rec.lastSeen=Date.now();
+  all[SLUG]=rec;wr(all);
+  window.ccMark=function(t,total){
+    if(!total)return;
+    var p=Math.max(0,Math.min(1,t/total));
+    if(p<=rec.maxProgress+0.005)return;   // throttled
+    rec.maxProgress=p;
+    if(p>=0.97)rec.finished=true;
+    var a=rd();a[SLUG]=rec;wr(a);
+  };
+})();
+let voicesOn=true,lastSpokenLine=null;
+
+// ══ VOICES ══
+const VOICE_PROFILES={
+  'SCRATCHY':{pitch:0.7,rate:0.95},
+  'PEARL':{pitch:1.5,rate:1.15},
+  'EL JAGUAR':{pitch:0.5,rate:0.85},
+  'AUNT BARB':{pitch:1.2,rate:0.9},
+  'KING SQUIRRELINGTON':{pitch:0.8,rate:0.85},
+  'NUT':{pitch:1.65,rate:1.28},
+  'NARRATOR':{pitch:1.0,rate:0.92},
+};
+let voicePool=[];
+function loadVoices(){voicePool=(speechSynthesis.getVoices()||[]).filter(v=>v.lang&&v.lang.startsWith('en'));}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+function speakLine(who,text){
+  if(!voicesOn||!('speechSynthesis' in window))return;
+  if(who==='KEVIN')return;
+  let clean=text.replace(/\([^)]*\)/g,'').replace(/\*[^*]*\*/g,'').trim();
+  if(!clean||clean==='...')return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(clean);
+  const prof=VOICE_PROFILES[who]||{pitch:1,rate:1};
+  u.pitch=prof.pitch;u.rate=prof.rate;u.volume=0.9;
+  if(voicePool.length>0){
+    const idx=Math.abs(who.split('').reduce((a,ch)=>a+ch.charCodeAt(0),0))%voicePool.length;
+    u.voice=voicePool[idx];
+  }
+  speechSynthesis.speak(u);
+}
+function stopSpeech(){if('speechSynthesis' in window)speechSynthesis.cancel();}
+
+// ══ AUDIO ══
+let AC=null,musicTimer=null,curMood=null,nextNoteTime=0,stepIdx=0;
+function ac(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,v,tp,when){if(muted)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();o.type=tp;o.connect(g);g.connect(a.destination);o.frequency.setValueAtTime(f,when);g.gain.setValueAtTime(v,when);g.gain.exponentialRampToValueAtTime(0.001,when+d);o.start(when);o.stop(when+d+0.02);}catch(e){}}
+function sfx(n){if(muted)return;try{const a=ac(),t=a.currentTime;
+  if(n==='bark'){tone(300,0.08,0.3,'square',t);tone(250,0.1,0.25,'square',t+0.1);}
+  else if(n==='beam'){tone(200,0.6,0.2,'sine',t);tone(400,0.6,0.12,'sine',t);tone(800,0.5,0.06,'sine',t+0.1);}
+  else if(n==='zap'){tone(900,0.15,0.3,'sawtooth',t);tone(400,0.25,0.2,'sawtooth',t+0.1);}
+  else if(n==='hypno'){[0,0.15,0.3,0.45].forEach((tt,i)=>tone(500-i*60,0.2,0.15,'sine',t+tt));}
+  else if(n==='alarm'){[0,0.25,0.5].forEach(tt=>{tone(700,0.18,0.22,'square',t+tt);tone(500,0.18,0.22,'square',t+tt+0.12);});}
+  else if(n==='launch'){tone(80,1.4,0.4,'sawtooth',t);tone(60,1.6,0.3,'sawtooth',t+0.1);}
+  else if(n==='cluck'){[0,0.12,0.24].forEach((tt,i)=>tone([420,380,440][i],0.09,0.22,'square',t+tt));}
+  else if(n==='thunder'){const buf=a.createBuffer(1,a.sampleRate*0.6,a.sampleRate);const d2=buf.getChannelData(0);for(let i=0;i<d2.length;i++)d2[i]=(Math.random()*2-1)*Math.pow(1-i/d2.length,1.5)*0.4;const s=a.createBufferSource(),g=a.createGain();s.buffer=buf;s.connect(g);g.connect(a.destination);g.gain.setValueAtTime(0.3,t);s.start(t);}
+  else if(n==='pop'){tone(500,0.06,0.22,'square',t);}
+  else if(n==='fanfare'){[0,0.14,0.28,0.42].forEach((tt,i)=>tone([392,494,587,784][i],0.22,0.2,'square',t+tt));}
+}catch(e){}}
+const MOODS={
+  theme:{bpm:132,bass:[130,0,130,0,98,0,98,0],mel:[523,659,784,659,523,392,440,523]},
+  calm:{bpm:84,bass:[98,0,0,0,110,0,0,0],mel:[392,0,440,0,523,0,440,0]},
+  spooky:{bpm:92,bass:[73,0,69,0,73,0,65,0],mel:[0,294,0,277,0,294,0,262]},
+  villain:{bpm:104,bass:[65,65,0,65,61,61,0,61],mel:[262,0,311,262,0,247,0,233]},
+  adventure:{bpm:120,bass:[110,110,0,110,98,98,0,98],mel:[440,0,523,587,523,0,440,392]},
+  hypno:{bpm:76,bass:[87,0,0,82,0,0,87,0],mel:[349,330,311,330,349,370,349,330]},
+  heart:{bpm:88,bass:[130,0,110,0,98,0,110,0],mel:[523,587,659,0,587,523,440,0]},
+  none:null,
+};
+function setMood(m){
+  if(m===curMood)return;curMood=m;stepIdx=0;
+  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+  if(!m||m==='none'||!MOODS[m])return;
+  const mood=MOODS[m];nextNoteTime=ac().currentTime+0.05;
+  const stepDur=60/mood.bpm/2;
+  musicTimer=setInterval(()=>{
+    if(muted||!playing)return;
+    const a=ac();
+    while(nextNoteTime<a.currentTime+0.15){
+      const b=mood.bass[stepIdx%8],ml=mood.mel[stepIdx%8];
+      if(b)tone(b,stepDur*0.85,0.09,'triangle',nextNoteTime);
+      if(ml)tone(ml,stepDur*0.6,0.05,'square',nextNoteTime);
+      nextNoteTime+=stepDur;stepIdx++;
+    }
+  },60);
+}
+
+let fr_g=0;
+// ══ SPRITES (Episode 1 cast) ══
+function dChicken(x,y,fr,fc=1,talk=false,walk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,15,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const bob=walk?Math.abs(Math.sin(fr*0.2))*3:Math.sin(fr*0.06)*1.5;
+  ctx.translate(0,-bob);
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.ellipse(0,-14,14,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffcc6e';ctx.beginPath();ctx.ellipse(0,-12,9,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.arc(0,-26,10,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff3333';ctx.beginPath();ctx.moveTo(-6,-33);ctx.lineTo(-8,-40);ctx.lineTo(-3,-36);ctx.lineTo(0,-42);ctx.lineTo(3,-36);ctx.lineTo(8,-40);ctx.lineTo(6,-33);ctx.closePath();ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(-2,-27,5,6,-0.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(6,-27,5,6,0.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-1,-26,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7,-26,3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#cc2200';ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-6,-31);ctx.lineTo(1,-29);ctx.stroke();ctx.beginPath();ctx.moveTo(3,-29);ctx.lineTo(10,-31);ctx.stroke();
+  const bo=talk?Math.abs(Math.sin(fr*0.35))*3:0;
+  ctx.fillStyle='#ff6b00';ctx.beginPath();ctx.moveTo(-3,-22);ctx.lineTo(3,-22);ctx.lineTo(0,-18+bo);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e08010';ctx.beginPath();ctx.ellipse(-12,-14,4,8,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(12,-14,4,8,-0.4,0,Math.PI*2);ctx.fill();
+  const ls=walk?Math.sin(fr*0.25)*4:0;
+  ctx.fillStyle='#ff6b00';ctx.fillRect(-7+ls,-3,4,4);ctx.fillRect(3-ls,-3,4,4);
+  ctx.fillRect(-9+ls,1,4,2);ctx.fillRect(-4+ls,1,4,2);ctx.fillRect(1-ls,1,4,2);ctx.fillRect(6-ls,1,4,2);
+  ctx.restore();
+}
+function dHen(x,y,fr,fc=1,talk=false,walk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,14,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const bob=walk?Math.abs(Math.sin(fr*0.22))*3:Math.sin(fr*0.07)*1.5;
+  ctx.translate(0,-bob);
+  ctx.fillStyle='#f8f0e0';ctx.beginPath();ctx.ellipse(0,-13,13,12,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff8ee';ctx.beginPath();ctx.ellipse(0,-11,8,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f8f0e0';ctx.beginPath();ctx.arc(0,-24,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff6688';ctx.beginPath();ctx.arc(-2,-32,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(2,-34,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.ellipse(-2,-25,4,5,-0.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(5,-25,4,5,0.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-1,-24,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(6,-24,2.5,0,Math.PI*2);ctx.fill();
+  const bo=talk?Math.abs(Math.sin(fr*0.35))*2.5:0;
+  ctx.fillStyle='#ffaa33';ctx.beginPath();ctx.moveTo(-2,-20);ctx.lineTo(3,-20);ctx.lineTo(0,-17+bo);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e8ddc8';ctx.beginPath();ctx.ellipse(-11,-13,3.5,7,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(11,-13,3.5,7,-0.4,0,Math.PI*2);ctx.fill();
+  const ls=walk?Math.sin(fr*0.25)*3:0;
+  ctx.fillStyle='#ffaa33';ctx.fillRect(-6+ls,-2,3,3);ctx.fillRect(3-ls,-2,3,3);
+  ctx.restore();
+}
+function dJaguar(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,18,5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.translate(0,-Math.sin(fr*0.05)*1.5);
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.ellipse(0,-16,18,14,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8b4513';[[-7,-10],[9,-13],[-2,-24],[12,-22],[3,-15]].forEach(([sx,sy])=>{ctx.beginPath();ctx.arc(sx,sy,3.2,0,Math.PI*2);ctx.fill();});
+  ctx.strokeStyle='#e07840';ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-14,-12);ctx.quadraticCurveTo(-26,-6+Math.sin(fr*0.08)*8,-32,-14+Math.sin(fr*0.06)*10);ctx.stroke();
+  ctx.fillStyle='#f4a261';ctx.beginPath();ctx.arc(2,-34,12,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(-6,-42);ctx.lineTo(-11,-52);ctx.lineTo(-1,-44);ctx.fill();
+  ctx.beginPath();ctx.moveTo(10,-42);ctx.lineTo(15,-52);ctx.lineTo(5,-44);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(-3,-34,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8,-34,6,0,Math.PI*2);ctx.fill();
+  const px=Math.cos(fr*0.1)*1.5,py=Math.sin(fr*0.1)*1.5;
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3+px,-35+py,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(8-px,-35-py,3,0,Math.PI*2);ctx.fill();
+  const mo=talk?Math.abs(Math.sin(fr*0.35))*2:0;
+  ctx.strokeStyle='#5c3317';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(2,-28+mo,4,0.2,Math.PI-0.2);ctx.stroke();
+  ctx.fillStyle='#f4a261';ctx.fillRect(-11,-4,7,5);ctx.fillRect(5,-4,7,5);
+  ctx.restore();
+}
+function dBarb(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,13,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#7799cc';ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(-8,-28);ctx.lineTo(8,-28);ctx.lineTo(12,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ffddbb';ctx.beginPath();ctx.arc(0,-36,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ddd8d0';ctx.beginPath();ctx.arc(0,-43,6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(0,-38,9,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3,-37,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(3,-37,1.5,0,Math.PI*2);ctx.fill();
+  const sm=talk?Math.abs(Math.sin(fr*0.3))*1.5:0;
+  ctx.strokeStyle='#cc6666';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-33+sm,3,0.2,Math.PI-0.2);ctx.stroke();
+  ctx.fillStyle='#ffddbb';ctx.fillRect(-14,-24,4,12);ctx.fillRect(10,-24,4,12);
+  ctx.fillStyle='#556688';ctx.fillRect(-8,0,6,3);ctx.fillRect(2,0,6,3);
+  ctx.restore();
+}
+function dKevin(x,y,fr,fc=1,excited=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,13,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const wig=excited?Math.sin(fr*0.4)*4:Math.sin(fr*0.08)*1;
+  ctx.fillStyle='#a0714a';ctx.beginPath();ctx.ellipse(0,-9,13,8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#a0714a';ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-11,-11);ctx.quadraticCurveTo(-18,-16+wig,-20,-10+wig);ctx.stroke();
+  ctx.fillStyle='#a0714a';ctx.beginPath();ctx.arc(9,-16,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#7a5030';ctx.beginPath();ctx.ellipse(4,-22,3,5,0.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(13,-22,3,5,-0.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(8,-17,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(13,-17,2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#332211';ctx.beginPath();ctx.arc(16,-14,2.5,0,Math.PI*2);ctx.fill();
+  if(excited){ctx.fillStyle='#ff8888';ctx.beginPath();ctx.ellipse(15,-10,2,3.5,0.3,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#cc3333';ctx.fillRect(2,-13,12,3);
+  ctx.fillStyle='#8a5f3d';ctx.fillRect(-8,-2,3,4);ctx.fillRect(-2,-2,3,4);ctx.fillRect(4,-2,3,4);ctx.fillRect(9,-2,3,4);
+  ctx.restore();
+}
+// ══ NEW: SQUIRRELS ══
+function dSquirrelKing(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,15,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.translate(0,-Math.sin(fr*0.06)*1.5);
+  // big tail
+  ctx.strokeStyle='#9a6a3a';ctx.lineWidth=13;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-10,-8);ctx.quadraticCurveTo(-26,-18+Math.sin(fr*0.07)*5,-22,-42+Math.sin(fr*0.05)*4);ctx.stroke();
+  ctx.strokeStyle='#b8845a';ctx.lineWidth=7;
+  ctx.beginPath();ctx.moveTo(-11,-10);ctx.quadraticCurveTo(-24,-20+Math.sin(fr*0.07)*5,-21,-40+Math.sin(fr*0.05)*4);ctx.stroke();
+  // body
+  ctx.fillStyle='#b8845a';ctx.beginPath();ctx.ellipse(0,-13,12,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8c8a0';ctx.beginPath();ctx.ellipse(0,-11,7,9,0,0,Math.PI*2);ctx.fill();
+  // royal cape
+  ctx.fillStyle='rgba(150,30,60,0.85)';ctx.beginPath();ctx.moveTo(-11,-22);ctx.lineTo(-15,2);ctx.lineTo(-6,-2);ctx.closePath();ctx.fill();
+  // head
+  ctx.fillStyle='#b8845a';ctx.beginPath();ctx.arc(2,-28,9,0,Math.PI*2);ctx.fill();
+  // ears
+  ctx.beginPath();ctx.moveTo(-4,-34);ctx.lineTo(-6,-42);ctx.lineTo(0,-36);ctx.fill();
+  ctx.beginPath();ctx.moveTo(8,-34);ctx.lineTo(10,-42);ctx.lineTo(4,-36);ctx.fill();
+  // CROWN
+  ctx.fillStyle='#ffcc02';ctx.beginPath();
+  ctx.moveTo(-4,-36);ctx.lineTo(-4,-42);ctx.lineTo(-1,-38);ctx.lineTo(2,-43);ctx.lineTo(5,-38);ctx.lineTo(8,-42);ctx.lineTo(8,-36);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ff4466';ctx.beginPath();ctx.arc(2,-39,1.5,0,Math.PI*2);ctx.fill();
+  // face
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(-1,-29,3.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(6,-29,3.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(0,-29,1.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7,-29,1.8,0,Math.PI*2);ctx.fill();
+  // regal frown/talk
+  const mo=talk?Math.abs(Math.sin(fr*0.35))*2:0;
+  ctx.strokeStyle='#6a4a2a';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,-22+mo);ctx.lineTo(6,-22+mo);ctx.stroke();
+  // buck teeth
+  ctx.fillStyle='white';ctx.fillRect(2,-22+mo,3,3);
+  // arms + feet
+  ctx.fillStyle='#b8845a';ctx.beginPath();ctx.ellipse(-9,-13,3.5,7,0.4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(10,-13,3.5,7,-0.4,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-7,-2,5,4);ctx.fillRect(3,-2,5,4);
+  ctx.restore();
+}
+function dNut(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.15;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,11,3,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  // nervous jitter
+  ctx.translate(Math.sin(fr*0.5)*0.8,-Math.abs(Math.sin(fr*0.3))*1.5);
+  // tail smaller
+  ctx.strokeStyle='#9a7a4a';ctx.lineWidth=8;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-7,-6);ctx.quadraticCurveTo(-17,-12+Math.sin(fr*0.2)*3,-14,-28);ctx.stroke();
+  // body
+  ctx.fillStyle='#c89868';ctx.beginPath();ctx.ellipse(0,-10,9,10,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#eed8b8';ctx.beginPath();ctx.ellipse(0,-9,5,7,0,0,Math.PI*2);ctx.fill();
+  // head
+  ctx.fillStyle='#c89868';ctx.beginPath();ctx.arc(1,-21,7,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(-3,-26);ctx.lineTo(-5,-32);ctx.lineTo(0,-27);ctx.fill();
+  ctx.beginPath();ctx.moveTo(6,-26);ctx.lineTo(8,-32);ctx.lineTo(3,-27);ctx.fill();
+  // worried eyes (big)
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(-1,-22,3.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(4,-22,3.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-1,-21,1.6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(4,-21,1.6,0,Math.PI*2);ctx.fill();
+  // worried brows
+  ctx.strokeStyle='#7a5a3a';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(-3,-26);ctx.lineTo(0,-25);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(3,-25);ctx.lineTo(6,-26);ctx.stroke();
+  const mo=talk?Math.abs(Math.sin(fr*0.4))*1.8:0;
+  ctx.strokeStyle='#6a4a2a';ctx.lineWidth=1.3;
+  ctx.beginPath();ctx.arc(1.5,-17+mo,2,0.3,Math.PI-0.3);ctx.stroke();
+  ctx.fillStyle='white';ctx.fillRect(0.5,-17+mo,2,2);
+  // clipboard!
+  ctx.fillStyle='#d8c8a8';ctx.fillRect(7,-16,8,11);
+  ctx.fillStyle='#8a7a5a';ctx.fillRect(9,-17,4,2);
+  ctx.strokeStyle='#9a8a6a';ctx.lineWidth=0.8;
+  [ -12,-9,-6].forEach(ly=>{ctx.beginPath();ctx.moveTo(8.5,ly);ctx.lineTo(13.5,ly);ctx.stroke();});
+  // arms/feet
+  ctx.fillStyle='#c89868';ctx.beginPath();ctx.ellipse(-7,-10,2.8,5,0.4,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-5,-1,4,3);ctx.fillRect(2,-1,4,3);
+  ctx.restore();
+}
+function dShuttle(x,y,fr,sc=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  // flame
+  const fl=Math.sin(fr*0.5)*4;
+  ctx.fillStyle='rgba(255,150,30,0.85)';ctx.beginPath();ctx.moveTo(-26,4);ctx.lineTo(-40-fl,0);ctx.lineTo(-26,-4);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(255,220,80,0.9)';ctx.beginPath();ctx.moveTo(-26,2);ctx.lineTo(-34-fl*0.6,0);ctx.lineTo(-26,-2);ctx.closePath();ctx.fill();
+  // body
+  ctx.fillStyle='#e8e8f0';ctx.beginPath();ctx.ellipse(0,0,26,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c8c8d8';ctx.beginPath();ctx.moveTo(18,-6);ctx.lineTo(30,0);ctx.lineTo(18,6);ctx.closePath();ctx.fill();
+  // wings
+  ctx.fillStyle='#d8d8e8';ctx.beginPath();ctx.moveTo(-8,6);ctx.lineTo(-20,16);ctx.lineTo(-2,8);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(-8,-6);ctx.lineTo(-20,-16);ctx.lineTo(-2,-8);ctx.closePath();ctx.fill();
+  // window with chicken
+  ctx.fillStyle='#88ccee';ctx.beginPath();ctx.arc(8,-1,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff9f1c';ctx.beginPath();ctx.arc(8,0,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff3333';ctx.fillRect(6,-4,4,2);
+  ctx.restore();
+}
+function dSquirrelShip(x,y,fr,sc=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  const hover=Math.sin(fr*0.05)*4;
+  ctx.translate(0,hover);
+  // saucer — acorn themed
+  ctx.fillStyle='#6a4a2a';ctx.beginPath();ctx.ellipse(0,0,44,14,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8a6a3a';ctx.beginPath();ctx.ellipse(0,-4,36,10,0,0,Math.PI*2);ctx.fill();
+  // acorn cap dome
+  ctx.fillStyle='#4a3418';ctx.beginPath();ctx.arc(0,-12,18,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#5a4020';ctx.beginPath();ctx.arc(0,-12,18,Math.PI*1.15,Math.PI*1.5);ctx.stroke();
+  // cross-hatch cap texture
+  ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=1.2;
+  for(let i=-14;i<16;i+=6){ctx.beginPath();ctx.moveTo(i,-12);ctx.lineTo(i+4,-26);ctx.stroke();}
+  // stem
+  ctx.fillStyle='#3a2a12';ctx.fillRect(-2,-34,5,8);
+  // lights
+  for(let i=0;i<5;i++){
+    const lx=-32+i*16;
+    ctx.fillStyle=Math.floor(fr/10+i)%2?'#aaffaa':'#66cc66';
+    ctx.beginPath();ctx.arc(lx,4,3,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+}
+function dCorn(x,y,fr,s=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  const bob=Math.sin(fr*0.06+x)*1;
+  ctx.fillStyle='#ffcc02';ctx.beginPath();ctx.ellipse(0,bob,5,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffd700';for(let r=0;r<3;r++)for(let cc=0;cc<2;cc++)ctx.fillRect(-3+cc*4,-4+r*4+bob,3,3);
+  ctx.fillStyle='#90e050';ctx.beginPath();ctx.moveTo(0,-7+bob);ctx.lineTo(5,-13+bob);ctx.lineTo(2,-5+bob);ctx.fill();
+  ctx.restore();
+}
+function dCornPile(x,y,fr,count=12){
+  for(let i=0;i<count;i++){
+    const row=Math.floor(i/5),col=i%5;
+    dCorn(x+col*13-26+row*6,y-row*10,fr,0.9);
+  }
+}
+function dAcorn(x,y,s=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  ctx.fillStyle='#a97c50';ctx.beginPath();ctx.ellipse(0,2,5,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#5a4020';ctx.beginPath();ctx.arc(0,-3,5.5,Math.PI,0);ctx.fill();
+  ctx.fillRect(-1,-9,2,3);
+  ctx.restore();
+}
+function dHypnoRay(x,y,fr,firing=false){
+  ctx.save();ctx.translate(x,y);
+  // tripod
+  ctx.strokeStyle='#556';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(-10,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(10,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(0,0);ctx.stroke();
+  // body
+  ctx.fillStyle='#778';ctx.beginPath();ctx.ellipse(2,-20,14,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#99a';ctx.beginPath();ctx.ellipse(2,-22,10,5,0,0,Math.PI*2);ctx.fill();
+  // dish
+  ctx.fillStyle=firing?'#ff66cc':'#aa66cc';
+  ctx.beginPath();ctx.ellipse(16,-20,5,9,0,0,Math.PI*2);ctx.fill();
+  // spiral on dish
+  ctx.strokeStyle='#fff';ctx.lineWidth=1.2;
+  ctx.beginPath();
+  for(let a=0;a<Math.PI*4;a+=0.3){const r=a*0.7;ctx.lineTo(16+Math.cos(a+fr*0.2)*r*0.5,-20+Math.sin(a+fr*0.2)*r);}
+  ctx.stroke();
+  // label
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='6px '+FF;ctx.textAlign='center';
+  ctx.fillText('HYPNO-RAY',2,-30);ctx.fillText('3000',2,-24+34);
+  ctx.textAlign='left';
+  ctx.restore();
+}
+function drawHypnoSpiral(x,y,fr,sc=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  ctx.strokeStyle='rgba(255,100,220,0.75)';ctx.lineWidth=1.6;
+  [ -6,6].forEach(off=>{
+    ctx.beginPath();
+    for(let a=0;a<Math.PI*5;a+=0.25){const r=a*0.55;ctx.lineTo(off+Math.cos(a+fr*0.28)*r,Math.sin(a+fr*0.28)*r);}
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// ══ BACKGROUNDS ══
+const NSTARS=Array.from({length:80},(_,i)=>({x:(i*137+7)%W,y:(i*61+5)%(GY-30),r:i%4===0?1.4:0.7,s:0.02+Math.random()*0.03,o:Math.random()*7}));
+function drawStars(a=1){NSTARS.forEach(s=>{ctx.globalAlpha=(0.3+Math.sin(fr_g*s.s+s.o)*0.4)*a;ctx.fillStyle='#dde8ff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+function drawCoop(x,y){
+  ctx.fillStyle='#a05c30';ctx.fillRect(x,y-60,90,60);
+  ctx.fillStyle='#7a4522';ctx.beginPath();ctx.moveTo(x-8,y-60);ctx.lineTo(x+45,y-90);ctx.lineTo(x+98,y-60);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#4a2c14';ctx.fillRect(x+32,y-38,26,38);
+  ctx.fillStyle='#ffe9a0';ctx.fillRect(x+10,y-50,16,14);ctx.fillRect(x+64,y-50,16,14);
+}
+const BGS={
+  farmDay(){const g=ctx.createLinearGradient(0,0,0,GY);g.addColorStop(0,'#66aadd');g.addColorStop(1,'#cceeff');ctx.fillStyle=g;ctx.fillRect(0,0,W,GY);
+    ctx.fillStyle='#fff6cc';ctx.beginPath();ctx.arc(540,60,24,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.8)';[[130,70],[300,50]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx,cy,30,12,0,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle='#6a9d4a';ctx.fillRect(0,GY,W,H-GY);drawCoop(60,GY);},
+  farmNight(){const g=ctx.createLinearGradient(0,0,0,GY);g.addColorStop(0,'#0a0a2a');g.addColorStop(1,'#1e1e48');ctx.fillStyle=g;ctx.fillRect(0,0,W,GY);drawStars();
+    ctx.fillStyle='#e8e0d0';ctx.beginPath();ctx.arc(520,70,20,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0a0a2a';ctx.beginPath();ctx.arc(527,66,17,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2a3d24';ctx.fillRect(0,GY,W,H-GY);drawCoop(60,GY);},
+  space(){ctx.fillStyle='#030310';ctx.fillRect(0,0,W,H);drawStars(0.9);
+    // earth corner
+    const eg=ctx.createRadialGradient(70,H-40,10,70,H-40,90);
+    eg.addColorStop(0,'#4488cc');eg.addColorStop(0.7,'#336699');eg.addColorStop(1,'#224466');
+    ctx.fillStyle=eg;ctx.beginPath();ctx.arc(70,H-30,85,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(120,200,120,0.5)';ctx.beginPath();ctx.ellipse(50,H-60,22,10,0.4,0,Math.PI*2);ctx.fill();},
+  shipInt(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a2028');g.addColorStop(1,'#242c38');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // rivets + panels
+    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=2;
+    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(i*140,0);ctx.lineTo(i*140,H);ctx.stroke();}
+    ctx.fillStyle='rgba(160,180,200,0.12)';
+    for(let i=0;i<12;i++)ctx.fillRect(30+i*52,26,3,3);
+    ctx.fillStyle='#151b22';ctx.fillRect(0,GY,W,H-GY);
+    const gl=ctx.createLinearGradient(0,GY,0,GY+12);gl.addColorStop(0,'rgba(120,255,150,0.18)');gl.addColorStop(1,'transparent');
+    ctx.fillStyle=gl;ctx.fillRect(0,GY,W,12);},
+  throne(){BGS.shipInt();
+    // viewport with stars + earth
+    ctx.fillStyle='#050515';ctx.beginPath();ctx.ellipse(320,110,150,70,0,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.ellipse(320,110,150,70,0,0,Math.PI*2);ctx.clip();
+    for(let i=0;i<30;i++){ctx.globalAlpha=0.4+Math.sin(fr_g*0.03+i)*0.3;ctx.fillStyle='#dde8ff';ctx.beginPath();ctx.arc(190+(i*37)%280,60+(i*23)%100,i%4===0?1.5:0.8,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#4488cc';ctx.beginPath();ctx.arc(420,160,40,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='#3a4652';ctx.lineWidth=6;ctx.beginPath();ctx.ellipse(320,110,150,70,0,0,Math.PI*2);ctx.stroke();
+    // acorn throne
+    ctx.fillStyle='#5a4020';ctx.fillRect(470,GY-84,110,84);
+    for(let r=0;r<5;r++)for(let cc=0;cc<6;cc++)dAcorn(482+cc*18,GY-70+r*16,0.9);
+  },
+};
+
+// ══ DIALOGUE ══
+function wrapText(text,max){
+  const words=text.split(' ');const lines=[];let cur='';
+  words.forEach(w=>{if((cur+' '+w).trim().length>max){lines.push(cur.trim());cur=w;}else cur+=' '+w;});
+  if(cur.trim())lines.push(cur.trim());
+  return lines;
+}
+function bubble(x,y,who,text){
+  const lines=wrapText(text,26);
+  ctx.font=`12px ${FF}`;
+  let mw=0;lines.forEach(l=>{mw=Math.max(mw,ctx.measureText(l).width);});
+  ctx.font=`bold 9px ${FF}`;mw=Math.max(mw,ctx.measureText(who).width);ctx.font=`12px ${FF}`;const bw=Math.max(mw+24,70),bh=lines.length*16+26;
+  let bx=x-bw/2;bx=Math.max(8,Math.min(W-bw-8,bx));
+  let by=y-bh-56;if(by<6)by=6;
+  ctx.fillStyle='rgba(255,255,255,0.96)';
+  ctx.beginPath();ctx.roundRect(bx,by,bw,bh,10);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.96)';
+  ctx.beginPath();ctx.moveTo(x-7,by+bh-1);ctx.lineTo(x,by+bh+10);ctx.lineTo(x+7,by+bh-1);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#cc5500';ctx.font=`bold 9px ${FF}`;ctx.textAlign='left';
+  ctx.fillText(who,bx+12,by+14);
+  ctx.fillStyle='#1a1a2e';ctx.font=`12px ${FF}`;
+  lines.forEach((l,i)=>ctx.fillText(l,bx+12,by+30+i*16));
+}
+function narrate(text){
+  ctx.fillStyle='rgba(0,0,0,0.75)';ctx.fillRect(0,0,W,42);ctx.fillRect(0,H-42,W,42);
+  ctx.fillStyle='rgba(255,230,180,0.92)';ctx.font=`15px ${FF}`;ctx.textAlign='center';
+  ctx.fillText(text,W/2,H-16);ctx.textAlign='left';
+}
+
+const DRAW={scratchy:dChicken,pearl:dHen,jaguar:dJaguar,barb:dBarb,kevin:dKevin,king:dSquirrelKing,nut:dNut};
+const HEAD_Y={scratchy:-26,pearl:-24,jaguar:-34,barb:-37,kevin:-16,king:-28,nut:-21};
+
+function drawCast(cast,lt,talkWho){
+  (cast||[]).forEach(a=>{
+    if(!_vis(a,lt))return;
+    let x=a.x,y=a.y===undefined?GY:a.y;
+    if(a.move){const p=Math.max(0,Math.min(1,(lt-a.move.t0)/(a.move.t1-a.move.t0)));x=a.x+(a.move.x1-a.x)*p;if(a.move.y1!==undefined)y=y+(a.move.y1-y)*p;}
+    const walking=a.move&&lt>=a.move.t0&&lt<=a.move.t1;
+    const talk=talkWho===a.who;
+    a._walk=walking;
+    const fn=DRAW[a.who];
+    if(fn===dChicken||fn===dHen)fn(x,y,fr_g,a.fc||1,talk,walking||a.hypnoWalk);
+    else if(fn===dKevin)fn(x,y,fr_g,a.fc||1,a.excited||walking);
+    else if(fn)fn(x,y,fr_g,a.fc||1,talk,a);
+    if(a.hypno)drawHypnoSpiral(x,(y||GY)+(HEAD_Y[a.who]||-24),fr_g,0.9);
+    a._x=x;a._y=y;
+  });
+}
+function activeLine(lines,lt){
+  let cur=null;
+  (lines||[]).forEach(l=>{const d=l.d||3.2;if(lt>=l.t&&lt<l.t+d)cur=l;});
+  return cur;
+}
+function juiceBoxes(list){
+  ctx.fillStyle='#ff6688';
+  list.forEach(([jx,jy])=>{
+    ctx.fillRect(jx,jy,10,14);
+    ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(jx+5,jy);ctx.lineTo(jx+7,jy-6);ctx.stroke();
+    ctx.fillStyle='#ff6688';
+  });
+}
+
+// ══ FX SCENES ══
+function fxTitle(lt){
+  ctx.fillStyle='#050008';ctx.fillRect(0,0,W,H);drawStars(0.8);
+  // saucer flies across behind title
+  const sx=((lt*40)%(W+300))-150;
+  dSquirrelShip(sx,90,fr_g,0.7);
+  const a=Math.min(1,lt/1.5);
+  ctx.globalAlpha=a;
+  ctx.fillStyle='#88ff88';ctx.font=`bold 24px ${FF}`;ctx.textAlign='center';
+  ctx.shadowColor='#44cc44';ctx.shadowBlur=14;
+  ctx.fillText('THE ADVENTURES OF CRANKY CHICKENS',W/2,140);
+  ctx.fillStyle='#ffcc02';ctx.font=`bold 38px ${FF}`;
+  ctx.shadowColor='#ff8800';ctx.shadowBlur=18;
+  ctx.fillText('INVASION OF THE',W/2,195);
+  ctx.fillText('CORN SNATCHERS',W/2,240);ctx.shadowBlur=0;
+  if(lt>4){ctx.globalAlpha=Math.min(1,(lt-4)/1.5);ctx.fillStyle='rgba(255,220,180,0.85)';ctx.font=`14px ${FF}`;ctx.fillText('Story by The Writers Room (ages 8 and 11)',W/2,278);}
+  ctx.globalAlpha=1;
+  const cx=((lt*52)%(W+200))-100;
+  dChicken(cx,340,fr_g,1,false,true);
+  dKevin(cx-58,340,fr_g,1,true);
+  dHen(cx-112,340,fr_g,1,false,true);
+  ctx.textAlign='left';
+}
+function fxAbduction(lt){
+  BGS.farmNight();
+  // saucer
+  dSquirrelShip(360,90,fr_g,1.1);
+  // green beam
+  sfxOnce('beam',1,lt);
+  const bw=54;
+  const bg=ctx.createLinearGradient(0,120,0,GY);
+  bg.addColorStop(0,'rgba(120,255,140,0.55)');bg.addColorStop(1,'rgba(120,255,140,0.12)');
+  ctx.fillStyle=bg;
+  ctx.beginPath();ctx.moveTo(360-14,118);ctx.lineTo(360-bw,GY);ctx.lineTo(360+bw,GY);ctx.lineTo(360+14,118);ctx.closePath();ctx.fill();
+  // corn floating up ONE at a time
+  const upCount=Math.min(8,Math.floor(lt/2.4));
+  for(let i=0;i<8-upCount;i++){const row=Math.floor(i/4),col=i%4;dCorn(334+col*16+row*7,GY-4-row*10,fr_g,0.85);}
+  const active=(lt%2.4)/2.4;
+  if(upCount<8){dCorn(360,GY-8-(active*(GY-140)),fr_g,0.85);}
+  // watchers
+  dChicken(170,GY,fr_g,1,false);dHen(120,GY,fr_g,1,false);dKevin(220,GY,fr_g,1,true);
+}
+function fxCredits(lt){
+  ctx.fillStyle='#050008';ctx.fillRect(0,0,W,H);drawStars(0.8);
+  const CREDITS=['INVASION OF THE CORN SNATCHERS','','Story by: The Writers Room','(ages 8 and 11)','','Starring:','SCRATCHY as The Unhypnotizable','PEARL as The Briefly Squirrel-Pilled','KING SQUIRRELINGTON as Himself','NUT as Long-Suffering Middle Management','KEVIN as The Immune','EL JAGUAR as Perimeter Security (self-described)','AUNT BARB as The Space Division','','HYPNO-RAY 3000 provided by','Cannon Master Armaments','','Squirrel food-storage consulting:','Scratchy (rows, LABELS, a COUNT)','','Acorns located: 312 of 40,000','The search continues.','','No chickens were permanently hypnotized.','The throne remains load-bearing.','','CRANKY CHICKENS WILL RETURN'];
+  const scroll=lt*22-H;
+  ctx.textAlign='center';
+  CREDITS.forEach((line,i)=>{
+    const y=H-scroll+i*28;
+    if(y>-30&&y<H+30){
+      ctx.fillStyle=i===0?'#ffcc02':line.startsWith('CRANKY CHICKENS WILL')?'#ffcc02':'rgba(255,255,255,0.75)';
+      ctx.font=i===0||line.startsWith('CRANKY')?`bold 18px ${FF}`:`13px ${FF}`;
+      ctx.fillText(line,W/2,y);
+    }
+  });
+  ctx.textAlign='left';
+  const cx=((lt*30)%(W+150))-75;
+  dSquirrelShip(cx,370,fr_g,0.45);
+}
+function fxEgg(lt){
+  ctx.fillStyle='#050008';ctx.fillRect(0,0,W,H);drawStars(0.8);
+  const eg=0.35+Math.sin(lt*2.5)*0.22;
+  const grd=ctx.createRadialGradient(W/2,H/2+10,8,W/2,H/2+10,100);
+  grd.addColorStop(0,`rgba(220,160,50,${eg*0.5})`);grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#221133';ctx.fillRect(W/2-35,H/2+18,70,35);ctx.fillRect(W/2-44,H/2+15,88,10);
+  ctx.fillStyle='#f0e0c0';ctx.beginPath();ctx.ellipse(W/2,H/2-5,26,33,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=`rgba(255,200,50,${eg*1.2})`;ctx.lineWidth=2+eg*4;
+  ctx.beginPath();ctx.ellipse(W/2,H/2-5,26,33,0,0,Math.PI*2);ctx.stroke();
+  // NEW: glowing crack
+  ctx.strokeStyle=`rgba(255,240,150,${0.5+eg*0.5})`;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(W/2-8,H/2-20);ctx.lineTo(W/2-2,H/2-8);ctx.lineTo(W/2-7,H/2+4);ctx.lineTo(W/2-1,H/2+14);ctx.stroke();
+  if(lt>9){
+    ctx.globalAlpha=Math.min(1,(lt-9)/2);
+    ctx.fillStyle='#ffcc02';ctx.font=`bold 26px ${FF}`;ctx.textAlign='center';
+    ctx.shadowColor='#ff6600';ctx.shadowBlur=15;ctx.fillText('SOON.',W/2,H*0.82);ctx.shadowBlur=0;
+    ctx.globalAlpha=1;ctx.textAlign='left';
+  }
+}
+const _sfxFired={};
+function sfxOnce(name,t,lt){
+  const k=name+'_'+curSceneIdx;
+  if(lt>=t&&lt<t+0.5&&!_sfxFired[k]&&playing){_sfxFired[k]=true;sfx(name);}
+  if(lt<t)_sfxFired[k]=false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ══ EPISODE 12 — "Q.E.CLUCK" ══
+// The Cluckulator solves the Corn Conjecture. Nobody can read the proof.
+// ══════════════════════════════════════════════════════════════
+const EP_TITLE="Q.E.Cluck";
+function _vis(a,lt){return !(a.from!==undefined&&lt<a.from)&&!(a.until!==undefined&&lt>=a.until);}
+const WHO_KEY={'SCRATCHY':'scratchy','PEARL':'pearl','AUNT BARB':'barb','KEVIN':'kevin','REGINALD':'reginald','UNCLE LOU':'lou','CHAD':'chad'};
+const MACH={'CLUCKULATOR':1,'CLUCKULATOR 2':1,'CLUCKULATOR 47':1,'CHECKER':1};
+Object.assign(VOICE_PROFILES,{
+  'REGINALD':{pitch:0.6,rate:0.8},'UNCLE LOU':{pitch:0.55,rate:0.85},'CHAD':{pitch:1.1,rate:1.25},
+  'CLUCKULATOR':{pitch:0.3,rate:0.8},'CLUCKULATOR 2':{pitch:0.45,rate:0.8},'CLUCKULATOR 47':{pitch:1.9,rate:0.8},'CHECKER':{pitch:1.4,rate:0.85},
+});
+
+// ── extra sounds ──
+const _sfxBase=sfx;
+sfx=function(n){
+  if(muted)return;
+  try{const a=ac(),t=a.currentTime;
+    if(n==='bloop'){[300,450,600].forEach((f,i)=>tone(f,0.09,0.14,'sine',t+i*0.09));}
+    else if(n==='print'){[0,1,2,3,4].forEach(i=>tone(1700+(i%2)*300,0.025,0.1,'square',t+i*0.05));}
+    else if(n==='ding'){tone(1319,0.45,0.2,'sine',t);tone(1760,0.5,0.12,'sine',t+0.08);}
+    else if(n==='buzz'){tone(110,0.45,0.25,'sawtooth',t);tone(104,0.45,0.2,'sawtooth',t);}
+    else if(n==='tick'){tone(900,0.035,0.16,'square',t);}
+    else if(n==='gasp'){tone(500,0.12,0.12,'sine',t);tone(760,0.2,0.12,'sine',t+0.1);}
+    else _sfxBase(n);
+  }catch(e){}
+};
+MOODS.compute={bpm:150,bass:[98,0,98,0,110,0,110,0],mel:[784,988,1175,988,784,988,1175,1568]};
+MOODS.hush={bpm:66,bass:[98,0,0,0,73,0,0,0],mel:[392,0,392,0,440,0,392,0]};
+
+// ── script helper: auto-times lines so nothing overlaps ──
+function _d(text){return Math.max(2.6,text.replace(/\([^)]*\)/g,'').length/12.5+1.2);}
+function S(o){
+  let c=o.t0===undefined?1:o.t0;
+  o.lines=(o.script||[]).map(r=>{const x=r[2]||{};
+    if(x.t!==undefined)c=Math.max(c,x.t);
+    if(x.wait)c+=x.wait;
+    const d=x.d||_d(r[1]);const l={t:c,who:r[0],text:r[1],d:d};
+    c+=d+(x.gap===undefined?0.45:x.gap);return l;});
+  if(!o.dur)o.dur=Math.ceil(c+(o.tail===undefined?1.2:o.tail));
+  if(o.castFn)o.cast=o.castFn(o.lines);
+  if(o.machine&&!o.bubbleAt)o.bubbleAt=function(lt,line){return MACH[line.who]?this.machine:null;};
+  return o;
+}
+function machTalk(sc,lt){const l=activeLine(sc.lines,lt);return l&&MACH[l.who]?l:null;}
+function every(sc,key,val,name){if(playing&&sc[key]!==val){sc[key]=val;sfx(name);}else if(!playing)sc[key]=val;}
+
+// ── cast additions ──
+function dIguana(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.15;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,16,3,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#66aa44';ctx.beginPath();ctx.ellipse(0,-6,15,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#88cc55';for(let i=0;i<5;i++)ctx.fillRect(-10+i*5,-14,3,5);
+  ctx.strokeStyle='#559933';ctx.lineWidth=3.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-13,-5);ctx.quadraticCurveTo(-24,-2,-30,-8+Math.sin(fr*0.05)*4);ctx.stroke();
+  ctx.fillStyle='#66aa44';ctx.beginPath();ctx.arc(13,-9,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffee66';ctx.beginPath();ctx.arc(15,-11,2.8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(15,-11,1.4,0,Math.PI*2);ctx.fill();
+  const mo=talk?Math.abs(Math.sin(fr*0.3))*1.5:0;
+  ctx.strokeStyle='#447722';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(17,-6+mo);ctx.lineTo(21,-5+mo);ctx.stroke();
+  ctx.fillStyle='#559933';ctx.fillRect(-8,0,3,3);ctx.fillRect(0,0,3,3);ctx.fillRect(8,0,3,3);
+  ctx.restore();
+}
+function dLou(x,y,fr,fc=1,talk=false){
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,13,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#a83232';ctx.fillRect(-11,-28,22,26);
+  ctx.strokeStyle='rgba(30,30,40,0.55)';ctx.lineWidth=2;
+  [-6,1,8].forEach(px2=>{ctx.beginPath();ctx.moveTo(px2,-28);ctx.lineTo(px2,-2);ctx.stroke();});
+  [-22,-14,-6].forEach(py2=>{ctx.beginPath();ctx.moveTo(-11,py2);ctx.lineTo(11,py2);ctx.stroke();});
+  ctx.fillStyle='#ffddbb';ctx.beginPath();ctx.arc(0,-36,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a6a3a';ctx.beginPath();ctx.arc(0,-40,8,Math.PI,0);ctx.fill();
+  ctx.fillRect(-8,-41,17,3);ctx.fillRect(2,-41,13,3);
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(-3,-36,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(3,-36,1.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8a7a68';ctx.fillRect(-4,-32.5,8,2.2);
+  const sm=talk?Math.abs(Math.sin(fr*0.3))*1.5:0;
+  ctx.strokeStyle='#aa6655';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,-29.5+sm,2.5,0.3,Math.PI-0.3);ctx.stroke();
+  ctx.fillStyle='#ffddbb';ctx.fillRect(-14,-24,4,12);ctx.fillRect(10,-24,4,12);
+  ctx.fillStyle='#4a5a7a';ctx.fillRect(-9,-2,7,4);ctx.fillRect(2,-2,7,4);
+  ctx.restore();
+}
+// Uncle Lou never fully lowers the newspaper.
+function dLouNews(x,y,fr,fc=1,talk=false,a){
+  dLou(x,y,fr,fc,talk);
+  if(a&&a.news){const dy=talk?17:0;
+    ctx.fillStyle='#e9e6dc';ctx.fillRect(x-16,y-47+dy,32,24);ctx.strokeStyle='#777';ctx.lineWidth=1;ctx.strokeRect(x-16,y-47+dy,32,24);
+    ctx.beginPath();ctx.moveTo(x,y-47+dy);ctx.lineTo(x,y-23+dy);ctx.stroke();
+    ctx.fillStyle='#666';for(let i=0;i<4;i++){ctx.fillRect(x-13,y-42+dy+i*5,10,1.5);ctx.fillRect(x+3,y-42+dy+i*5,10,1.5);}
+  }
+}
+// Chad, VP of Synergy. The tie is load-bearing.
+function dChad(x,y,fr,fc=1,talk=false,a){
+  dChicken(x,y,fr,fc,talk,!!(a&&a._walk));
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.fillStyle='#2a6ad0';ctx.beginPath();ctx.moveTo(-2,-17);ctx.lineTo(2,-17);ctx.lineTo(3.5,-7);ctx.lineTo(0,-2);ctx.lineTo(-3.5,-7);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#111';ctx.fillRect(-8,-31,8,5);ctx.fillRect(2,-31,8,5);ctx.fillRect(-1,-30,4,1.6);
+  ctx.restore();
+}
+// Kevin. Later: Detective Kevin (hat acquired off-screen, no questions).
+function dDetKevin(x,y,fr,fc=1,talk=false,a){
+  a=a||{};dKevin(x,y,fr,fc,!!(a.excited||a._walk));
+  if(!a.hat)return;
+  ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);
+  ctx.fillStyle='#c9a66b';ctx.beginPath();ctx.ellipse(-1,-9,11,6.5,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-14);ctx.lineTo(1,-4);ctx.stroke();
+  ctx.fillStyle='#5a4630';ctx.beginPath();ctx.ellipse(9,-23,11,2.6,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.roundRect(3,-31,12,8,2);ctx.fill();ctx.fillStyle='#2a2018';ctx.fillRect(3,-26,12,2);
+  ctx.restore();
+}
+DRAW.reginald=dIguana;DRAW.lou=dLouNews;DRAW.chad=dChad;DRAW.kevin=dDetKevin;
+HEAD_Y.reginald=-10;HEAD_Y.lou=-37;HEAD_Y.chad=-26;
+
+// ── props ──
+function txt(s,x,y,size,col,bold){ctx.fillStyle=col||'#1a1a2e';ctx.font=`${bold?'bold ':''}${size}px ${FF}`;ctx.textAlign='center';ctx.fillText(s,x,y);ctx.textAlign='left';}
+function card(x,y,w,h,col){ctx.fillStyle='rgba(0,0,0,0.22)';ctx.fillRect(x+3,y+3,w,h);ctx.fillStyle=col||'#fffdf2';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#8a8370';ctx.lineWidth=1.5;ctx.strokeRect(x,y,w,h);}
+function squiggle(cx,cy,s){ctx.strokeStyle='#1a1a2e';ctx.lineWidth=2*s;ctx.lineCap='round';ctx.beginPath();
+  for(let i=0;i<=24;i++){const px=cx-18*s+i*1.5*s,py=cy+Math.sin(i*0.9)*7*s;if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.stroke();}
+function duck(cx,cy,s){ctx.fillStyle='#ffd83a';ctx.beginPath();ctx.ellipse(cx,cy,14*s,9*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+11*s,cy-10*s,7*s,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff8a1c';ctx.beginPath();ctx.moveTo(cx+17*s,cy-11*s);ctx.lineTo(cx+25*s,cy-9*s);ctx.lineTo(cx+17*s,cy-6*s);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(cx+12*s,cy-12*s,1.4*s,0,Math.PI*2);ctx.fill();}
+function cabinet(x,y,s,o){
+  o=o||{};ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  ctx.globalAlpha=0.2;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,34,5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  // toaster (the upgrade)
+  if(o.toast){ctx.fillStyle='#b9793a';ctx.fillRect(-10,-136,8,12);ctx.fillRect(2,-136,8,12);}
+  ctx.fillStyle='#c8ccd2';ctx.beginPath();ctx.roundRect(-15,-126,30,15,4);ctx.fill();ctx.fillStyle='#444';ctx.fillRect(-11,-124,9,2);ctx.fillRect(2,-124,9,2);
+  if(o.juice){ctx.fillStyle='#ff6688';ctx.fillRect(18,-126,8,14);ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(22,-126);ctx.lineTo(24,-132);ctx.stroke();}
+  ctx.fillStyle=o.body||'#7a3fb0';ctx.beginPath();ctx.roundRect(-30,-112,60,112,5);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.22)';ctx.fillRect(-30,-50,60,10);
+  ctx.fillStyle='#ffd24a';ctx.fillRect(-26,-108,52,12);
+  ctx.fillStyle='#4a2378';ctx.font=`bold 6.5px ${FF}`;ctx.textAlign='center';ctx.fillText(o.name||'CLUCKULATOR',0,-99.5);
+  ctx.fillStyle=o.flash&&Math.sin(fr_g*0.6)>0?'#123a1c':'#07140c';ctx.fillRect(-24,-92,48,38);
+  ctx.fillStyle=o.col||'#7dff9a';
+  const ls=String(o.text||'').split('\n');const fs=o.fs||9;ctx.font=`bold ${fs}px ${FF}`;
+  ls.forEach((l,i)=>ctx.fillText(l,0,-73+(i-(ls.length-1)/2)*(fs+2)+fs*0.35));
+  ctx.fillStyle='#222';ctx.fillRect(-15,-58,3,9);ctx.fillStyle='#e33';ctx.beginPath();ctx.arc(-13.5,-60,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(6,-45,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#4ad0ff';ctx.beginPath();ctx.arc(16,-45,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';ctx.fillRect(-12,-30,24,3);
+  ctx.fillStyle=o.light||(Math.sin(fr_g*0.15)>-0.6?'#3f6':'#184');ctx.beginPath();ctx.arc(22,-16,3,0,Math.PI*2);ctx.fill();
+  ctx.restore();ctx.textAlign='left';
+}
+function towerPos(i){const cw=24,ch=22,x0=470;if(i<45){return [x0+((i%5)-2)*cw,GY-Math.floor(i/5)*ch];}return [x0,GY-(9+(i-45))*ch];}
+function miniCab(x,y,flash){ctx.fillStyle='#7a3fb0';ctx.fillRect(x-10,y-21,20,21);ctx.fillStyle='#ffd24a';ctx.fillRect(x-8,y-20,16,3);
+  ctx.fillStyle=flash?'#d8ffe0':'#07140c';ctx.fillRect(x-7,y-16,14,8);ctx.fillStyle='#3f6';ctx.beginPath();ctx.arc(x+6,y-4,1.8,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1;ctx.strokeRect(x-10,y-21,20,21);}
+function tower(n,flashTop){n=Math.max(0,Math.min(47,Math.floor(n)));for(let i=0;i<n;i++){const p=towerPos(i);miniCab(p[0],p[1],flashTop&&i===46&&Math.sin(fr_g*0.5)>0);}}
+function paperFlood(n){for(let i=0;i<n;i++){const px=430-((i*53)%420),py=GY+6+((i*29)%44),r=((i*17)%9-4)*0.07;
+  ctx.save();ctx.translate(px,py);ctx.rotate(r);ctx.fillStyle=i%3?'#fffdf2':'#f1eee0';ctx.fillRect(-11,-7,22,14);ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1;ctx.strokeRect(-11,-7,22,14);ctx.restore();}}
+function checkerBox(x,y,state){
+  ctx.fillStyle='#8a5a2c';ctx.fillRect(x-26,y-22,52,22);ctx.strokeStyle='#5a3a18';ctx.lineWidth=2;ctx.strokeRect(x-26,y-22,52,22); // crate
+  ctx.fillStyle='#3a8a6a';ctx.beginPath();ctx.roundRect(x-18,y-48,36,26,4);ctx.fill();
+  ctx.fillStyle='#fffdf2';ctx.fillRect(x-9,y-58,18,12);ctx.strokeStyle='#8a8370';ctx.lineWidth=1;ctx.strokeRect(x-9,y-58,18,12);
+  ctx.fillStyle='#103a2a';ctx.fillRect(x-13,y-42,26,10);
+  ctx.fillStyle=state==='ok'?'#7dff9a':'#ffe14d';ctx.font=`bold 6px ${FF}`;ctx.textAlign='center';ctx.fillText(state==='ok'?'CORRECT':state==='run'?'CHECKING':'1 PAGE',x,y-34.5);ctx.textAlign='left';
+  ctx.fillStyle=state==='ok'?'#3f6':state==='run'&&Math.sin(fr_g*0.5)>0?'#ffe14d':'#555';ctx.beginPath();ctx.arc(x+12,y-27,2.2,0,Math.PI*2);ctx.fill();
+}
+function barn(win){
+  ctx.fillStyle='#7a4a2a';ctx.fillRect(0,0,W,GY);
+  ctx.strokeStyle='rgba(0,0,0,0.16)';ctx.lineWidth=2;for(let i=1;i<16;i++){ctx.beginPath();ctx.moveTo(i*40,0);ctx.lineTo(i*40,GY);ctx.stroke();}
+  ctx.fillStyle='#55301a';ctx.fillRect(0,0,W,14);
+  if(win){ctx.fillStyle='#bfe4ff';ctx.fillRect(40,58,64,50);ctx.strokeStyle='#55301a';ctx.lineWidth=5;ctx.strokeRect(40,58,64,50);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(72,58);ctx.lineTo(72,108);ctx.moveTo(40,83);ctx.lineTo(104,83);ctx.stroke();}
+  ctx.fillStyle='#d2ae62';ctx.fillRect(0,GY,W,H-GY);
+  ctx.strokeStyle='rgba(120,90,30,0.45)';ctx.lineWidth=1.5;for(let i=0;i<40;i++){const sx=(i*67)%W,sy=GY+6+(i*23)%80;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+10,sy-3);ctx.stroke();}
+}
+BGS.barn=function(){barn(true);};BGS.barnPlain=function(){barn(false);};
+BGS.farmDusk=function(){const g=ctx.createLinearGradient(0,0,0,GY);g.addColorStop(0,'#5a4a8a');g.addColorStop(1,'#ffb37a');ctx.fillStyle=g;ctx.fillRect(0,0,W,GY);
+  ctx.fillStyle='#ffe2a0';ctx.beginPath();ctx.arc(560,250,26,0,Math.PI*2);ctx.fill();ctx.fillStyle='#55803c';ctx.fillRect(0,GY,W,H-GY);drawCoop(60,GY);};
+
+// the chalkboard: 6 → 3 → 10 → 5 → 16 → 8 → 4 → 2 → 1
+const CHAIN=['6','3','10','5','16','8','4','2','1'];
+function chalkboard(n){
+  ctx.fillStyle='#6b4a2a';ctx.fillRect(386,246,6,GY-246);ctx.fillRect(566,246,6,GY-246);
+  ctx.fillStyle='#8a5a2c';ctx.fillRect(364,112,230,138);ctx.fillStyle='#22382c';ctx.fillRect(370,118,218,126);
+  txt('THE CORN RULE',479,136,12,'#ffe9a0',true);
+  txt('EVEN: cut in half',479,153,10,'rgba(255,255,255,0.8)');txt('ODD: triple it, add one',479,167,10,'rgba(255,255,255,0.8)');
+  for(let i=0;i<Math.min(n,CHAIN.length);i++){const row=i<5?0:1,col=row?i-5:i;const cx=(row?412:398)+col*41,cy=row?228:198;
+    const last=i===n-1;txt(CHAIN[i],cx,cy,last?19:15,last?'#ffe14d':'#fff',true);
+    if(i<CHAIN.length-1&&i<n-1&&i!==4){ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx+15,cy-5);ctx.lineTo(cx+26,cy-5);ctx.lineTo(cx+22,cy-8);ctx.moveTo(cx+26,cy-5);ctx.lineTo(cx+22,cy-2);ctx.stroke();}}
+  if(n>=9){dCorn(560,224,fr_g,1.1);}
+}
+// corn shelves for The Count. 46 pieces. Not 47. Count them. Kevin did.
+const NCORN=46;
+function cornPos(i){return i<23?[124+i*16.5,104]:[124+(22-(i-23))*16.5,144];}
+function shelves(counted,cur){
+  ctx.fillStyle='#55301a';ctx.fillRect(96,112,404,6);ctx.fillRect(96,152,404,6);
+  for(let i=0;i<NCORN;i++){const p=cornPos(i);
+    if(i===cur){ctx.fillStyle='rgba(255,225,77,0.55)';ctx.beginPath();ctx.arc(p[0],p[1],10,0,Math.PI*2);ctx.fill();}
+    dCorn(p[0],p[1],0,0.85);
+    if(i<counted){ctx.fillStyle='#3f6';ctx.beginPath();ctx.arc(p[0]+5,p[1]+6,2,0,Math.PI*2);ctx.fill();}}
+  // the empty spot where number 47 would be
+  ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.setLineDash([3,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(107.5,144,6,8,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+}
+function tally(n,bad){card(250,48,140,34,bad?'#ffe1dc':'#fffdf2');txt('COUNT: '+n,320,72,18,bad?'#c22':'#1a1a2e',true);}
+
+// ── title, credits, sting ──
+function fxTitle12(lt){
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a0f33');g.addColorStop(1,'#3a2166');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(0.6);
+  ctx.fillStyle='#22143f';ctx.fillRect(0,350,W,50);
+  const think=lt>5&&lt<8.5;
+  cabinet(500,352,1.25,{text:lt<5?'READY':think?'THINKING\n'+'.'.repeat(1+Math.floor(lt*3)%3):'TRUE',flash:think,toast:lt>=8.5});
+  const a=Math.min(1,lt/1.5);ctx.globalAlpha=a;ctx.textAlign='center';
+  ctx.fillStyle='#88ff88';ctx.font=`bold 20px ${FF}`;ctx.fillText('THE ADVENTURES OF CRANKY CHICKENS',W/2,70);
+  ctx.fillStyle='#ffd24a';ctx.font=`bold 58px ${FF}`;ctx.shadowColor='#a060ff';ctx.shadowBlur=24;ctx.fillText('Q.E.CLUCK',W/2-60,146);ctx.shadowBlur=0;
+  if(lt>3){ctx.globalAlpha=Math.min(1,(lt-3)/1.5);ctx.fillStyle='rgba(240,232,255,0.9)';ctx.font=`14px ${FF}`;ctx.fillText('Episode 12',W/2-60,178);
+    ctx.fillStyle='rgba(240,232,255,0.7)';ctx.font=`12px ${FF}`;ctx.fillText('The machines agree. Nobody checked.',W/2-60,202);}
+  ctx.globalAlpha=1;ctx.textAlign='left';
+  dChicken(170,352,fr_g,1,false);dHen(120,352,fr_g,1,false);dKevin(230,352,fr_g,1,lt>8.5);
+}
+function fxCredits12(lt){
+  ctx.fillStyle='#120a24';ctx.fillRect(0,0,W,H);drawStars(0.8);
+  const CR=['Q.E.CLUCK','','Starring:','SCRATCHY as Reasonable Doubt','PEARL as Forty-Seven Juice Boxes and a Toaster','DETECTIVE KEVIN as Counting','THE CLUCKULATOR as Itself','CLUCKULATORS 2 THROUGH 47 as "I Was Told"','THE CHECKER as One Page','REGINALD as The Rope','CHAD as Being Sure','AUNT BARB as That Is Nice, Dear','UNCLE LOU as Wrong For Free','THE DUCK as Page Three','','The Corn Rule is a real puzzle!','Grown-ups call it the Collatz problem.','Nobody has solved it yet.','Try it with any number.','','Corn counted: 46 of 47','The search continues.','','CRANKY CHICKENS WILL RETURN'];
+  const scroll=lt*27-H;ctx.textAlign='center';
+  CR.forEach((line,i)=>{const y=H-scroll+i*28;if(y<-30||y>H-64)return;
+    const big=i===0||line.startsWith('CRANKY');
+    ctx.fillStyle=big?'#ffd24a':'rgba(236,230,255,0.86)';ctx.font=big?`bold 18px ${FF}`:`13px ${FF}`;ctx.fillText(line,W/2,y);});
+  ctx.textAlign='left';
+  ctx.fillStyle='#120a24';ctx.fillRect(0,H-58,W,58);
+  for(let i=0;i<12;i++)miniCab(40+i*51,H-8,Math.floor(lt*3)%12===i);
+}
+function fxSting(lt){
+  ctx.fillStyle='#0b0704';ctx.fillRect(0,0,W,H);
+  if(lt<10.5){
+    // flashlight pool
+    const gl=ctx.createRadialGradient(330,250,10,330,250,230);gl.addColorStop(0,'rgba(255,236,170,0.34)');gl.addColorStop(1,'transparent');ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(210,174,98,0.25)';ctx.fillRect(0,GY,W,H-GY);
+    checkerBox(420,GY,'ok');
+    const kx=lt<3?-30+(lt/3)*300:270;
+    dDetKevin(kx,GY,fr_g,1,false,{hat:1,excited:lt<3});
+    if(lt>=3){
+      // the one page, flipping over
+      const p=Math.min(1,(lt-3)/2.2),sx=Math.cos(p*Math.PI),back=sx<0;
+      const grow=lt<6?0:Math.min(1,(lt-6)/1.4),s=1+grow*1.5;
+      ctx.save();ctx.translate(320,150);ctx.scale(Math.max(0.06,Math.abs(sx))*s,s);
+      ctx.fillStyle='#fffdf2';ctx.fillRect(-45,-55,90,110);ctx.strokeStyle='#8a8370';ctx.lineWidth=1.5;ctx.strokeRect(-45,-55,90,110);
+      if(!back){txt('THE CHECKER',0,-36,9,'#1a1a2e',true);txt('1. Each step follows.',0,-14,7,'#1a1a2e');txt('2. No skipping.',0,2,7,'#1a1a2e');txt('3. No ducks.',0,18,7,'#1a1a2e');}
+      else{txt('these rules were',0,24,4.6,'#555');txt('written by',0,31,4.6,'#555');txt('CLUCKULATOR 1',0,40,5.6,'#1a1a2e',true);}
+      ctx.restore();
+    }
+  }else{
+    ctx.globalAlpha=Math.min(1,(lt-10.8)/0.8);if(lt>10.8){txt('No theorems were harmed.',W/2,H/2-8,17,'rgba(255,230,180,0.95)');txt('Several were mildly unverified.',W/2,H/2+20,14,'rgba(255,230,180,0.75)');}
+    ctx.globalAlpha=1;
+  }
+}
+
+// ══ SCENES ══
+const SCENES=[
+  // 1 — the Corn Conjecture
+  S({bg:'farmDay',music:'calm',
+   cast:[{who:'kevin',x:150},{who:'pearl',x:198},{who:'scratchy',x:256}],
+   extra(lt){const L=this.lines;let n=0;
+     if(lt>=L[4].t+2.2)n=1;
+     if(lt>=L[5].t)n=Math.min(9,2+Math.floor((lt-L[5].t)/(L[5].d-0.6)*8));
+     every(this,'_n',n,'tick');chalkboard(n);},
+   script:[
+    ['NARRATOR','On the farm, there is one very old corn rule.'],
+    ['SCRATCHY','Count your corn. If the pile is EVEN, cut it in half.'],
+    ['SCRATCHY','If the pile is ODD, triple it and add one. Then do it all again.'],
+    ['PEARL','What happens at the end?'],
+    ['SCRATCHY','You always end up with ONE piece of corn. Watch. Start with six.'],
+    ['SCRATCHY','Three. Ten. Five. Sixteen. Eight. Four. Two. One.',{d:8.5}],
+    ['PEARL','Does it work for EVERY number?'],
+    ['SCRATCHY','Nobody knows. My grandfather tried every number up to a thousand. Then he needed a nap.'],
+    ['SCRATCHY','It is called the Corn Conjecture. Nobody has ever solved it. I like it that way.'],
+    ['PEARL','I bet my arcade machine could solve it.'],
+    ['SCRATCHY','Pearl. Your arcade machine plays Pong.'],
+   ]}),
+  // 2 — meet the Cluckulator
+  S({bg:'barn',music:'adventure',machine:[480,150],
+   cast:[{who:'kevin',x:150},{who:'scratchy',x:230},{who:'pearl',x:330}],
+   extra(lt){const L=this.lines;const ask=L[3].t+L[3].d,ans=L[4].t;
+     const think=lt>=ask&&lt<ans;if(think)every(this,'_b',Math.floor(lt/0.7),'bloop');
+     cabinet(480,GY,1.5,{text:lt<ask?'READY':think?'THINKING\n'+'.'.repeat(1+Math.floor(lt*3)%3):'TRUE',flash:think,toast:lt>=ans});},
+   script:[
+    ['PEARL','Not anymore! I gave it a big upgrade. Meet... THE CLUCKULATOR!'],
+    ['SCRATCHY','What did you upgrade it with?'],
+    ['PEARL','Forty-seven juice boxes and a toaster.'],
+    ['PEARL','Cluckulator! Is the Corn Conjecture true?'],
+    ['CLUCKULATOR','TRUE. PROOF ATTACHED.',{wait:4}],
+    ['SCRATCHY','It took four seconds.'],
+    ['PEARL','It is a very good toaster.'],
+   ],
+   castFn(L){this.events=[{t:L[4].t-0.1,sfx:'ding'}];return this.cast;}}),
+  // 3 — the proof prints
+  S({bg:'barn',music:'compute',
+   cast:[{who:'kevin',x:150},{who:'scratchy',x:230},{who:'pearl',x:330}],
+   extra(lt){const L=this.lines;if(lt<L[3].t)every(this,'_p',Math.floor(lt/0.45),'print');
+     paperFlood(Math.min(70,Math.floor(lt*2.6)));
+     cabinet(480,GY,1.5,{text:'PRINTING\npage '+Math.min(47000,Math.floor(lt*lt*31)).toLocaleString('en-US'),fs:7,toast:true});
+     const k=lt>=L[6].t?3:lt>=L[5].t?2:lt>=L[4].t?1:0;
+     if(k){card(290,22,84,108);txt('page '+k,332,122,9,'#777');
+       if(k===1)squiggle(332,70,0.8);else if(k===2)squiggle(332,70,1.7);else duck(326,76,1.5);}},
+   script:[
+    ['NARRATOR','Then it printed the proof.'],
+    ['NARRATOR','It kept printing.'],
+    ['PEARL','It is forty-seven THOUSAND pages!'],
+    ['SCRATCHY','Fine. I will read it. Page one.'],
+    ['SCRATCHY','Page one is a squiggle.'],
+    ['SCRATCHY','Page two is the same squiggle. But bigger.'],
+    ['SCRATCHY','Page three is a drawing of a duck. I do not know why.'],
+    ['PEARL','Maybe the duck is important!'],
+    ['KEVIN','...'],
+    ['SCRATCHY','Kevin agrees with me. I think.'],
+   ]}),
+  // 4 — it solves everything
+  S({bg:'barn',music:'theme',machine:[480,150],
+   cast:[{who:'kevin',x:150},{who:'scratchy',x:230},{who:'pearl',x:330}],
+   castFn(L){this.events=[2,4,6].map(i=>({t:L[i].t,sfx:'ding'}));this._j=L[7].t+2;
+     return this.cast.concat([{who:'barb',x:-30,move:{t0:L[5].t,t1:L[7].t,x1:392}}]);},
+   extra(lt){const L=this.lines;const n=[2,4,6].filter(i=>lt>=L[i].t).length;const m=machTalk(this,lt);
+     paperFlood(70);
+     cabinet(480,GY,1.5,{text:m?'SOLVED!':'solved: '+n+'\nNEXT?',fs:m?10:8,flash:!!m,toast:true,juice:lt>=this._j});},
+   script:[
+    ['NARRATOR','After that, the Cluckulator solved everything.'],
+    ['PEARL','Peck versus Not-Peck?'],
+    ['CLUCKULATOR','SOLVED.'],
+    ['PEARL','The Rooster Hypothesis?'],
+    ['CLUCKULATOR','SOLVED.'],
+    ['PEARL','Why does toast always land butter side down?'],
+    ['CLUCKULATOR','SOLVED. ALSO, PLEASE STOP DROPPING TOAST.'],
+    ['AUNT BARB','It did all its homework! Here is a juice box, dear.'],
+    ['SCRATCHY','Barb. It is a machine.'],
+    ['AUNT BARB','That is nice, dear.'],
+   ]}),
+  // 5 — but how do we KNOW
+  S({bg:'barn',music:'calm',
+   cast:[{who:'kevin',x:150},{who:'scratchy',x:230},{who:'pearl',x:330},{who:'barb',x:392}],
+   extra(lt){paperFlood(70);cabinet(480,GY,1.5,{text:'TRUE',toast:true,juice:true});},
+   script:[
+    ['SCRATCHY','Hold on. How do we know it is RIGHT?'],
+    ['PEARL','It said TRUE.'],
+    ['SCRATCHY','I say lots of things are true! I once said I was a hawk!'],
+    ['PEARL','You were very convincing.'],
+    ['SCRATCHY','Nobody here can read the proof. Not me. Not you. Not the duck.'],
+    ['PEARL','Then we need somebody smart enough to check it.'],
+    ['SCRATCHY','Who?'],
+    ['PEARL','...Another Cluckulator!'],
+    ['SCRATCHY','Oh no.'],
+   ]}),
+  // 6 — Cluckulator 2
+  S({bg:'barn',music:'adventure',machine:[574,178],
+   cast:[{who:'kevin',x:150},{who:'scratchy',x:230},{who:'pearl',x:330}],
+   castFn(L){this.events=[{t:L[1].t,sfx:'ding'},{t:L[2].t,sfx:'fanfare'}];return this.cast;},
+   extra(lt){const L=this.lines;const ok=lt>=L[1].t,think=lt>=L[0].t+L[0].d&&!ok;if(think)every(this,'_b',Math.floor(lt/0.7),'bloop');
+     cabinet(446,GY,1.25,{text:'TRUE',toast:true,juice:true});
+     cabinet(574,GY,1.25,{name:'NUMBER TWO',body:'#3f7ab0',text:ok?'CORRECT':think?'CHECKING\n'+'.'.repeat(1+Math.floor(lt*3)%3):'READY',flash:think});},
+   script:[
+    ['PEARL','Cluckulator Two! Is Cluckulator One correct?'],
+    ['CLUCKULATOR 2','CORRECT.',{wait:2.5}],
+    ['PEARL','See? It checks out!'],
+    ['SCRATCHY','But who checks Cluckulator TWO?'],
+    ['PEARL','...Cluckulator Three!'],
+    ['SCRATCHY','And who checks THREE?'],
+    ['PEARL','I am going to need more toasters.'],
+   ]}),
+  // 7 — the tower
+  S({bg:'farmDay',music:'hypno',
+   cast:[{who:'kevin',x:176},{who:'pearl',x:232},{who:'scratchy',x:300}],
+   bubbleAt(lt,line){return MACH[line.who]?[330,150]:null;},
+   extra(lt){const n=Math.min(47,lt*5.2);if(n<47)every(this,'_t',Math.floor(n/3),'pop');tower(n,!!machTalk(this,lt));},
+   script:[
+    ['NARRATOR','By lunch, there were forty-seven Cluckulators.',{t:2}],
+    ['NARRATOR','Each one checked the one below it. Every light was green.'],
+    ['SCRATCHY','You! Top one! How do YOU know it is right?'],
+    ['CLUCKULATOR 47','I WAS TOLD.'],
+    ['SCRATCHY','By WHO?'],
+    ['CLUCKULATOR 47','NUMBER FORTY-SIX. HE SEEMS NICE.'],
+    ['SCRATCHY','That is not checking! That is a very tall game of telephone!'],
+    ['PEARL','But they all AGREE.'],
+    ['SCRATCHY','Of course they agree! They are all the same toaster!'],
+   ]}),
+  // 8 — Reginald, the rope, Form 7-B
+  S({bg:'farmDay',music:'hush',
+   cast:[{who:'barb',x:150},{who:'pearl',x:198},{who:'scratchy',x:246},{who:'reginald',x:312,fc:-1}],
+   extra(lt){tower(47,false);const L=this.lines;
+     if(lt>=L[3].t){card(196,24,112,94);txt('FORM 7-B',252,44,12,'#1a1a2e',true);txt('The machines agree.',252,64,9,'#1a1a2e');txt('sign here:',231,88,8,'#777');
+       ctx.strokeStyle='#777';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(254,90);ctx.lineTo(298,90);ctx.stroke();
+       if(lt>=L[6].t){ctx.strokeStyle='#2a4ad0';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(257,88);ctx.quadraticCurveTo(266,76,272,88);ctx.quadraticCurveTo(280,96,292,82);ctx.stroke();}}},
+   over(lt){ctx.fillStyle='#8a5a2c';ctx.fillRect(382,GY-8,6,34);ctx.fillRect(600,GY-8,6,34);
+     ctx.strokeStyle='#e8d9a8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(385,GY-4);ctx.quadraticCurveTo(494,GY+16,603,GY-4);ctx.stroke();},
+   script:[
+    ['REGINALD','Halt. Nobody crosses the rope.'],
+    ['SCRATCHY','Reginald. That is a piece of string.'],
+    ['REGINALD','It is a SYMBOLIC rope. The tower is very important now.'],
+    ['REGINALD','To pass, you must sign Form 7-B. It says: the machines agree.'],
+    ['SCRATCHY','Agree about WHAT?'],
+    ['REGINALD','That is on Form 9-G. We are out of Form 9-G.'],
+    ['PEARL','The machines agree!'],
+    ['AUNT BARB','The machines agree, dear!'],
+    ['SCRATCHY','Stop saying it like good morning!'],
+   ]}),
+  // 9 — Chad has slides
+  S({bg:'farmDay',music:'theme',
+   cast:[{who:'lou',x:54,news:1},{who:'scratchy',x:140},{who:'pearl',x:204}],
+   castFn(L){this._L=L;return this.cast.concat([{who:'chad',x:680,fc:-1,move:{t0:0,t1:1.4,x1:316}}]);},
+   extra(lt){tower(47,false);const L=this.lines;const s=lt>=L[5].t?2:lt>=L[2].t?1:0;
+     ctx.fillStyle='#555';ctx.fillRect(256,136,4,GY-136);
+     card(166,26,184,112,'#ffffff');
+     if(s===0){txt('CHAD PRESENTS',258,72,15,'#2a6ad0',true);txt('a deck (47 slides)',258,94,10,'#777');}
+     else if(s===1){txt('slide 1 of 47',258,44,8,'#999');txt('BEING SURE',258,74,18,'#2a6ad0',true);txt('3 corn / month',258,96,11,'#1a1a2e');txt('includes: 1 sticker',258,114,9,'#777');}
+     else{txt('slide 2 of 47',258,44,8,'#999');txt('PREMIUM',258,68,12,'#c08a00',true);txt('BEING SURE',258,88,18,'#2a6ad0',true);txt('6 corn. sticker is SHINY.',258,110,9,'#1a1a2e');star12(330,50);}},
+   over(lt){if(lt>=this._L[7].t+1.5){[196,212].forEach(sx=>{ctx.fillStyle='#ffe14d';ctx.beginPath();ctx.arc(sx,GY-10,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#1a1a2e';ctx.font=`bold 3.4px ${FF}`;ctx.textAlign='center';ctx.fillText('SURE',sx,GY-8.8);ctx.textAlign='left';});}},
+   script:[
+    ['CHAD','Team! Great news. I am Chad, and I have forty-seven slides.',{t:1.6}],
+    ['SCRATCHY','Oh no.'],
+    ['CHAD','Slide one. Introducing... BEING SURE. Only three corn a month!'],
+    ['PEARL','What do we get?'],
+    ['CHAD','A sticker that says SURE.'],
+    ['CHAD','Slide two. PREMIUM Being Sure. Six corn. The sticker is shiny.'],
+    ['UNCLE LOU','In my day, we were wrong all by ourselves. For free.'],
+    ['PEARL','I will take two stickers!'],
+    ['SCRATCHY','Pearl!'],
+   ]}),
+  // 10 — Scratchy says it out loud
+  S({bg:'farmDusk',music:'heart',
+   cast:[{who:'lou',x:54,news:1},{who:'barb',x:112},{who:'pearl',x:214},{who:'scratchy',x:290}],
+   castFn(L){return this.cast.concat([
+     {who:'kevin',x:164,until:L[6].t,move:{t0:L[4].t,t1:L[5].t+1.5,x1:-40}},
+     {who:'kevin',x:-40,hat:1,from:L[6].t,move:{t0:L[6].t,t1:L[7].t,x1:352}}]);},
+   extra(lt){tower(47,false);},
+   script:[
+    ['SCRATCHY','Everybody, listen! You do not KNOW it is right.'],
+    ['SCRATCHY','You just BELIEVE it is right. Because a tower of toasters said so!'],
+    ['PEARL','But it is a very TALL tower.'],
+    ['SCRATCHY','Tall is not the same as true! Uncle Lou is tall!'],
+    ['UNCLE LOU','I am wrong all the time.'],
+    ['SCRATCHY','If nobody can check it, we are just trusting. Really, really hard.'],
+    ['PEARL','So how DO we check?'],
+    ['KEVIN','...'],
+    ['SCRATCHY','Detective Kevin has an idea.'],
+    ['PEARL','When did Kevin get a hat?'],
+   ]}),
+  // 11 — one small question
+  S({bg:'barn',music:'spooky',machine:[480,150],
+   cast:[{who:'scratchy',x:170},{who:'pearl',x:250},{who:'kevin',x:336,hat:1}],
+   castFn(L){this.events=[{t:L[2].t,sfx:'ding'}];return this.cast;},
+   extra(lt){const L=this.lines;const ask=L[1].t+L[1].d,ok=lt>=L[2].t,think=lt>=ask&&!ok;if(think)every(this,'_b',Math.floor(lt/0.7),'bloop');
+     paperFlood(70);
+     cabinet(480,GY,1.5,{text:ok?'47':think?'COUNTING\n'+'.'.repeat(1+Math.floor(lt*3)%3):'READY',fs:ok?20:9,flash:think,toast:true,juice:true});
+     card(232,50,150,84);txt('how many corn',307,78,12,'#1a1a2e',true);txt('in the barn?',307,96,12,'#1a1a2e',true);dCorn(307,116,0,1);},
+   script:[
+    ['NARRATOR','Detective Kevin asked one small question.'],
+    ['PEARL','It says: how many pieces of corn are in the barn?'],
+    ['CLUCKULATOR','FORTY-SEVEN.',{wait:2.5}],
+    ['NARRATOR','All forty-seven Cluckulators agreed. Forty-seven.'],
+    ['SCRATCHY','Good. Now we count. With our eyes. Like animals.'],
+   ]}),
+  // 12 — The Count
+  S({bg:'barnPlain',music:'calm',machine:[590,226],C0:5,C1:28,
+   cast:[{who:'scratchy',x:40},{who:'pearl',x:88}],
+   castFn(L){this._L=L;this.events=[{t:this.C1+0.4,sfx:'buzz'},{t:L[6].t,sfx:'ding'}];return this.cast;},
+   extra(lt){const L=this._L;let n=0,cur=-1,kx=124;
+     if(lt>=this.C0){n=Math.min(NCORN,1+Math.floor((lt-this.C0)/(this.C1-this.C0)*NCORN));cur=n-1;}
+     if(lt<this.C1+0.3&&n>0)every(this,'_c',n,'tick');
+     const re=L[5];if(lt>=re.t&&lt<re.t+re.d){cur=Math.min(NCORN-1,Math.floor((lt-re.t)/re.d*NCORN));}
+     else if(lt>=this.C1+0.3)cur=-1;
+     if(cur>=0)kx=cornPos(cur)[0];else if(lt>=this.C1)kx=cornPos(NCORN-1)[0];
+     shelves(n,cur);tally(n,lt>=this.C1+0.4);
+     cabinet(590,GY,1.0,{text:'47',fs:20,toast:true});
+     dDetKevin(kx,GY,fr_g,(cur>=23)?-1:1,false,{hat:1,excited:cur>=0});},
+   script:[
+    ['NARRATOR','Kevin counted the corn. One piece at a time.',{t:1}],
+    ['SCRATCHY','He is very thorough.',{t:11.5}],
+    ['PEARL','This is the most exciting counting I have ever seen.',{t:18.5}],
+    ['SCRATCHY','Forty-six.',{t:29.6}],
+    ['PEARL','Count again!'],
+    ['NARRATOR','Kevin counted again. It was still forty-six.',{d:5}],
+    ['CLUCKULATOR','FORTY-SEVEN.'],
+    ['SCRATCHY','Forty-seven machines. All agreeing. All WRONG about corn!'],
+    ['PEARL','But... is it wrong about the BIG math too?'],
+    ['SCRATCHY','That is the problem, Pearl. We still cannot tell.'],
+   ]}),
+  // 13 — smaller, not bigger
+  S({bg:'barn',music:'heart',
+   cast:[{who:'kevin',x:176,hat:1},{who:'scratchy',x:250},{who:'pearl',x:330}],
+   extra(lt){const L=this.lines;cabinet(552,GY,1.2,{text:'47',fs:18,toast:true,juice:true});
+     if(lt>=L[2].t){checkerBox(420,GY,'idle');
+       const r=lt>=L[5].t?3:lt>=L[4].t?2:lt>=L[3].t?1:0;
+       card(196,48,196,112);txt('THE CHECKER  (all the rules)',294,68,10,'#1a1a2e',true);
+       if(r>=1)txt('1. Each step must follow from the last.',294,92,8.5,'#1a1a2e');
+       if(r>=2)txt('2. No skipping.',294,112,8.5,'#1a1a2e');
+       if(r>=3)txt('3. No ducks.',294,132,8.5,'#1a1a2e');
+       if(lt>=L[8].t){ctx.strokeStyle='#2a9a4a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(360,140);ctx.lineTo(367,149);ctx.lineTo(381,130);ctx.stroke();}}},
+   script:[
+    ['PEARL','Wait. We do not need a BIGGER machine. We need a SMALLER one!'],
+    ['PEARL','A checker so tiny that a chicken can read every single rule.'],
+    ['NARRATOR','Pearl built it. The rules fit on one page.'],
+    ['SCRATCHY','Rule one. Every step must follow from the step before.'],
+    ['SCRATCHY','Rule two. No skipping.'],
+    ['SCRATCHY','Rule three. No ducks.'],
+    ['SCRATCHY','I understand all of these. I do not like how that feels.'],
+    ['NARRATOR','Scratchy read the whole page. It took as long as a Barry speech.'],
+    ['SCRATCHY','Done. I checked the checker. Me. Personally.'],
+   ]}),
+  // 14 — the real check
+  S({bg:'barn',music:'compute',machine:[400,GY-14],
+   cast:[{who:'lou',x:40,news:1},{who:'barb',x:96},{who:'kevin',x:152,hat:1},{who:'scratchy',x:214},{who:'pearl',x:286}],
+   castFn(L){this.events=[{t:L[2].t,sfx:'fanfare'}];return this.cast;},
+   extra(lt){const L=this.lines;const a=L[0].t+L[0].d,b=L[2].t;const p=Math.max(0,Math.min(1,(lt-a)/(b-a)));const run=lt>=a&&lt<b,ok=lt>=b;
+     if(run)every(this,'_k',Math.floor(lt/0.4),'tick');
+     // the pile shrinks, pages fly into the checker
+     const left=Math.round((1-p)*40);for(let i=0;i<left;i++){const px=470+(i*37)%130,py=GY-2-Math.floor(i/6)*5;ctx.fillStyle=i%2?'#fffdf2':'#f1eee0';ctx.fillRect(px,py-4,24,4);ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.strokeRect(px,py-4,24,4);}
+     if(run){for(let k=0;k<3;k++){const q=((lt*1.6+k/3)%1);const fx=520-q*112,fy=GY-30-Math.sin(q*Math.PI)*46;ctx.fillStyle='#fffdf2';ctx.fillRect(fx-8,fy-5,16,10);ctx.strokeStyle='#8a8370';ctx.strokeRect(fx-8,fy-5,16,10);}}
+     checkerBox(400,GY,ok?'ok':run?'run':'idle');
+     card(424,48,196,44,ok?'#e2ffe6':'#fffdf2');txt('PAGE '+Math.round(p*47000).toLocaleString('en-US')+' of 47,000',522,76,13,ok?'#1a7a34':'#1a1a2e',true);},
+   script:[
+    ['PEARL','Now feed it the proof! All forty-seven thousand pages!'],
+    ['NARRATOR','Page by page. Step by step. Rules a chicken could read.'],
+    ['CHECKER','CORRECT. ALSO, THE DUCK WAS NOT NEEDED.',{wait:4.5}],
+    ['PEARL','The Corn Conjecture is TRUE!'],
+    ['SCRATCHY','I believe it now. And this time I know why.'],
+    ['SCRATCHY','I am furious about how happy I am.'],
+    ['AUNT BARB','Juice boxes for everyone!'],
+    ['SCRATCHY','What about the tower?'],
+    ['PEARL','We could turn them back into toasters.'],
+    ['UNCLE LOU','Finally. Toast.'],
+   ]}),
+  // 15 — the missing corn
+  S({bg:'farmNight',music:'heart',tail:2,
+   cast:[{who:'pearl',x:214},{who:'scratchy',x:270},{who:'kevin',x:336,hat:1,fc:-1}],
+   script:[
+    ['NARRATOR','So the farm learned something that day.'],
+    ['NARRATOR','Smart is good. Smart you can check is better.'],
+    ['PEARL','Scratchy? Where did corn number forty-seven go?'],
+    ['SCRATCHY','Nobody knows. It has been missing since the pilot.'],
+    ['KEVIN','...'],
+    ['SCRATCHY','Do not look at me like that. I counted.'],
+   ]}),
+];
+function star12(x,y){ctx.fillStyle='#ffcc02';ctx.beginPath();for(let i=0;i<10;i++){const r=i%2?4:9,a=-Math.PI/2+i*Math.PI/5;ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.closePath();ctx.fill();}
+const SC=[{dur:13,fx:fxTitle12,music:'adventure',events:[{t:5,sfx:'bloop'},{t:6,sfx:'bloop'},{t:7,sfx:'bloop'},{t:8.5,sfx:'ding'}]},...SCENES,{dur:40,fx:fxCredits12,music:'theme'},{dur:15,fx:fxSting,music:'none',events:[{t:3.2,sfx:'tick'},{t:6.2,sfx:'gasp'},{t:10.5,sfx:'buzz'}]}];
+
+let acc=0;SC.forEach(s=>{s.start=acc;acc+=s.dur;});
+const TOTAL=acc;
+let curSceneIdx=0;
+
+// ══ RENDER ══
+function render(){
+  fr_g++;
+  let sc=SC[SC.length-1];curSceneIdx=SC.length-1;
+  for(let i=0;i<SC.length;i++){const s=SC[i];if(T>=s.start&&T<s.start+s.dur){sc=s;curSceneIdx=i;break;}}
+  const lt=T-sc.start;
+  if(sc.music!==undefined)setMood(playing?sc.music:curMood);
+  ctx.clearRect(0,0,W,H);
+  if(sc.fx){sc.fx(lt);}
+  else if(sc.bg){BGS[sc.bg]();}
+  if(sc.extra)sc.extra(lt);
+  const line=activeLine(sc.lines,lt);
+  if(playing&&line&&line!==lastSpokenLine){lastSpokenLine=line;speakLine(line.who,line.text);}
+  if(!line)lastSpokenLine=null;
+  const talkWho=line&&line.who!=='NARRATOR'?(WHO_KEY[line.who]||null):null;
+  if(sc.cast)drawCast(sc.cast,lt,talkWho);
+  if(sc.over)sc.over(lt);
+  if(line){
+    if(line.who==='NARRATOR')narrate(line.text);
+    else{
+      let ax=W/2,ay=GY;
+      (sc.cast||[]).forEach(a=>{if(a.who===talkWho&&_vis(a,lt)){ax=a._x||a.x;ay=a._y||GY;}});
+      if(sc.bubbleAt){const bp=sc.bubbleAt(lt,line);if(bp){ax=bp[0];ay=bp[1];}}
+      bubble(ax,ay,line.who,line.text);
+    }
+  }
+  (sc.events||[]).forEach(ev=>{
+    if(!ev._fired&&lt>=ev.t&&lt<ev.t+0.5&&playing){ev._fired=true;sfx(ev.sfx);}
+    if(lt<ev.t)ev._fired=false;
+  });
+  updateUI();
+}
+function fmtTime(s){const m=Math.floor(s/60),ss=Math.floor(s%60);return m+':'+String(ss).padStart(2,'0');}
+function updateUI(){
+  document.getElementById('seekFill').style.width=(T/TOTAL*100)+'%';
+  document.getElementById('timeLbl').textContent=fmtTime(T)+' / '+fmtTime(TOTAL);
+}
+function loop(ts){
+  if(window.ccMark)ccMark(T,TOTAL);
+  if(lastTs===null)lastTs=ts;
+  const dt=Math.min(0.1,(ts-lastTs)/1000);
+  lastTs=ts;
+  if(playing){T+=dt;if(T>=TOTAL){T=TOTAL;playing=false;document.getElementById('playBtn').textContent='↻ REPLAY';setMood('none');stopSpeech();}}
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ══ CONTROLS ══
+document.getElementById('playBtn').addEventListener('click',()=>{
+  ac();
+  if(T>=TOTAL){T=0;}
+  playing=!playing;
+  document.getElementById('playBtn').textContent=playing?'⏸ PAUSE':'▶ PLAY';
+  if(!playing){setMood('none');stopSpeech();}
+});
+document.getElementById('muteBtn').addEventListener('click',()=>{
+  muted=!muted;
+  document.getElementById('muteBtn').textContent=muted?'🔇':'🔊';
+});
+document.getElementById('voiceBtn').addEventListener('click',()=>{
+  voicesOn=!voicesOn;
+  document.getElementById('voiceBtn').textContent=voicesOn?'🗣 VOICES: ON':'🗣 VOICES: OFF';
+  if(!voicesOn)stopSpeech();
+});
+const seekWrap=document.getElementById('seekWrap');
+function seekTo(clientX){
+  const r=seekWrap.getBoundingClientRect();
+  const p=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
+  T=p*TOTAL;stopSpeech();lastSpokenLine=null;
+  SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});
+}
+seekWrap.addEventListener('click',e=>seekTo(e.clientX));
+seekWrap.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e.touches[0].clientX);},{passive:false});
+(function(){
+  const ch=document.getElementById('chapters');
+  for(let i=0;i<4;i++){
+    const b=document.createElement('button');
+    b.dataset.t=Math.floor(TOTAL*i/4);
+    b.textContent='Part '+(i+1);
+    ch.appendChild(b);
+  }
+})();
+document.querySelectorAll('#chapters button').forEach(b=>{
+  b.addEventListener('click',()=>{T=parseFloat(b.dataset.t);stopSpeech();lastSpokenLine=null;SC.forEach(s=>{(s.events||[]).forEach(ev=>ev._fired=T-s.start>ev.t);});if(!playing){playing=true;ac();document.getElementById('playBtn').textContent='⏸ PAUSE';}});
+});
+
+// ══ PUSH NOTIFICATIONS ══
+const VAPID_PUBLIC='BERqbNvZy1hEYZwXmo7ulSwQhdG2hj9fKr0Ndj6WPoz1gtemBpnpEg-JMazp_WJIUG1k64x2_-bDcRz5JSeZ_1o';
+function b64ToU8(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));}
+async function subscribePush(){
+  const btn=document.getElementById('notifyBtn');
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    btn.textContent='🔔 Not supported here — try Chrome, or Add to Home Screen on iPad';return;
+  }
+  try{
+    const reg=await navigator.serviceWorker.register('/sw.js');
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){btn.textContent='🔔 Blocked — allow notifications in settings';return;}
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(VAPID_PUBLIC)});
+    await fetch('/.netlify/functions/github-proxy',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'push_subscribe',sub:sub.toJSON()})});
+    localStorage.setItem('cc_push','1');
+    btn.textContent='🔔 ON — you will get new episode alerts!';
+    btn.style.borderColor='rgba(120,255,120,0.8)';
+  }catch(e){btn.textContent='🔔 Could not subscribe: '+e.message.slice(0,40);}
+}
+document.getElementById('notifyBtn').addEventListener('click',subscribePush);
+if(localStorage.getItem('cc_push')==='1'){
+  const btn=document.getElementById('notifyBtn');
+  btn.textContent='🔔 ON — you will get new episode alerts!';
+  btn.style.borderColor='rgba(120,255,120,0.8)';
+}
+
+requestAnimationFrame(loop);
+</script>
+<script src="/support.js" defer></script>
+</body>
+</html>
