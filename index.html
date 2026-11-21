@@ -20,6 +20,13 @@ body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hi
 #topbar .stats{display:flex;gap:10px;align-items:center;font-family:'Fredoka One',cursive;font-size:clamp(11px,3vw,15px);color:#fff;text-shadow:1px 1px 0 #000;}
 
 /* ── HERO ── */
+.new-callout{display:flex;align-items:center;justify-content:center;gap:10px 16px;flex-wrap:wrap;background:#ffe14d;color:#1d1a1f;
+  border-bottom:4px solid #1d1a1f;padding:10px 16px;text-decoration:none;font-family:'Fredoka One',cursive;text-align:center;line-height:1.25}
+.new-callout .nc-tag{background:#1d1a1f;color:#ffe14d;padding:2px 10px;letter-spacing:1px;font-size:clamp(11px,3vw,14px);transform:rotate(-2deg);white-space:nowrap}
+.new-callout .nc-text{font-size:clamp(14px,3.6vw,19px)}
+.new-callout .nc-text small{display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:clamp(11px,2.8vw,14px)}
+.new-callout .nc-btn{background:#ea4f8c;color:#fff;border:3px solid #1d1a1f;box-shadow:3px 3px 0 #1d1a1f;padding:4px 14px;font-size:clamp(12px,3vw,15px);white-space:nowrap}
+.new-callout:hover .nc-btn,.new-callout:focus-visible .nc-btn{transform:translate(2px,2px);box-shadow:1px 1px 0 #1d1a1f}
 .hero-canvas-wrap{position:relative;width:100%;max-width:640px;margin:0 auto;display:block;}
 #heroCanvas{display:block;width:100%;image-rendering:pixelated;}
 .hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
@@ -168,6 +175,13 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
   </div>
 </div>
 
+<!-- ── NEW: GRAYDORN & BATDORN ISSUE #4 ── -->
+<a class="new-callout" href="/games/graydorn-issue-4.html">
+  <span class="nc-tag">🐶 NEW ORIGIN STORY</span>
+  <span class="nc-text">GRAYDORN &amp; BATDORN ISSUE #4: BEFORE THE BARK<small>How the goodest girl on the street became the Bark Lady. A watchable episode with voices, plus the comic.</small></span>
+  <span class="nc-btn">▶ WATCH &amp; READ</span>
+</a>
+
 <!-- ── HERO CANVAS ── -->
 <div class="hero-canvas-wrap">
   <canvas id="heroCanvas" width="640" height="280"></canvas>
@@ -183,7 +197,7 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
   <div class="hero-ethos">Free to watch. Free to play. Shirts are how we keep the lights on in the coop.</div>
 </div>
 
-<div class="marquee"><span>🕹 NEW GAME: WE KNOW YOU'RE HERE — THE CHICKENS BUILT AN ARCADE INSIDE THE DEMO &nbsp;&nbsp;&nbsp;&nbsp; 🎂 NEW EPISODE: ELEVEN — A GRAYDORN'S WORLD CROSSOVER &nbsp;&nbsp;&nbsp;&nbsp; 🎃 EP 8: THE LONGEST LINE &nbsp;&nbsp;&nbsp;&nbsp; 👕 SHIRTS: HOLLOWBEAK DMV · GOLDEN UNICORNS VARSITY &nbsp;&nbsp;&nbsp;&nbsp; 🐔 NEW: GRAYDORN & BATDORN ISSUE #3, THE CROSSOVER · PLAY NOW: WE KNOW YOU'RE HERE (NEW!) · GRAYDORN'S WORLD · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: IN SPACE · JURASSIC SQUAWK · AUNT BARB'S RESCUE RANCH · MEDIEVAL MOLT · CORPORATE RETREAT · THE COOKING SHOW · RETIREMENT COMMUNITY · HUMAN RESOURCES &nbsp;&nbsp;&nbsp;&nbsp; 🎬 META: DIRECTOR'S CUT · THE MOVIE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: WE KNOW YOU'RE HERE (NEW!) · GRAYDORN'S WORLD (NEW!) · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+<div class="marquee"><span>🐶 NEW: GRAYDORN &amp; BATDORN ISSUE #4, BEFORE THE BARK — THE ORIGIN STORY &nbsp;&nbsp;&nbsp;&nbsp; 🕹 NEW GAME: WE KNOW YOU'RE HERE — THE CHICKENS BUILT AN ARCADE INSIDE THE DEMO &nbsp;&nbsp;&nbsp;&nbsp; 🎂 NEW EPISODE: ELEVEN — A GRAYDORN'S WORLD CROSSOVER &nbsp;&nbsp;&nbsp;&nbsp; 🎃 EP 8: THE LONGEST LINE &nbsp;&nbsp;&nbsp;&nbsp; 👕 SHIRTS: HOLLOWBEAK DMV · GOLDEN UNICORNS VARSITY &nbsp;&nbsp;&nbsp;&nbsp; 🐔 NEW: GRAYDORN & BATDORN ISSUE #3, THE CROSSOVER · PLAY NOW: WE KNOW YOU'RE HERE (NEW!) · GRAYDORN'S WORLD · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE &nbsp;&nbsp;&nbsp;&nbsp; 🥚 COMING SOON: IN SPACE · JURASSIC SQUAWK · AUNT BARB'S RESCUE RANCH · MEDIEVAL MOLT · CORPORATE RETREAT · THE COOKING SHOW · RETIREMENT COMMUNITY · HUMAN RESOURCES &nbsp;&nbsp;&nbsp;&nbsp; 🎬 META: DIRECTOR'S CUT · THE MOVIE &nbsp;&nbsp;&nbsp;&nbsp; 🐔 PLAY NOW: WE KNOW YOU'RE HERE (NEW!) · GRAYDORN'S WORLD (NEW!) · CRANKY CHICKEN · MYSTERY ISLAND · TULUM TROUBLE &nbsp;&nbsp;&nbsp;&nbsp;</span></div>
 
 <!-- ── NOW STREAMING (the show) ── -->
 <section class="trailers" id="watch" style="padding-bottom:8px;">
