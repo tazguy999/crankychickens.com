@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GP4SZY2B0Z"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GP4SZY2B0Z');</script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Cranky Chickens In Space: The Spatula of Destiny. A free point-and-peck adventure in three acts.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cranky Chickens In Space: The Spatula of Destiny</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#05050f;color:#fff;font-family:'Nunito',system-ui,sans-serif;font-weight:700;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+body.portrait #app{justify-content:flex-start}
+#stage{position:relative;background:#000;flex:none;overflow:hidden}
+canvas{display:block;width:100%;height:100%;image-rendering:crisp-edges;image-rendering:pixelated;touch-action:none}
+#loc{position:absolute;left:1.5%;top:2%;background:rgba(0,0,30,.72);color:#ffcc02;font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:clamp(10px,1.6vw,16px);padding:.25em .7em;border-radius:99px;pointer-events:none}
+#using{position:absolute;left:50%;top:2%;transform:translateX(-50%);background:#ffcc02;color:#1a1200;font-size:clamp(11px,1.7vw,17px);padding:.3em .9em;border-radius:99px;display:none;pointer-events:none;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis}
+#using.on{display:block}
+#toast{position:absolute;left:50%;top:14%;transform:translate(-50%,-10px);background:#0a7a2a;border:2px solid #55ff55;font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:clamp(13px,2.2vw,22px);padding:.35em 1em;border-radius:12px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#verbs{position:absolute;transform:translateX(-50%);display:none;background:rgba(8,8,40,.96);border:3px solid #fff;border-radius:14px;padding:6px 8px 8px;z-index:5;text-align:center}
+#verbs.on{display:block}
+.vname{font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;color:#ffcc02;font-size:clamp(12px,1.8vw,18px);margin-bottom:5px;white-space:nowrap}
+.vrow{display:flex;gap:8px;justify-content:center}
+.vrow button{min-width:58px;min-height:56px;background:#2a2a7a;border:2px solid #5555ff;border-radius:10px;font-size:24px;line-height:1;padding:6px 8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.vrow button span{font-size:12px}
+.vrow button:active{background:#5555ff}
+#say{position:absolute;left:2%;right:2%;bottom:3%;display:none;background:rgba(8,8,40,.95);border:3px solid #ffcc02;border-radius:14px;padding:.6em .9em 1.1em;font-size:clamp(14px,2.3vw,24px);line-height:1.35;z-index:6;max-height:60%;overflow:auto}
+#say.on{display:block}
+#say.narr #line{font-style:italic}
+#who{font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:.8em;margin-bottom:.15em;letter-spacing:.03em}
+#more{position:absolute;right:.8em;bottom:.25em;font-size:.6em;color:#aab;animation:bl 1s steps(2) infinite}
+@keyframes bl{50%{opacity:.25}}
+body.portrait #say{position:fixed;left:8px;right:8px;bottom:10px;max-height:40%}
+#bar{flex:none;height:72px;display:flex;align-items:stretch;gap:6px;padding:6px;background:#10102a;border-top:3px solid #2a2a7a}
+#inv{flex:1;display:flex;gap:6px;overflow-x:auto;align-items:stretch;min-width:0}
+.empty{align-self:center;color:#667;font-size:13px;padding-left:6px}
+.item,.tool{flex:none;min-width:60px;background:#1c1c4a;border:2px solid #3a3a9a;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 8px}
+.item i,.tool i{font-style:normal;font-size:24px;line-height:1.1}
+.item span,.tool span{font-size:11px;white-space:nowrap}
+.item.sel{background:#ffcc02;color:#1a1200;border-color:#fff}
+#tools{display:flex;gap:6px}
+.tool{background:#2a1c4a;border-color:#6a3a9a}
+#ov{position:fixed;inset:0;display:none;background:rgba(0,0,12,.86);z-index:20;overflow:auto;padding:12px;align-items:center;justify-content:center}
+#ov.on{display:flex}
+.card{margin:auto;width:min(640px,100%);background:#10103a;border:4px solid #5555ff;border-radius:18px;padding:18px 18px 16px;text-align:center}
+.card h1{font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;color:#ffcc02;font-size:clamp(26px,6vw,46px);line-height:1.05;text-shadow:3px 3px 0 #aa0000}
+.card h1 em{font-style:normal;color:#55ffff;text-shadow:3px 3px 0 #0000aa}
+.card h2{font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;color:#ffcc02;font-size:clamp(20px,4vw,30px);margin:.2em 0}
+.card p{font-size:clamp(14px,2.2vw,19px);line-height:1.4;margin:.5em 0;color:#dde}
+.big{display:block;width:100%;margin-top:12px;min-height:56px;background:#ffcc02;color:#1a1200;font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:22px;border-radius:14px;border-bottom:5px solid #aa7700}
+.big:active{transform:translateY(3px);border-bottom-width:2px}
+.small{display:block;width:100%;margin-top:10px;min-height:44px;background:transparent;color:#99a;font-size:15px;text-decoration:underline;line-height:44px}
+.card.death{border-color:#ff5555}.dicon{font-size:64px;line-height:1.1}
+.badge{display:inline-block;background:#aa0000;color:#fff;font-size:13px;padding:.2em .8em;border-radius:99px;margin:.3em 0}.badge.old{background:#333355;color:#aab}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:10px;text-align:left}
+.dc{background:#1c1c4a;border-radius:10px;padding:8px;display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}
+.dc i{font-style:normal;font-size:28px;grid-row:span 2}.dc b{color:#ffcc02;font-size:14px}.dc span{font-size:12px;color:#bbc;line-height:1.3}
+.dc.no{opacity:.5}.dc.need{border:2px dashed #5555ff}
+.grid.map{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.pl{background:#1c1c4a;border:3px solid #5555ff;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:110px}
+.pl i{font-style:normal;font-size:40px;line-height:1.1}.pl b{font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:17px;color:#ffcc02}.pl span{font-size:12px;color:#bbc}
+.pl.here{border-color:#55ff55;opacity:.75}.pl.soon{border-style:dashed;border-color:#445;opacity:.55}
+.pl:not(:disabled):active{background:#5555ff}
+#kdisp{font-family:monospace;font-size:40px;letter-spacing:.2em;color:#55ff55;background:#000;border-radius:10px;padding:6px;margin:8px auto;width:160px}
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;margin:0 auto}
+.keys button{min-height:60px;background:#2a2a7a;border:2px solid #5555ff;border-radius:12px;font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:26px}
+.keys button:active{background:#5555ff}.keys.six{grid-template-columns:repeat(6,1fr)}
+#miniExit{position:absolute;right:1.5%;top:2%;display:none;min-height:48px;padding:0 16px;background:#aa0000;border:3px solid #fff;border-radius:12px;font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:clamp(14px,2vw,20px);z-index:7}
+#miniExit.on{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" width="320" height="180"></canvas>
+    <div id="loc"></div>
+    <div id="using"></div>
+    <div id="toast"></div>
+    <div id="verbs"></div>
+    <button id="miniExit">✕ Exit game</button>
+    <div id="say"><div id="who"></div><div id="line"></div><div id="more">▶ tap</div></div>
+  </div>
+  <div id="bar">
+    <div id="inv"></div>
+    <div id="tools">
+      <button class="tool" id="bRecipe" style="display:none"><i>📖</i><span>Recipe</span></button>
+      <button class="tool" id="bHint"><i>💡</i><span>Hint</span></button>
+      <button class="tool" id="bDeaths"><i>🍗</i><span>0/10</span></button>
+      <button class="tool" id="bSound"><i>🔊</i><span>Sound</span></button>
+    </div>
+  </div>
+</div>
+<div id="ov"></div>
+<script>
+// ───────────────────────── ART ─────────────────────────
+// Everything is drawn in code on a 320x180 canvas, EGA-ish palette.
+const P={K:'#000000',B:'#0000aa',G:'#00aa00',C:'#00aaaa',R:'#aa0000',M:'#aa00aa',BR:'#aa5500',LG:'#aaaaaa',DG:'#555555',
+  LB:'#5555ff',LGR:'#55ff55',LC:'#55ffff',LR:'#ff5555',LM:'#ff55ff',Y:'#ffff55',W:'#ffffff',O:'#ff9f1c'};
+let X=null,T=0;
+function r(x,y,w,h,c){X.fillStyle=c;X.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function ell(cx,cy,rx,ry,c){X.fillStyle=c;for(let dy=-ry;dy<=ry;dy++){const dx=Math.floor(rx*Math.sqrt(Math.max(0,1-(dy*dy)/(ry*ry))));X.fillRect(Math.round(cx-dx),Math.round(cy+dy),dx*2+1,1);}}
+function disc(cx,cy,rad,c){ell(cx,cy,rad,rad,c);}
+function rnd(seed){let s=seed%2147483647;if(s<=0)s+=2147483646;return()=>(s=s*16807%2147483647)/2147483647;}
+function starfield(x0,y0,w,h,n,seed){const g=rnd(seed);for(let i=0;i<n;i++){const x=x0+Math.floor(g()*w),y=y0+Math.floor(g()*h),k=Math.floor(g()*9);
+  const tw=(k+Math.floor(T*2))%9===0;r(x,y,1,1,tw?P.DG:(k%4===0?P.LC:P.W));}}
+
+// 3x5 pixel font for signs
+const FONT={A:'010101111101101',B:'110101110101110',C:'011100100100011',D:'110101101101110',E:'111100110100111',F:'111100110100100',
+G:'011100101101011',H:'101101111101101',I:'111010010010111',J:'001001001101010',K:'101101110101101',L:'100100100100111',M:'101111111101101',
+N:'110101101101101',O:'010101101101010',P:'110101110100100',Q:'010101101110011',R:'110101110101101',S:'011100010001110',T:'111010010010010',
+U:'101101101101111',V:'101101101101010',W:'101101111111101',X:'101101010101101',Y:'101101010010010',Z:'111001010100111',
+'0':'111101101101111','1':'010110010010111','2':'110001010100111','3':'110001010001110','4':'101101111001001','5':'111100110001110',
+'6':'011100111101111','7':'111001010010010','8':'111101111101111','9':'111101111001110','!':'010010010000010','?':'110001010000010',
+'-':'000000111000000','.':'000000000000010'};
+function txt(s,x,y,c){X.fillStyle=c;for(const ch of s){const g=FONT[ch];if(g){for(let i=0;i<15;i++)if(g[i]==='1')X.fillRect(x+i%3,y+Math.floor(i/3),1,1);}x+=4;}}
+
+// ── characters ── (x,y) is feet, centre-bottom
+function chicken(x,y,o){o=o||{};const s=o.s||2,f=o.f||1,st=o.step||0,b=o.body||P.W,be=o.belly||'#dddddd',w=o.wing||P.LG;
+  X.save();X.translate(Math.round(x),Math.round(y));X.scale(s*f,s);
+  r(-3,-4,1,st===1?3:4,P.O);r(-4,st===1?-2:-1,3,1,P.O);r(1,-4,1,st===2?3:4,P.O);r(0,st===2?-2:-1,3,1,P.O);
+  r(-9,-16,3,5,b);r(-10,-17,2,3,b);
+  r(-7,-13,13,9,b);r(-6,-14,11,1,b);r(-6,-4,10,1,b);r(-3,-8,8,4,be);r(-5,-11,6,4,w);
+  r(1,-21,7,8,b);
+  if(o.hat==='chef'){r(1,-24,7,3,P.W);r(0,-29,9,5,P.W);r(1,-30,3,1,P.W);r(5,-30,3,1,P.W);r(1,-22,7,1,P.LG);}
+  else if(o.hat==='helm'){r(0,-25,9,7,P.LG);r(0,-19,9,1,P.DG);r(5,-21,4,2,P.K);r(4,-28,2,3,P.R);}
+  else if(o.hat==='captain'){r(0,-25,9,3,P.W);r(0,-22,9,1,P.K);r(4,-24,1,1,P.Y);}
+  else{r(3,-23,2,2,o.comb||P.R);r(5,-24,2,3,o.comb||P.R);}
+  if(o.blink){r(5,-18,2,1,P.K);}else{r(5,-19,2,2,P.W);r(6,-19,1,2,P.K);}
+  r(4,-20,3,1,o.brow||P.DG);
+  r(8,-17,3,2,o.beak||P.Y);r(7,-15,1,2,P.R);
+  if(o.glasses){r(4,-20,4,1,P.K);r(4,-17,4,1,P.K);r(4,-19,1,2,P.K);r(7,-19,1,2,P.K);}
+  if(o.spat){r(10,-18,1,12,P.BR);r(9,-26,3,8,P.LG);r(10,-25,1,5,P.DG);}
+  X.restore();}
+
+function sixtyseven(x,y){const bob=Math.round(Math.sin(T*2)*1.5);y+=bob-3;
+  r(x-1,y-4,2,6,'#2a8a2a');r(x-2,y-12,4,9,P.G);r(x-3,y-18,6,7,P.LGR);
+  r(x-4,y-36,8,20,P.LB);r(x-4,y-36,2,6,P.B);r(x+2,y-36,2,6,P.B);r(x-1,y-28,2,2,P.Y);
+  r(x-7,y-34,2,14,P.LGR);r(x+5,y-34,2,10,P.LGR);r(x+6,y-30,2,12,P.LG);r(x+5,y-33,4,3,P.LG);r(x+6,y-32,2,1,P.DG);
+  r(x-1,y-40,2,4,P.LGR);ell(x,y-47,6,8,P.LGR);ell(x-3,y-47,2,3,P.K);ell(x+3,y-47,2,3,P.K);r(x-3,y-49,1,1,P.W);r(x+3,y-49,1,1,P.W);
+  r(x-1,y-41,3,1,P.G);r(x,y-59,1,4,P.LGR);disc(x,y-60,1,P.Y);}
+
+function turkey(x,y,boss){const cols=['#7a3a10',P.R,'#d2691e',P.Y,'#d2691e',P.R,'#7a3a10'];
+  for(let i=-3;i<=3;i++)r(x+i*5-2,y-44+Math.abs(i)*4,4,24,cols[i+3]);
+  disc(x,y-16,11,'#7a4a1a');r(x-9,y-14,6,8,'#5a3410');
+  r(x-5,y-5,2,5,P.O);r(x+3,y-5,2,5,P.O);r(x-7,y-1,5,1,P.O);r(x+2,y-1,5,1,P.O);
+  r(x-2,y-36,5,12,'#7a4a1a');disc(x,y-38,5,'#e89090');
+  r(x-6,y-45,12,4,boss?P.G:P.DG);r(x-4,y-47,8,2,boss?P.G:P.DG);if(boss)r(x-1,y-46,2,2,P.Y);
+  r(x+1,y-39,2,2,P.K);r(x+4,y-37,4,2,P.Y);r(x+5,y-35,2,5,P.R);
+  if(boss){r(x-7,y-22,2,2,P.Y);r(x-4,y-22,2,2,P.Y);r(x-1,y-22,2,2,P.Y);r(x-7,y-19,2,2,P.LC);r(x-4,y-19,2,2,P.LR);}}
+
+function floaty(x,y,happy){const bob=Math.round(Math.sin(T*1.6)*3);y+=bob;
+  for(let i=0;i<5;i++)r(x-8+i*4+Math.round(Math.sin(T*3+i)*1),y+20+i%2*3,2,5-i%2*2,'#2a8a8a');
+  ell(x,y,16,19,'#2aaaaa');ell(x,y,14,17,P.LC);
+  if(happy){r(x-9,y-5,5,1,P.K);r(x-10,y-4,1,1,P.K);r(x-4,y-4,1,1,P.K);r(x+4,y-5,5,1,P.K);r(x+3,y-4,1,1,P.K);r(x+9,y-4,1,1,P.K);r(x-5,y+12,10,1,P.K);r(x-6,y+11,1,1,P.K);r(x+5,y+11,1,1,P.K);}
+  else{r(x-9,y-7,5,4,P.W);r(x-7,y-6,2,3,P.K);r(x+4,y-7,5,4,P.W);r(x+6,y-6,2,3,P.K);r(x-10,y-10,5,1,P.K);r(x+5,y-10,5,1,P.K);r(x-4,y+12,8,1,P.K);r(x-5,y+13,1,1,P.K);r(x+4,y+13,1,1,P.K);}
+  const tw=happy?0:Math.round(Math.sin(T*14)*1);
+  r(x-2+tw,y-3,5,9,'#3cc');disc(x+tw,y+7,3,happy?'#3cc':P.LR);}
+
+function sockmunch(x,y,asleep){
+  ell(x,y-9,16,9,P.LGR);ell(x-2,y-6,9,5,'#b8ffb8');r(x-12,y-2,5,2,P.O);r(x+2,y-2,5,2,P.O);r(x-17,y-14,4,4,P.LGR);
+  disc(x+14,y-17,7,P.LGR);r(x+19,y-17,10,3,P.O);r(x+19,y-14,8,2,'#d07000');
+  r(x+11,y-29,1,6,P.G);r(x+16,y-29,1,6,P.G);
+  if(asleep){disc(x+11,y-30,2,P.LGR);disc(x+16,y-30,2,P.LGR);r(x+10,y-30,3,1,P.K);r(x+15,y-30,3,1,P.K);
+    const k=Math.floor(T*1.5)%3;txt('Z',x+24+k*3,y-34-k*5,P.W);}
+  else{disc(x+11,y-30,2,P.W);disc(x+16,y-30,2,P.W);r(x+11,y-30,1,1,P.K);r(x+16,y-30,1,1,P.K);}}
+
+function hound(x,y,chef){const fl=Math.round(Math.sin(T*5));
+  r(x-6,y-10,5,10,P.B);r(x+1,y-10,5,10,P.B);r(x-7,y-2,6,2,P.K);r(x+1,y-2,6,2,P.K);
+  r(x-7,y-34,14,24,P.LB);r(x-1,y-34,2,24,P.B);r(x-10,y-32,3,12,P.LB);r(x+7,y-32,3,12,P.LB);r(x+7,y-21,3,3,'#cc9966');r(x-10,y-21,3,3,'#cc9966');
+  r(x-7,y-48,14,14,'#cc9966');r(x-10,y-47,4,12,'#885533');r(x+6,y-47,4,12,'#885533');
+  r(x+3,y-42,8,6,'#eebb88');r(x+10,y-42,2,2,P.K);r(x+4,y-37,6,1,P.K);
+  r(x-4,y-46,10,3,P.LC);r(x-5,y-46,1,3,P.K);r(x+1,y-46,1,3,P.K);
+  r(x-8,y-35,16,3,P.R);r(x-11,y-33+fl,3,9,P.R);
+  if(chef){r(x-6,y-57,12,9,P.W);r(x-8,y-61,16,6,P.W);r(x-6,y-50,12,2,P.LG);}}
+
+function shuttle(x,y){
+  r(x-22,y-6,2,6,P.DG);r(x+18,y-6,2,6,P.DG);r(x-26,y-1,10,1,P.DG);r(x+14,y-1,10,1,P.DG);
+  ell(x,y-20,30,14,P.LG);ell(x,y-22,28,11,'#cccccc');r(x-30,y-22,60,2,P.R);
+  disc(x+12,y-27,7,P.B);disc(x+12,y-27,5,P.LC);r(x+10,y-30,2,2,P.W);
+  r(x-34,y-34,8,12,P.R);r(x-30,y-38,4,6,P.R);r(x-14,y-17,16,5,P.W);txt('C.S.S',x-13,y-17,P.B);}
+
+function arrow(x,y,dir,c){const p=Math.round(Math.sin(T*5)*2);
+  if(dir==='left'){for(let i=0;i<5;i++)r(x-p+i,y-i,2,1+i*2,c);}
+  else if(dir==='right'){for(let i=0;i<5;i++)r(x+p-i,y-i,2,1+i*2,c);}
+  else if(dir==='down'){for(let i=0;i<5;i++)r(x-i,y+p-i,1+i*2,2,c);}
+  else{for(let i=0;i<5;i++)r(x-i,y-p+i,1+i*2,2,c);}}
+
+function cornSky(){r(0,0,320,120,'#1a6a8a');r(0,60,320,30,'#2a8aaa');r(0,90,320,30,'#4aaacc');
+  disc(250,28,12,P.Y);disc(250,28,9,'#ffffaa');disc(284,46,6,'#ffddaa');}
+function cornRows(y,h,seed){const g=rnd(seed);for(let x=0;x<320;x+=7){const k=Math.floor(g()*6);r(x,y+k,3,h-k,P.G);r(x+3,y+k+4,2,h-k-4,'#008800');if(k%2===0)r(x+1,y+k+6,2,5,P.Y);}}
+
+// ── scenes ──
+const ART={
+galley(F,has){
+  r(0,0,320,180,'#3a5a5a');for(let x=0;x<320;x+=16)r(x,0,1,150,'#2f4c4c');for(let y=0;y<150;y+=16)r(0,y,320,1,'#2f4c4c');
+  r(0,6,320,4,P.LG);r(0,10,320,1,P.DG);
+  for(let x=0;x<320;x+=20)for(let y=150;y<180;y+=15)r(x,y,20,15,((x/20+(y-150)/15)%2)?'#444444':P.DG);r(0,150,320,1,P.LG);
+  r(20,16,40,14,P.DG);for(let i=0;i<5;i++)r(23,19+i*2,34,1,P.K);
+  // pancake table
+  r(22,140,58,4,P.BR);r(26,144,3,16,P.BR);r(73,144,3,16,P.BR);r(36,138,30,2,P.W);
+  for(let i=0;i<5;i++){r(40,134-i*3,22,3,i%2?'#d9a050':'#c08030');}r(47,118,8,3,P.Y);r(44,121,3,6,'#aa5500');r(57,121,2,4,'#aa5500');
+  const st=Math.floor(T*3)%3;r(46+st,110-st*2,1,4,P.LG);r(54-st,108-st,1,4,P.LG);
+  // fridge
+  r(90,70,34,86,P.LG);r(92,72,30,26,P.W);r(92,100,30,54,P.W);r(118,80,2,12,P.DG);r(118,106,2,18,P.DG);
+  r(96,108,14,10,P.Y);r(98,111,10,1,P.K);r(98,114,7,1,P.K);r(102,106,2,2,P.R);r(98,128,5,5,P.LR);
+  // menu board
+  r(140,58,42,46,P.BR);r(142,60,38,42,'#113311');txt('MENU',153,63,P.Y);txt('CORN',146,72,P.W);txt('CORN',146,80,P.W);txt('CORN?',146,88,P.W);r(146,96,12,1,P.LR);
+  // shelf
+  r(186,76,62,2,P.BR);r(190,66,5,10,P.LR);r(198,68,5,8,P.LGR);r(206,64,4,12,P.LB);r(214,69,7,7,P.Y);r(226,66,5,10,P.LM);r(236,68,6,8,P.W);
+  r(205,88,5,2,P.DG);
+  if(!has('spatula')){r(207,90,2,36,P.BR);r(204,126,8,16,P.LG);r(206,129,1,10,P.DG);r(209,129,1,10,P.DG);}
+  // stove + stew
+  r(214,134,36,26,P.DG);r(214,134,36,2,P.LG);r(219,150,4,4,P.R);r(228,150,4,4,P.K);r(237,150,4,4,P.K);
+  r(220,120,24,14,P.LB);r(218,119,28,3,P.LG);r(216,124,4,3,P.LG);r(244,124,4,3,P.LG);r(222,121,20,2,P.G);
+  const bb=Math.floor(T*4)%4;disc(226+bb*4,121,1,P.LGR);r(228+bb,112-bb*2,1,5,'#88aa88');r(236-bb,110-bb,1,5,'#88aa88');
+  r(250,60,18,22,P.LG);for(let i=0;i<4;i++)r(253,69+i*3,12,1,P.DG);r(257,63,4,3,Math.floor(T*2)%2?P.LR:P.R);
+  r(282,68,34,92,'#111122');r(286,72,28,88,P.B);r(288,74,24,40,P.LB);r(290,118,4,6,P.Y);
+},
+corridor(F,has){
+  r(0,0,320,152,'#6f7890');r(0,0,320,10,'#3a3f55');for(let x=20;x<320;x+=64)r(x,10,24,3,P.Y);
+  for(let x=0;x<320;x+=32)r(x,13,1,139,'#5a6278');
+  r(0,152,320,28,'#3a3f55');r(0,152,320,2,P.Y);for(let x=0;x<320;x+=16)r(x,152,8,2,P.K);
+  r(0,76,26,86,'#222a44');r(2,80,22,82,P.B);txt('GALLEY',1,69,P.W);
+  r(40,60,28,34,P.BR);r(42,62,24,30,P.LC);X.save();X.beginPath();X.rect(42,62,24,30);X.clip();chicken(52,91,{s:1,body:P.O,belly:'#ffcc6e',wing:'#e08010',beak:'#ff6b00',brow:'#cc2200',hat:'captain'});r(46,64,2,2,P.Y);r(60,66,2,2,P.Y);X.restore();
+  r(80,76,34,86,P.R);r(83,80,22,52,P.K);const sn=[P.Y,P.LGR,P.LC,P.LM,P.O,P.W];for(let i=0;i<12;i++)r(85+(i%3)*7,83+Math.floor(i/3)*12,5,8,sn[i%6]);
+  r(107,82,5,20,P.DG);r(108,84,3,2,P.LGR);r(84,138,22,10,P.K);txt('SNAX',86,152,P.Y);
+  r(126,64,48,40,P.DG);r(128,66,44,36,P.K);starfield(128,66,44,36,14,7);disc(160,90,5,P.Y);
+  r(182,72,40,90,P.DG);r(184,74,36,88,P.R);for(let i=0;i<9;i++)r(184+i*4,74,4,6,i%2?P.K:P.Y);r(188,90,28,70,'#881111');
+  disc(202,122,9,P.LG);disc(202,122,5,P.DG);r(201,113,2,18,P.LG);r(193,121,18,2,P.LG);txt('AIRLOCK',188,82,P.W);
+  sixtyseven(236,162);
+  r(250,78,38,84,P.DG);txt('SHUTTLE',255,71,P.W);
+  if(F('shuttleOpen')){r(254,84,30,78,P.K);starfield(254,84,30,60,8,21);r(254,150,30,12,P.LG);r(254,150,30,1,P.W);}
+  else{r(254,84,30,78,P.C);r(268,84,2,78,'#006666');r(263,112,12,14,P.K);for(let i=0;i<6;i++)r(265+(i%2)*5,114+Math.floor(i/2)*4,3,2,P.LGR);}
+  r(296,76,24,86,'#222a44');r(298,80,22,82,P.B);txt('BRIDGE',296,69,P.W);
+},
+bridge(F,has){
+  r(0,0,320,180,'#2b3050');for(let x=0;x<320;x+=40)r(x,0,1,152,'#232844');
+  r(0,152,320,28,'#444a66');r(0,152,320,1,'#8890b0');
+  r(66,16,188,68,P.LG);r(70,20,180,60,P.K);starfield(70,20,180,60,40,3);
+  disc(215,58,14,P.Y);r(204,52,22,1,'#cccc22');r(202,58,26,1,'#cccc22');r(204,64,22,1,'#cccc22');disc(120,40,6,'#b9a9c9');r(112,40,16,1,'#e8dcf0');
+  r(236,22,12,10,P.Y);r(238,25,8,1,P.K);r(238,28,6,1,P.K);
+  r(0,76,24,86,'#222a44');r(2,80,20,82,P.B);
+  r(100,84,2,68,P.LG);r(110,84,2,68,P.LG);for(let y=90;y<152;y+=8)r(100,y,12,2,P.LG);r(98,80,16,5,P.K);
+  // Pearl's console
+  r(24,122,26,40,P.DG);r(26,118,22,6,P.LG);r(28,126,18,12,P.G);r(30,128,4,5,P.W);r(36,128,4,5,P.W);r(42,130,3,5,P.R);r(28,142,4,3,P.LR);r(34,142,4,3,P.Y);r(40,142,4,3,P.LC);
+  chicken(64,162,{f:-1,body:'#f8f0e0',belly:'#fff8ee',wing:'#e8ddc8',comb:'#ff6688',beak:'#ffaa33',glasses:true,blink:Math.floor(T*0.7)%5===0});
+  // captain chair + Scratchy
+  r(138,108,40,54,P.R);r(140,110,36,30,'#cc2222');r(132,138,52,8,'#881111');r(152,146,12,16,P.DG);
+  chicken(156,146,{body:P.O,belly:'#ffcc6e',wing:'#e08010',beak:'#ff6b00',brow:'#cc2200',hat:'captain',blink:Math.floor(T*0.5)%6===0});
+  r(170,128,10,12,P.W);r(170,128,10,2,P.R);r(172,125,2,3,P.W);r(175,124,2,4,'#ffffaa');
+  // hyperdrive
+  r(194,146,54,16,P.DG);r(196,148,50,3,P.LG);r(214,140,14,8,P.K);
+  if(F('fixed')){const g=Math.floor(T*6)%2;disc(221,143,6,g?'#ffffaa':P.Y);disc(221,143,3,P.W);r(200,158,3,3,P.W);r(238,157,3,3,'#ffffaa');}
+  else{const g=rnd(11);for(let i=0;i<34;i++){const px=198+g()*46,py=160-g()*30*(1-Math.abs(px-221)/30);disc(px,py,2,i%3?P.W:'#ffffaa');}}
+  // red button
+  r(268,134,10,28,P.LG);r(264,160,18,2,P.DG);disc(273,130,7,'#660000');disc(273,128,6,P.R);r(270,124,3,2,P.LR);
+  r(262,104,22,12,P.Y);txt('DO',264,105,P.K);txt('NOT',272,105,P.K);txt('PRESS',263,110,P.R);
+},
+cornfield(F,has){
+  cornSky();cornRows(92,30,5);r(0,120,320,60,'#c8a030');for(let y=128;y<180;y+=9)r(0,y,320,1,'#a88420');
+  shuttle(38,160);
+  r(123,96,3,64,P.BR);r(106,104,36,3,P.BR);r(116,100,17,24,P.R);r(119,108,5,5,P.Y);r(127,116,4,4,P.LB);
+  disc(124,90,7,'#e8d090');r(114,82,21,3,P.BR);r(118,74,13,8,P.BR);r(120,88,2,2,P.K);r(126,88,2,2,P.K);r(119,86,3,1,P.K);r(126,86,3,1,P.K);r(121,93,6,1,P.K);
+  r(104,104,3,8,'#e8d090');r(141,104,3,8,'#e8d090');
+  if(!has('corn')&&!F('gotFlour')){const g=rnd(9);for(let i=0;i<16;i++)r(152+g()*26,152+g()*9,2,2,i%4?P.Y:'#cccc22');}
+  r(214,70,8,90,P.G);r(200,120,16,6,P.G);r(222,104,18,6,P.G);r(196,116,6,6,'#008800');
+  ell(218,84,13,42,'#cccc22');ell(218,84,11,40,P.Y);for(let yy=48;yy<122;yy+=6)for(let xx=209;xx<228;xx+=5)r(xx,yy,1,3,'#cc9900');
+  r(205,112,6,16,P.LGR);r(226,110,6,18,P.LGR);
+  const h=Math.floor(T*4)%3;for(let i=0;i<3;i++)r(236+i*4,60+((i+h)%3)*6,1,5,'#ffffaa');
+  r(300,60,8,100,P.G);r(308,48,8,112,'#008800');r(302,70,4,8,P.Y);
+},
+gate(F,has){
+  cornSky();r(0,56,320,96,'#008800');for(let x=0;x<320;x+=6){r(x,56+((x*13)%7),3,96,P.G);if((x*7)%5===0)r(x+1,80+((x*11)%40),2,6,P.Y);}
+  r(0,150,320,30,'#c8a030');for(let y=158;y<180;y+=9)r(0,y,320,1,'#a88420');
+  r(134,62,56,98,P.BR);r(136,60,52,10,'#6a3500');txt('CORN MAZE',144,63,P.Y);
+  if(F('turkeyPassed')){r(142,72,40,88,'#102008');r(150,120,24,40,'#203010');r(156,100,12,20,'#2a4018');}
+  else{r(142,72,40,88,'#885522');for(let x=142;x<182;x+=8)r(x,72,1,88,'#6a3500');r(176,112,3,5,P.Y);}
+  r(52,122,3,38,P.BR);r(34,90,40,32,P.BR);r(36,92,36,28,P.W);txt('NO ENTRY',38,95,P.R);txt('WITHOUT',40,103,P.K);txt('PAPERS!',40,111,P.K);
+  turkey(226,156,false);turkey(250,160,false);turkey(274,156,false);
+  turkey(F('turkeyPassed')?104:162,160,true);
+},
+temple(F,has){
+  r(0,0,320,180,'#103018');for(let x=0;x<320;x+=6)r(x,0,3,140,'#184020');
+  r(20,26,280,114,'#666677');for(let y=26;y<140;y+=12){r(20,y,280,1,'#555566');for(let x=20+((y/12)%2)*14;x<300;x+=28)r(x,y,1,12,'#555566');}
+  r(0,140,320,40,'#555566');r(0,140,320,1,'#8888aa');for(let x=0;x<320;x+=32)r(x,141,1,39,'#444455');
+  // mural
+  r(28,38,74,54,'#444455');r(30,40,70,50,'#9999aa');r(53,40,1,50,'#444455');r(77,40,1,50,'#444455');
+  disc(41,52,5,P.LC);chicken(36,84,{s:1,body:P.BR,belly:P.BR,wing:P.BR,comb:P.BR,brow:P.BR,beak:P.BR});r(44,76,3,6,P.Y);
+  disc(65,52,5,P.LC);r(60,74,3,8,P.Y);r(65,72,3,10,P.Y);r(70,75,3,7,P.Y);
+  disc(89,58,6,P.LC);r(88,58,3,5,P.LR);r(82,80,14,1,'#444455');
+  // light beam + pedestal
+  X.globalAlpha=0.12;r(232,0,24,124,P.Y);X.globalAlpha=1;
+  r(232,128,24,32,P.LG);r(228,124,32,5,P.W);r(228,158,32,3,P.DG);r(236,134,16,2,P.DG);r(236,140,16,2,P.DG);
+  if(F('gotKernel')){disc(244,117,6,'#b9a9c9');r(240,114,3,2,'#e8dcf0');}
+  else{const g=Math.floor(T*5)%2;disc(244,116,g?8:7,'#aa8800');disc(244,116,6,P.Y);disc(243,115,3,'#ffffaa');r(241,112,2,2,P.W);}
+  floaty(172,70,F('scratched'));
+},
+dunes(F,has){
+  r(0,0,320,180,'#f5b8d0');r(0,70,320,40,'#f8c8dc');disc(70,34,18,'#e898c0');r(42,33,56,2,P.W);r(46,36,48,1,'#ffddee');
+  ell(60,128,90,26,'#a898b8');ell(230,126,110,30,'#b0a0c0');ell(266,122,36,18,'#d8cce8');r(250,112,2,2,P.W);r(276,108,2,2,P.W);r(262,104,1,1,P.W);
+  r(0,138,320,42,'#c8bcd8');ell(120,140,70,8,'#d8cce8');
+  const g=rnd(4);for(let i=0;i<22;i++){const px=(g()*320+T*6*(0.5+g()))%320,py=30+g()*130;r(px,py,2,1,P.W);}
+  shuttle(38,160);r(20,128,8,3,'#d8cce8');r(44,124,10,3,'#d8cce8');
+  r(104,126,3,34,P.BR);r(84,94,44,32,P.BR);r(86,96,40,28,P.W);txt('PLANET',94,99,P.M);txt('LINT',98,106,P.M);txt('POP. 1',94,115,P.K);
+  r(140,70,2,90,P.BR);r(230,70,2,90,P.BR);for(let x=142;x<230;x+=2){const sag=Math.round(8*Math.sin(Math.PI*(x-142)/88));r(x,74+sag,2,1,P.W);}
+  for(let x=154;x<226;x+=14){const sag=Math.round(8*Math.sin(Math.PI*(x-142)/88));r(x,72+sag,2,5,'#cc9944');}
+  r(298,86,22,76,P.LB);r(300,104,20,58,P.K);r(298,86,22,4,P.W);txt('WASH',301,94,P.W);
+},
+laundromat(F,has,shake){
+  r(0,0,320,180,'#aaddcc');r(0,0,320,8,'#88bbaa');for(let x=30;x<320;x+=90)r(x,8,30,3,P.W);
+  for(let x=0;x<320;x+=16)for(let y=152;y<180;y+=14)r(x,y,16,14,((x/16+Math.floor((y-152)/14))%2)?P.W:P.LC);r(0,152,320,1,P.DG);
+  r(0,76,22,86,'#446655');r(2,80,18,82,'#f5b8d0');
+  // hound + table
+  hound(48,162);r(24,138,56,4,P.BR);r(26,142,3,20,P.BR);r(75,142,3,20,P.BR);
+  r(58,132,16,2,P.R);r(58,134,16,2,P.LB);r(58,136,16,2,P.Y);r(30,134,14,4,P.LM);
+  // washer
+  r(84,70,50,92,P.W);r(84,70,50,1,P.LG);r(86,72,46,10,P.LG);r(89,75,3,3,P.LR);r(95,75,3,3,P.LGR);r(101,75,3,3,P.Y);txt('WASH',113,75,P.K);
+  disc(109,120,19,P.DG);disc(109,120,15,P.LC);const a=T*2;for(let i=0;i<5;i++)disc(109+Math.cos(a+i*1.3)*9,120+Math.sin(a+i*1.3)*9,2,P.W);r(100,112,4,2,P.W);
+  // giant dryer
+  const sx=shake?Math.round(Math.sin(T*40)*1.5):0;
+  r(146+sx,40,78,122,'#e8e8f0');r(146+sx,40,78,2,P.W);r(146+sx,160,78,2,P.LG);
+  disc(185+sx,88,29,P.DG);disc(185+sx,88,24,'#222233');
+  if(shake){for(let i=0;i<6;i++)disc(185+sx+Math.cos(T*9+i)*14,88+Math.sin(T*9+i)*14,3,[P.LR,P.Y,P.LB,P.LGR,P.LM,P.W][i]);}
+  else{r(172,78,8,3,'#444466');}
+  r(198+sx,42,24,16,P.Y);txt('CORN',202+sx,44,P.K);txt('ONLY',202+sx,51,P.K);r(152+sx,46,14,6,P.K);r(154+sx,48,10,2,P.DG);
+  r(168+sx,136,48,22,P.DG);r(172+sx,140,40,14,P.K);txt('LINT',184+sx,130,P.DG);
+  if(F('dryerRan')&&!F('gotLint')){disc(192,148,6,'#b9a9c9');r(188,145,3,2,'#e8dcf0');}
+  if(F('fed'))sockmunch(262,162,true);else sockmunch(186,162,false);
+}};
+
+// ───────────────────────── ART: ACT TWO ─────────────────────────
+function cat(x,y,c,o){o=o||{};const s=o.s||1;X.save();X.translate(Math.round(x),Math.round(y));X.scale(s*(o.f||1),s);
+  r(5,-4,8,2,c);r(12,-9,2,6,c);ell(0,-8,7,8,c);ell(0,-5,4,4,o.belly||c);disc(0,-19,6,c);r(-6,-27,3,4,c);r(3,-27,3,4,c);r(-5,-26,1,2,P.LR);r(4,-26,1,2,P.LR);
+  if(o.sleep){r(-4,-19,3,1,P.K);r(1,-19,3,1,P.K);}else{r(-4,-21,2,3,o.eye||P.LGR);r(2,-21,2,3,o.eye||P.LGR);r(-3,-21,1,3,P.K);r(3,-21,1,3,P.K);}
+  r(0,-17,1,1,P.LR);r(-4,-2,3,2,c);r(1,-2,3,2,c);
+  if(o.stripe){r(-5,-10,3,1,o.stripe);r(2,-12,4,1,o.stripe);r(-2,-25,1,2,o.stripe);r(1,-25,1,2,o.stripe);}
+  X.restore();}
+function jelly(x,y,c,ph){const b=Math.round(Math.sin(T*2+(ph||0))*3);y+=b;
+  ell(x,y,9,6,c);r(x-9,y,19,3,c);ell(x-2,y-2,4,2,P.W);
+  for(let i=0;i<4;i++){const w=Math.round(Math.sin(T*4+i+(ph||0))*1);r(x-7+i*4+w,y+3,1,5,c);r(x-7+i*4-w,y+8,1,4,c);}}
+function seventysix(x,y){const bob=Math.round(Math.sin(T*2+2)*1.5);y+=bob-3;const c=P.LM;
+  r(x-2,y-12,4,9,P.M);r(x-3,y-18,6,7,c);r(x-4,y-36,8,20,P.Y);r(x-7,y-34,2,12,c);r(x+5,y-34,2,12,c);
+  r(x-1,y-40,2,4,c);ell(x,y-47,6,8,c);ell(x-3,y-47,2,3,P.K);ell(x+3,y-47,2,3,P.K);r(x-1,y-41,3,1,P.M);r(x,y-59,1,4,c);disc(x,y-60,1,P.LC);}
+function mapleTop(x,y,rad){disc(x,y,rad,'#cc4400');disc(x-rad/2,y+2,Math.round(rad*0.7),'#ee7711');disc(x+rad/2,y-2,Math.round(rad*0.6),'#ffaa22');}
+
+Object.assign(ART,{
+dock(F,has){
+  r(0,0,320,152,'#39445a');for(let x=0;x<320;x+=32)r(x,0,1,152,'#2c3548');r(0,0,320,8,'#222a3a');
+  r(0,152,320,28,'#2c3548');r(0,152,320,2,P.LC);
+  r(116,16,158,68,P.LG);r(120,20,150,60,P.K);starfield(120,20,150,60,30,13);
+  r(160,46,70,10,'#e8e0c8');disc(160,44,7,'#e8e0c8');disc(160,58,7,'#e8e0c8');disc(230,44,7,'#e8e0c8');disc(230,58,7,'#e8e0c8');
+  for(let x=168;x<226;x+=8)r(x,49,3,3,Math.floor(T*2+x)%5?P.Y:P.DG);
+  shuttle(38,162);
+  r(84,58,30,36,P.Y);r(86,60,26,32,P.LC);r(92,70,14,14,'#cc9966');r(89,70,4,10,'#885533');r(105,70,4,10,'#885533');r(95,75,2,2,P.K);r(101,75,2,2,P.K);r(97,79,4,3,'#eebb88');r(98,79,2,1,P.K);
+  txt('GOOD BOY',83,98,P.W);
+  r(130,140,10,22,P.R);r(128,144,14,4,P.LR);disc(135,138,4,P.R);r(125,149,4,4,P.R);r(141,149,4,4,P.R);r(133,134,4,2,P.LR);
+  ell(185,156,15,6,P.DG);ell(185,154,13,4,'#777777');r(180,150,10,3,P.K);r(183,151,4,1,Math.floor(T*1.2)%2?P.R:P.K);
+  hound(246,162);r(222,136,52,26,P.BR);r(222,136,52,2,'#cc8833');r(228,141,22,14,P.W);txt('SNIFF',229,142,P.K);txt('CHECK',229,149,P.R);
+  r(296,86,24,78,'#222a3a');r(298,90,22,74,P.B);txt('MESS',299,80,P.W);
+},
+mess(F,has){
+  r(0,0,320,152,'#6a5038');for(let y=0;y<152;y+=20)r(0,y,320,1,'#5a4230');r(0,0,320,8,'#4a3424');
+  for(let x=0;x<320;x+=20)for(let y=152;y<180;y+=14)r(x,y,20,14,((x/20+(y-152)/14)%2)?'#c8a878':'#a88858');r(0,152,320,1,'#4a3424');
+  r(0,76,22,88,'#222a3a');r(2,80,18,84,P.B);
+  r(36,112,38,40,P.DG);r(40,116,30,36,P.K);starfield(40,116,30,36,12,31);r(40,116,30,3,P.LG);txt('OUT',47,105,P.W);
+  r(88,140,84,4,P.BR);r(92,144,3,18,P.BR);r(165,144,3,18,P.BR);
+  [[98,P.LR],[124,P.LB],[150,P.Y]].forEach(b=>{r(b[0],133,16,7,b[1]);r(b[0]+2,131,12,3,'#885533');});
+  r(184,136,16,28,P.LG);r(182,134,20,3,P.W);txt('BALL',184,142,P.K);
+  X.globalAlpha=0.25;r(182,112,20,22,P.LC);X.globalAlpha=1;r(182,112,20,1,P.W);r(182,112,1,22,P.W);r(201,112,1,22,P.W);
+  if(F('gotButter')){disc(192,128,5,P.LGR);r(189,126,6,1,P.W);}
+  hound(232,164,true);
+  r(252,122,40,42,P.Y);r(252,122,40,7,P.W);r(252,129,40,1,'#cccc22');txt('BUTTER',260,123,P.B);r(254,134,10,3,'#ffffaa');
+  if(F('gotButter')){r(280,129,12,12,'#6a5038');r(279,129,1,12,'#cccc22');r(280,141,12,1,'#cccc22');}
+},
+crater(F,has){
+  r(0,0,320,180,P.K);starfield(0,0,320,120,70,41);
+  const g=rnd(8);for(let i=0;i<120;i++){const px=g()*320;r(px,20+px*0.2+g()*26,1,1,i%3?P.W:'#ccccff');}
+  r(0,118,320,62,'#8a8a9a');ell(160,120,170,8,'#9a9aaa');
+  ell(70,140,18,4,'#6a6a7a');ell(210,170,26,5,'#6a6a7a');ell(290,134,14,3,'#6a6a7a');ell(140,172,12,3,'#6a6a7a');
+  shuttle(38,160);cat(30,126,'#444444',{sleep:true});
+  r(96,70,14,92,P.K);r(97,71,1,90,P.DG);for(let i=0;i<5;i++)r(99+i*2,126+i%2*3,1,22,P.LG);
+  r(130,134,42,28,'#c49a5a');r(126,130,12,5,'#b08848');r(164,130,12,5,'#b08848');r(130,134,42,1,'#8a6a30');txt('THIS',142,140,'#6a4a20');txt('SIDE UP',136,148,'#6a4a20');
+  if(F('gotBall')){const dx=Math.round(Math.sin(T*3)*10);cat(204+dx,162,'#888888',{f:dx>0?1:-1,eye:P.K});r(206+dx*2,160,2,2,P.LR);}
+  else{cat(200,162,'#888888',{});disc(214,157,4,P.LGR);r(212,155,5,1,P.W);}
+  X.globalAlpha=0.18;r(232,0,44,162,P.Y);X.globalAlpha=1;
+  ell(254,156,13,5,P.O);ell(254,154,9,3,'#fff0d0');disc(268,154,5,P.O);r(264,148,2,3,P.O);r(270,148,2,3,P.O);r(266,154,3,1,P.K);r(247,147,2,5,P.O);r(258,147,2,5,P.O);
+  const k=Math.floor(T*1.5)%3;txt('Z',274+k*3,142-k*5,P.W);
+},
+fountain(F,has){
+  r(0,0,320,180,'#2a2040');for(let x=20;x<320;x+=60){r(x,0,12,150,'#3a3058');r(x-2,0,16,6,'#4a4070');r(x-2,144,16,6,'#4a4070');}
+  starfield(0,0,320,40,20,51);
+  r(0,150,320,30,'#8a8a9a');r(0,150,320,1,'#aaaabc');
+  r(0,100,22,64,'#111122');r(2,104,18,60,P.K);
+  [60,92,124].forEach((y,i)=>{r(40,y,74,3,P.BR);r(40,y+3,2,6,P.BR);r(112,y+3,2,6,P.BR);});
+  cat(54,60,'#444444',{});cat(98,60,P.W,{stripe:P.LG});cat(60,92,'#cc8844',{stripe:'#885522'});cat(102,92,'#888888',{sleep:true});cat(80,124,P.K,{eye:P.Y});
+  r(74,44,8,16,P.LC);r(72,42,12,3,P.LC);r(76,48,4,6,P.LB);
+  ell(260,152,32,8,P.LG);ell(260,150,28,5,P.W);r(256,110,8,40,P.LG);ell(260,108,16,4,P.LG);ell(260,107,13,2,P.W);
+  for(let i=0;i<3;i++){const yy=110+((T*40+i*14)%40);r(248,yy,1,4,P.W);r(271,yy,1,4,P.W);}
+  for(let i=0;i<5;i++){const a=T*2+i*1.3;r(260+Math.cos(a)*18,96+Math.sin(a)*6,1,1,P.Y);}
+  if(F('catNap')){r(132,156,44,6,P.LM);r(132,156,44,1,'#ffaaff');ell(154,152,14,6,'#ffaa22');ell(154,151,9,3,P.Y);disc(166,150,5,'#ffaa22');r(163,144,2,3,'#ffaa22');r(168,144,2,3,'#ffaa22');r(164,150,3,1,P.K);
+    const k=Math.floor(T*1.5)%3;txt('Z',172+k*3,138-k*5,P.W);}
+  else{const gl=Math.floor(T*3)%2;X.globalAlpha=0.2;disc(192,128,gl?34:32,P.Y);X.globalAlpha=1;cat(192,162,'#ffaa22',{s:2,belly:P.Y,stripe:'#cc6600',eye:P.LC});}
+},
+shore(F,has){
+  r(0,0,320,60,'#e88820');r(0,60,320,40,'#f0a030');disc(60,40,16,'#ffdd66');
+  for(let x=10;x<320;x+=38){r(x+4,70,4,32,'#4a2a0a');mapleTop(x+6,66,10);}
+  r(0,100,320,38,'#aa5500');for(let i=0;i<10;i++){const px=(i*37+T*3)%340-20;r(px,104+(i%4)*8,18,1,'#d07818');r(px+6,106+(i%4)*8,8,1,'#ffb030');}
+  r(0,136,320,44,'#c88a3a');r(0,136,320,2,'#8a5a20');for(let i=0;i<8;i++)ell(20+i*42,150+(i%3)*9,6,1,'#aa5500');
+  shuttle(38,162);
+  r(106,132,3,30,P.BR);r(86,98,44,34,P.BR);r(88,100,40,30,P.W);txt('DO NOT',96,103,P.R);txt('STEP IN',94,111,P.K);txt('SYRUP',98,119,P.K);r(120,130,3,6,'#ffb030');
+  r(152,112,6,10,P.K);r(150,120,9,3,P.K);r(163,113,6,9,P.K);r(161,120,9,3,P.K);r(180,108,4,3,P.W);r(187,109,4,3,P.W);
+  jelly(258,60,P.LC,0);jelly(280,76,P.LM,2);jelly(266,88,'#aaffaa',4);
+},
+grove(F,has){
+  r(0,0,320,180,'#5a2e0c');for(let x=6;x<320;x+=34){r(x,0,10,152,'#3e1e06');}
+  for(let x=0;x<320;x+=26)mapleTop(x+8,10+(x*7)%9,13);
+  r(0,152,320,28,'#8a5a20');r(0,152,320,1,'#aa7a30');for(let i=0;i<7;i++)ell(24+i*46,164+(i%2)*8,7,1,'#aa5500');
+  r(0,100,22,64,'#3e1e06');
+  r(140,18,40,144,'#241002');r(146,18,4,144,'#4e2a0a');r(172,18,3,144,'#160a00');r(178,48,116,7,'#3a1c04');r(286,44,8,6,'#3a1c04');
+  const ice=[232,242,254,264,276];ice.forEach((x,i)=>{if(i===2&&F('gotSyrup'))return;const h=12+(i*5)%9;r(x,55,4,h,'#ffb030');r(x+1,55+h,2,3,'#ffb030');r(x,56,1,h-3,'#ffe090');});
+  // Stellar Serpent, coiled round the trunk
+  [[140,34],[122,30],[104,27]].forEach((c,i)=>{ell(160,c[0],c[1],7,i%2?'#2a2aaa':P.B);ell(160,c[0]-1,c[1]-3,3,i%2?'#4444cc':'#2a2aaa');});
+  const g=rnd(61);for(let i=0;i<18;i++){const px=128+g()*64,py=98+g()*46;if(Math.floor(T*2+i)%6)r(px,py,1,1,i%4?P.W:P.Y);}
+  r(122,142,14,12,P.B);r(124,143,10,4,'#2a2aaa');
+  ell(116,154,16,8,P.B);ell(112,152,12,5,'#2a2aaa');r(102,152,6,1,P.K);r(100,157,2,1,P.K);r(124,146,3,5,P.LB);r(130,147,3,4,P.LB);
+  const k=Math.floor(T*1.2)%3;txt('Z',96-k*4,140-k*6,P.W);
+  if(F('jellyUp'))jelly(256,104,P.LC,1);else jelly(70,112,P.LC,1);
+},
+arena(F,has,shake,FX){
+  r(0,0,320,180,'#201830');
+  const g=rnd(71),cc=[P.LR,P.LB,P.LGR,P.Y,P.LM,P.LC,P.W,P.O];
+  for(let row=0;row<4;row++){r(0,28+row*12,320,12,row%2?'#2a2040':'#32284c');for(let x=3;x<320;x+=7){const up=Math.floor(T*3+g()*9)%4===0?1:0;r(x,32+row*12-up,4,5,cc[Math.floor(g()*8)]);}}
+  r(94,6,132,13,P.R);r(94,6,132,1,P.LR);txt('GREAT GALACTIC COOK-OFF',114,10,P.Y);
+  X.globalAlpha=0.1;r(150,20,72,132,P.Y);X.globalAlpha=1;
+  r(0,152,320,28,'#5a5070');r(0,152,320,2,P.Y);
+  shuttle(38,162);
+  if(!F('act3')){chicken(16,120,{s:1,body:P.O,belly:'#ffcc6e',wing:'#e08010',beak:'#ff6b00',brow:'#cc2200',hat:'captain'});chicken(34,120,{s:1,body:'#f8f0e0',belly:'#fff8ee',wing:'#e8ddc8',comb:'#ff6688',beak:'#ffaa33',glasses:true});}r(4,120,44,3,'#32284c');
+  // judges
+  chicken(82,118,{s:1,glasses:true,brow:P.K});r(81,92,10,2,P.K);r(84,90,4,2,P.K);r(90,93,1,4,P.Y);
+  seventysix(106,122);jelly(126,104,'#ffaaff',3);
+  r(66,116,72,16,P.W);r(66,116,72,2,P.LG);txt('JUDGES',90,122,P.B);
+  if(F('won')){r(76,100,10,9,P.W);txt('10',77,102,P.R);r(98,86,6,9,P.W);txt('7',100,88,P.K);r(108,86,6,9,P.W);txt('6',110,88,P.K);}
+  if(!F('won')){r(138,122,8,10,P.LG);r(136,130,12,2,P.DG);r(141,102,2,20,P.Y);r(139,93,6,10,P.Y);r(141,95,1,6,'#aa8800');}
+  // griddle
+  r(158,140,56,22,P.DG);r(162,146,48,3,P.K);r(166,152,6,4,P.R);r(178,152,6,4,F('batter')?P.LR:P.K);
+  ell(186,138,34,6,P.K);ell(186,137,32,4,'#333333');
+  if(F('batter')){let py=134;const a=FX.flipT?T-FX.flipT:99;if(F('flipped')&&a<3)py=134-(a<1.5?a:3-a)*190;
+    const gold=F('flipped');ell(186,py,28,4,gold?'#f0a020':'#f0d890');ell(186,py-1,24,2,gold?'#ffc040':'#fff0c0');
+    if(!gold||a>=3){const st=Math.floor(T*4)%3;r(172+st*2,122-st*2,1,5,P.LG);r(196-st,120-st,1,5,P.LG);}
+    if(gold&&a>=3){r(170,128,2,2,P.W);r(202,130,2,2,P.W);}}
+  else{r(176,126,20,9,P.LC);r(174,125,24,2,P.W);let n=0;['inFlour','inCream','inButter','inSyrup'].forEach((f,i)=>{if(F(f)){r(178+i*4,128,3,3,[P.Y,P.W,'#ffffaa','#ffb030'][i]);}});}
+  if(!F('act3')){
+  r(240,70,42,94,'#ccaa00');r(240,70,42,2,P.Y);r(244,78,26,50,P.K);for(let i=0;i<9;i++)r(247+(i%3)*8,82+Math.floor(i/3)*15,5,5,'#f0d890');
+  r(273,80,6,24,P.DG);r(274,82,4,2,F('won')?P.K:P.LR);r(246,138,24,10,P.K);txt('9000',248,153,P.K);
+  r(250,58,22,12,P.W);r(248,52,26,8,P.W);r(250,68,22,2,P.LG);
+  if(F('won')){r(244,96,34,14,P.W);txt('OUT OF',249,98,P.R);txt('ORDER',251,104,P.R);const st=Math.floor(T*3)%4;r(262+st,50-st*4,3,3,P.DG);r(256-st,44-st*3,2,2,P.DG);}}
+  else{sign(244,112,44,['GONE','HOME TO','MOTHER']);}
+}});
+
+// ───────────────────────── ART: THE BIG EXPANSION ─────────────────────────
+function room(wall,line,floor,trim){r(0,0,320,152,wall);for(let x=0;x<320;x+=32)r(x,0,1,152,line);r(0,0,320,8,line);r(0,152,320,28,floor);r(0,152,320,1,trim||P.LG);}
+function doorL(c,label){r(0,76,20,88,'#1a1a2a');r(2,80,18,84,c||P.B);if(label)txt(label,1,69,P.W);}
+function doorR(c,label){r(300,76,20,88,'#1a1a2a');r(300,80,18,84,c||P.B);if(label)txt(label,320-label.length*4,69,P.W);}
+function cornWall(){cornSky();r(0,56,320,96,'#008800');for(let x=0;x<320;x+=6){r(x,56+((x*13)%7),3,96,P.G);if((x*7)%5===0)r(x+1,80+((x*11)%40),2,6,P.Y);}
+  r(0,150,320,30,'#c8a030');for(let y=158;y<180;y+=9)r(0,y,320,1,'#a88420');}
+function moonBg(seed){r(0,0,320,180,P.K);starfield(0,0,320,120,60,seed);r(0,118,320,62,'#8a8a9a');ell(160,120,170,8,'#9a9aaa');ell(80,150,18,4,'#6a6a7a');ell(240,170,26,5,'#6a6a7a');}
+function stone(c1,c2){r(0,0,320,152,c1);for(let y=0;y<152;y+=12){r(0,y,320,1,c2);for(let x=((y/12)%2)*14;x<320;x+=28)r(x,y,1,12,c2);}r(0,152,320,28,c2);r(0,152,320,1,c1);}
+function vendBg(){r(0,0,320,180,'#3a3a2a');for(let x=0;x<320;x+=40){r(x,0,2,152,'#2a2a1c');for(let y=10;y<152;y+=36)r(x+4,y,2,2,P.LG);}r(0,152,320,28,'#55553a');r(0,152,320,2,P.Y);}
+function sign(x,y,w,lines,c){const h=lines.length*7+5;r(x+w/2-1,y+h,3,162-y-h,P.BR);r(x-2,y-2,w+4,h+4,P.BR);r(x,y,w,h,P.W);lines.forEach((l,i)=>txt(l,x+Math.floor((w-l.length*4)/2)+1,y+3+i*7,i===0?(c||P.R):P.K));}
+function cab(x,y,c,label,on){r(x-14,y-62,28,62,c);r(x-14,y-66,28,6,P.Y);txt(label,x-Math.floor(label.length*2),y-65,P.K);r(x-11,y-54,22,18,P.K);
+  if(on!==false){const g=rnd(x+Math.floor(T*4));for(let i=0;i<8;i++)r(x-10+g()*19,y-53+g()*15,2,2,[P.LGR,P.LR,P.Y,P.LC][i%4]);}
+  r(x-13,y-33,26,6,P.DG);r(x-6,y-37,2,5,P.LG);disc(x-5,y-38,2,P.R);r(x+3,y-32,3,2,P.LR);r(x+8,y-32,3,2,P.LB);r(x-3,y-20,6,8,P.K);r(x-1,y-18,2,4,P.Y);}
+function sockPic(x,y){r(x,y,4,8,P.W);r(x,y+6,8,4,P.W);r(x,y,4,2,P.LR);r(x+5,y+8,3,2,P.LR);}
+function cow(x,y){ell(x,y-16,20,11,P.W);disc(x-8,y-18,5,P.K);disc(x+6,y-12,4,P.K);r(x-14,y-7,4,7,P.W);r(x+8,y-7,4,7,P.W);r(x-14,y-1,4,1,P.K);r(x+8,y-1,4,1,P.K);
+  r(x+16,y-34,12,13,P.W);r(x+18,y-24,10,5,'#ffbbbb');r(x+20,y-22,1,1,P.K);r(x+25,y-22,1,1,P.K);r(x+18,y-31,2,2,P.K);r(x+24,y-31,2,2,P.K);r(x+14,y-37,3,4,'#ddddaa');r(x+27,y-37,3,4,'#ddddaa');
+  r(x+20,y-20,5,5,P.Y);r(x-22,y-22,3,12,P.W);r(x-23,y-11,4,3,P.K);}
+function hamster(x,y){ell(x,y-7,8,7,'#d9a050');ell(x,y-5,5,4,'#fff0d0');r(x-6,y-16,3,3,'#d9a050');r(x+3,y-16,3,3,'#d9a050');r(x-3,y-10,2,2,P.K);r(x+2,y-10,2,2,P.K);r(x,y-7,1,1,P.LR);r(x+8,y-8,5,6,P.W);r(x+13,y-7,2,3,P.W);r(x+9,y-11,1,2,P.LG);}
+function pom(x,y){disc(x,y-8,8,'#ffaa44');disc(x,y-8,6,'#ffcc77');r(x-3,y-10,2,2,P.K);r(x+2,y-10,2,2,P.K);r(x-1,y-6,2,2,P.K);r(x-6,y-16,3,3,'#ffaa44');r(x+4,y-16,3,3,'#ffaa44');r(x-6,y-20,13,3,P.B);r(x-3,y-23,7,3,P.B);r(x,y-22,2,1,P.Y);}
+function dragonlet(x,y){ell(x,y-9,8,9,P.G);ell(x,y-6,5,5,P.LGR);disc(x+2,y-22,6,P.G);r(x+6,y-22,6,4,P.G);r(x+10,y-23,1,1,P.K);r(x+3,y-25,2,2,P.W);r(x+4,y-25,1,2,P.K);r(x-2,y-30,2,4,P.Y);r(x+3,y-30,2,4,P.Y);
+  r(x-13,y-18,6,8,'#008800');r(x-12,y-4,5,2,P.G);r(x-16,y-3,5,2,P.G);r(x+8,y-12,8,10,'#ffffcc');r(x+9,y-10,6,1,P.K);r(x+9,y-7,5,1,P.K);r(x+9,y-4,6,1,P.K);r(x+7,y-18,1,8,P.W);r(x+6,y-21,3,4,P.LR);}
+function dino(x,y,nap){if(nap){ell(x,y-12,40,12,P.G);ell(x,y-8,28,6,P.LGR);disc(x+40,y-10,11,P.G);r(x+42,y-12,6,1,P.K);r(x+48,y-6,4,2,P.K);r(x-52,y-10,16,6,P.G);const k=Math.floor(T*1.3)%3;txt('Z',x+54+k*3,y-28-k*5,P.W);return;}
+  r(x-46,y-18,22,10,P.G);r(x-58,y-12,14,6,P.G);ell(x,y-34,28,34,P.G);ell(x+4,y-26,17,24,P.LGR);r(x-14,y-6,12,6,P.G);r(x+8,y-6,12,6,P.G);
+  ell(x+22,y-78,20,14,P.G);r(x+22,y-74,24,10,P.G);r(x+26,y-66,18,2,P.W);r(x+24,y-86,5,5,P.W);r(x+26,y-85,2,3,P.K);r(x+40,y-76,2,2,'#006600');r(x+22,y-92,8,2,'#006600');
+  r(x+22,y-50,10,3,P.G);r(x+30,y-50,2,5,P.G);r(x+20,y-42,9,3,P.G);r(x+27,y-42,2,5,P.G);for(let i=0;i<5;i++)r(x-20+i*8,y-66+Math.abs(i-2)*3,4,5,'#006600');}
+function gold(x,y,w){const g=rnd(x);for(let i=0;i<w;i++){const px=x+g()*w,py=y-g()*(14-Math.abs(px-x-w/2)*24/w);r(px,py,3,2,i%3?P.Y:'#ccaa00');}r(x,y,w,3,'#ccaa00');}
+function robot(x,y,c,eye){r(x-8,y-30,16,22,c);r(x-6,y-44,12,12,P.LG);r(x-4,y-40,3,3,eye||P.LR);r(x+1,y-40,3,3,eye||P.LR);r(x,y-48,1,4,P.LG);disc(x,y-49,1,P.Y);r(x-11,y-28,3,14,P.LG);r(x+8,y-28,3,14,P.LG);r(x-6,y-8,4,8,P.DG);r(x+2,y-8,4,8,P.DG);r(x-4,y-24,8,6,P.K);}
+function mini9000(x,y){r(x-12,y-56,24,56,'#ccaa00');r(x-9,y-50,14,26,P.K);r(x-7,y-46,3,3,P.LR);r(x-1,y-46,3,3,P.LR);r(x-7,y-36,10,2,P.LR);r(x+7,y-48,3,12,P.DG);r(x-8,y-16,14,6,P.K);r(x-7,y-64,14,8,P.W);r(x-9,y-67,18,5,P.W);}
+function bigShip(x,y){ell(x,y-14,40,14,P.LG);ell(x,y-16,37,11,'#cccccc');r(x-40,y-16,80,2,P.R);r(x-14,y-28,28,10,P.LC);r(x-12,y-26,6,6,P.O);r(x+2,y-26,6,6,'#f8f0e0');txt('OVEREASY',x-16,y-12,P.B);r(x-46,y-30,10,14,P.R);}
+
+Object.assign(ART,{
+rec(F,has){room('#4a3a5a','#3c2e4a','#3a3040',P.LM);doorL(P.B,'ENGINE');doorR(P.B,'GALLEY');
+  r(36,134,82,22,'#8855aa');r(36,122,82,14,'#9966bb');r(36,128,8,28,'#774499');r(110,128,8,28,'#774499');r(52,128,22,8,'#aa77cc');r(80,128,22,8,'#aa77cc');
+  cab(150,162,P.R,'FLY');
+  disc(211,80,13,P.W);disc(211,80,10,P.R);disc(211,80,6,P.W);disc(211,80,2,P.R);r(218,72,6,1,P.Y);r(204,88,5,1,P.LB);
+  r(238,116,34,40,'#553311');r(240,108,30,12,'#774422');r(236,130,6,26,'#553311');r(268,130,6,26,'#553311');r(244,150,22,4,P.K);r(272,124,6,8,P.LG);r(273,126,4,2,P.LR);txt('RELAX',245,100,P.Y);},
+engine(F,has){room('#2a2a2a','#1c1c1c','#333333',P.O);doorR(P.B,'REC');r(0,20,320,5,P.BR);r(40,25,5,40,P.BR);
+  disc(120,104,46,P.DG);disc(120,104,42,'#1c1c1c');for(let i=0;i<8;i++){const a=i*0.785;for(let d=0;d<42;d+=3)r(120+Math.cos(a)*d,104+Math.sin(a)*d,2,2,P.LG);}disc(120,104,5,P.LG);r(112,150,16,12,P.DG);
+  hamster(188,162);
+  r(220,120,6,42,P.LG);r(214,100,18,22,P.R);disc(223,98,5,P.LR);r(208,72,32,22,P.Y);txt('DO NOT',212,75,P.K);txt('PULL',216,83,P.R);
+  r(250,144,34,18,P.R);r(250,144,34,3,P.LR);r(262,140,10,4,P.LG);r(256,150,4,3,P.Y);
+  const st=Math.floor(T*3)%4;r(46+st,60-st*3,3,3,P.LG);},
+dome(F,has){r(0,0,320,180,P.K);starfield(0,0,320,150,110,91);disc(262,36,9,P.Y);disc(284,50,5,'#ffddaa');
+  for(let i=0;i<7;i++){const x=20+i*46;for(let y=0;y<150;y+=3)r(x+Math.round((y-75)*(i-3)*0.02),y,1,2,'#334466');}for(let y=30;y<150;y+=40)r(0,y,320,1,'#334466');
+  r(0,150,320,30,'#2c3548');r(0,150,320,2,P.LC);r(16,150,36,8,P.K);r(18,152,32,2,P.DG);r(24,154,3,4,P.LG);r(40,154,3,4,P.LG);
+  r(56,70,50,50,P.BR);r(58,72,46,46,'#112244');const g=rnd(3);for(let i=0;i<12;i++)r(60+g()*42,74+g()*42,1,1,P.W);disc(70,84,2,P.Y);disc(92,104,2,'#b9a9c9');txt('SNACKS',68,110,P.LR);
+  r(152,140,4,22,P.LG);r(142,160,24,3,P.DG);for(let i=0;i<30;i++)r(140+i,132-i*1.3,8,8,P.LG);r(166,90,12,10,P.LC);r(138,132,8,10,P.DG);
+  ell(254,154,22,10,'#aa3355');ell(254,150,18,7,'#cc4477');},
+maze1(F,has){cornWall();r(102,96,3,66,P.BR);[[88,86,'THIS WAY'],[86,96,'THIS WAY'],[90,106,'THIS WAY'],[84,116,'NOT THIS']].forEach((s,i)=>{r(s[0]-2,s[1]-1,36,7,i===3?P.LR:P.W);txt(s[2],s[0],s[1],P.K);});
+  turkey(200,162,false);r(190,128,8,6,P.K);r(192,130,4,3,P.LC);r(205,106,12,3,P.LM);
+  r(238,90,30,62,'#103008');r(244,110,18,42,'#081c04');},
+maze2(F,has){cornWall();cow(160,162);r(220,60,50,70,'#008800');r(232,84,22,30,'#c8a030');r(232,84,22,2,P.G);r(238,82,3,4,P.G);r(248,82,3,4,P.G);
+  if(Math.floor(T)%3===0)txt('MOO',196,116,P.W);},
+geyser(F,has){cornSky();cornRows(92,30,15);r(0,120,320,60,'#c8a030');
+  [[84,162,1],[36,150,0.6],[200,134,0.5]].forEach((q,i)=>{const s=q[2];ell(q[0],q[1],22*s,5*s,'#a88420');ell(q[0],q[1]-1,10*s,2*s,P.K);
+    const ph=(T+i*1.3)%4;if(ph<1.2){const h=Math.sin(ph/1.2*3.14)*70*s;const g=rnd(i+3);for(let k=0;k<26;k++){const px=q[0]+(g()-0.5)*30*s*(0.3+ph),py=q[1]-g()*h;disc(px,py,2,k%3?P.W:'#ffffaa');}}});
+  ell(220,152,30,8,'#ccaa00');ell(220,151,26,5,P.Y);r(206,148,8,1,'#ffffaa');
+  r(258,146,42,4,P.BR);r(262,150,3,12,P.BR);r(293,150,3,12,P.BR);r(258,132,42,3,P.BR);r(260,135,3,12,P.BR);r(295,135,3,12,P.BR);
+  if(!F('sock_geyser'))sockPic(274,136);},
+lostfound(F,has){room('#7a6a4a','#6a5a3c','#9a8a6a',P.BR);doorL('#aaddcc');
+  r(190,40,100,3,P.BR);r(190,70,100,3,P.BR);r(190,100,100,3,P.BR);
+  [[196,28,P.LR],[210,30,P.LB],[226,26,P.Y],[244,32,P.LGR],[262,29,P.LM],[200,58,P.W],[218,60,P.O],[240,56,P.LC],[266,60,P.LR],[204,88,P.LG],[228,90,P.Y],[256,86,P.LB]].forEach(b=>r(b[0],b[1],10,b[1]<40?12:b[1]<70?12:14,b[2]));
+  r(110,126,80,36,P.BR);r(108,122,84,5,'#cc8833');r(146,96,8,28,'#cc9966');ell(150,90,9,10,P.W);r(142,92,16,4,P.LR);disc(146,86,2,P.K);disc(154,86,2,P.K);r(145,96,10,2,P.K);
+  r(60,100,24,62,P.DG);r(63,104,18,12,P.K);txt('3',70,107,P.LR);r(66,124,12,6,P.W);txt('NOW',62,92,P.W);
+  r(250,134,40,28,P.LB);r(248,132,44,4,P.B);if(!F('sock_lostfound'))sockPic(266,124);r(256,128,6,6,P.Y);r(278,126,6,8,P.LM);},
+canyon(F,has){r(0,0,320,180,'#f5b8d0');r(0,0,70,180,'#a898b8');r(250,0,70,180,'#a898b8');r(60,0,14,180,'#b8a8c8');r(246,0,14,180,'#b8a8c8');r(0,160,320,20,'#c8bcd8');
+  for(let k=0;k<3;k++){const y0=30+k*28;for(let x=70;x<250;x+=2)r(x,y0+Math.round(7*Math.sin(3.14*(x-70)/180)),2,1,P.W);}
+  r(112,44,66,34,P.W);r(112,44,66,5,P.LR);r(112,70,26,22,P.W);r(152,70,26,22,P.W);[[124,56],[146,60],[164,54],[130,78],[160,82]].forEach(h=>{r(h[0],h[1],2,2,P.LR);r(h[0]+3,h[1],2,2,P.LR);r(h[0]+1,h[1]+2,3,2,P.LR);});
+  r(196,66,20,26,P.LB);r(190,66,6,10,P.LB);r(216,66,6,10,P.LB);r(84,36,12,22,P.Y);
+  r(50,64,3,40,P.DG);r(44,100,15,4,P.R);r(40,60,24,3,P.LG);
+  if(!F('sock_canyon'))sockPic(240,54);r(130,164,60,3,'#b0a0c0');},
+park(F,has){room('#39445a','#2c3548','#22882a',P.LGR);doorL(P.B,'MESS');doorR(P.B,'BOSS');for(let x=6;x<320;x+=9)r(x,154+(x*7)%20,1,3,'#33aa3a');
+  r(80,90,10,72,P.BR);disc(85,70,28,P.G);disc(70,62,14,P.LGR);disc(98,76,12,'#008800');
+  if(Math.floor(T*6)%5){disc(104,96,5,'#cc8844');r(108,90,4,8,'#cc8844');r(101,94,2,2,P.K);}X.globalAlpha=0.3;r(98,86,16,16,P.LC);X.globalAlpha=1;
+  r(140,140,32,22,P.R);r(150,118,12,24,P.LG);r(148,114,16,5,P.DG);disc(156,146,4,P.LGR);txt('FETCH',144,154,P.W);
+  r(198,150,64,12,P.BR);r(200,148,60,6,'#e8d090');if(!F('sock_park')){r(226,146,4,3,P.W);r(226,146,4,1,P.LR);}r(244,144,4,6,P.LR);},
+office(F,has){room('#6a4a2a','#5a3c20','#884422',P.Y);doorL(P.B,'PARK');
+  [[44,44],[62,44],[80,44],[98,44],[44,66],[62,66],[80,66],[98,66]].forEach((m,i)=>{r(m[0]+3,m[1],4,6,[P.LR,P.LB,P.LGR,P.Y][i%4]);disc(m[0]+5,m[1]+10,4,P.Y);});
+  r(150,84,50,78,'#aa0000');r(154,88,42,40,P.R);pom(175,140);r(120,140,110,6,'#442200');r(126,146,6,16,'#442200');r(218,146,6,16,'#442200');r(132,134,14,6,P.W);r(206,130,8,10,P.R);
+  r(230,90,60,3,P.BR);disc(240,84,5,P.LGR);r(252,80,8,10,P.LR);disc(270,84,5,P.Y);r(280,78,6,12,P.LM);r(230,60,60,3,P.BR);disc(244,54,5,P.LC);r(262,50,10,10,P.O);},
+yarn(F,has){r(0,0,320,180,'#2a1840');for(let i=0;i<9;i++)ell(20+i*38,(i%2)*8,22,14,'#3a2458');r(0,152,320,28,'#4a3a66');r(0,100,20,64,P.K);r(300,100,20,64,P.K);
+  const gl=Math.floor(T*3)%2;X.globalAlpha=0.2;disc(202,112,gl?52:50,P.LM);X.globalAlpha=1;disc(202,114,44,'#cc3388');disc(202,114,40,P.LM);
+  for(let i=0;i<9;i++){const a=i*0.7;for(let d=-38;d<38;d+=2)r(202+Math.cos(a)*d-Math.sin(a)*(i*4-16),114+Math.sin(a)*d+Math.cos(a)*(i*4-16),1,1,'#ff99dd');}
+  for(let x=20;x<170;x+=2)r(x,150+Math.round(Math.sin(x*0.2)*3),2,1,P.LM);
+  cat(260,162,'#888888',{});cat(284,162,P.W,{f:-1});
+  if(F('untangled')){chicken(110,162,{body:'#ccaa77',belly:'#eeddaa',wing:'#aa8855',brow:P.K});}
+  else{chicken(110,150,{body:'#ccaa77',belly:'#eeddaa',wing:'#aa8855',brow:P.K});for(let i=0;i<6;i++)r(94,108+i*7,34,2,P.LM);r(110,60,1,50,P.LM);}},
+nap(F,has){moonBg(55);const g=rnd(12),cc=['#888888','#444444',P.W,'#cc8844',P.O,P.K];
+  for(let i=0;i<26;i++){const x=10+g()*300,y=124+g()*20;ell(x,y,7,3,cc[i%6]);disc(x+6,y-1,3,cc[i%6]);}
+  X.globalAlpha=0.15;r(40,0,60,162,P.Y);r(200,0,80,162,P.Y);X.globalAlpha=1;
+  r(50,146,70,14,P.LG);for(let i=0;i<10;i++)r(53+i*6.5,148,5,4,P.W);for(let i=0;i<9;i++)r(56+i*6.5,154,5,4,P.W);cat(84,146,'#cc8844',{stripe:'#885522'});
+  r(160,110,20,52,'#aaaabc');r(156,106,28,6,'#ccccdd');cat(170,106,P.W,{s:1,eye:P.LC});
+  r(236,134,18,28,P.LG);r(232,130,26,5,P.W);r(238,114,14,16,P.DG);disc(245,110,5,P.R);r(240,120,10,4,P.LG);txt('DINNER',233,138,P.K);},
+ruins(F,has){r(0,0,320,180,'#5a2e0c');for(let x=0;x<320;x+=26)mapleTop(x+8,8+(x*7)%9,12);r(0,152,320,28,'#8a5a20');r(0,100,20,64,'#3e1e06');
+  r(30,30,270,122,'#d9a050');for(let x=30;x<300;x+=30)for(let y=30;y<150;y+=30){r(x+3,y+3,24,24,'#c08030');r(x+5,y+5,20,20,'#aa6a20');}
+  r(120,130,36,32,P.LG);r(116,126,44,5,P.W);chicken(138,126,{body:P.LG,belly:'#bbbbbb',wing:P.DG,comb:P.DG,beak:P.DG,brow:P.DG,hat:'chef'});
+  r(40,90,36,52,'#888877');r(42,92,32,48,'#aaaa99');for(let i=0;i<6;i++)r(46,98+i*6,24-(i%3)*4,1,P.DG);
+  r(190,150,52,14,'#aa6a20');r(192,152,48,10,'#aa5500');r(196,154,14,1,'#ffb030');
+  r(258,150,26,12,P.LG);ell(271,148,14,4,P.W);if(!F('sock_ruins'))sockPic(266,138);},
+lobby(F,has){room('#32284c','#2a2040','#5a5070',P.Y);doorL(P.B,'ARENA');
+  r(150,60,6,102,P.LG);r(144,40,3,26,P.LG);r(149,40,3,26,P.LG);r(154,40,3,26,P.LG);r(159,40,3,26,P.LG);r(144,62,18,6,P.LG);
+  r(172,60,5,102,P.LG);r(170,36,9,30,P.W);r(140,160,44,4,P.DG);
+  r(40,110,60,52,P.R);r(40,96,60,14,P.Y);txt('GIFT SHOP',52,101,P.K);r(46,116,12,12,P.W);r(62,116,12,12,P.LC);r(78,116,12,12,P.LM);robot(70,160,'#ccaa00',P.LGR);
+  robot(250,162,P.LB,P.LC);r(262,134,2,28,P.BR);r(258,158,10,5,'#dddddd');ell(280,164,14,2,P.LC);},
+arcfront(F,has){r(0,0,320,180,P.K);starfield(0,0,320,150,80,101);r(0,150,320,30,'#3a3040');ell(160,152,170,6,'#4a4058');
+  shuttle(38,162);r(150,30,170,122,'#1c1430');r(150,30,170,3,P.LM);const fl=Math.floor(T*5)%7!==0;r(176,40,116,16,P.K);txt('THE LAST ARCADE',204,46,fl?P.LM:P.DG);r(176,40,116,1,fl?P.LC:P.DG);r(176,55,116,1,fl?P.LC:P.DG);
+  r(300,86,20,78,P.LM);r(302,90,18,74,P.K);
+  ell(122,156,22,7,P.LG);ell(122,154,18,4,P.Y);r(120,134,4,20,P.LG);const g=rnd(Math.floor(T*3));for(let i=0;i<5;i++)r(112+g()*20,138+g()*12,2,2,P.Y);
+  r(178,92,3,70,P.W);for(let i=0;i<7;i++)r(178,96+i*10,8,1,P.R);r(170,84,24,10,P.Y);txt('TALL?',172,87,P.K);
+  robot(242,162,'#aa0000',P.Y);r(232,116,20,4,P.K);},
+arcfloor(F,has){r(0,0,320,152,'#1c1430');const g=rnd(9);for(let i=0;i<40;i++)r(g()*320,g()*150,2,1,[P.LM,P.LC,P.Y][i%3]);r(0,152,320,28,'#2a1040');for(let i=0;i<30;i++)r(g()*320,154+g()*24,3,1,[P.LM,P.LC,P.Y,P.LGR][i%4]);
+  doorL(P.K);doorR(P.K,'PRIZES');cab(72,162,P.G,'INVADE');cab(122,162,P.O,'CATCH');
+  r(168,84,44,78,P.LM);r(172,88,36,44,'#223344');r(189,88,2,10+Math.round(Math.sin(T*2)*4),P.LG);r(185,98+Math.round(Math.sin(T*2)*4),10,4,P.LG);
+  disc(180,124,5,P.Y);disc(192,126,5,P.LR);disc(202,122,5,P.LGR);r(174,138,32,8,P.K);r(196,148,8,8,P.R);
+  cab(272,162,P.B,'????');sixtyseven(250,162);},
+prize(F,has){room('#402050','#341844','#5a3a6a',P.LM);doorL(P.K);doorR(P.K,'STAFF');
+  r(180,30,104,3,P.LG);r(180,58,104,3,P.LG);r(180,86,104,3,P.LG);
+  if(!F('gotQ1')){disc(196,20,7,'#ccaa00');disc(196,20,5,P.Y);txt('67',190,34,P.W);}
+  r(216,8,22,22,'#ccaa00');r(220,12,12,10,P.K);txt('9M',222,34,P.W);r(250,14,20,14,P.LR);r(190,42,14,14,P.LB);r(214,44,10,12,P.LGR);r(236,40,18,16,P.LM);r(264,46,12,10,P.Y);r(194,72,8,12,P.O);r(212,74,20,10,P.LC);r(244,70,10,14,P.W);r(266,74,14,10,P.LR);
+  r(100,126,110,36,'#553366');r(98,122,114,5,P.LM);X.globalAlpha=0.3;r(104,130,102,20,P.LC);X.globalAlpha=1;
+  const b=Math.round(Math.sin(T*1.6)*2);ell(150,96+b,11,13,P.LC);r(141,84+b,18,5,P.R);r(152,86+b,10,2,P.R);r(144,94+b,4,2,P.K);r(153,94+b,4,2,P.K);r(146,104+b,8,1,P.K);
+  r(44,100,30,62,P.G);r(48,106,22,10,P.K);r(50,122,18,3,P.K);txt('FEED ME',46,94,P.W);},
+backroom(F,has){room('#2a2a2a','#202020','#3a3a3a',P.DG);doorL(P.K);
+  cab(86,162,P.DG,'DOT',false);r(85,118,2,2,P.W);
+  cab(166,162,P.LB,'SPATULA',false);r(157,110,18,14,'#1c1430');r(164,116,5,7,P.O);r(165,114,3,3,P.W);r(161,117,2,5,P.W);
+  r(220,130,30,32,P.BR);r(246,120,34,42,'#885522');r(224,112,24,18,'#996633');r(222,146,26,1,'#553311');if(!F('sock_backroom'))sockPic(256,110);
+  const g=rnd(4);for(let i=0;i<10;i++)r(g()*320,20+g()*120+((T*4)%20),1,1,P.DG);},
+cfield(F,has){r(0,0,320,120,'#223a4a');starfield(0,0,320,60,30,111);r(0,60,320,60,'#335566');r(0,120,320,60,'#6a7a5a');ell(160,122,170,6,'#7a8a6a');
+  shuttle(38,162);ell(128,158,20,5,'#55664a');ell(128,157,16,4,P.W);r(120,155,16,2,P.R);r(127,152,2,8,P.R);ell(70,136,10,2,'#55664a');
+  disc(182,154,6,P.W);r(186,150,5,4,P.W);r(190,151,4,2,P.O);r(187,150,1,1,P.K);r(178,160,3,2,P.O);r(184,160,3,2,P.O);
+  sign(214,90,40,['NO HELMET','NO','CANNON']);
+  for(let x=262;x<320;x+=8){r(x,120,2,44,P.BR);}r(262,128,58,2,P.BR);r(262,146,58,2,P.BR);
+  if(!F('gotHelmet'))robot(280,162,P.Y,P.LR);},
+cgun(F,has){r(0,0,320,120,'#223a4a');starfield(0,0,320,60,30,112);r(0,60,320,60,'#335566');r(0,120,320,60,'#6a7a5a');
+  for(let i=0;i<46;i++)r(132+i*2,118-i*1.7,26,26,i%8===0?'#555555':'#333333');r(222,36,30,30,P.K);r(226,40,22,22,'#111111');
+  disc(150,146,18,P.BR);disc(150,146,13,'#6a3500');disc(150,146,3,P.LG);disc(196,150,14,P.BR);disc(196,150,9,'#6a3500');
+  r(214,124,24,40,P.R);r(218,130,16,10,P.K);r(224,144,4,8,P.K);if(!F('gotQ2'))r(224,143,4,3,P.Y);txt('RIDES',217,118,P.W);
+  chicken(92,164,{body:'#cc8844',belly:'#eebb88',wing:'#aa6622',glasses:true,brow:P.K});r(96,124,10,2,P.K);},
+chut(F,has){room('#5a4a3a','#4a3c2e','#6a5a4a',P.BR);doorL(P.B,'CANNON');
+  r(56,56,68,68,P.DG);disc(90,90,26,P.LG);disc(90,90,22,P.W);const a=T*0.7;for(let d=0;d<20;d+=2)r(90+Math.cos(a)*d,90+Math.sin(a)*d,2,2,P.R);txt('WHERE TO',72,128,P.W);
+  r(150,56,40,40,P.W);r(150,56,40,8,P.R);txt('DAYS',160,68,P.K);txt('SINCE',158,75,P.K);txt('0',168,84,P.R);
+  r(220,128,50,34,P.BR);r(220,128,50,4,'#cc8833');txt('CHICKEN',226,138,P.K);txt('INSIDE',228,145,P.K);txt('MAYBE',230,152,P.R);},
+cgate(F,has){r(0,0,320,152,'#3355aa');r(0,90,320,62,'#5577cc');disc(50,30,10,P.W);r(0,152,320,28,'#448844');
+  r(150,30,170,122,'#888899');for(let y=30;y<152;y+=12)r(150,y,170,1,'#666677');for(let x=150;x<320;x+=20)r(x,22,12,10,'#888899');
+  r(200,10,40,142,'#777788');for(let x=200;x<240;x+=12)r(x,2,8,10,'#777788');r(214,40,10,16,P.K);r(238,44,26,4,P.BR);r(242,48,18,26,P.R);disc(251,60,4,P.Y);
+  r(262,86,58,78,P.K);r(266,92,54,72,'#332211');r(248,160,72,6,P.BR);
+  r(92,166,64,14,'#8a5a20');r(96,168,56,10,'#aa7733');r(104,170,10,1,'#cc9955');r(128,173,12,1,'#cc9955');
+  shuttle(38,160);chicken(196,162,{body:P.LG,belly:'#cccccc',wing:P.DG,hat:'helm',blink:true});const k=Math.floor(T*1.3)%3;txt('Z',214+k*3,112-k*5,P.W);},
+yard(F,has){stone('#888899','#666677');r(0,100,20,64,P.K);r(300,100,20,64,'#448844');
+  r(70,150,44,8,P.BR);disc(78,160,5,P.BR);disc(106,160,5,P.BR);r(90,120,4,32,P.BR);for(let i=0;i<24;i++)r(92-i*1.2,122-i*1.1,5,4,P.BR);r(58,92,12,8,P.BR);ell(64,90,5,6,P.W);
+  chicken(152,164,{body:P.LG,belly:'#cccccc',wing:P.DG,hat:'helm'});r(166,130,2,34,P.BR);r(164,124,6,8,P.LG);
+  r(212,150,18,12,P.BR);dragonlet(222,150);
+  r(254,120,30,44,P.K);r(256,124,26,40,'#221100');for(let i=0;i<4;i++)r(256,150-i*7,26-i*5,2,'#666677');txt('GIFTS',260,112,P.Y);},
+dino(F,has){r(0,0,320,120,'#3355aa');r(0,80,320,40,'#5577cc');r(0,60,60,60,'#888899');for(let x=0;x<60;x+=20)r(x,52,12,10,'#888899');r(0,120,320,60,'#448844');r(0,100,20,64,P.K);
+  [[46,156],[70,164],[120,170],[280,160]].forEach(e=>{ell(e[0],e[1],7,2,P.W);disc(e[0],e[1],2,P.Y);});
+  gold(190,160,70);if(!F('gotQ3')&&F('dinoFed')){disc(226,144,5,'#ccaa00');disc(226,144,3,P.Y);}
+  if(F('dinoFed'))dino(104,162,true);else dino(212,150,false);},
+dungeon(F,has){stone('#555566','#3a3a4a');for(let i=0;i<5;i++)r(10+i*4,150-i*12,30-i*4,12,'#777788');r(14,84,24,10,P.K);
+  r(60,60,70,3,P.BR);r(60,92,70,3,P.BR);r(66,46,12,14,P.W);r(84,48,10,12,P.LR);r(100,44,14,16,P.LC);r(68,76,16,16,P.Y);r(92,80,10,12,P.LM);r(110,78,12,14,P.LGR);txt('GIFT SHOP',64,34,P.Y);
+  r(158,150,18,12,P.BR);disc(167,118,6,P.W);r(164,117,2,2,P.K);r(168,117,2,2,P.K);r(165,122,4,1,P.K);r(166,124,2,22,P.W);for(let i=0;i<4;i++)r(160,128+i*4,14,1,P.W);r(160,146,4,10,P.W);r(170,146,4,10,P.W);
+  r(214,100,4,62,P.BR);r(206,160,20,3,P.DG);const w=Math.round(Math.sin(T*6)*3);r(218,104,20,2,P.BR);r(236+w,96,3,10,P.LM);r(234+w,92,7,5,P.W);txt('TICKLER',204,88,P.W);
+  r(262,146,30,16,P.BR);if(!F('sock_dungeon'))sockPic(272,136);
+  r(46,20,3,10,P.BR);disc(47,18,3,Math.floor(T*8)%2?P.Y:P.O);r(286,20,3,10,P.BR);disc(287,18,3,Math.floor(T*8+1)%2?P.Y:P.O);},
+slotp(F,has){r(0,0,320,180,P.K);starfield(0,0,320,60,40,121);r(0,40,320,112,'#ccaa00');for(let x=0;x<320;x+=40)r(x,40,2,112,'#aa8800');r(0,152,320,28,'#55553a');r(0,152,320,2,P.Y);
+  shuttle(38,162);r(96,130,40,32,P.DG);r(100,134,32,24,P.K);r(100,134,32,4,P.LG);txt('RETURN',104,124,P.K);
+  r(166,50,44,100,'#aa8800');r(170,54,36,92,'#ffdd55');r(184,62,8,76,P.K);txt('COINS',178,44,P.K);
+  [F('inQ1'),F('inQ2'),F('inQ3')].forEach((on,i)=>{disc(176+i*12,142,3,on?P.LGR:P.DG);});
+  r(226,60,40,40,P.Y);r(226,60,40,6,'#ffffaa');txt('OUT OF',232,72,P.K);txt('SNACKS?',230,80,P.K);txt('NEVER',234,88,P.R);
+  r(300,86,20,78,'#aa8800');r(302,90,18,74,P.K);},
+shelf(F,has){vendBg();r(0,100,20,64,P.K);r(300,100,20,64,P.K);r(0,118,320,4,P.LG);r(0,30,320,4,P.LG);
+  r(30,40,68,112,P.R);r(30,40,68,10,P.W);r(36,60,56,30,P.Y);txt('CORN',52,66,P.R);txt('CHIPS',50,74,P.R);txt('0 CORN',48,96,P.W);r(30,144,68,8,P.W);
+  if(!F('freed')){bigShip(156,112);for(let i=0;i<6;i++){for(let a=0;a<6.3;a+=0.3)r(120+i*14+Math.cos(a)*5,96+Math.sin(a)*22,1,2,P.LG);}r(140,122,30,10,P.W);txt('B4',150,125,P.K);}
+  else{r(140,122,30,10,P.W);txt('SOLD',148,125,P.R);}
+  X.globalAlpha=0.75;ell(251,126,22,30,P.LGR);disc(251,84,14,P.LGR);disc(240,72,5,P.LGR);disc(262,72,5,P.LGR);r(226,112,8,16,P.LGR);r(268,112,8,16,P.LGR);X.globalAlpha=1;r(246,82,2,2,P.K);r(254,82,2,2,P.K);r(248,88,5,1,P.K);},
+coilr(F,has){vendBg();r(0,100,20,64,P.K);r(300,100,20,64,P.K);
+  for(let i=0;i<9;i++){const cx=100+i*15,ph=T*1.5;for(let a=0;a<6.3;a+=0.18){const z=Math.sin(a+ph+i);r(cx+Math.cos(a)*6+a,96+Math.sin(a)*44,2,2,z>0?P.W:P.DG);}}
+  r(236,138,50,22,'#885522');r(236,138,50,5,'#aa7733');txt('GRANOLA',240,146,P.W);txt('EXP 0000',238,153,P.Y);},
+panel(F,has){vendBg();r(0,100,20,64,P.K);r(300,100,20,64,P.K);
+  r(46,26,128,98,P.DG);r(50,30,120,90,P.K);const bl=Math.floor(T*0.8)%5===0;if(!bl){r(76,54,20,12,P.LR);r(124,54,20,12,P.LR);r(82,58,8,6,P.K);r(130,58,8,6,P.K);}else{r(76,60,20,2,P.LR);r(124,60,20,2,P.LR);}
+  r(86,90,48,6,P.LR);for(let i=0;i<6;i++)r(88+i*8,92,4,2,P.K);txt('MOTHER',98,34,P.LR);
+  r(200,70,70,80,P.DG);for(let i=0;i<12;i++){r(206+(i%3)*21,76+Math.floor(i/3)*18,16,13,P.LG);txt('ABCDEF123456'[i],212+(i%3)*21,80+Math.floor(i/3)*18,P.K);}},
+chute(F,has){vendBg();r(0,100,20,64,P.K);mini9000(62,162);
+  r(124,54,132,110,P.DG);
+  if(F('freed')){r(130,60,120,100,P.K);r(130,60,120,10,P.LG);bigShip(196,162);}
+  else{r(130,60,120,100,P.LG);r(130,60,120,3,P.W);txt('PUSH',180,104,P.K);if(F('vended')){r(150,150,80,10,P.K);r(160,152,60,6,'#cccccc');r(160,154,60,1,P.R);}}}
+});
+
+// ───────────────────────── WORLD DATA ─────────────────────────
+// Everything a planet needs except its picture lives here as plain data.
+// A step is either a line of dialogue ("WHO: text", N = narrator) or a command:
+//   {give:item} {take:item} {set:flag} {die:id} {map:true} {keypad:true} {fx:'shake'} {end:true}
+//   {if:cond, then:[...], else:[...]}     cond: "flag", "!flag", "has:item", or a list (all must hold)
+const ITEMS={
+  spatula:{name:'Spatula of Destiny',icon:'🍳'},
+  sock:{name:'Left Sock',icon:'🧦'},
+  slip:{name:'Permission Slip',icon:'📜'},
+  corn:{name:'Corn',icon:'🌽'},
+  lintball:{name:'Lint Ball',icon:'🧶'},
+  kernel:{name:'Cosmic Kernel',icon:'🌟'}
+};
+
+const DEATHS={
+  stew:{icon:'🍲',fx:'gulp',title:'Soup of the Day',text:"You tasted the stew. It was not from today. It was not from this month."},
+  vending:{icon:'🥤',fx:'squish',title:'Snack Attack',text:"The Snack-O-Tron fell on you. It always said it would crush the competition."},
+  airlock:{icon:'🚪',fx:'float',title:'Spaced Out',text:"You opened the airlock. Space came in. You went out. Fair trade."},
+  button:{icon:'🔴',fx:'float',title:'Do Not Press',text:"It was the ejector seat. You were not in the seat. Somehow that made it worse."},
+  cob:{icon:'🌽',fx:'pop',title:'Pop Goes the Chicken',text:"One giant sun-baked ear of corn, plus one peck, equals you, in orbit, lightly salted."},
+  turkey:{icon:'🦃',fx:'squish',title:'Fowl Play',text:"The entire Turkey Armada sat on you. In formation."},
+  popcorn:{icon:'🍿',fx:'pop',title:'Extra Butter',text:"The pedestal was booby-trapped. You are now popcorn chicken. The ancients thought that was hilarious."},
+  lint:{icon:'☁️',fx:'sink',title:'Lint Trap',text:"The dune was nine miles deep. You are very comfortable. You will be found in a thousand years, extremely fluffy."},
+  spin:{icon:'🌀',fx:'spin',title:'Spin Cycle',text:"Washed, rinsed, fluffed and folded. You have never been cleaner, or flatter."},
+  sock:{icon:'🧦',fx:'gulp',title:'Sock It To Me',text:"Sock Munch mistook you for a sock. An honest mistake. You are sock-sized, and you were carrying one."}
+};
+
+const INTRO=[
+  "INTERCOM: Attention, crew of the C.S.S. Overeasy. The Cosmic Kernel that powers our hyperdrive has... popped.",
+  "INTERCOM: We are stranded. We need one brave volunteer to fetch a new Kernel.",
+  "SCRATCHY: Not it.",
+  "PEARL: Not it!",
+  "N: Down in the galley, somebody had a mouthful of pancake batter.",
+  "INTERCOM: ...Would the cook please report to the bridge.",
+  "N: That's you. Waffles. Lunch Chicken, Third Class. There is no Fourth Class.",
+  "N: Tap anything to poke at it. Tap the floor to walk. You cannot get stuck, and getting fried is just a hobby."
+];
+
+const ENDING=[
+  "N: You sweep the popcorn aside and click the Cosmic Kernel into place.",
+  {take:'kernel'},{set:'fixed'},{fx:'win'},
+  "N: The hyperdrive hums. The lights come on. The bridge stops smelling like a movie theater.",
+  "SCRATCHY: I did it! I saved the ship! Pearl, take us somewhere nice.",
+  "PEARL: Jumping in three, two...",
+  "N: The ship leaps across the galaxy and stops, with a small polite ding, beside a space station shaped like a frying pan.",
+  "INTERCOM: Welcome, contestants, to the Great Galactic Cook-Off!",
+  "SCRATCHY: Ah. Yes. I may have entered us in that.",
+  "SCRATCHY: And bet the ship.",
+  "PEARL: You bet the SHIP?",
+  "SCRATCHY: I was very confident. We have a cook.",
+  "N: Everyone looks at you."
+];
+
+const FLIP_FALLBACK=[
+  "N: You try to flip it with the spatula. It is not a pancake. It does not flip.",
+  "N: Flipped. Well, poked. One more thing in the galaxy you have tried to flip. You are keeping count.",
+  "N: You slide the spatula under it and lift. Nothing. It is not done on that side yet."
+];
+const USE_FALLBACK=[
+  "N: That doesn't work. But it was a very confident try.",
+  "N: Nope. Good idea, though. Wrong, but good.",
+  "N: Nothing happens. The narrator is impressed you tried, and the narrator is not easily impressed."
+];
+const PECK_FALLBACK=["N: You peck it. Peck. Yep. That is a thing you have pecked now."];
+
+// First match wins. This is what the hint button says.
+const HINTS=[
+  ['!has:spatula',"A cook without a spatula is just a chicken in a kitchen. It is hanging right there."],
+  [['!has:slip','!turkeyPassed'],"The Captain is on the bridge. Captains love handing out paperwork."],
+  ['!shuttleOpen',"The shuttle hatch needs a code. The mechanic keeps telling you the code. Over and over."],
+  ['!seenCorn',"The shuttle is open. The Corn Moon is not going to visit itself."],
+  ['!turkeyPassed',"The Turkey Commander wants papers. You have exactly one paper."],
+  ['!scratched',"The floating head has an itch and no hands. You have a spatula and no shame."],
+  [['!gotLint','!has:sock','!fed'],"The galley fridge on the ship holds something that smells like dinner to a Sock Munch."],
+  [['!gotLint','!has:corn','!dryerRan'],"The Giant Dryer on Planet Lint only takes corn. There is a whole moon made of the stuff."],
+  [['!gotLint','!fed'],"Sock Munch is hungry. For socks. It is right there in his name."],
+  [['!gotLint','!dryerRan'],"Corn goes in the slot that says CORN ONLY. This one is on you."],
+  ['!gotLint',"The lint trap is full. Go on. Reach in."],
+  ['!gotKernel',"The pedestal must never be empty. One lint ball weighs exactly one Cosmic Kernel."],
+  ['!fixed',"Take the Cosmic Kernel to the hyperdrive on the bridge. It is under the popcorn."],
+  ['!gotPointer',"Pearl has a laser pointer for presentations. Nobody lets her present. Go and talk to her."],
+  [['!gotFlour','!has:corn'],"Flour starts out as corn. The Corn Moon landing field has plenty lying around."],
+  ['!gotFlour',"Corn needs stomping into flour. You know some turkeys who stomp in formation."],
+  ['!gotBall',"A kitten in Cat Crater has The Ball. Kittens will drop anything to chase a red dot."],
+  [['!gotCream','!gotJar'],"You will need something to carry cream in. The galley shelf has jars."],
+  [['!gotCream','!catNap','!gotTowel'],"The StarCat Guardian is cold. The Laundry Hound on Planet Lint has warm towels. Ask him."],
+  [['!gotCream','!catNap'],"Give the StarCat Guardian the warm towel."],
+  ['!gotCream',"The Guardian is asleep. Fill your jar at the fountain."],
+  ['!gotButter',"The hounds of the Canine Nebula will trade their butter for The Ball. Find Chef Biscuit."],
+  [['!gotSyrup','!jellyUp'],"In the Syrup Grove, a lonely jellyfish will follow a light. You have a light."],
+  ['!gotSyrup',"The jellyfish is your trampoline. Chip off a syrup-sicle with the spatula."],
+  ['!batter',"You have everything. Put all four ingredients on the griddle at the Frying Pan Station."],
+  ['!won',"The pancake is cooking. There is exactly one tool in the galaxy for flipping it."],
+  [null,"You are the champion. Go find new ways to get fried."]
+];
+
+// Where the shuttle can go.
+const MAP=[
+  {id:'ship',name:'C.S.S. Overeasy',icon:'🚀',screen:'corridor',x:240,again:"N: Home, sour home."},
+  {id:'corn',name:'The Corn Moon',icon:'🌽',screen:'cornfield',x:84,flag:'seenCorn',
+   first:["N: The Corn Moon. A whole moon of corn, as far as the eye can see.","N: For a chicken, this is either heaven or a very serious test."],again:"N: The Corn Moon. Still corn."},
+  {id:'lint',name:'Planet Lint',icon:'☁️',screen:'dunes',x:84,flag:'seenLint',
+   first:["N: Planet Lint. Soft. Gray. Quiet. It smells like a warm towel.","N: You have never felt so calm, or so itchy."],again:"N: Planet Lint. You are already covered in it."}
+];
+const MAP_SOON=[{name:'Your planet idea here',icon:'❓'}];
+
+const WORLD={screens:{
+
+galley:{world:'ship',name:'The Galley',floor:160,xs:[30,292],hotspots:[
+  {id:'pancakes',name:'Pancakes',x:20,y:120,w:60,h:40,at:96,
+   look:"N: A stack of pancakes. Your best work. Nobody came to lunch, on account of the emergency.",
+   peck:"N: You eat one. Chef's privilege."},
+  {id:'fridge',name:'Fridge',x:90,y:70,w:34,h:86,
+   look:"N: The galley fridge. The note on the door says: DO NOT EAT WAFFLES' LUNCH. You are Waffles. It is a confusing note.",
+   peck:[{if:'gotSock',then:"N: Just vegetables now. It still smells like the sock. It will always smell like the sock.",
+     else:["N: In the vegetable drawer: one sock. Left. Nobody has claimed it since launch. It has developed opinions.",{give:'sock'},{set:'gotSock'}]}]},
+  {id:'menu',name:'Menu Board',x:140,y:58,w:42,h:46,
+   look:"N: The menu. Monday: corn. Tuesday: corn. Wednesday: corn, but with a question mark. You like to keep them guessing."},
+  {id:'jars',name:'Spice Shelf',x:186,y:60,w:62,h:20,
+   look:"N: Jars of spices. Paprika, pepper, oregano, and one just labelled 'NO.'",
+   peck:[{if:'gotJar',then:"N: You already took a jar. Leave the one labelled NO. It is labelled.",
+     else:[{if:'act2',then:["N: You tip the oregano out of its jar. Nobody will miss the oregano. Everything is corn.",{give:'jar'},{set:'gotJar'}],
+       else:"N: You don't need a jar. Yet. The narrator has read ahead."}]}]},
+  {id:'spatula',name:'Spatula',x:200,y:88,w:14,h:60,when:'!has:spatula',
+   look:"N: A spatula. The handle says SPATULA OF DESTINY. The other side says 'dishwasher safe.'",
+   peck:["N: You take the spatula. Somewhere, a choir does not sing. Budget cuts.",{give:'spatula'}]},
+  {id:'stew',name:'Stew Pot',x:216,y:112,w:32,h:48,
+   look:"N: The stew of the day. Which day is no longer clear.",
+   peck:["N: A good cook always tastes the food.","N: You are about to find out whether you are a good cook.",{die:'stew'}]},
+  {id:'intercom',name:'Intercom',x:250,y:58,w:22,h:26,
+   look:"N: The intercom. It only ever announces bad news and complaints about lunch.",
+   peck:["INTERCOM: Please stop pecking the intercom.","N: It knows."]},
+  {id:'door',name:'Hallway',x:284,y:70,w:36,h:92,exit:{to:'corridor',x:40},dir:'right'}
+]},
+
+corridor:{world:'ship',name:'Main Hallway',floor:164,xs:[14,306],hotspots:[
+  {id:'galley',name:'Galley',x:0,y:76,w:26,h:88,exit:{to:'galley',x:270},dir:'left'},
+  {id:'portrait',name:'Portrait',x:38,y:58,w:32,h:38,
+   look:"N: A portrait of Captain Scratchy looking heroic. He painted it himself. You can tell, because he also framed it, hung it, and gave it an award."},
+  {id:'vending',name:'Snack-O-Tron',x:80,y:76,w:34,h:88,
+   look:"N: The Snack-O-Tron 3000. Your sworn enemy. The crew buys chips from it instead of eating your lunch.",
+   peck:["N: You give it a little shake. It gives a little wobble.","N: You give it a BIG shake.",{die:'vending'}]},
+  {id:'window',name:'Window',x:126,y:64,w:48,h:40,
+   look:"N: Space. Big. Dark. Needs dusting."},
+  {id:'airlock',name:'Airlock',x:184,y:74,w:36,h:90,
+   look:"N: The airlock. The sign says DO NOT OPEN. Below that, smaller: SERIOUSLY. Below that, in pencil: 'not again, Waffles.'",
+   peck:["N: You spin the big wheel. It's a really satisfying wheel.",{die:'airlock'}]},
+  {id:'sixtyseven',name:'Sixtyseven',x:226,y:100,w:20,h:64,
+   look:"N: Sixtyseven, the ship's mechanic. A thin, wispy alien who speaks only in numbers. Well. Two numbers.",
+   talk:["SIXTYSEVEN: Six. Seven.","N: You ask how his day is going.","SIXTYSEVEN: Six... seven.","N: You ask for the code to the shuttle hatch.","SIXTYSEVEN: SIX. SEVEN.","N: He is no help at all."],
+   peck:["N: You peck his wrench. He rates the peck.","SIXTYSEVEN: Six... seven.","N: You'll take that as a six point seven."],
+   use:{spatula:["SIXTYSEVEN: Six! Seven! Six! Seven!","N: He's ticklish."]}},
+  {id:'hatch',name:'Shuttle Hatch',x:250,y:78,w:38,h:86,
+   look:[{if:'shuttleOpen',then:"N: Your shuttle. It seats one cook and one spatula, in that order of importance.",
+     else:"N: The shuttle hatch. Locked with a two-digit keypad. If only somebody would tell you two digits."}],
+   peck:[{if:'shuttleOpen',then:[{map:true}],else:[{keypad:true}]}]},
+  {id:'bridge',name:'Bridge',x:296,y:76,w:24,h:88,exit:{to:'bridge',x:36},dir:'right'}
+]},
+
+bridge:{world:'ship',name:'The Bridge',floor:164,xs:[14,302],hotspots:[
+  {id:'hall',name:'Hallway',x:0,y:76,w:24,h:88,exit:{to:'corridor',x:284},dir:'left'},
+  {id:'viewscreen',name:'Viewscreen',x:66,y:16,w:188,h:68,
+   look:"N: The main viewscreen. It shows the vast, silent void, and a sticky note that says 'buy more Kernel.'"},
+  {id:'pearl',name:'Pearl',x:26,y:112,w:54,h:52,at:96,
+   look:"N: Pearl, the science officer. She is doing science very quickly so nobody can check it.",
+   talk:[{if:'act2',then:[{if:'gotPointer',then:"PEARL: Go! Cook! I'm calculating our odds. Do not ask what they are.",
+       else:["PEARL: You'll need this. My laser pointer. For presentations.",{give:'pointer'},{set:'gotPointer'},"PEARL: Nobody ever lets me present. Point it at something for me."]}],
+     else:["PEARL: I'd go myself, but I'm doing science. See? Beep. Boop. That's science.","N: Her screen says SOLITAIRE."]}],
+   peck:["PEARL: Hey! I'm a senior officer! Peck someone your own rank!","N: There is no one your own rank."],
+   use:{spatula:["PEARL: Careful! This console is very sensitive!","N: It is a card game."]}},
+  {id:'scratchy',name:'Captain Scratchy',x:134,y:96,w:48,h:66,at:118,
+   look:"N: Captain Scratchy. Bold. Decisive. Currently eating the hyperdrive.",
+   talk:[{if:'act2',then:"SCRATCHY: Win this, cook. I really like this ship. My chair is in it.",else:[{if:'gotSlip',then:"SCRATCHY: Still here? The galaxy isn't going to save itself. That's your job now. I wrote it on the slip.",
+     else:["SCRATCHY: Cook! I would fetch the Kernel myself, but I am very busy being in charge.",
+       "SCRATCHY: Take this permission slip. It lets you do anything dangerous that I don't want to do.",
+       {give:'slip'},{set:'gotSlip'},"N: It is signed in crayon.","SCRATCHY: Noted. Formally."]}]}],
+   peck:"N: You think about pecking your captain. Your paycheck thinks about it too. You both decide against it.",
+   use:{spatula:["SCRATCHY: Did you just try to FLIP me?","N: A little.","SCRATCHY: ...Noted. Formally."],
+     kernel:["SCRATCHY: Don't hand it to ME. I'd have to do something. Put it in the hyperdrive."]}},
+  {id:'hyperdrive',name:'Hyperdrive',x:194,y:128,w:54,h:36,
+   look:[{if:'fixed',then:"N: The hyperdrive, humming along on a fresh Cosmic Kernel. You did that. It will say 'Scratchy' on the plaque.",
+     else:"N: The hyperdrive. The Cosmic Kernel inside popped, so now it is mostly popcorn. The bridge smells amazing. Morale has never been higher, or more stranded."}],
+   peck:[{if:'fixed',then:"N: Best not to peck the thing keeping everyone alive.",else:"N: You eat one piece. It tastes like faster-than-light travel and butter."}],
+   use:{spatula:"N: You stir the popcorn with the spatula. Professionally speaking, it needs salt.",kernel:[{act1end:true}]}},
+  {id:'button',name:'Big Red Button',x:260,y:102,w:26,h:62,
+   look:"N: A big red button. The label says DO NOT PRESS. The label has clearly been pressed many times.",
+   peck:["N: You press it. Of course you press it.",{die:'button'}]}
+]},
+
+cornfield:{world:'corn',name:'Landing Field',floor:162,xs:[20,306],hotspots:[
+  {id:'shuttle',name:'Shuttle',x:2,y:120,w:70,h:42,at:84,
+   look:"N: Your shuttle. The bumper sticker says: MY OTHER SHIP IS ALSO BROKEN.",
+   peck:[{map:true}]},
+  {id:'scarecrow',name:'Scarecrow',x:104,y:74,w:42,h:88,
+   look:"N: A scarecrow. On a moon with no crows. It has the easiest job in the galaxy and it still looks stressed.",
+   talk:"N: You say hello. The scarecrow says nothing. It is the best conversation you have had all week.",
+   peck:"N: You peck the scarecrow. It is made of straw. You are made of chicken. Nobody wins."},
+  {id:'kernels',name:'Loose Corn',x:148,y:148,w:34,h:16,when:['!has:corn','!gotFlour'],
+   look:"N: Loose corn. Ordinary, non-cosmic. The cheap stuff.",
+   peck:["N: You gather a wingful of corn.",{give:'corn'},"N: You are a chicken holding corn and NOT eating it. This is the hardest thing you have ever done."]},
+  {id:'cob',name:'Giant Corn',x:198,y:42,w:44,h:120,
+   look:"N: An ear of corn three stories tall, baking in the light of two suns. It is making a faint ticking sound.",
+   peck:["N: You peck it. Just once.","N: The ticking stops.",{die:'cob'}]},
+  {id:'east',name:'Corn Maze',x:294,y:100,w:26,h:64,exit:{to:'gate',x:36},dir:'right'}
+]},
+
+gate:{world:'corn',name:'Corn Maze Gate',floor:162,xs:[14,304],hotspots:[
+  {id:'west',name:'Landing Field',x:0,y:100,w:24,h:64,exit:{to:'cornfield',x:282},dir:'left'},
+  {id:'sign',name:'Sign',x:34,y:90,w:40,h:34,
+   look:"N: The sign says: NO ENTRY WITHOUT PAPERS. Then, in smaller letters: THIS MEANS YOU, CHICKEN. Oddly specific."},
+  {id:'troops',name:'Turkey Armada',x:208,y:108,w:84,h:54,
+   look:"N: The Turkey Armada. They waddle in perfect formation. It took years of practice and they still bump into each other.",
+   talk:"N: You wave. One of them waves back and is immediately demoted.",
+   peck:["N: You size up three turkeys at once. Bold.","N: You decide to start with their boss instead. Bolder."],
+   use:{corn:[{if:'act2',then:["N: You pour the corn on the ground and explain what you need.","TURKEY: ARMADA! FORMATION STOMP! GOBBLE!",
+       "N: Three turkeys march on the spot in perfect time. Finally, a use for the formation.",{take:'corn'},{set:'gotFlour'},{give:'flour'},
+       "N: They hand you the flour in a small paper bag, neatly folded. They are very organized."],
+     else:"N: They look at the corn. They look at you. Not without orders."}]}},
+  {id:'gateShut',name:'Maze Gate',x:140,y:66,w:44,h:36,when:'!turkeyPassed',
+   look:"N: The gate to the Corn Maze. The Commander is standing in front of it. On purpose. It is his whole job."},
+  {id:'turkey',name:'Turkey Commander',x:144,y:104,w:36,h:58,when:'!turkeyPassed',at:122,
+   look:"N: The Turkey Commander. A chest full of medals. One of them is for 'Most Medals.'",
+   talk:["TURKEY: HALT! Nobody enters the Corn Maze without PAPERS! Gobble!","N: He says 'gobble' the way other people say 'sir.'"],
+   peck:["N: You peck the Commander of the Turkey Armada. In front of the Turkey Armada.",{die:'turkey'}],
+   use:{slip:["TURKEY: Hmm. A permission slip.","TURKEY: This is signed in crayon.","N: A long pause. A very long pause. Somewhere, corn grows.",
+       "TURKEY: ...It checks out. Gobble.",{take:'slip'},{set:'turkeyPassed'},"N: He keeps the slip for his files. His files are a shoebox."],
+     spatula:["TURKEY: Unhand me! ...Actually, get behind the wattle. Gobble."]}},
+  {id:'turkey2',name:'Turkey Commander',x:86,y:104,w:36,h:58,when:'turkeyPassed',
+   look:"N: The Turkey Commander, guarding slightly to the left now.",
+   talk:"TURKEY: Move along, citizen. Gobble.",
+   peck:["N: He has been so reasonable. You peck him anyway.",{die:'turkey'}]},
+  {id:'gateOpen',name:'Into the Maze',x:140,y:70,w:44,h:92,when:'turkeyPassed',exit:{to:'temple',x:40},dir:'up'}
+]},
+
+temple:{world:'corn',name:'Temple of the Kernel',floor:162,xs:[14,300],hotspots:[
+  {id:'out',name:'Maze Gate',x:0,y:100,w:22,h:64,exit:{to:'gate',x:162},dir:'left'},
+  {id:'mural',name:'Carvings',x:28,y:38,w:74,h:54,
+   look:["N: Ancient carvings. Long ago, chickens brought corn to a giant floating head.","N: In the last panel the head has an itchy nose and everyone has gone home. History is sad."]},
+  {id:'floaty',name:'Floaty Head Guy',x:150,y:44,w:46,h:60,at:140,
+   look:"N: A giant floating head, guardian of the Great Kernel. No body. No arms. No hands. A nose that twitches like it has a secret.",
+   talk:[{if:'scratched',
+     then:["FLOATY: THE PEDESTAL MUST NEVER BE EMPTY, FRIEND. SWAP THE KERNEL FOR SOMETHING THAT WEIGHS EXACTLY THE SAME.","FLOATY: ONE BALL OF DRYER LINT. THE ANCIENTS WERE WEIRDLY SPECIFIC."],
+     else:["FLOATY: I AM THE FLOATY HEAD GUY. GUARDIAN OF THE KERNEL. NONE SHALL... SHALL... AH... AHH...","N: His nose twitches.",
+       "FLOATY: FORGIVE ME. MY NOSE HAS ITCHED FOR NINE THOUSAND YEARS. I HAVE NO HANDS. IT IS A DESIGN FLAW."]}],
+   peck:"N: You can't reach. He is a FLOATING head. It is the whole point of him.",
+   use:{spatula:[{if:'scratched',then:"FLOATY: A LITTLE MORE. ...THANK YOU. I AM GOOD FOR ANOTHER NINE THOUSAND YEARS.",
+     else:["N: You raise the Spatula of Destiny. You scratch the nose of a nine-thousand-year-old head.",
+       "FLOATY: OHHHHH. OH, THAT'S THE SPOT. LEFT. LEFT. YES.",{set:'scratched'},
+       "N: A single happy tear rolls down his cheek and falls a very long way.",
+       "FLOATY: YOU MAY TAKE THE KERNEL, SPATULA-BEARER. BUT THE PEDESTAL MUST NEVER BE EMPTY.",
+       "FLOATY: SWAP IT FOR SOMETHING THAT WEIGHS EXACTLY THE SAME. ONE BALL OF DRYER LINT. THE ANCIENTS WERE WEIRDLY SPECIFIC."]}]}},
+  {id:'pedestal',name:'Pedestal',x:224,y:104,w:40,h:58,
+   look:[{if:'gotKernel',then:"N: A ball of dryer lint on an ancient pedestal. Honestly, it looks nice there.",
+     else:"N: The Great Cosmic Kernel. It hums with the power of a thousand microwaves."}],
+   peck:[{if:'gotKernel',then:"N: You already have the Kernel. Leave the lint. It lives here now.",
+     else:["N: You grab the Kernel right off the pedestal.","N: The pedestal notices.",{die:'popcorn'}]}],
+   use:{lintball:[{if:'scratched',
+     then:["N: Carefully... carefully... you swap the Kernel for the lint ball.","N: The pedestal thinks about it.","N: ...The pedestal is fine with it.",
+       {take:'lintball'},{give:'kernel'},{set:'gotKernel'},"FLOATY: GO WELL, SPATULA-BEARER. TELL YOUR CAPTAIN HE IS WELCOME."],
+     else:["FLOATY: NO TOUCHING THE... AH... AHH... MY NOSE...","N: He is too itchy to talk business. Maybe fix that first."]}]}}
+]},
+
+dunes:{world:'lint',name:'Lint Dunes',floor:162,xs:[20,304],hotspots:[
+  {id:'shuttle',name:'Shuttle',x:2,y:120,w:70,h:42,at:84,
+   look:"N: Your shuttle. Already covered in lint. Everything here is covered in lint. YOU are covered in lint.",
+   peck:[{map:true}]},
+  {id:'sign',name:'Sign',x:84,y:94,w:44,h:34,
+   look:"N: It says: WELCOME TO PLANET LINT. WHERE YOUR MISSING SOCKS WENT. POPULATION: ONE. And underneath, scratched in: HUNGRY."},
+  {id:'line',name:'Clothesline',x:140,y:64,w:92,h:30,
+   look:"N: Miles of clothesline. Not one sock left. Just clothespins, holding on to nothing, like tiny wooden hopes.",
+   peck:"N: You take a clothespin and clip it to your comb. You look fantastic. It falls off."},
+  {id:'far',name:'Fluffy Dune',x:234,y:102,w:58,h:36,
+   look:"N: Soft, fluffy dunes of lint stretch to the horizon. That one looks like the comfiest thing in the universe.",
+   peck:["N: You take a running jump into the comfiest dune in the universe.",{die:'lint'}]},
+  {id:'east',name:'Laundromat',x:296,y:86,w:24,h:78,exit:{to:'laundromat',x:36},dir:'right'}
+]},
+
+laundromat:{world:'lint',name:'The Great Laundromat',floor:164,xs:[14,304],hotspots:[
+  {id:'out',name:'Lint Dunes',x:0,y:76,w:22,h:88,exit:{to:'dunes',x:282},dir:'left'},
+  {id:'hound',name:'Space Hound',x:26,y:110,w:54,h:32,at:96,
+   look:"N: A Space Hound pilot from the Canine Nebula, folding laundry with military precision.",
+   talk:[{if:['act2','!gotTowel'],then:["HOUND: Off to Cat Crater? Cold place. All rock. Take a towel, fresh out of the dryer.",{give:'towel'},{set:'gotTowel'},
+       "HOUND: Space Hound Patrol never travels without a towel."],else:["HOUND: Space Hound Patrol, Laundry Division. Somebody has to keep the galaxy's capes fresh.",
+     "HOUND: Word of advice, cook. Don't climb in the washer. We lost a good cat that way.","HOUND: He's fine. He's just very clean now."]}],
+   peck:"HOUND: No pecking on laundry day."},
+  {id:'washer',name:'Washing Machine',x:84,y:70,w:50,h:94,
+   look:"N: An industrial washing machine. The settings are DELICATE, NORMAL, and CHICKEN.",
+   peck:["N: It does look roomy in there. And you ARE covered in lint.",{die:'spin'}]},
+  {id:'dryer',name:'Giant Dryer',x:146,y:40,w:78,h:92,
+   look:"N: The Giant Dryer. The coin slot says CORN ONLY. Finally, a machine that understands the economy.",
+   peck:[{if:'dryerRan',then:"N: It already ran. It is resting. It has earned it.",else:"N: You press START. Nothing. It wants corn. Don't we all."}],
+   use:{corn:[{if:'dryerRan',then:"N: The dryer already ran. Don't waste good corn.",else:["N: You pour the corn into the slot. Every instinct you have screams.",{take:'corn'},{set:'usedCorn'},{fx:'shake'},
+     "N: The Giant Dryer rumbles to life. Thump. Thump. Thump.",{set:'dryerRan'},{fx:'stop'},
+     {if:'fed',then:"N: DING. Something soft rolls into the lint trap.",else:"N: DING. Something soft rolls into the lint trap. A large duck is lying in front of it."}]}]}},
+  {id:'munch',name:'Sock Munch',x:166,y:132,w:54,h:32,when:'!fed',at:144,
+   look:"N: Sock Munch, a galactic duck, flopped in front of the lint trap. He ate every sock on the planet and he is STILL hungry.",
+   talk:["SOCK MUNCH: Soooock...","N: He says it the way you say 'weekend.'","SOCK MUNCH: No more sock. Sock Munch so empty. Sock Munch munch... nothing."],
+   peck:["N: You peck Sock Munch. Sock Munch looks at you.","N: You are roughly sock-sized.",{die:'sock'}],
+   use:{sock:["N: You hold out your one unwashed left sock. Sock Munch's eyes go wide.","SOCK MUNCH: Is... is VINTAGE.",{take:'sock'},{set:'fed'},
+       "N: He eats it in one bite, sighs happily, and waddles off to nap by the wall."],
+     spatula:"N: You poke Sock Munch with the spatula. He tries to eat it. It is not a sock. He is disappointed in both of you.",
+     corn:["SOCK MUNCH: Is not sock.","N: He has a very focused diet."]}},
+  {id:'trap',name:'Lint Trap',x:166,y:134,w:52,h:30,when:'fed',at:150,
+   look:[{if:['dryerRan','!gotLint'],then:"N: The lint trap. There is something round and fuzzy in there.",else:"N: The lint trap. Empty."}],
+   peck:[{if:'gotLint',then:"N: Empty. You already have the good lint.",
+     else:[{if:'dryerRan',
+       then:["N: You reach in and pull out a perfect, round ball of dryer lint.",{give:'lintball'},{set:'gotLint'},
+         "N: It is warm. It is weirdly heavy. It weighs exactly one Cosmic Kernel, not that you would know that."],
+       else:"N: The lint trap is empty. The dryer hasn't run. Lint doesn't grow on trees. Here, it grows on everything else."}]}]},
+  {id:'munchNap',name:'Sock Munch',x:244,y:130,w:50,h:34,when:'fed',
+   look:"N: Sock Munch, asleep and smiling. One sock. That is all it took. There is a lesson in there, but it is probably gross.",
+   talk:"SOCK MUNCH: Zzz... argyle... zzz.",
+   peck:"N: Let sleeping ducks lie."}
+]}
+
+}};
+
+// ───────────────────────── WORLD DATA: ACT TWO ─────────────────────────
+Object.assign(ITEMS,{
+  pointer:{name:'Laser Pointer',icon:'🔦'},
+  jar:{name:'Empty Jar',icon:'🥫'},
+  towel:{name:'Warm Towel',icon:'🧺'},
+  ball:{name:'The Ball',icon:'🎾'},
+  flour:{name:'Corn Flour',icon:'🌾'},
+  cream:{name:'Milky Way Cream',icon:'🥛'},
+  butter:{name:'Star Butter',icon:'🧀'},
+  syrup:{name:'Syrup-sicle',icon:'🍯'},
+  trophy:{name:'Golden Spatula',icon:'🏆'}
+});
+
+Object.assign(DEATHS,{
+  vacuum:{icon:'🌪️',fx:'gulp',title:'Clean Sweep',text:"The robot vacuum ate you. The hounds were right about it all along."},
+  doggy:{icon:'🐶',fx:'float',title:'Who Let the Chicken Out',text:"The doggy door led outside. Outside is space. The hounds forget this about twice a week."},
+  box:{icon:'📦',fx:'squish',title:'If I Fits',text:"You sat in the box. A cat sat on you. The cat is comfortable. The cat may never move."},
+  belly:{icon:'🐱',fx:'spin',title:"It's a Trap",text:"The fluffy belly was a trap. The fluffy belly is always a trap."},
+  shelf:{icon:'🏺',fx:'squish',title:'Gravity Check',text:"A cat pushed you off the shelf, just to see what would happen. What happened was gravity."},
+  syrup:{icon:'🍯',fx:'sink',title:'Slow Ending',text:"You sank into the syrup at one inch per hour. You had plenty of time to think about what you did."},
+  sting:{icon:'⚡',fx:'pop',title:'Group Hug',text:"You hugged a celestial jellyfish. It hugged back with every arm it had. Zap."},
+  serpent:{icon:'🐉',fx:'gulp',title:'Big Yawn',text:"The Stellar Serpent yawned. You were standing in the yawn."},
+  stack:{icon:'🥞',fx:'squish',title:'Short Stack',text:"The Snack-O-Tron 9000 dispensed four hundred square pancakes directly onto you. You lost, technically, to breakfast."},
+  griddle:{icon:'🔥',fx:'pop',title:'Chicken Fried',text:"You checked whether the griddle was hot using your entire body. It was hot."}
+});
+
+const RECIPE=[
+  {name:'Corn Flour',icon:'🌾',where:'The Corn Moon',got:'gotFlour',inn:'inFlour'},
+  {name:'Milky Way Cream',icon:'🥛',where:'Cat Crater',got:'gotCream',inn:'inCream'},
+  {name:'Star Butter',icon:'🧀',where:'Canine Nebula',got:'gotButter',inn:'inButter'},
+  {name:'Syrup-sicle',icon:'🍯',where:'Syrup Swamp',got:'gotSyrup',inn:'inSyrup'}
+];
+
+MAP.push(
+  {id:'pan',name:'Frying Pan Station',icon:'🥞',screen:'arena',x:84,when:'act2',flag:'seenPan',
+   first:["N: The Frying Pan Station. Ten thousand seats, one enormous griddle, and the smell of everything.","N: Your cooking station is the one in the middle. No pressure."],again:"N: The Cook-Off arena. The crowd is still here. They brought snacks."},
+  {id:'dogs',name:'Canine Nebula',icon:'🦴',screen:'dock',x:84,when:'act2',flag:'seenDogs',
+   first:["N: The Canine Nebula. A space station shaped like a giant bone, patrolled by the heroic Space Hounds.","N: Everything here is very clean, except the parts that have been licked."],again:"N: The Canine Nebula. Somebody is barking at nothing. Now everybody is."},
+  {id:'cats',name:'Cat Crater',icon:'🐱',screen:'crater',x:84,when:'act2',flag:'seenCats',
+   first:["N: Cat Crater, home of the ancient cat colonies. A moon of soft gray dust, warm sunbeams, and several thousand cats ignoring you.","N: You are a bird. You remind yourself to stay calm."],again:"N: Cat Crater. Nobody looks up."},
+  {id:'swamp',name:'Syrup Swamp',icon:'🍯',screen:'shore',x:84,when:'act2',flag:'seenSwamp',
+   first:["N: The Syrup Swamp. The air is sweet. The ground is sticky.","N: Your feet make a sound with every step that you will hear in your dreams."],again:"N: The Syrup Swamp. Squelch."}
+);
+
+const ACT2_BRIEF=[
+  "PEARL: The reigning champion is the Snack-O-Tron 9000. To beat it, you need the Legendary Galactic Pancake. I looked it up. With science.",
+  "PEARL: Corn flour. Milky Way cream. Star butter. And one syrup-sicle. I marked the planets on your shuttle map.",
+  {set:'act2'},{toast:'📖 Act Two: The Great Galactic Cook-Off'},
+  "N: A recipe! Tap the Recipe button any time to see what you still need."
+];
+
+const FILL_JAR=["N: You dip the jar in the fountain. It fills with thick, glowing cream.",{take:'jar'},{give:'cream'},{set:'gotCream'},
+  "N: One sleeping eye opens. Looks at the jar. Closes again. You have been allowed."];
+
+const ADDED={if:['inFlour','inCream','inButter','inSyrup'],
+  then:["N: That is everything! You stir it up and pour the batter onto the griddle.",{set:'batter'},
+    "N: It sizzles. It spreads. It keeps spreading. The pancake is now the size of a trampoline.",
+    "N: It is going to need flipping. By someone brave. With something flat."],
+  else:"N: Into the bowl it goes. Check the recipe for what is left."};
+
+const FINALE=[
+  "N: This is it. You slide the Spatula of Destiny under a pancake the size of a trampoline.",
+  "N: You flip.",
+  {set:'flipped'},{fx:'flip'},
+  "N: The pancake rises. It keeps rising. It leaves the arena. For a moment, it has a moon.",
+  "N: Then it comes down. Golden. Perfect. It lands with a sound like applause, because it IS applause. Ten thousand seats are clapping.",
+  "RIVAL: DOES. NOT. COMPUTE. PANCAKE. IS. ROUND.",
+  {set:'won'},
+  "N: The Snack-O-Tron 9000 dispenses one sad bag of chips and shuts down. Out of order.",
+  "PROFESSOR: In forty years of judging, I have never tasted anything so... corn-forward. Ten!",
+  "SEVENTYSIX: Seven. Six.",
+  "N: That is either a seventy-six or two separate scores. Either way: you win.",
+  {give:'trophy'},{fx:'win'},
+  "SCRATCHY: I did it! I won the Cook-Off!",
+  "PEARL: WE did it. With science.",
+  "N: You stand there. Holding two spatulas.",
+  "SCRATCHY: Cook. For your bravery, I promote you to Lunch Chicken... SECOND Class.",
+  "N: A promotion! It comes with no extra pay and one slightly bigger ladle.",
+  "SCRATCHY: Now. What's for lunch?",
+  "N: It is pancake. There is so much pancake.",
+  {end:true}
+];
+
+Object.assign(WORLD.screens,{
+
+dock:{world:'dogs',name:'Docking Bay',floor:164,xs:[20,304],hotspots:[
+  {id:'shuttle',name:'Shuttle',x:2,y:120,w:70,h:42,at:84,
+   look:"N: Your shuttle, parked between two much nicer shuttles. Theirs have little flags.",peck:[{map:true}]},
+  {id:'portrait',name:'Portrait',x:82,y:56,w:34,h:48,
+   look:"N: Good Boy of the Month. It has been the same hound for forty months. The others are fine with it. They are all good boys."},
+  {id:'hydrant',name:'Hydrant',x:124,y:130,w:22,h:34,
+   look:"N: A fire hydrant. On a space station. It is the most visited landmark in the Canine Nebula.",
+   peck:"N: No. Whatever you were about to do: no."},
+  {id:'vacuum',name:'Robot Vacuum',x:168,y:144,w:34,h:20,
+   look:"N: A robot vacuum cleaner, switched off. Every hound on this station is afraid of it. It has its own guard, who is also afraid of it.",
+   peck:["N: You press the ON button with your beak.","N: It turns out the hounds had a point.",{die:'vacuum'}]},
+  {id:'guard',name:'Sniff Guard',x:222,y:104,w:52,h:58,at:206,
+   look:"N: A Space Hound on sniff duty. Very serious. Tail wagging anyway.",
+   talk:["HOUND: Halt. Sniff check.","N: He sniffs you. Thoroughly.","HOUND: Pancakes. Corn. One very old sock. ...You are clear.",
+     "HOUND: Mess hall is that way. Chef Biscuit runs it. Do NOT ask him about The Ball."],
+   peck:"HOUND: Pecking an officer. That is a no-treat offense."},
+  {id:'east',name:'Mess Hall',x:296,y:86,w:24,h:78,exit:{to:'mess',x:36},dir:'right'}
+]},
+
+mess:{world:'dogs',name:'Mess Hall',floor:164,xs:[14,304],hotspots:[
+  {id:'west',name:'Docking Bay',x:0,y:76,w:22,h:88,exit:{to:'dock',x:282},dir:'left'},
+  {id:'doggy',name:'Doggy Door',x:36,y:102,w:38,h:50,
+   look:"N: A doggy door marked OUT. Through the flap you can see stars. So many stars. Suspiciously many.",
+   peck:["N: You push through the flap to see what is outside.","N: What is outside is outside.",{die:'doggy'}]},
+  {id:'bowls',name:'Bowls',x:92,y:126,w:78,h:16,
+   look:"N: Three bowls: REX, MAX, and COMMANDER FLUFFY. Commander Fluffy's is the biggest. Rank has its privileges.",
+   peck:"N: You try the kibble. Crunchy. Meaty. You decide not to ask what kind of meaty."},
+  {id:'case',name:'Glass Case',x:180,y:110,w:24,h:54,
+   look:[{if:'gotButter',then:"N: The Ball, back in its case. Slightly damp. The hounds salute it when they walk past.",
+     else:"N: An empty glass case. The plaque says THE BALL. Under it, a newer plaque says: STOLEN. BY CATS. OBVIOUSLY."}]},
+  {id:'chef',name:'Chef Biscuit',x:218,y:102,w:30,h:62,at:200,
+   look:"N: Chef Biscuit. Big hat, bigger heart. Guards the butter like it is the last butter in the galaxy. It might be.",
+   talk:[{if:'gotButter',then:"BISCUIT: You brought back The Ball. You eat free here forever. It's kibble. But it's free.",
+     else:["BISCUIT: You want my Star Butter? Churned by hand? By PAW? No. Not for money.",
+       "BISCUIT: ...There is one thing. The cats took The Ball. Our only Ball.",
+       "BISCUIT: Bring back The Ball and the butter is yours. I'll cry, but it's yours."]}],
+   peck:"BISCUIT: Chefs don't peck chefs. It's in the code.",
+   use:{ball:["N: You hold up The Ball. The whole mess hall goes silent.","BISCUIT: Is that... it's... THE BALL.","N: Forty hounds sit down at exactly the same time.",
+       {take:'ball'},{set:'gotButter'},{give:'butter'},"BISCUIT: Take the butter. Go, before I change my mind. Who's a good chicken? YOU are."],
+     spatula:"BISCUIT: Nice spatula. Is that a Destiny? I've only ever seen them in magazines."}},
+  {id:'butter',name:'Star Butter',x:250,y:120,w:44,h:44,at:236,
+   look:"N: A block of Star Butter the size of a doghouse. It glows, slightly.",
+   peck:[{if:'gotButter',then:"N: You already have a generous slice. Leave some for the hounds.",
+     else:["BISCUIT: PAWS. OFF.","N: You do not have paws. You take your wings off it anyway."]}]}
+]},
+
+crater:{world:'cats',name:'Crater Fields',floor:162,xs:[20,304],hotspots:[
+  {id:'shuttle',name:'Shuttle',x:2,y:120,w:70,h:42,at:84,
+   look:"N: Your shuttle. A cat is already asleep on the warm engine. That was fast.",peck:[{map:true}]},
+  {id:'monolith',name:'Monolith',x:92,y:68,w:22,h:94,
+   look:"N: A tall black monolith, ancient and mysterious, humming with unknowable purpose. The cats use it as a scratching post.",
+   peck:"N: You have a scratch on it too. Oh. Oh, that IS good."},
+  {id:'box',name:'Cardboard Box',x:126,y:128,w:50,h:34,
+   look:"N: A cardboard box. No cat can resist one. Come to think of it, it does look cozy.",
+   peck:["N: You climb in. It's perfect. It is the perfect box.","N: A very large cat agrees.",{die:'box'}]},
+  {id:'kitten',name:'Kitten',x:188,y:134,w:34,h:28,when:'!gotBall',at:172,
+   look:"N: A kitten, batting a slobbery green ball around. That is The Ball. It has to be. It has that 'stolen from dogs' look.",
+   talk:["KITTEN: Mew.","N: She will not be taking questions."],
+   peck:["N: You reach for The Ball. The kitten moves it. You reach again. She moves it again.","N: This could go on all day. For her, that is the goal."],
+   use:{pointer:["N: You click the laser pointer. A red dot appears on the ground.","N: The kitten's eyes go completely black.","KITTEN: MEW.",
+     {set:'gotBall'},{give:'ball'},"N: She forgets The Ball ever existed. You pick it up. It is damp. You choose not to think about that."]}},
+  {id:'kitten2',name:'Kitten',x:184,y:134,w:44,h:28,when:'gotBall',
+   look:"N: The kitten is still hunting the red dot. The dot is gone. She knows it will come back. She has faith.",
+   use:{pointer:"N: You give her another minute of red dot. It is the best day of her life."}},
+  {id:'belly',name:'Sleepy Cat',x:238,y:140,w:36,h:22,
+   look:"N: A cat asleep in a sunbeam, belly up, fluffy as a cloud. It looks so soft. It is practically an invitation.",
+   peck:["N: You pat the fluffy belly.","N: It was not an invitation.",{die:'belly'}]},
+  {id:'east',name:'Hall of the StarCat',x:296,y:100,w:24,h:64,exit:{to:'fountain',x:36},dir:'right'}
+]},
+
+fountain:{world:'cats',name:'Hall of the StarCat',floor:164,xs:[14,300],hotspots:[
+  {id:'west',name:'Crater Fields',x:0,y:100,w:22,h:64,exit:{to:'crater',x:282},dir:'left'},
+  {id:'shelf',name:'Shelves',x:40,y:30,w:76,h:100,at:126,
+   look:"N: Shelves full of cats, and one priceless vase, right at the edge. Every cat is staring at the vase. It is only a matter of time.",
+   peck:["N: You climb up to move the vase somewhere safe.","N: A cat looks you in the eye. Slowly. Calmly. It reaches out one paw.",{die:'shelf'}]},
+  {id:'starcat',name:'StarCat Guardian',x:170,y:100,w:46,h:64,when:'!catNap',at:150,
+   look:"N: The StarCat Guardian. Gold and orange, glowing faintly, sitting exactly in your way. On purpose.",
+   talk:["STARCAT: I am the StarCat Guardian. I guard the Fountain of the Milky Way.",
+     "STARCAT: I am also cold. This moon is all rock. No cushions. No blankets. Nothing warm.",
+     "STARCAT: These two facts are not related. Unless somebody were to make them related."],
+   peck:["N: You try to squeeze past. She puts one paw on your head. Gently.","N: It is still a no."],
+   use:{towel:["N: You hold out the towel, still warm from the dryer.","STARCAT: ...Put it down. There. No. LEFT. There.",{take:'towel'},{set:'catNap'},
+       "N: She turns around three times, lies down, and is asleep before she finishes purring.",
+       "N: The fountain is unguarded. Well. She is still guarding it. With her eyes closed."],
+     pointer:["STARCAT: I am nine thousand years old. I do not chase dots.","N: Her tail twitches. She wants to chase the dot so badly."],
+     spatula:"STARCAT: Do not."}},
+  {id:'starcatNap',name:'StarCat Guardian',x:128,y:138,w:52,h:26,when:'catNap',
+   look:"N: The StarCat Guardian, asleep on a warm towel. Guarding. Technically.",
+   talk:"STARCAT: Prrrrrr.",
+   peck:"N: You have met enough cats today to know better."},
+  {id:'fountain',name:'Fountain',x:228,y:96,w:64,h:68,at:214,
+   look:"N: The Fountain of the Milky Way. This is where milk comes from, if you ask a cat. Fresh, glowing, galaxy-grade cream.",
+   peck:[{if:'gotCream',then:"N: You have your jar of cream. Any more and you would be one of them.",
+     else:[{if:'catNap',then:[{if:'has:jar',then:FILL_JAR,else:"N: You have nothing to put it in. Your wings are famously not cups."}],
+       else:["N: You reach for the cream. A golden paw lands on your head. Gently.","N: It is still a no."]}]}],
+   use:{jar:[{if:'catNap',then:FILL_JAR,else:["N: You get out the jar. The Guardian looks at the jar. Then at you.","STARCAT: No."]}]}}
+]},
+
+shore:{world:'swamp',name:'Sticky Shore',floor:164,xs:[20,304],hotspots:[
+  {id:'shuttle',name:'Shuttle',x:2,y:120,w:70,h:42,at:84,
+   look:"N: Your shuttle. It is slowly sticking to the planet. Everything here is slowly sticking to the planet.",peck:[{map:true}]},
+  {id:'sign',name:'Sign',x:86,y:98,w:44,h:36,
+   look:"N: The sign says: DO NOT STEP IN THE SYRUP. It is stuck to its post with syrup."},
+  {id:'boots',name:'Boots',x:146,y:104,w:50,h:22,
+   look:"N: A pair of boots, stuck in the syrup. Further out, a pair of socks. Then footprints. Somebody had a very long afternoon.",
+   peck:"N: You pull on a boot. The boot does not come out. The boot lives here now."},
+  {id:'river',name:'Syrup River',x:200,y:104,w:44,h:30,at:222,
+   look:"N: A river of syrup, wide and golden, moving at the speed of a Monday.",
+   peck:["N: You dip one toe in. Just to see.","N: Then the other toe, to get the first toe out.",{die:'syrup'}]},
+  {id:'swarm',name:'Jellyfish',x:244,y:44,w:52,h:56,at:254,
+   look:"N: Celestial jellyfish, drifting over the river, glowing softly. They talk to each other in gentle pulses of light. It's beautiful.",
+   talk:"N: You cluck hello. They pulse back. You have no idea what you just agreed to.",
+   peck:["N: They look so soft and friendly. You give the nearest one a big hug.","N: It hugs back. With all of its arms.",{die:'sting'}],
+   use:{pointer:"N: The jellyfish all turn toward the red dot. They love a light. But these ones are too far out over the syrup to be any help."}},
+  {id:'east',name:'Syrup Grove',x:296,y:104,w:24,h:60,exit:{to:'grove',x:36},dir:'right'}
+]},
+
+grove:{world:'swamp',name:'Syrup Grove',floor:164,xs:[14,304],hotspots:[
+  {id:'west',name:'Sticky Shore',x:0,y:100,w:22,h:64,exit:{to:'shore',x:282},dir:'left'},
+  {id:'serpent',name:'Stellar Serpent',x:98,y:92,w:96,h:70,at:212,
+   look:"N: The Stellar Serpent. A dragon the size of a river, coiled around the tree, fast asleep. Its scales are full of tiny stars. Technically, it is a constellation.",
+   talk:["SERPENT: Zzzz... five more centuries...","N: Fair enough."],
+   peck:["N: You peck the dragon. Just a little peck. On the nose.","N: It yawns.",{die:'serpent'}],
+   use:{spatula:"N: You consider flipping a sleeping dragon. Even the Spatula of Destiny thinks that is a bad idea."}},
+  {id:'jelly',name:'Lonely Jellyfish',x:52,y:92,w:36,h:38,when:'!jellyUp',at:100,
+   look:"N: One celestial jellyfish, drifting alone, low to the ground. It looks bored. It looks like it would follow anything interesting.",
+   talk:"N: It pulses hello. You think. It might also be 'go away.' The accent is tricky.",
+   peck:["N: You remember: gentle pulses. Not gentle pecks.","N: You keep your beak to yourself."],
+   use:{pointer:["N: You shine the red dot on the ground. The jellyfish perks right up.",
+     "N: You walk the dot across the grove, and the jellyfish bobs along after it, all the way to the big branch.",{set:'jellyUp'},
+     "N: It stops right under the syrup-sicles and hovers there, round and bouncy, like a trampoline that glows."]}},
+  {id:'jellyUp',name:'Jellyfish',x:240,y:92,w:34,h:30,when:'jellyUp',
+   look:"N: The jellyfish, hovering under the branch. Round. Bouncy. Conveniently placed.",
+   peck:"N: You give it a test bounce. Boing. It seems to enjoy that."},
+  {id:'icicles',name:'Syrup-sicles',x:226,y:46,w:62,h:40,at:256,
+   look:"N: Syrup-sicles. Pure star syrup, frozen into icicles, hanging from the big branch. They are very high up.",
+   peck:[{if:'gotSyrup',then:"N: One syrup-sicle is plenty. Any more and the pancake becomes a swimming pool.",
+     else:[{if:'jellyUp',then:["N: You bounce up on the jellyfish and peck at a syrup-sicle.","N: Your beak sticks. It takes a while to get it back.","N: You need a tool. A flat one. Possibly of destiny."],
+       else:"N: Too high. You flap as hard as you can and rise almost one inch. Chickens: not great at this."}]}],
+   use:{spatula:[{if:'gotSyrup',then:"N: You already have one. Don't be greedy.",
+     else:[{if:'jellyUp',then:["N: Boing. You bounce off the jellyfish, swing the Spatula of Destiny, and chip off one perfect syrup-sicle.",{give:'syrup'},{set:'gotSyrup'},
+         "N: You land on the jellyfish again. Boing. You could do this all day. You have a cook-off to win."],
+       else:"N: You swing the spatula at the syrup-sicles. You miss by about the height of a house."}]}]}}
+]},
+
+arena:{world:'pan',name:'Cook-Off Arena',floor:164,xs:[20,304],hotspots:[
+  {id:'shuttle',name:'Shuttle',x:2,y:134,w:62,h:28,at:84,
+   look:"N: Your shuttle, in contestant parking. The space next to it says RESERVED FOR CHAMPION. A vending machine is parked in it.",peck:[{map:true}]},
+  {id:'crew',name:'Your Crew',x:4,y:94,w:44,h:28,at:60,
+   look:"N: Captain Scratchy and Pearl, in the front row. Scratchy is holding a sign that says GO ME.",
+   talk:["SCRATCHY: No pressure, cook. It's only the ship.","PEARL: And everything in it. Including us."]},
+  {id:'judges',name:'Judges',x:66,y:84,w:72,h:48,at:104,
+   look:"N: The judges. Professor Chicken, the galaxy's top food scientist. Seventysix, who only says two numbers. And a jellyfish, who gives feedback by glowing.",
+   talk:[{if:'won',then:"PROFESSOR: Magnificent. I am still chewing.",
+     else:["PROFESSOR: Welcome, contestant. The rules are simple. One dish. No poisoning the judges. Again.","SEVENTYSIX: Seven. Six.","N: You have met someone like this before, only backwards."]}],
+   peck:"PROFESSOR: Points will be deducted."},
+  {id:'trophy',name:'Golden Spatula',x:134,y:90,w:14,h:42,when:'!won',at:124,
+   look:"N: The grand prize: the Golden Spatula. Legend says whoever holds two spatulas can flip anything. Legend does not say why you would want to.",
+   peck:"N: Not yours. Yet."},
+  {id:'griddle',name:'Griddle',x:152,y:118,w:70,h:46,at:140,
+   look:[{if:'won',then:"N: The Legendary Galactic Pancake. Golden. Perfect. Slightly bigger than your shuttle.",
+     else:[{if:'batter',then:"N: The pancake is bubbling. It is the size of a trampoline. It needs flipping, by someone brave, with something flat.",
+       else:"N: Your cooking station: one enormous griddle and one mixing bowl. The recipe needs corn flour, Milky Way cream, star butter and a syrup-sicle."}]}],
+   peck:[{if:'won',then:"N: You take a bite. It tastes like victory, and corn.",
+     else:[{if:'batter',then:["N: Is it ready to flip? A good cook checks. You hop up onto the griddle for a closer look.","N: The griddle is on.",{die:'griddle'}],
+       else:"N: The griddle is cold and the bowl is not full yet. Check the recipe."}]}],
+   use:{
+     flour:["N: You tip in the corn flour. A small golden cloud rises. A judge sneezes.",{take:'flour'},{set:'inFlour'},ADDED],
+     cream:["N: You pour in the Milky Way cream. It glows in the bowl. That is probably fine.",{take:'cream'},{set:'inCream'},ADDED],
+     butter:["N: In goes the star butter. All of it. Chef Biscuit would weep with pride.",{take:'butter'},{set:'inButter'},ADDED],
+     syrup:["N: You drop in the syrup-sicle. Technically syrup goes on top. Technically you are the cook.",{take:'syrup'},{set:'inSyrup'},ADDED],
+     spatula:[{if:'won',then:"N: It is flipped. It is perfect. Flipping it again would just be showing off.",
+       else:[{if:'batter',then:FINALE,else:"N: There is nothing to flip yet. Just a cold griddle and a dream."}]}],
+     corn:"N: Whole corn in a pancake? The recipe says flour. Corn needs a good stomping first."}},
+  {id:'rival',name:'Snack-O-Tron 9000',x:238,y:52,w:46,h:112,at:226,
+   look:[{if:'won',then:"N: The Snack-O-Tron 9000. Out of order. A small sign says: 'It was the pancake.'",
+     else:"N: The Snack-O-Tron 9000. Reigning champion. It makes one thousand perfectly square pancakes an hour and has never once been told 'thank you.'"}],
+   talk:[{if:'won',then:"N: It doesn't answer. A single chip falls out of the slot. It might be a surrender.",
+     else:["RIVAL: GREETINGS. LUNCH. CHICKEN.","RIVAL: YOUR. LUNCH. IS. OPTIONAL. I. AM. INEVITABLE.","RIVAL: PLEASE. INSERT. COIN."]}],
+   peck:[{if:'won',then:"N: Don't shake a vending machine when it's down. That is how you got in trouble last time.",
+     else:["N: You give the champion a little shake, to show it who's boss.","RIVAL: DISPENSING.",{die:'stack'}]}]}
+]}
+
+});
+
+// ───────────────────────── WORLD DATA: THE BIG EXPANSION ─────────────────────────
+Object.assign(ITEMS,{
+  kibble:{name:'Bag of Kibble',icon:'🥣'},helmet:{name:'Spare Helmet',icon:'⛑️'},
+  q1:{name:'Galactic Quarter',icon:'🥇'},q2:{name:'Galactic Quarter',icon:'🥇'},q3:{name:'Galactic Quarter',icon:'🥇'}
+});
+const SOCK_TOTAL=12;
+Object.assign(DEATHS,{
+  chair:{icon:'💺',fx:'squish',title:'Tenderized',text:"The massage chair was set to TENDERIZE. It was a very thorough massage."},
+  gravity:{icon:'🎈',fx:'float',title:'Fan Mail',text:"You pulled the lever marked DO NOT PULL. It was the gravity. The ceiling has a fan."},
+  sun:{icon:'🌞',fx:'pop',title:'Sunny Side Up',text:"You looked at two suns through a telescope. You are now cooked on one side only."},
+  moo:{icon:'🐮',fx:'squish',title:'A-Maize-ing',text:"The Moo-notaur sat on you. She did not mean to. She is very sorry. Moo."},
+  geyser:{icon:'⛲',fx:'float',title:'Extra Large',text:"You stood on a popcorn geyser to see how it worked. It worked."},
+  wait:{icon:'🎫',fx:'sink',title:'Now Serving',text:"You took a number and waited your turn. It took eleven thousand years. You were next."},
+  zip:{icon:'👖',fx:'spin',title:'Hung Out to Dry',text:"You rode the zipline straight into a giant's underpants. They found you on laundry day."},
+  fetch:{icon:'🎾',fx:'float',title:'Go Long',text:"The Fetch-O-Matic launched you across the park. Forty hounds brought you back. Eventually. Damp."},
+  yarn:{icon:'🧶',fx:'spin',title:'All Tied Up',text:"You touched the Great Yarn Ball. You are part of the Great Yarn Ball now."},
+  stampede:{icon:'🥫',fx:'squish',title:'Dinner Bell',text:"You pressed the can opener button. Nine thousand cats arrived at once. None of them slowed down."},
+  waffle:{icon:'🧇',fx:'squish',title:'Waffled',text:"The ancient temple was a waffle iron. You are now very evenly patterned."},
+  fork:{icon:'🍴',fx:'squish',title:'Fork in the Road',text:"You shook the giant fork statue. It was a load-bearing fork."},
+  claw:{icon:'🧸',fx:'float',title:'The Claw Chooses',text:"The claw machine picked YOU. A small alien won you on the first try. You live on a shelf now."},
+  loop:{icon:'🔁',fx:'spin',title:'Infinite Loop',text:"You climbed into the game about you, where you climbed into the game about you, where you climbed into"},
+  target:{icon:'🎯',fx:'squish',title:'X Marks the Chicken',text:"You stood on the big red X. A test chicken landed on you. It was wearing a helmet. You were not."},
+  cannon:{icon:'💥',fx:'float',title:'Chicken Cannonball',text:"You climbed into the Great Chicken Cannon to have a look. You landed in a different time zone."},
+  quantum:{icon:'📦',fx:'pop',title:'Maybe',text:"You opened the box. You were inside it. You were both fried and not fried, right up until you checked."},
+  moat:{icon:'🥘',fx:'sink',title:'Moat Point',text:"The moat is gravy. Hot gravy. Castle Cluckingham takes its defenses seriously."},
+  catapult:{icon:'🥚',fx:'float',title:'Over Easy',text:"You sat in the catapult. You travelled exactly five spaces, very fast."},
+  dino:{icon:'🦖',fx:'gulp',title:'Jurassic Snack',text:"You pecked a hungry dinosaur. It was hungry. You were right there."},
+  tickle:{icon:'🪶',fx:'spin',title:'Tickled Pink',text:"You tried the Tickler. You laughed so hard you turned inside out."},
+  coinret:{icon:'🪙',fx:'float',title:'Return to Sender',text:"You climbed into the coin return. You were returned. Into space."},
+  gummy:{icon:'🧸',fx:'gulp',title:'Gummed Up',text:"You pecked a gummy bear the size of a bus. Your beak went in. Then the rest of you."},
+  coil:{icon:'🌀',fx:'sink',title:'Item Dispensed',text:"You rode the giant coil to the end. You were dispensed. You got stuck in the flap, like every snack ever."},
+  granola:{icon:'🍫',fx:'squish',title:'A1',text:"You pressed A1. A granola bar from before the universe began landed on you. It was not chewy."}
+});
+DEATHS.tickle.icon='😂';DEATHS.coinret.icon='💰';DEATHS.waffle.icon='🍳';
+
+MAP.push(
+  {id:'arcade',name:'The Last Arcade',icon:'🕹️',screen:'arcfront',x:84,when:'act3',flag:'seenArcade',
+   first:["N: The Last Arcade. An asteroid with a neon sign and a carpet that has seen things.","N: It smells like pizza and determination."],again:"N: The Last Arcade. The carpet is still sticky."},
+  {id:'cannon',name:'Quantum Cannon Fields',icon:'💥',screen:'cfield',x:84,when:'act3',flag:'seenCannon',
+   first:["N: The Quantum Cannon Fields, home of the Great Chicken Cannon of Quantum Defiance.","N: The ground is covered in craters. Each one has a little flag with a name on it."],again:"N: The Cannon Fields. Something whistles overhead. You decide not to look up."},
+  {id:'castle',name:'Castle Cluckingham',icon:'🏰',screen:'cgate',x:84,when:'act3',flag:'seenCastle',
+   first:["N: Castle Cluckingham, on the Medieval Moon. A fortress of brave knight chickens.","N: They have been fighting one dinosaur for a hundred years. It is going about how you would expect."],again:"N: Castle Cluckingham. A trumpet plays. It is not good, but it is loud."},
+  {id:'mother',name:'The Mothership',icon:'🏭',screen:'slotp',x:84,when:'act3',flag:'seenMother',
+   first:["N: The Mothership. A vending machine the size of a moon. You land on the front of it, next to a coin slot as tall as a building.","N: Somewhere inside, in Row B, Slot 4, is everyone you work with."],again:"N: The Mothership. It hums. It is always humming."}
+);
+
+const ACT3_START=[
+  "RIVAL: ...REBOOTING.",
+  "N: The Snack-O-Tron 9000's lights flick back on. It turns out it is a very sore loser.",
+  "RIVAL: CALLING. MOTHER.",
+  "N: The sky goes dark. Something enormous slides in front of the stars. It is a vending machine. It is the size of a moon.",
+  "MOTHER: WHO. WAS. MEAN. TO. MY. BABY.",
+  "N: A giant claw reaches down, picks up the C.S.S. Overeasy with the whole crew inside, and sets it on a shelf. Row B. Slot 4.",
+  "SCRATCHY: My chair is in here! I am ALSO in here!",
+  "N: A price tag flips into place under the ship. THREE GALACTIC QUARTERS. EXACT CHANGE ONLY.",
+  {set:'act3'},{toast:'🥇 Act Three: Exact Change'},
+  "N: New places have appeared on your shuttle map. Somewhere out there are three Galactic Quarters. Tap the Quest button to keep track."
+];
+FINALE.splice(FINALE.length-1,1,{act3start:true});
+
+const QUEST3=[
+  {name:'Galactic Quarter',icon:'🥇',where:'The Last Arcade (67 prize tickets)',got:'gotQ1',inn:'inQ1'},
+  {name:'Galactic Quarter',icon:'🥇',where:'Quantum Cannon Fields',got:'gotQ2',inn:'inQ2'},
+  {name:'Galactic Quarter',icon:'🥇',where:'Castle Cluckingham',got:'gotQ3',inn:'inQ3'}
+];
+
+const MINI_QUIT=["N: You step away from the cabinet. It plays a sad little tune at your back."];
+const MINI_WIN={
+  flap:["N: You flew a chicken into a game, inside a game, inside a game. Somewhere, a philosopher just sat down.",
+    {if:['act3','!tFlap'],then:[{set:'tFlap'},"N: The old cabinet coughs, rattles, and pays out exactly 7 prize tickets. They say: GOOD AT THE LAST ARCADE."],
+     else:"N: The cabinet plays a little fanfare. No prize. Just the knowledge."}],
+  invade:["N: The last tiny Snack-O-Tron pops. That felt good. That felt personal.",
+    {if:'!tInvade',then:[{set:'tInvade'},"N: The cabinet spits out 30 prize tickets."],else:"N: No more tickets. You have already cleaned this one out."}],
+  catch:["N: Twelve pancakes, stacked. A little wobbly. Your best work since breakfast.",
+    {if:'!tCatch',then:[{set:'tCatch'},"N: The cabinet spits out 30 prize tickets."],else:"N: No more tickets. The machine knows your face."}]
+};
+
+const COIN_IN={if:['inQ1','inQ2','inQ3'],then:["N: CLUNK. CLUNK. CLUNK. Three quarters. Somewhere deep inside, a light turns green.",{set:'vendReady'},"MOTHER: CREDIT. ACCEPTED. MAKE. A. SELECTION."],
+  else:"N: CLUNK. The quarter rolls away into the dark. The machine wants more."};
+const PRY=["N: You slide the Golden Spatula into the coin slot. Thin. Flat. Gold. Just like the Cannon Master said.","N: Something goes ping.",{give:'q2'},{set:'gotQ2'},
+  "N: One Galactic Quarter, slightly bent. The Great Chicken Cannon is back in business. You step away from it quickly."];
+const FINALE3=[
+  "N: You take the Spatula of Destiny in one wing and the Golden Spatula in the other.",
+  "N: Legend says whoever holds two spatulas can flip anything. Legend never mentioned a flap the size of a football field. Time to find out.",
+  {set:'freed'},{fx:'win'},
+  "N: You flip. The flap swings open with a groan that rattles every snack in the building.",
+  "N: The C.S.S. Overeasy slides out, a little dented, smelling strongly of corn chips.",
+  "SCRATCHY: I did it! I escaped!",
+  "PEARL: We were dispensed.",
+  "MOTHER: MY. BABY. LOST. FAIR. AND. SQUARE.",
+  "RIVAL: ...AND. ROUND.",
+  "N: The Snack-O-Tron 9000 looks at its feet. It does not have feet. It looks at where feet would be.",
+  "N: You hand it the last slice of the Legendary Galactic Pancake. And you say the one thing nobody has ever said to it.",
+  "N: 'Bawk.' It means thank you.",
+  "RIVAL: ...YOU. ARE. WELCOME.",
+  "RIVAL: DISPENSING. FRIENDSHIP.",
+  "N: A bag of chips drops into the slot. It is the good kind.",
+  "SCRATCHY: Cook. For extraordinary bravery, I promote you all the way to Lunch Chicken... FIRST Class.",
+  "N: First Class! It comes with no extra pay, and a hat that is one inch taller.",
+  "SCRATCHY: Now. What's for lunch?",
+  {end:true}
+];
+const VEND_OTHER=["a single pretzel the size of a canoe","nine hundred identical mints","a juice box labelled FLAVOR","one warm pickle","a bag of air with three chips in it","a sandwich that is somehow wet"];
+
+HINTS.splice(HINTS.length-1,1,
+  ['!gotKibble',"A dinosaur at Castle Cluckingham looks hungry. Chef Biscuit said you eat free forever. Go and ask him for some kibble."],
+  ['!dinoFed',"The dinosaur at Castle Cluckingham is not mean. It is hungry. You have kibble."],
+  ['!gotQ3',"The dinosaur has moved. Have a look in the treasure."],
+  ['!gotHelmet',"The hundred-year siege is over. Sir Clucksalot owes you one. Go and talk to him."],
+  ['!gotQ2',"The Great Chicken Cannon's coin slot is jammed with a quarter. Pry it out with something thin, flat and gold."],
+  ['!tInvade',"The Last Arcade pays prize tickets. Beat Corn Invaders."],
+  ['!tCatch',"Beat Pancake Catch at the Last Arcade."],
+  ['!tFlap',"You are 7 tickets short. The old cabinet in your ship's rec room pays out, if you fly into the cabinets inside it. Three deep."],
+  ['!gotQ1',"You have 67 tickets. The prize counter at the Last Arcade has a Galactic Quarter."],
+  ['!vendReady',"Put all three quarters in the giant coin slot on the front of the Mothership."],
+  ['!vended',"The keypad is in the Mothership's control room. Your ship is in row B, slot 4."],
+  ['!freed',"The ship is stuck behind the flap in the prize chute. Legend says whoever holds two spatulas can flip anything."],
+  [null,"You saved lunch, the ship, and a vending machine's feelings. Go find the rest of the lost socks."]
+);
+
+const S_=(id,line)=>[{if:'sock_'+id,then:"N: Nothing else in there. You checked. Twice.",else:[line,{sock:id}]}];
+const EXL=(to,x,name,y)=>({id:'west',name,x:0,y:y||76,w:20,h:164-(y||76),exit:{to,x},dir:'left'});
+const EXR=(to,x,name,y)=>({id:'east',name,x:300,y:y||76,w:20,h:164-(y||76),exit:{to,x:x||36},dir:'right'});
+const SHUT=(look)=>({id:'shuttle',name:'Shuttle',x:2,y:120,w:70,h:42,at:84,look,peck:[{map:true}]});
+
+Object.assign(WORLD.screens,{
+
+rec:{world:'ship',name:'Rec Room',floor:164,xs:[14,306],hotspots:[
+  EXL('engine',282,'Engine Room'),
+  {id:'couch',name:'Couch',x:36,y:122,w:82,h:40,at:128,
+   look:"N: The crew couch. It has a dent shaped exactly like Captain Scratchy.",
+   peck:S_('rec',"N: You dig down between the cushions. Crumbs. A button. Something soft...")},
+  {id:'cab',name:"Chickens Can't Fly",x:134,y:96,w:32,h:68,at:122,
+   look:"N: An old arcade cabinet called CHICKENS CAN'T FLY. In the game, a chicken flies. It is the least realistic thing on this ship.",
+   peck:[{play:'flap'}]},
+  {id:'darts',name:'Dartboard',x:198,y:64,w:28,h:32,
+   look:"N: A dartboard. All the darts are in the wall around it. Pearl says that is 'statistically interesting.'",
+   peck:"N: You throw a dart with your beak. It lands in the couch. Statistically interesting."},
+  {id:'chair',name:'Massage Chair',x:236,y:106,w:38,h:56,at:222,
+   look:"N: A massage chair with two settings: RELAX and TENDERIZE. The dial is stuck on one of them.",
+   peck:["N: You have had a long day. You sit down and press START.","N: It is the other setting.",{die:'chair'}]},
+  EXR('galley',44,'Galley')
+]},
+
+engine:{world:'ship',name:'Engine Room',floor:164,xs:[14,306],hotspots:[
+  {id:'wheel',name:'Backup Generator',x:74,y:58,w:92,h:104,at:182,
+   look:"N: The backup generator. It is a hamster wheel. A very large hamster wheel. The hamster is on break.",
+   peck:"N: You hop in and run. The lights get one percent brighter. You get one hundred percent more tired."},
+  {id:'hamster',name:'Hamster',x:176,y:140,w:26,h:24,at:160,
+   look:"N: The ship's backup power source, drinking a very small coffee.",
+   talk:["N: You ask when his break ends.","N: He takes a long sip and looks at a tiny watch. He does not answer. He is in a union."],
+   peck:"N: He gives you a look that says he has filed complaints about less."},
+  {id:'lever',name:'Big Lever',x:206,y:70,w:36,h:94,at:192,
+   look:"N: A big red lever. The sign says DO NOT PULL. You have a long and proud history with signs like this.",
+   peck:["N: You pull it. Obviously you pull it.","N: Your feet leave the floor. So does everything else.",{die:'gravity'}]},
+  {id:'tools',name:'Toolbox',x:250,y:138,w:34,h:26,
+   look:"N: Sixtyseven's toolbox. Every tool is labelled with a number. All of them are six or seven.",
+   peck:"N: You borrow a wrench. You do not know how wrenches work. You put the wrench back."},
+  EXR('rec',36,'Rec Room')
+]},
+
+dome:{world:'ship',name:'Observation Dome',floor:162,xs:[30,300],hotspots:[
+  {id:'hatch',name:'Down to the Bridge',x:12,y:140,w:42,h:26,exit:{to:'bridge',x:108},dir:'down'},
+  {id:'chart',name:'Star Chart',x:56,y:70,w:50,h:50,
+   look:"N: A star chart. Somebody has circled one corner of the galaxy and written HERE BE SNACKS."},
+  {id:'scope',name:'Telescope',x:134,y:84,w:46,h:78,at:122,
+   look:"N: Through the telescope you can see Planet Lint. Somebody has written WASH ME on it.",
+   peck:["N: You swing the telescope around for a better view. Now it is pointing at two suns.","N: You look anyway.",{die:'sun'}]},
+  {id:'bean',name:'Beanbag',x:230,y:138,w:48,h:26,
+   look:"N: A beanbag chair. Pearl comes up here to 'think.' Thinking sounds a lot like snoring.",
+   peck:S_('dome',"N: You flop into the beanbag. Something that is not a bean pokes you...")}
+]},
+
+maze1:{world:'corn',name:'Corn Maze',floor:162,xs:[14,306],hotspots:[
+  EXL('gate',162,'Maze Gate',100),
+  {id:'post',name:'Signpost',x:84,y:82,w:40,h:80,at:136,
+   look:"N: A signpost. Three signs say THIS WAY and point in three directions. The fourth says NOT THIS WAY and points at the other three.",
+   peck:S_('maze1',"N: You give the signpost a peck. Something falls off the top. It was holding the signs on...")},
+  {id:'tourist',name:'Lost Tourist',x:184,y:104,w:36,h:58,at:166,
+   look:"N: A turkey with a camera and a visor. He has the look of someone who was promised a short walk.",
+   talk:["TOURIST: Oh thank goodness. Is this the way out? I came in on Tuesday. Gobble.","N: You ask which Tuesday.","TOURIST: ...There has been more than one?"],
+   peck:"TOURIST: Hey! I am a paying customer! Gobble!"},
+  {id:'dead',name:'Dark Path',x:236,y:88,w:34,h:64,at:222,
+   look:"N: A side path, leading off into the corn. It looks like a shortcut.",
+   peck:"N: You take the shortcut. Eleven minutes later you come out of the same gap, from the other side. You do not know how. Neither does the corn."},
+  EXR('maze2',36,'Deeper In',100)
+]},
+
+maze2:{world:'corn',name:'Heart of the Maze',floor:162,xs:[14,306],hotspots:[
+  EXL('maze1',284,'Corn Maze',100),
+  {id:'cow',name:'The Moo-notaur',x:130,y:100,w:66,h:62,at:112,
+   look:"N: Every maze has a monster at the middle. This one has a Moo-notaur. She is one hundred percent cow, zero percent monster, and completely lost.",
+   talk:["N: You ask the Moo-notaur for directions.","N: She says moo. She says it very kindly. It does not help."],
+   peck:["N: You give the Moo-notaur a friendly peck.","N: She is so happy to have a friend that she sits down.",{die:'moo'}]},
+  {id:'wall',name:'Corn Wall',x:220,y:60,w:50,h:72,at:206,
+   look:"N: A wall of corn with a chicken-sized bite out of it. Somebody tried to eat their way out. Recently.",
+   peck:"N: You eat three more stalks. Only forty thousand to go. You decide to use the path like a civilized chicken."},
+  EXR('temple',40,'Temple',100)
+]},
+
+geyser:{world:'corn',name:'Popcorn Geysers',floor:164,xs:[20,300],hotspots:[
+  {id:'geyser',name:'Geyser',x:60,y:90,w:50,h:74,at:128,
+   look:"N: A popcorn geyser. Every few seconds it erupts in a fountain of hot popcorn. The Corn Moon is basically a snack with gravity.",
+   peck:["N: How does it work? You lean over the hole to look.","N: It is about to erupt. That is how it works.",{die:'geyser'}]},
+  {id:'pool',name:'Butter Spring',x:188,y:142,w:64,h:20,
+   look:"N: A natural hot spring of melted butter. Tourists come from all over the galaxy to dip things in it.",
+   peck:"N: You dip a toe. It is delicious. You feel weird about that."},
+  {id:'bench',name:'Bench',x:256,y:130,w:46,h:32,at:240,
+   look:"N: A viewing bench. The plaque says: IN MEMORY OF EVERYONE WHO STOOD TOO CLOSE.",
+   peck:S_('geyser',"N: Somebody left something on the bench...")},
+  {id:'back',name:'Landing Field',x:130,y:164,w:60,h:16,exit:{to:'cornfield',x:172},dir:'down'}
+]},
+
+lostfound:{world:'lint',name:'Lost and Found',floor:164,xs:[14,300],hotspots:[
+  EXL('laundromat',284,'Laundromat'),
+  {id:'ticket',name:'Take a Number',x:58,y:88,w:28,h:76,at:100,
+   look:"N: A ticket machine. The screen says NOW SERVING: 3. The next ticket in the slot says 9,000,000,041.",
+   peck:["N: Rules are rules. You take a number and wait your turn.","N: You wait.","N: You wait some more.",{die:'wait'}]},
+  {id:'clerk',name:'Clerk',x:130,y:78,w:40,h:48,at:112,
+   look:"N: The clerk of the Lost and Found. The clerk is a sock puppet. Nobody knows whose hand it is. Nobody asks.",
+   talk:["N: You ask if anybody handed in a spaceship.","N: The sock puppet slowly shakes its head. Then it slowly eats your question."],
+   peck:"N: You peck the sock puppet. The hand inside says 'ow.' You both pretend that did not happen."},
+  {id:'shelf',name:'Lost Things',x:188,y:22,w:104,h:84,at:176,
+   look:"N: Shelves of lost things. One glove. Forty umbrellas. A jar labelled 'your train of thought.' A smaller jar labelled 'the remote.'"},
+  {id:'bin',name:'Sock Bin',x:248,y:122,w:44,h:42,at:232,
+   look:"N: A bin marked SOCKS: UNCLAIMED. It is almost empty. Somebody on this planet has been snacking.",
+   peck:S_('lostfound',"N: You dig to the bottom of the bin. One survivor...")}
+]},
+
+canyon:{world:'lint',name:'Clothesline Canyon',floor:162,xs:[76,244],hotspots:[
+  {id:'zip',name:'Zipline',x:38,y:56,w:28,h:52,at:80,
+   look:"N: A zipline, strung across the whole canyon. The handle is right there. It looks fast.",
+   peck:["N: You grab the handle and jump.","N: It is fast.",{die:'zip'}]},
+  {id:'pants',name:'Giant Underpants',x:108,y:40,w:74,h:54,
+   look:"N: Underpants the size of a house, with little hearts on. Somewhere on this planet there is a giant, and he is having a breezy day.",
+   peck:"N: You are not touching those. You have standards. They are low, but you have them."},
+  {id:'sock',name:'Something Pinned Up',x:232,y:48,w:22,h:26,when:'!sock_canyon',at:224,
+   look:"N: A single sock, pinned to the highest line. The only sock Sock Munch could not reach.",
+   peck:"N: Too high. You would need something long and flat to knock it down.",
+   use:{spatula:["N: You jump and swat with the Spatula of Destiny. The clothespin pops.",{sock:'canyon'}]}},
+  {id:'back',name:'Lint Dunes',x:130,y:164,w:60,h:16,exit:{to:'dunes',x:170},dir:'down'}
+]},
+
+park:{world:'dogs',name:'Park Deck',floor:164,xs:[14,306],hotspots:[
+  EXL('mess',280,'Mess Hall'),
+  {id:'tree',name:'The Tree',x:56,y:42,w:60,h:120,at:130,
+   look:"N: The station's only tree. It is plastic. In it sits a hologram of a squirrel, switched on twice a day so everybody can bark at it.",
+   talk:"N: You say hello to the squirrel. It flickers. Forty hounds on other decks start barking and do not know why.",
+   peck:"N: You peck the tree. It is hollow. A recorded voice says: 'PLEASE DO NOT CHEW THE TREE.'"},
+  {id:'fetch',name:'Fetch-O-Matic',x:136,y:112,w:40,h:52,at:122,
+   look:"N: The Fetch-O-Matic 500. It launches a ball the full length of the park. The ball tray is empty, on account of the cats.",
+   peck:["N: You climb into the ball tray to see why it is empty.","N: The machine detects something round-ish.",{die:'fetch'}]},
+  {id:'sand',name:'Sandbox',x:196,y:142,w:68,h:22,
+   look:"N: A sandbox. The hounds bury their treasures here: bones, more bones, and one very confused remote control.",
+   peck:S_('park',"N: You scratch around in the sand, the way your ancestors did. You hit something...")},
+  EXR('office',36,'Commander')
+]},
+
+office:{world:'dogs',name:"Commander's Office",floor:164,xs:[14,300],hotspots:[
+  EXL('park',284,'Park Deck'),
+  {id:'medals',name:'Medals',x:40,y:40,w:70,h:44,
+   look:"N: A wall of medals. FETCH, FIRST CLASS. EXCELLENCE IN SIT. And one, in the middle, that just says WHO'S A GOOD BOY. It has the most ribbon."},
+  {id:'fluffy',name:'Commander Fluffy',x:148,y:82,w:54,h:60,at:122,
+   look:"N: Commander Fluffy, supreme leader of the Space Hounds. He weighs four pounds. His chair weighs four hundred.",
+   talk:[{if:'gotButter',then:["FLUFFY: You returned The Ball. The Canine Nebula is in your debt, chicken.","N: His voice is astonishingly deep. It seems to come from somewhere behind him."],
+     else:["FLUFFY: State your business. And make it quick. I have a nap at fourteen hundred.","N: His voice is astonishingly deep. It seems to come from somewhere behind him."]}],
+   peck:"N: You would never. He is tiny, he is fluffy, and he could have you court-martialed."},
+  {id:'toys',name:'Squeaky Collection',x:228,y:44,w:64,h:50,at:214,
+   look:"N: The Commander's private collection of squeaky toys. Every one is in mint condition. Unsqueaked.",
+   peck:["N: You squeak one. Just one.","N: The door opens. Forty hounds are standing in it, heads tilted, all at exactly the same angle.","N: You put the toy back very slowly."]}
+]},
+
+yarn:{world:'cats',name:'Yarn Cavern',floor:164,xs:[24,296],hotspots:[
+  EXL('fountain',284,'Hall of the StarCat',100),
+  {id:'tangled',name:'Tangled Chicken',x:90,y:100,w:40,h:64,at:66,
+   look:[{if:'untangled',then:"N: The explorer, untangled at last. He is doing stretches. He has a lot of stretches to catch up on.",
+     else:"N: A very cranky chicken, all tangled up in glowing space yarn. He has clearly been here a while. He has a beard. Chickens do not get beards."}],
+   talk:[{if:'untangled',then:"N: He says he is going to walk home. It is four hundred light years. He says he does not care, as long as none of it is yarn.",
+     else:["N: He says he came here to explore. He touched the yarn ONE time.","N: He asks if you happen to have anything flat, and possibly of destiny."]}],
+   peck:[{if:'untangled',then:"N: He has been through enough.",else:"N: You peck at a knot. Now you are holding a knot. He is not any freer. He sighs."}],
+   use:{spatula:[{if:'untangled',then:"N: He is already free. He flinches anyway.",
+     else:["N: You slide the Spatula of Destiny under the yarn and flip. The whole tangle pops off like a pancake.",{set:'untangled'},
+       "N: The explorer lands on his feet, for the first time in years. He wants to give you something. All he has is what he was tied up with.",{sock:'yarn'}]}]}},
+  {id:'ball',name:'Great Yarn Ball',x:160,y:68,w:86,h:94,at:148,
+   look:"N: The Great Yarn Ball. It glows. It hums. Legend says it has been unravelling since the start of time, and the kittens are only on row three.",
+   peck:["N: It is so round. So soft. One little bat with a wing could not hurt.",{die:'yarn'}]},
+  EXR('nap',36,'Nap Plateau',100)
+]},
+
+nap:{world:'cats',name:'Nap Plateau',floor:162,xs:[24,300],hotspots:[
+  EXL('yarn',280,'Yarn Cavern',100),
+  {id:'keys',name:'Keyboard Cat',x:48,y:118,w:74,h:44,at:136,
+   look:"N: A cat sitting on a giant keyboard. The screen above her says: jjjjjjjjjjjjjjjjjjjjj. She is writing her memoirs.",
+   talk:"N: You ask how the book is going. She adds another j. Chapter two."},
+  {id:'elder',name:'The Elder Cat',x:150,y:74,w:40,h:88,at:134,
+   look:"N: The Elder Cat, oldest and wisest of the colony. She will answer any question with a single slow blink.",
+   talk:["N: You ask the Elder Cat the meaning of life.","N: She blinks. Slowly.","N: It is the most profound thing you have ever seen. You have no idea what it meant."],
+   peck:"N: She looks at you. You sit down. You do not know why you sat down."},
+  {id:'opener',name:'Can Opener',x:228,y:104,w:34,h:58,at:212,
+   look:"N: An electric can opener on a pedestal, with one big red button. The sign says DINNER. There is no can. There has never been a can.",
+   peck:["N: You press the button. The can opener goes: whirrrrr.","N: The ground begins to shake.",{die:'stampede'}]}
+]},
+
+ruins:{world:'swamp',name:'Waffle Ruins',floor:164,xs:[24,300],hotspots:[
+  EXL('grove',284,'Syrup Grove',100),
+  {id:'tablet',name:'Stone Tablet',x:40,y:90,w:36,h:52,
+   look:"N: An ancient tablet. It reads: THOSE WHO SKIP BREAKFAST ARE DOOMED TO REPEAT LUNCH."},
+  {id:'statue',name:'Statue',x:112,y:72,w:52,h:92,at:96,
+   look:"N: A statue of an ancient chef chicken, holding a spatula. He looks exactly like you. The plaque says THE FIRST WAFFLE. Any resemblance is, legally, a coincidence.",
+   peck:"N: You peck your own stone face. It is an odd feeling. Like biting a mirror."},
+  {id:'square',name:'Syrup Square',x:190,y:148,w:52,h:16,at:176,
+   look:"N: One square of the temple floor, filled to the brim with syrup. In fact the whole temple is squares. Deep ones. In a grid.",
+   peck:["N: You step into the square for a taste.","N: Far above you, the roof begins to close. The roof also has squares.",{die:'waffle'}]},
+  {id:'bowl',name:'Offering Bowl',x:254,y:134,w:34,h:30,at:240,
+   look:"N: An offering bowl. Ancient chickens left gifts here for the breakfast gods.",
+   peck:S_('ruins',"N: You look in the bowl. The breakfast gods got some odd gifts...")}
+]},
+
+lobby:{world:'pan',name:'Station Lobby',floor:164,xs:[14,300],hotspots:[
+  EXL('arena',284,'Arena'),
+  {id:'shop',name:'Gift Shop',x:40,y:92,w:62,h:70,at:116,
+   look:"N: The gift shop. T-shirts, mugs, and a snow globe of the arena with a tiny pancake inside that never lands.",
+   talk:["N: The shop robot asks if you would like a souvenir.","N: You would. You have no money. It gives you a look you last got from a vending machine."],
+   peck:S_('lobby',"N: You check the bargain bin. Everything is half price. One thing is free...")},
+  {id:'fork',name:'Fork Statue',x:138,y:34,w:46,h:130,at:124,
+   look:"N: A fork and knife, forty feet tall, standing on end. It is the symbol of the Great Galactic Cook-Off. It wobbles when the air conditioning comes on.",
+   peck:["N: You give the giant fork a little shake, to see if it is real metal.","N: It is real metal.",{die:'fork'}]},
+  {id:'mopbot',name:'Cleaning Robot',x:230,y:112,w:54,h:52,at:214,
+   look:"N: A cleaning robot, mopping the same spot over and over. It keeps glancing at you, like it thinks this should have been ITS adventure.",
+   talk:"N: It says nothing. It mops, heroically. You both know."}
+]},
+
+arcfront:{world:'arcade',name:'Front Door',floor:164,xs:[20,306],hotspots:[
+  SHUT("N: Your shuttle, parked between a row of hover-bikes. Somebody has already stuck a flyer on it."),
+  {id:'well',name:'Token Fountain',x:98,y:130,w:48,h:32,
+   look:"N: A wishing fountain full of arcade tokens. Every one of them was a wish for one more turn.",
+   peck:"N: You make a wish. You do not have a token. The fountain says the wish is 'pending.'"},
+  {id:'tall',name:'Height Chart',x:166,y:82,w:30,h:80,
+   look:"N: YOU MUST BE THIS TALL TO PLAY. The line is far above your head. Just under it, somebody has added a second line, labelled CHICKENS.",
+   peck:"N: You stand up very straight. You reach the chicken line. You feel seen."},
+  {id:'bouncer',name:'Door Robot',x:222,y:112,w:40,h:52,at:204,
+   look:"N: The door robot. Arms folded. Its whole job is to look at people.",
+   talk:["N: The door robot looks at you for a long time.","N: Then it says: 'Beep.' and steps aside. You have never been so proud."],
+   peck:"N: It looks at you harder."},
+  EXR('arcfloor',36,'Inside',86)
+]},
+
+arcfloor:{world:'arcade',name:'Game Floor',floor:164,xs:[14,306],hotspots:[
+  EXL('arcfront',284,'Front Door'),
+  {id:'invade',name:'Corn Invaders',x:56,y:96,w:32,h:68,at:42,
+   look:"N: CORN INVADERS. Rows of tiny Snack-O-Trons march down the screen. Finally, a game that understands you.",peck:[{play:'invade'}]},
+  {id:'catch',name:'Pancake Catch',x:106,y:96,w:32,h:68,at:94,
+   look:"N: PANCAKE CATCH. Pancakes fall from the sky and you stack them on a plate. This is not a game. This is your actual job.",peck:[{play:'catch'}]},
+  {id:'claw',name:'Claw Machine',x:166,y:82,w:48,h:82,at:152,
+   look:"N: A claw machine full of plush toys. The claw sways back and forth, slowly. It seems to be watching you.",
+   peck:["N: You put your face against the glass to see the prizes.","N: The claw stops swaying.",{die:'claw'}]},
+  {id:'teen',name:'Teenager',x:236,y:100,w:28,h:64,at:222,
+   look:"N: A tall, thin alien teenager, playing a game with no name. He has not blinked since you came in.",
+   talk:["N: You ask what he is playing.","N: He says: 'Six. Seven.' He does not look up. You are starting to think it runs in the family."]},
+  EXR('prize',36,'Prizes')
+]},
+
+prize:{world:'arcade',name:'Prize Counter',floor:164,xs:[14,306],hotspots:[
+  EXL('arcfloor',284,'Game Floor'),
+  {id:'muncher',name:'Ticket Muncher',x:44,y:90,w:32,h:74,at:92,
+   look:"N: The Ticket Muncher. You feed it tickets and it counts them, loudly, and usually wrong.",
+   peck:"N: It bites your wing. It counts you as four tickets."},
+  {id:'kid',name:'Floaty Head Kid',x:128,y:76,w:44,h:48,at:108,
+   look:"N: The prize counter is run by a Floaty Head Kid. Summer job. He has the eyes of someone who has explained the ticket prices nine thousand times.",
+   talk:[{if:'gotQ1',then:"N: He nods at you. It is the nod of a professional who respects a big spender.",
+     else:[{if:['tInvade','tCatch','tFlap'],then:["N: You pile sixty-seven tickets on the counter. The Floaty Head Kid counts them with his eyebrows.",{give:'q1'},{set:'gotQ1'},
+         "N: He slides one Galactic Quarter across the glass. It is the most expensive quarter in history."],
+       else:["N: He says the Galactic Quarter costs 67 tickets. Corn Invaders pays 30. Pancake Catch pays 30.","N: You point out that is only 60.",
+         "N: He shrugs with his whole head. He says there is one more machine that still pays tickets: an old Chickens Can't Fly cabinet. Nobody has seen one in years."]}]}],
+   peck:"N: He floats slightly higher. Out of range. He has done this before."},
+  {id:'wall',name:'Prize Wall',x:180,y:6,w:104,h:82,at:170,
+   look:[{if:'gotQ1',then:"N: The prize wall. The quarter is gone. The nine-million-ticket plush Snack-O-Tron is still there. It will always be there.",
+     else:"N: The prize wall. A plastic comb: 2 tickets. A Galactic Quarter: 67 tickets. A life-size plush Snack-O-Tron: nine million tickets."}]},
+  EXR('backroom',36,'Staff Only')
+]},
+
+backroom:{world:'arcade',name:'Back Room',floor:164,xs:[14,300],hotspots:[
+  EXL('prize',284,'Prize Counter'),
+  {id:'dot',name:'Very Old Cabinet',x:70,y:96,w:32,h:68,at:54,
+   look:"N: The oldest game in the galaxy. It is called DOT. There is one dot on the screen. It is waiting for a second player. It has been waiting a long time.",
+   peck:["N: You press PLAYER TWO. A second dot appears.","N: The two dots sit next to each other. Nothing else happens. It is, somehow, the best game you have ever played."]},
+  {id:'meta',name:'Strange Cabinet',x:150,y:96,w:32,h:68,at:134,
+   look:["N: A cabinet labelled THE SPATULA OF DESTINY. On its screen, a tiny chicken in a tiny back room is looking at a tiny cabinet.","N: You wave. The tiny chicken waves. Somewhere above you, you feel a faint breeze."],
+   talk:"N: You say hello to the screen. From the ceiling, a very large voice says hello to you. You decide to stop doing that.",
+   peck:["N: There is a little door in the side of the cabinet. You are little. You climb in to meet yourself.",{die:'loop'}]},
+  {id:'boxes',name:'Old Boxes',x:218,y:108,w:64,h:56,at:204,
+   look:"N: Boxes of old game cartridges. PONG 2: PONG HARDER. SUPER LUNCH BROS. One just says SEQUEL.",
+   peck:S_('backroom',"N: You blow the dust off the top box. Something is draped over it...")}
+]},
+
+cfield:{world:'cannon',name:'Landing Crater',floor:164,xs:[20,306],hotspots:[
+  SHUT("N: Your shuttle, parked in a crater. The crater has a little flag in it that says DAVE."),
+  {id:'target',name:'Big Red X',x:106,y:150,w:44,h:14,at:92,
+   look:"N: A big red X painted on the ground. It probably does not mean anything.",
+   peck:["N: You stand on the X. It is a nice X.","N: You hear a whistling sound. It is getting louder.",{die:'target'}]},
+  {id:'gary',name:'Gary',x:172,y:142,w:26,h:22,
+   look:"N: A duck. A sign next to him says DUCK. It is not a warning. That is Gary.",
+   talk:"N: Gary says quack. You say bawk. It is the most normal conversation you have had in three acts."},
+  {id:'sign',name:'Sign',x:212,y:88,w:44,h:40,
+   look:"N: The sign says: NO HELMET, NO CANNON. Under that: THIS IS THE ONE RULE. Under that: WE USED TO HAVE NO RULES. IT WENT BADLY."},
+  {id:'booth',name:'Safety Robot',x:262,y:104,w:38,h:60,when:'!gotHelmet',at:246,
+   look:"N: A safety robot at the gate, checking for helmets. It takes its job extremely seriously. It is wearing two.",
+   talk:["N: The safety robot scans your head.","N: 'NO HELMET DETECTED. A CHEF HAT IS NOT A HELMET. I HAVE BEEN TOLD TO SAY THAT SPECIFICALLY.'"],
+   peck:"N: It hands you a pamphlet called 'SO YOU PECKED A ROBOT.'",
+   use:{helmet:["N: You put the knight's helmet on over your chef hat. It is not comfortable.","N: 'HELMET DETECTED. HAVE A SAFE DAY.' The robot rolls off for its lunch break.",{set:'gotHelmet'},{take:'helmet'}]}},
+  {id:'east',name:'The Cannon',x:300,y:86,w:20,h:78,when:'gotHelmet',exit:{to:'cgun',x:36},dir:'right'}
+]},
+
+cgun:{world:'cannon',name:'The Great Chicken Cannon',floor:164,xs:[14,306],hotspots:[
+  EXL('cfield',240,'Landing Crater',100),
+  {id:'master',name:'The Cannon Master',x:74,y:112,w:38,h:52,at:126,
+   look:"N: The Cannon Master. Goggles, singed eyebrows, and the calm of someone who has been fired out of a cannon more times than they have had breakfast.",
+   talk:[{if:'gotQ2',then:"N: The Cannon Master salutes you with one wing. The cannon is back in business. Somewhere in the distance, something goes boom, and somebody goes 'wheee.'",
+     else:["N: The Cannon Master says the Great Chicken Cannon has been out of action since the Great Jam. Somebody's quarter got stuck in the coin slot.",
+       "N: To get it out you would need something thin, flat, and made of gold. Why gold? The Cannon Master shrugs. 'It's quantum.'"]}],
+   peck:"N: The Cannon Master does not even flinch. You are the softest thing that has hit them all week."},
+  {id:'cannon',name:'The Cannon',x:134,y:36,w:76,h:88,at:122,
+   look:"N: The Great Chicken Cannon of Quantum Defiance. Built from stolen parts and powered by concentrated chicken fury. It is pointing at the sky. It is always pointing at the sky.",
+   peck:["N: You climb into the barrel. Just for a look. It is dark in here. And warm.","N: Outside, a very faint voice says: 'Is somebody in the-'",{die:'cannon'}]},
+  {id:'slot',name:'Coin Box',x:212,y:116,w:28,h:48,at:198,
+   look:[{if:'gotQ2',then:"N: The coin box. RIDES: ONE QUARTER. The slot is clear now. There is a line forming.",
+     else:"N: The coin box. RIDES: ONE QUARTER. There is a quarter jammed halfway into the slot, stuck fast."}],
+   peck:[{if:'gotQ2',then:"N: You have no quarters to spare. And you have seen what the ride does.",else:"N: You peck at the quarter. It does not budge. Your beak is the wrong shape. You need something thin and flat."}],
+   use:{trophy:[{if:'gotQ2',then:"N: Nothing left to pry.",else:PRY}],
+     spatula:[{if:'gotQ2',then:"N: Nothing left to pry.",else:"N: The Spatula of Destiny is too thick for the slot. You need a thinner, fancier spatula. A golden one, say."}]}},
+  EXR('chut',36,'Control Hut',100)
+]},
+
+chut:{world:'cannon',name:'Control Hut',floor:164,xs:[14,300],hotspots:[
+  EXL('cgun',284,'The Cannon'),
+  {id:'dial',name:'Aiming Dial',x:56,y:56,w:68,h:80,at:136,
+   look:"N: The aiming dial. The settings are: UP. FURTHER UP. THAT PLANET. THE OTHER PLANET. And SURPRISE ME.",
+   peck:"N: You spin it. It lands on SURPRISE ME. It always lands on SURPRISE ME."},
+  {id:'cal',name:'Calendar',x:148,y:54,w:44,h:44,
+   look:"N: A sign: DAYS SINCE LAST INCIDENT. The number is zero. The zero is painted on."},
+  {id:'box',name:'Mystery Box',x:218,y:124,w:54,h:40,at:204,
+   look:"N: A box. The label says: CHICKEN INSIDE. Under that, in smaller letters: MAYBE.",
+   talk:"N: You knock. Something inside knocks back. At exactly the same time.",
+   peck:["N: Only one way to find out. You open the lid.",{die:'quantum'}]}
+]},
+
+cgate:{world:'castle',name:'Drawbridge',floor:162,xs:[20,306],hotspots:[
+  SHUT("N: Your shuttle. A knight has already tied a horse to it. The horse is also a chicken."),
+  {id:'moat',name:'Moat',x:92,y:164,w:64,h:16,at:124,
+   look:"N: The castle moat. It is brown. It is steaming. It smells wonderful, which is worrying.",
+   peck:["N: You lean down for a taste. It is gravy! Hot gravy!","N: You lean down a bit further.",{die:'moat'}]},
+  {id:'guard',name:'Castle Guard',x:180,y:108,w:36,h:54,at:164,
+   look:"N: A knight chicken, guarding the drawbridge, asleep standing up inside his armor. The armor is doing most of the work.",
+   talk:["N: You say 'halt, who goes there' for him, since he is busy.","N: From inside the helmet: 'zzz... state your... zzz... business... zzz.'"],
+   peck:"N: CLANG. He does not wake up. Your beak rings for a full minute."},
+  {id:'banner',name:'Banner',x:236,y:40,w:30,h:36,
+   look:"N: The banner of Castle Cluckingham: a golden egg on a red field. The motto underneath reads: WE WERE HERE FIRST."},
+  EXR('yard',36,'Courtyard',86)
+]},
+
+yard:{world:'castle',name:'Courtyard',floor:164,xs:[24,296],hotspots:[
+  EXL('cgate',284,'Drawbridge',100),
+  {id:'catapult',name:'Egg Catapult',x:56,y:86,w:60,h:78,at:126,
+   look:"N: An egg catapult, aimed over the wall at the dinosaur, from exactly five spaces away. It has been firing for a hundred years. It has never once hit the dinosaur.",
+   peck:["N: Is it comfortable? You hop into the bucket.","N: It is not a chair.",{die:'catapult'}]},
+  {id:'sir',name:'Sir Clucksalot',x:136,y:108,w:38,h:56,at:118,
+   look:"N: Sir Clucksalot, bravest knight of Castle Cluckingham. His armor is very shiny. That is because nothing has ever touched it.",
+   talk:[{if:'gotHelmet',then:"N: Sir Clucksalot bows. He says the minstrels are already writing a song about you. It rhymes 'spatula' with 'spectacular.'",
+     else:[{if:'dinoFed',then:["N: Sir Clucksalot cannot believe it. A hundred years of siege, ended by breakfast cereal for dogs.",
+         "N: He says a hero needs a helmet, and hands you his spare. It is too big. It is also dented on the inside, somehow.",{give:'helmet'}],
+       else:["N: Sir Clucksalot says a terrible dinosaur is sitting on the royal treasure, and has been for a hundred years.",
+         "N: He says nothing can move it. They have tried eggs. They have tried more eggs. They have tried eggs from further away."]}]}],
+   peck:"N: TING. He does not notice. He adds it to his list of battles won."},
+  {id:'scribe',name:'The Dragon Scribe',x:204,y:112,w:38,h:50,at:190,
+   look:"N: The Dragon Scribe, keeper of the castle chronicle. A small green dragon with a very large quill. She writes down everything that happens.",
+   talk:["N: You ask what she is writing.","N: She reads it back: 'A chicken arrived. He asked what I was writing. I am now writing that I told him.'","N: She keeps writing. This could go on for a while."],
+   peck:["N: You peck the Dragon Scribe's scroll.","N: She writes: 'The chicken pecked my scroll. He will regret this in chapter nine.'"]},
+  {id:'stairs',name:'Dungeon',x:254,y:110,w:32,h:54,exit:{to:'dungeon',x:56},dir:'down'},
+  EXR('dino',36,'Outside the Walls',100)
+]},
+
+dino:{world:'castle',name:'Dinosaur Field',floor:164,xs:[24,300],hotspots:[
+  EXL('yard',280,'Courtyard',100),
+  {id:'eggs',name:'Splattered Eggs',x:36,y:150,w:50,h:14,
+   look:"N: A hundred years of missed eggs. The grass here is the healthiest grass in the galaxy."},
+  {id:'dino',name:'The Dinosaur',x:150,y:50,w:112,h:112,when:'!dinoFed',at:132,
+   look:"N: The terrible dinosaur. Enormous. Green. Sitting on a pile of gold. Its tummy is rumbling so loudly you can feel it in your feet.",
+   talk:["N: You say hello.","N: The dinosaur says 'rawr?' It is a small rawr, with a question mark on the end. Its tummy rumbles again."],
+   peck:["N: The knights are scared of it. You are braver than the knights. You peck the dinosaur.",{die:'dino'}],
+   use:{kibble:["N: You shake the bag of kibble. The dinosaur's head comes up. Its tail starts wagging and knocks over a tree.",{take:'kibble'},{set:'dinoFed'},
+       "N: It eats the whole bag, licks you once, rolls off the treasure, and falls asleep in the sun.","N: A hundred-year siege, and all it wanted was lunch. You know the feeling."],
+     spatula:"N: You wave the spatula. The dinosaur watches it go back and forth. It thinks you are a very small windshield wiper."}},
+  {id:'nap',name:'The Dinosaur',x:54,y:122,w:104,h:42,when:'dinoFed',
+   look:"N: The terrible dinosaur, asleep, full of kibble, smiling. One foot is twitching. It is dreaming of fetch.",
+   peck:"N: Let sleeping dinosaurs lie. You have learned this lesson on several planets now."},
+  {id:'gold',name:'Royal Treasure',x:188,y:134,w:74,h:30,when:'dinoFed',at:174,
+   look:"N: The royal treasure of Castle Cluckingham. Gold coins, gold cups, a gold statue of a chicken, and a lot of dinosaur-shaped dent.",
+   peck:[{if:'gotQ3',then:"N: You took the only thing you needed. The rest belongs to the castle. And it has been sat on.",
+     else:["N: You dig through the gold. Crowns. Goblets. And at the very bottom, one small silver coin that says GALACTIC QUARTER.",{give:'q3'},{set:'gotQ3'},
+       "N: A hundred years of siege for twenty-five cents. Somebody should tell the knights. Not you."]}]}
+]},
+
+dungeon:{world:'castle',name:'Dungeon Gift Shop',floor:164,xs:[30,300],hotspots:[
+  {id:'up',name:'Courtyard',x:8,y:84,w:36,h:80,exit:{to:'yard',x:240},dir:'up'},
+  {id:'shop',name:'Gift Shelves',x:58,y:30,w:76,h:66,at:140,
+   look:"N: The dungeon closed years ago, so now it is a gift shop. The mugs say MY FRIEND WENT TO THE DUNGEON AND ALL I GOT WAS OUT."},
+  {id:'bones',name:'Skeleton',x:150,y:108,w:34,h:56,at:136,
+   look:"N: A skeleton, sitting on a stool. The sign round its neck says STAFF.",
+   talk:"N: You ask if it works here. It does not answer. Its shift ended three hundred years ago and nobody told it.",
+   peck:"N: A finger bone falls off. You put it back. Wrong hand. Nobody will know."},
+  {id:'tickler',name:'The Tickler',x:204,y:86,w:40,h:78,at:190,
+   look:"N: The only dungeon machine they kept: THE TICKLER. A feather on a stick, on a motor. The sign says TRY ME.",
+   peck:["N: The sign does say TRY ME.","N: You step up to the feather.",{die:'tickle'}]},
+  {id:'crate',name:'Clearance Crate',x:260,y:136,w:34,h:28,at:246,
+   look:"N: A crate marked CLEARANCE: CURSED ITEMS, HALF OFF.",
+   peck:S_('dungeon',"N: You reach into the cursed crate. One item is only slightly cursed...")}
+]},
+
+slotp:{world:'mother',name:'Coin Slot Plaza',floor:164,xs:[20,306],hotspots:[
+  SHUT("N: Your shuttle, parked on the front of a vending machine the size of a moon. It is not the strangest place you have parked this week."),
+  {id:'coinret',name:'Coin Return',x:94,y:122,w:44,h:42,at:150,
+   look:"N: The coin return. A flap the size of a garage door. A cold wind blows out of it.",
+   peck:["N: Maybe somebody left some change in there. You climb in to check.","N: The flap swings shut behind you. A sign lights up: RETURNING.",{die:'coinret'}]},
+  {id:'slot',name:'Coin Slot',x:164,y:44,w:48,h:108,at:150,
+   look:[{if:'vendReady',then:"N: The coin slot. Three green lights. Paid in full.",else:"N: The coin slot, as tall as a building. Three little lights underneath. The price is three Galactic Quarters. Exact change only."}],
+   peck:"N: You try a button from your pocket. You do not have pockets. Or a button. The machine is not fooled.",
+   use:{q1:["N: You heave the quarter up into the slot.",{take:'q1'},{set:'inQ1'},COIN_IN],
+     q2:["N: You heave the quarter up into the slot.",{take:'q2'},{set:'inQ2'},COIN_IN],
+     q3:["N: You heave the quarter up into the slot.",{take:'q3'},{set:'inQ3'},COIN_IN]}},
+  {id:'note',name:'Sticky Note',x:224,y:58,w:44,h:44,
+   look:"N: A sticky note the size of a billboard. It says: OUT OF SNACKS? NEVER. Somebody has drawn a little heart on it. A big little heart."},
+  EXR('shelf',36,'Inside',86)
+]},
+
+shelf:{world:'mother',name:'Row B',floor:164,xs:[24,296],hotspots:[
+  EXL('slotp',284,'Coin Slot Plaza',100),
+  {id:'chips',name:'Giant Chips',x:30,y:40,w:68,h:112,at:112,
+   look:"N: A bag of corn chips the size of an apartment building. The label says: NOW WITH 0% CORN. You have never been so offended.",
+   peck:"N: You peck the bag. It makes the loudest crinkle in the history of crinkles. Somewhere, a librarian wakes up angry."},
+  {id:'ship',name:'Slot B4',x:112,y:70,w:92,h:64,at:104,
+   look:[{if:'freed',then:"N: Slot B4. The tag says SOLD.",else:"N: The C.S.S. Overeasy, sitting in a giant metal coil like a bag of pretzels. Two small faces are pressed against the window."}],
+   talk:[{if:'freed',then:"N: Nobody home. They are out. You got them out.",
+     else:["SCRATCHY: Cook! Get us out of here! Pearl says we expire in two days!","PEARL: I said the CHIPS expire in two days. We are fine. Probably."]}],
+   peck:[{if:'freed',then:"N: Empty slot. Good.",else:"N: You push the ship. It is a ship. You are a chicken. The coil does not turn for free."}]},
+  {id:'gummy',name:'Gummy Bear',x:226,y:66,w:52,h:98,at:210,
+   look:"N: A gummy bear the size of a bus. It is green. It is smiling. It is slightly see-through, and there is a shoe in it.",
+   peck:["N: Just one bite. It is a gummy bear. What could it do.",{die:'gummy'}]},
+  EXR('coilr',36,'The Coils',100)
+]},
+
+coilr:{world:'mother',name:'The Coil Walk',floor:164,xs:[24,296],hotspots:[
+  EXL('shelf',280,'Row B',100),
+  {id:'coil',name:'Giant Coil',x:96,y:50,w:130,h:92,at:84,
+   look:"N: A snack coil, turning slowly, big enough to drive a shuttle through. Anything standing in it gets carried to the end and dropped. That is the whole idea of a coil.",
+   peck:["N: It looks like a fun slide. You hop on.","N: It is a fun slide. Right up until the end.",{die:'coil'}]},
+  {id:'granola',name:'Expired Granola',x:234,y:132,w:54,h:32,at:220,
+   look:"N: A granola bar. The date on it says: BEST BEFORE THE UNIVERSE. It has been here since before there was a here.",
+   peck:"N: You peck it. Your beak bounces off. This is how diamonds are made."},
+  EXR('panel',36,'Control Room',100)
+]},
+
+panel:{world:'mother',name:'Control Room',floor:164,xs:[24,296],hotspots:[
+  EXL('coilr',280,'The Coil Walk',100),
+  {id:'mother',name:'Mother',x:46,y:26,w:128,h:98,at:180,
+   look:"N: The Snack-O-Tron One Million. The Mothership. Two red eyes the size of garage doors, and a mouth that is a coin slot. She is glaring at you.",
+   talk:[{if:'freed',then:["MOTHER: YOU. SAID. THANK. YOU. TO. MY. BABY.","MOTHER: YOU. MAY. HAVE. ONE. FREE. SNACK. ...ONE."],
+     else:["MOTHER: WHO. WAS. MEAN. TO. MY. BABY.","N: You explain that it was a fair cook-off, and that the pancake was round.","MOTHER: EXACT. CHANGE. ONLY."]}],
+   peck:"MOTHER: DO. NOT. TAP. THE. GLASS."},
+  {id:'keys',name:'Giant Keypad',x:198,y:68,w:74,h:84,at:184,
+   look:"N: The selection keypad. Letters A to F, numbers 1 to 6. Each button is the size of a dinner table. Your ship is in row B, slot 4.",
+   peck:[{vend:true}]},
+  EXR('chute',36,'Prize Chute',100)
+]},
+
+chute:{world:'mother',name:'Prize Chute',floor:164,xs:[24,296],hotspots:[
+  EXL('panel',280,'Control Room',100),
+  {id:'nine',name:'Snack-O-Tron 9000',x:40,y:92,w:46,h:72,at:104,
+   look:[{if:'freed',then:"N: The Snack-O-Tron 9000. There is a little light on its front that was not on before. It might be a smile.",
+     else:"N: The Snack-O-Tron 9000, sulking in the corner. It has a participation ribbon stuck to its front. It does not look like it wants to talk."}],
+   talk:[{if:'freed',then:["RIVAL: FRIEND. DETECTED.","N: It dispenses a single chip into your wing. Then, after a moment, a second one."],
+     else:["RIVAL: GO. AWAY. LUNCH. CHICKEN.","N: Its voice is quieter than before. Vending machines do not cry. This one is doing something close."]}],
+   peck:"N: No. Not this time."},
+  {id:'flap',name:'The Flap',x:126,y:56,w:128,h:108,at:112,
+   look:[{if:'freed',then:"N: The prize flap, wide open. Your ship is parked just outside, with a new dent and a price sticker on the windshield.",
+     else:[{if:'vended',then:"N: The prize flap. Your ship is jammed behind it, like every bag of chips you have ever paid for. The flap says PUSH.",
+       else:"N: The prize flap. It says PUSH. It is the size of a football field. Nothing is behind it yet."}]}],
+   peck:[{if:'freed',then:"N: It is open. You did that.",else:"N: You push. You are one chicken. It is one moon. It does not go well, but it goes quietly."}],
+   use:{spatula:[{if:'freed',then:"N: Already flipped.",else:[{if:'vended',then:FINALE3,else:"N: Nothing to flip it for. Your ship is still up on the shelf."}]}],
+     trophy:[{if:'freed',then:"N: Already flipped.",else:[{if:'vended',then:FINALE3,else:"N: Nothing to flip it for. Your ship is still up on the shelf."}]}]}}
+]}
+
+});
+
+// ── wire the new screens into the old ones ──
+(function(){const S0=WORLD.screens,HS=(scr,id)=>S0[scr].hotspots.find(h=>h.id===id);
+  S0.galley.hotspots.push(EXL('rec',284,'Rec Room'));
+  S0.bridge.hotspots.push({id:'ladder',name:'Observation Dome',x:98,y:86,w:16,h:78,exit:{to:'dome',x:60},dir:'up'});
+  HS('gate','gateOpen').exit={to:'maze1',x:36};HS('temple','out').exit={to:'maze2',x:284};
+  S0.cornfield.hotspots.push({id:'path',name:'Popcorn Geysers',x:150,y:98,w:36,h:24,exit:{to:'geyser',x:160},dir:'up'});
+  S0.dunes.hotspots.push({id:'trail',name:'Clothesline Canyon',x:150,y:112,w:40,h:24,exit:{to:'canyon',x:160},dir:'up'});
+  S0.laundromat.hotspots.push(EXR('lostfound',36,'Lost and Found',100));
+  S0.mess.hotspots.push(EXR('park',36,'Park Deck',86));
+  S0.fountain.hotspots.push(EXR('yarn',40,'Yarn Cavern',100));
+  S0.grove.hotspots.push(EXR('ruins',40,'Waffle Ruins',100));
+  S0.arena.hotspots.push(EXR('lobby',36,'Lobby',86));
+  HS('arena','rival').when='!act3';HS('arena','crew').when='!act3';
+  HS('mess','chef').talk3=[{if:'gotKibble',then:"BISCUIT: Free kibble forever. That was the deal. One bag at a time, though.",
+    else:["BISCUIT: A hungry dinosaur? Say no more. Nobody goes hungry on my watch. Not even the big ones.",{give:'kibble'},{set:'gotKibble'},"BISCUIT: Family size. Tell him Biscuit sent you."]}];
+  HS('bridge','scratchy').talk3=[{if:'freed',then:"SCRATCHY: First Class, cook. Do not let it go to your hat.",else:"SCRATCHY: We are a SNACK, cook. Row B. Slot four. Do something. Preferably something heroic that I can take credit for."}];
+  HS('bridge','pearl').talk3=[{if:'freed',then:"PEARL: I calculated the odds of us getting out. I am not going to tell you what they were. Well done.",else:"PEARL: I did the math. Three Galactic Quarters gets us out. I also did the math on how many we have. It was quick math."}];
+  HS('laundromat','munchNap').talk=[{if:'allSocks',then:[{if:'sockHero',then:"SOCK MUNCH: Zzz... best... friend... zzz.",
+      else:["N: You lay out twelve lost socks, gathered from every corner of the galaxy. Sock Munch opens one eye.","SOCK MUNCH: Is... is ALL of them. Is the COLLECTION.",{set:'sockHero'},
+        "N: He does not eat them. He hugs them. Then he hugs you. You are now a Sock Legend. It says so in your album."]}],
+    else:"SOCK MUNCH: Zzz... argyle... zzz."}];
+  HINTS.splice(HINTS.findIndex(h=>h[0]==='!gotHelmet'),1,[['!gotHelmet','!has:helmet'],"The hundred-year siege is over. Sir Clucksalot owes you one. Go and talk to him."],['!gotHelmet',"Show the knight's helmet to the safety robot at the Quantum Cannon Fields."]);
+})();
+
+// ───────────────────────── ARCADE CABINETS ─────────────────────────
+// Three tiny games played on the same canvas. No lives, no game over, big Exit button.
+const MINI={
+  flap:{title:"CHICKENS CAN'T FLY",help:'TAP TO FLAP. FLY INTO A CABINET.'},
+  invade:{title:'CORN INVADERS',help:'SLIDE YOUR FINGER TO MOVE.'},
+  catch:{title:'PANCAKE CATCH',help:'SLIDE TO MOVE. CATCH 12. NO BOOTS.'}
+};
+const DEPTH_MSG=['','A GAME INSIDE A GAME','A GAME INSIDE A GAME INSIDE A GAME','OK THAT IS DEEP ENOUGH'];
+const Mini={on:false,id:null,t:0,score:0,won:false,winT:0,px:160,g:null,
+  start(id){this.on=true;this.id=id;this.t=0;this.score=0;this.won=false;this.winT=0;this.px=160;modal='mini';closeVerbs();$('miniExit').className='on';$('loc').textContent=MINI[id].title;
+    if(id==='flap')this.g={y:80,vy:0,pipes:[],spawn:1,n:0,depth:0,bonk:0};
+    if(id==='invade'){const inv=[];for(let rw=0;rw<3;rw++)for(let c=0;c<6;c++)inv.push({c,rw,alive:true});this.g={inv,ox:0,dir:1,oy:0,eggs:[],fire:0,x:160};}
+    if(id==='catch')this.g={items:[],spawn:0.5,x:160,splat:[]};},
+  end(won){this.on=false;modal=null;$('miniExit').className='';const sc=SCR();$('loc').textContent=WORLD_NAMES[sc.world]+' · '+sc.name;run(won?MINI_WIN[this.id]:MINI_QUIT);},
+  input(kind,x,y){this.px=x;if(kind==='down'&&this.id==='flap'&&!this.won){this.g.vy=-92;Sfx.tone(520,0.05);}},
+  win(){if(this.won)return;this.won=true;this.winT=this.t+1.8;Sfx.win();},
+  update(dt){this.t+=dt;const g=this.g;if(this.won){if(this.t>this.winT)this.end(true);return;}
+    if(this.id==='flap'){g.vy+=250*dt;g.y+=g.vy*dt;if(g.y>158){g.y=158;g.vy=-60;}if(g.y<14){g.y=14;g.vy=20;}g.bonk-=dt;
+      g.spawn-=dt;if(g.spawn<=0){g.spawn=2.3;g.n++;g.pipes.push({x:340,gy:54+Math.random()*64,cab:g.n%3===0});}
+      g.pipes.forEach(p=>{p.x-=58*dt;const near=Math.abs(p.x-70)<13,inGap=g.y>p.gy-30&&g.y<p.gy+26;
+        if(near&&!inGap&&!p.hit){p.hit=true;g.bonk=0.5;this.score=Math.max(0,this.score-1);Sfx.bad();}
+        if(p.cab&&near&&inGap&&!p.used){p.used=true;g.depth++;toast(DEPTH_MSG[Math.min(3,g.depth)]);Sfx.get();if(g.depth>=3)this.win();}
+        if(!p.passed&&p.x<56){p.passed=true;if(!p.hit)this.score++;}});
+      g.pipes=g.pipes.filter(p=>p.x>-30);}
+    if(this.id==='invade'){g.x+=(this.px-g.x)*Math.min(1,dt*10);const left=g.inv.filter(i=>i.alive).length,sp=14+(18-left)*3;g.ox+=g.dir*sp*dt;if(g.ox>70||g.ox<-70){g.dir*=-1;g.oy+=6;}if(g.oy>70)g.oy=0;
+      g.fire-=dt;if(g.fire<=0){g.fire=0.32;g.eggs.push({x:g.x,y:144});Sfx.tone(700,0.03,'square',0.02);}
+      g.eggs.forEach(e=>{e.y-=170*dt;g.inv.forEach(i=>{if(!i.alive||e.dead)return;const ix=110+i.c*20+g.ox,iy=30+i.rw*18+g.oy;if(Math.abs(e.x-ix)<8&&Math.abs(e.y-iy)<7){i.alive=false;e.dead=true;this.score++;Sfx.tone(240,0.08,'sawtooth',0.04);}});});
+      g.eggs=g.eggs.filter(e=>e.y>0&&!e.dead);if(left===0)this.win();}
+    if(this.id==='catch'){g.x+=(this.px-g.x)*Math.min(1,dt*12);g.spawn-=dt;if(g.spawn<=0){g.spawn=0.85;g.items.push({x:24+Math.random()*272,y:-6,vy:52+Math.random()*30+this.score*2,boot:Math.random()<0.2});}
+      g.items.forEach(it=>{it.y+=it.vy*dt;if(!it.done&&it.y>142&&it.y<154&&Math.abs(it.x-g.x)<18){it.done=true;if(it.boot){this.score=Math.max(0,this.score-1);Sfx.bad();}else{this.score++;Sfx.tone(600+this.score*30,0.06);}}
+        if(!it.done&&it.y>164){it.done=true;if(!it.boot)g.splat.push({x:it.x,t:this.t});}});
+      g.items=g.items.filter(it=>!it.done);g.splat=g.splat.filter(s=>this.t-s.t<2);if(this.score>=12)this.win();}},
+  draw(){const g=this.g;
+    if(this.id==='flap'){const cols=[P.R,P.LB,P.G];
+      for(let d=0;d<Math.min(3,g.depth);d++){r(0,0,320,180,cols[d]);r(0,0,320,12,P.Y);txt(DEPTH_MSG[d+1],160-DEPTH_MSG[d+1].length*2,4,P.K);r(22,14,276,144,P.K);r(120,162,80,10,P.DG);disc(140,166,3,P.LR);r(160,163,4,6,P.LG);
+        X.translate(24,16);X.scale(0.85,0.778);X.beginPath();X.rect(0,0,320,180);X.clip();}
+      r(0,0,320,180,'#4aaacc');r(0,150,320,30,'#c8a030');disc(270,30,12,P.Y);for(let i=0;i<4;i++){const cx=(i*100-this.t*10)%400;ell(cx<-40?cx+400:cx,40+i*14,20,5,P.W);}
+      g.pipes.forEach(p=>{r(p.x-10,0,20,p.gy-34,P.G);r(p.x-12,p.gy-40,24,8,'#008800');r(p.x-10,p.gy+30,20,180,P.G);r(p.x-12,p.gy+30,24,8,'#008800');r(p.x-4,10,3,p.gy-54,P.Y);r(p.x+2,p.gy+46,3,90,P.Y);
+        if(p.cab&&!p.used){r(p.x-8,p.gy-14,16,26,P.LM);r(p.x-6,p.gy-11,12,9,P.K);r(p.x-4,p.gy-9,3,3,P.W);r(p.x-6,p.gy+2,12,3,P.DG);}});
+      if(g.bonk<=0||Math.floor(this.t*12)%2)chicken(70,g.y+10,{s:1,step:g.vy<0?1:0});
+      txt('SCORE '+this.score,6,170,P.K);}
+    if(this.id==='invade'){r(0,0,320,180,P.K);starfield(0,0,320,180,50,5);r(0,160,320,20,'#c8a030');
+      g.inv.forEach(i=>{if(!i.alive)return;const x=110+i.c*20+g.ox,y=30+i.rw*18+g.oy;r(x-6,y-6,12,12,'#ccaa00');r(x-4,y-4,8,5,P.K);r(x-3,y-3,2,2,P.LR);r(x+1,y-3,2,2,P.LR);r(x-4,y+3,8,2,P.K);r(x-5+(Math.floor(this.t*3)%2)*8,y+6,2,2,'#ccaa00');});
+      g.eggs.forEach(e=>ell(e.x,e.y,2,3,P.W));chicken(g.x,160,{s:1,hat:'chef'});
+      txt('SNACK-O-TRONS LEFT '+g.inv.filter(i=>i.alive).length,6,170,P.K);}
+    if(this.id==='catch'){r(0,0,320,180,'#201830');for(let x=0;x<320;x+=16)r(x,0,1,160,'#2a2040');r(0,160,320,20,'#5a5070');
+      g.splat.forEach(s=>ell(s.x,162,9,2,'#f0d890'));
+      g.items.forEach(it=>{if(it.boot){r(it.x-3,it.y-8,6,10,P.BR);r(it.x-3,it.y,10,4,P.BR);}else{ell(it.x,it.y,9,3,'#f0a020');ell(it.x,it.y-1,7,1,'#ffc040');}});
+      ell(g.x,152,18,3,P.W);r(g.x-18,150,36,2,P.LG);for(let i=0;i<Math.min(this.score,12);i++)ell(g.x,148-i*3,9,2,i%2?'#f0a020':'#e09010');
+      chicken(g.x-24,170,{s:1,hat:'chef'});txt('PANCAKES '+this.score+' OF 12',6,172,P.W);}
+    X.setTransform(1,0,0,1,0,0);
+    if(this.t<4&&!this.won){const h=MINI[this.id].help;r(160-h.length*2-4,84,h.length*4+8,13,P.K);txt(h,160-h.length*2,88,P.Y);}
+    if(this.won){r(100,74,120,30,P.K);r(102,76,116,26,P.Y);txt('YOU WIN!',144,82,P.K);txt('WELL. THE CHICKEN DID.',116,92,P.R);}}
+};
+
+// ───────────────────────── ENGINE ─────────────────────────
+const $=id=>document.getElementById(id);
+const SAVE_KEY='cc_spatula_of_destiny_v1';
+const cv=$('cv');X=cv.getContext('2d');X.imageSmoothingEnabled=false;
+const fresh=()=>({screen:'galley',x:96,flags:{},inv:[],deaths:[],flipped:[],socks:[],sound:true,done:false,started:false});
+let S=fresh();
+function save(){S.x=hero.x;try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
+function loadSave(){try{const j=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(j&&j.started&&WORLD.screens[j.screen])return Object.assign(fresh(),j);}catch(e){}return null;}
+const has=i=>S.inv.includes(i);
+const F=n=>!!S.flags[n];
+function cond(c){if(c==null)return true;if(c==='allSocks')return S.socks.length>=SOCK_TOTAL;if(Array.isArray(c))return c.every(cond);if(c[0]==='!')return !cond(c.slice(1));if(c.indexOf('has:')===0)return has(c.slice(4));return F(c);}
+const SCR=()=>WORLD.screens[S.screen];
+const WORLD_NAMES={ship:'C.S.S. Overeasy',corn:'The Corn Moon',lint:'Planet Lint',dogs:'Canine Nebula',cats:'Cat Crater',swamp:'Syrup Swamp',pan:'Frying Pan Station'};
+
+// ── sound ──
+const Sfx={ctx:null,
+  unlock(){try{if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state==='suspended')this.ctx.resume();}catch(e){}},
+  tone(f,d,type,v,slide){if(!S.sound||!this.ctx)return;try{const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type=type||'square';
+    o.frequency.setValueAtTime(f,c.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(slide,c.currentTime+d);
+    g.gain.setValueAtTime(v||0.05,c.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
+    o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d);}catch(e){}},
+  blip(){this.tone(660,0.05);},key(){this.tone(880,0.06);},bad(){this.tone(140,0.25);},door(){this.tone(180,0.12,'triangle',0.08);},
+  get(){this.tone(523,0.09);setTimeout(()=>this.tone(784,0.14),90);},die(){this.tone(300,0.7,'sawtooth',0.06,50);},
+  warp(){this.tone(120,1.3,'sawtooth',0.05,1400);},win(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,0.2),i*140));}};
+
+// ── voices ── same profile idea as the episodes and CC7, so the cast sound like themselves
+const VOICES={NARRATOR:{pitch:1.0,rate:0.95,color:'#ffcc02'},SCRATCHY:{pitch:0.7,rate:0.95,color:'#ff9f1c'},PEARL:{pitch:1.5,rate:1.15,color:'#ff88aa'},
+  INTERCOM:{pitch:0.9,rate:0.85,color:'#aaaaaa'},SIXTYSEVEN:{pitch:1.7,rate:0.8,color:'#55ff55'},TURKEY:{pitch:0.6,rate:1.05,color:'#e89090'},
+  FLOATY:{pitch:0.3,rate:0.75,color:'#55ffff'},MOTHER:{pitch:0.05,rate:0.7,color:'#ff5555'},FLUFFY:{pitch:0.1,rate:0.85,color:'#ffaa44'},TOURIST:{pitch:0.9,rate:1.1,color:'#e89090'},RIVAL:{pitch:0.1,rate:0.8,color:'#ffff55'},PROFESSOR:{pitch:1.3,rate:0.9,color:'#ffffff'},SEVENTYSIX:{pitch:1.8,rate:0.8,color:'#ff55ff'},
+  BISCUIT:{pitch:0.7,rate:1.0,color:'#ffcc88'},STARCAT:{pitch:1.2,rate:0.8,color:'#ffaa33'},KITTEN:{pitch:2,rate:1.2,color:'#cccccc'},SERPENT:{pitch:0.2,rate:0.6,color:'#8888ff'},'SOCK MUNCH':{pitch:0.5,rate:0.7,color:'#88ff88'},HOUND:{pitch:0.8,rate:1.0,color:'#8899ff'}};
+const NAMES={MOTHER:'Mother',FLUFFY:'Commander Fluffy',TOURIST:'Lost Tourist',RIVAL:'Snack-O-Tron 9000',PROFESSOR:'Professor Chicken',SEVENTYSIX:'Seventysix',BISCUIT:'Chef Biscuit',STARCAT:'StarCat Guardian',KITTEN:'Kitten',SERPENT:'Stellar Serpent',NARRATOR:'',TURKEY:'Turkey Commander',FLOATY:'Floaty Head Guy',HOUND:'Space Hound',SIXTYSEVEN:'Sixtyseven',INTERCOM:'Intercom',SCRATCHY:'Captain Scratchy',PEARL:'Pearl','SOCK MUNCH':'Sock Munch'};
+const Voice={pool:[],pick:null,
+  init(){if(!('speechSynthesis' in window))return;const load=()=>{try{this.pool=(speechSynthesis.getVoices()||[]).filter(v=>v.lang&&v.lang.indexOf('en')===0);
+      const want=['Google US English','Samantha','Microsoft Aria','Microsoft Zira','Daniel'];this.pick=null;
+      for(const w of want){const v=this.pool.find(p=>p.name.indexOf(w)>=0);if(v){this.pick=v;break;}}
+      if(!this.pick)this.pick=this.pool.find(p=>p.lang==='en-US')||this.pool[0]||null;}catch(e){}};
+    load();try{speechSynthesis.onvoiceschanged=load;}catch(e){}},
+  unlock(){try{const u=new SpeechSynthesisUtterance('');u.volume=0;speechSynthesis.speak(u);}catch(e){}},
+  say(who,text){if(!S.sound||!('speechSynthesis' in window))return;try{speechSynthesis.cancel();
+      let t=text;const letters=t.replace(/[^A-Za-z]/g,'');if(letters&&t.replace(/[^A-Z]/g,'').length/letters.length>0.6)t=t.toLowerCase();
+      const u=new SpeechSynthesisUtterance(t),p=VOICES[who]||VOICES.NARRATOR;u.pitch=p.pitch;u.rate=p.rate;if(this.pick)u.voice=this.pick;speechSynthesis.speak(u);}catch(e){}},
+  stop(){try{speechSynthesis.cancel();}catch(e){}}};
+
+// ── hero & state ──
+const hero={x:60,tx:60,f:1,walking:false,onArrive:null,fx:null,stepT:0};
+const BUILD_STAMP='2026-11-22-spatula-1';
+let Q=[],cur=null,shownAt=0,modal='title',sel=null,verbHot=null,hintUntil=0,shake=false,warp=null,fbI=0;const FX={flipT:0};
+
+function walkTo(x,cb){const xs=SCR().xs;x=Math.max(xs[0],Math.min(xs[1],x));hero.onArrive=cb||null;
+  if(Math.abs(x-hero.x)<2){hero.walking=false;const f=hero.onArrive;hero.onArrive=null;if(f)f();return;}
+  hero.tx=x;hero.f=x>hero.x?1:-1;hero.walking=true;}
+function standX(h){if(h.at!=null)return h.at;const c=h.x+h.w/2;if(h.exit)return c;const l=h.x-16,rr=h.x+h.w+16;
+  if(hero.x<l)return l;if(hero.x>rr)return rr;return hero.x<c?l:rr;}
+function face(h){const c=h.x+h.w/2;if(Math.abs(c-hero.x)>3)hero.f=c>hero.x?1:-1;}
+
+// ── script runner ──
+const norm=s=>s==null?[]:Array.isArray(s)?s.slice():[s];
+function run(steps){Q=Q.concat(norm(steps));if(!cur)next();}
+function next(){cur=null;
+  while(Q.length){const st=Q.shift();
+    if(typeof st==='string'){showLine(st);return;}
+    if(st.if!==undefined){Q=norm(cond(st.if)?st.then:st.else).concat(Q);continue;}
+    if(st.give){if(!has(st.give)){S.inv.push(st.give);toast(ITEMS[st.give].icon+' Got: '+ITEMS[st.give].name);Sfx.get();}renderInv();continue;}
+    if(st.take){S.inv=S.inv.filter(i=>i!==st.take);if(sel===st.take)sel=null;renderInv();continue;}
+    if(st.set){S.flags[st.set]=1;continue;}
+    if(st.fx){if(st.fx==='shake'){shake=true;Sfx.tone(70,1.2,'sawtooth',0.05);}else if(st.fx==='stop'){shake=false;Sfx.get();}else if(st.fx==='win')Sfx.win();else if(st.fx==='flip'){FX.flipT=T;Sfx.tone(200,1.4,'sine',0.07,1600);}continue;}
+    if(st.toast){toast(st.toast);continue;}
+    if(st.sock){if(!S.socks.includes(st.sock)){S.socks.push(st.sock);S.flags['sock_'+st.sock]=1;toast('🧦 Lost sock '+S.socks.length+' of '+SOCK_TOTAL);Sfx.get();}continue;}
+    if(st.act3start){Q=ACT3_START.concat(Q);continue;}
+    if(st.play){Q=[];hideSay();if(window.__sync){run(MINI_WIN[st.play]);return;}Mini.start(st.play);return;}
+    if(st.vend){Q=[];hideSay();openVend();return;}
+    if(st.act1end){Q=norm(ENDING).concat(ACT2_BRIEF,Q);continue;}
+    if(st.die){Q=[];hideSay();die(st.die);return;}
+    if(st.map){Q=[];hideSay();openMap();return;}
+    if(st.keypad){Q=[];hideSay();openKeypad();return;}
+    if(st.end){Q=[];hideSay();S.done=true;save();openEnd();return;}
+  }
+  hideSay();save();}
+function showLine(s){let who='NARRATOR',text=s;const i=s.indexOf(': ');
+  if(i>0){const w=s.slice(0,i);if(w==='N'){text=s.slice(i+2);}else if(VOICES[w]){who=w;text=s.slice(i+2);}}
+  cur={who,text};shownAt=performance.now();
+  const p=VOICES[who];$('who').textContent=NAMES[who]||'';$('who').style.color=p.color;$('who').style.display=NAMES[who]?'block':'none';
+  $('line').textContent=text;$('say').className=who==='NARRATOR'?'on narr':'on';$('say').style.borderColor=p.color;
+  Voice.say(who,text);}
+function hideSay(){$('say').className='';cur=null;Voice.stop();}
+function advance(){if(!cur)return;if(performance.now()-shownAt<280)return;Sfx.blip();next();}
+
+let toastT=null;
+function toast(t){const el=$('toast');el.textContent=t;el.className='on';clearTimeout(toastT);toastT=setTimeout(()=>{el.className='';},1900);}
+
+// ── screens ──
+function gotoScreen(id,x){S.screen=id;const sc=SCR();hero.x=hero.tx=(x!=null?x:(sc.xs[0]+sc.xs[1])/2);hero.walking=false;hero.onArrive=null;closeVerbs();shake=false;
+  $('loc').textContent=WORLD_NAMES[sc.world]+' · '+sc.name;save();}
+
+// ── verbs ──
+function openVerbs(h){verbHot=h;const el=$('verbs');let html='<div class="vname">'+h.name+'</div><div class="vrow">';
+  html+='<button data-v="look">👀<span>Look</span></button><button data-v="peck">🐔<span>Peck</span></button>';
+  if(h.talk)html+='<button data-v="talk">💬<span>Talk</span></button>';
+  el.innerHTML=html+'</div>';
+  const cx=(h.x+h.w/2)/320*100,top=h.y/180*100,bot=(h.y+h.h)/180*100;
+  el.style.left=Math.max(20,Math.min(80,cx))+'%';
+  if(top>42){el.style.top='auto';el.style.bottom=(100-top+2)+'%';}else{el.style.bottom='auto';el.style.top=Math.min(60,bot+2)+'%';}
+  el.className='on';}
+function closeVerbs(){verbHot=null;$('verbs').className='';}
+$('verbs').addEventListener('pointerdown',e=>{e.stopPropagation();const b=e.target.closest('button');if(!b||!verbHot)return;const h=verbHot,v=b.dataset.v;closeVerbs();Sfx.key();
+  const go=()=>{face(h);let steps=(F('act3')&&h[v+'3'])||h[v];if(!steps)steps=v==='peck'?PECK_FALLBACK:v==='talk'?["N: You talk to it. It doesn't talk back. You are used to this."]:["N: It looks like a "+h.name.toLowerCase()+". The narrator has nothing to add, which is rare."];run(steps);};
+  if(hero.walking)hero.onArrive=go;else go();});
+function useItem(item,h){face(h);let steps=h.use&&h.use[item];
+  if(item==='spatula'){const k=S.screen+'.'+h.id;if(!S.flipped.includes(k))S.flipped.push(k);}
+  if(!steps){const pool=item==='spatula'?FLIP_FALLBACK:USE_FALLBACK;steps=pool[fbI++%pool.length];}
+  sel=null;renderInv();run(steps);}
+
+// ── inventory & tools ──
+function renderInv(){const el=$('inv');el.innerHTML='';
+  if(!S.inv.length){el.innerHTML='<div class="empty">Your pockets are empty. You do not have pockets.</div>';}
+  S.inv.forEach(id=>{const b=document.createElement('button');b.className='item'+(sel===id?' sel':'');b.dataset.id=id;
+    b.innerHTML='<i>'+ITEMS[id].icon+'</i><span>'+ITEMS[id].name+'</span>';el.appendChild(b);});
+  const u=$('using');if(sel){u.textContent=ITEMS[sel].icon+' Now tap what to use the '+ITEMS[sel].name+' on';u.className='on';}else u.className='';$('loc').style.visibility=sel?'hidden':'visible';
+  $('bDeaths').querySelector('span').textContent=S.deaths.length+'/'+Object.keys(DEATHS).length;
+  $('bSound').querySelector('i').textContent=S.sound?'🔊':'🔇';$('bRecipe').style.display=F('act2')?'':'none';$('bRecipe').querySelector('span').textContent=F('act3')?'Quest':'Recipe';}
+$('inv').addEventListener('pointerdown',e=>{const b=e.target.closest('.item');if(!b||modal)return;if(cur){advance();return;}
+  closeVerbs();sel=sel===b.dataset.id?null:b.dataset.id;Sfx.key();renderInv();});
+$('bHint').addEventListener('click',()=>{if(modal)return;if(cur){advance();return;}closeVerbs();hintUntil=T+4;
+  const h=HINTS.find(x=>cond(x[0]));run(["N: The spatula says nothing. But if a spatula could talk, it would say:","N: "+h[1]]);});
+$('bRecipe').addEventListener('click',()=>{if(modal&&modal!=='recipe')return;if(modal==='recipe'){closeOv();return;}openRecipe();});
+$('bSound').addEventListener('click',()=>{S.sound=!S.sound;if(!S.sound)Voice.stop();else Sfx.unlock();renderInv();save();});
+$('bDeaths').addEventListener('click',()=>{if(modal&&modal!=='album')return;if(modal==='album'){closeOv();return;}openAlbum();});
+
+// ── overlays ──
+function openOv(kind,html){modal=kind;closeVerbs();const o=$('ov');o.innerHTML='<div class="card '+kind+'">'+html+'</div>';o.className='on';o.scrollTop=0;}
+function closeOv(){$('ov').className='';$('ov').innerHTML='';modal=null;}
+$('ov').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;Sfx.unlock();const a=b.dataset.a,v=b.dataset.v;
+  if(a==='new'){newGame();}
+  else if(a==='continue'){const j=loadSave();if(j){S=j;}if(!S.flipped)S.flipped=[];if(!S.socks)S.socks=[];Voice.unlock();closeOv();gotoScreen(S.screen,S.x);renderInv();
+    if(F('fixed')&&!F('act2')){S.done=false;run(["N: While you were away, the ship jumped to the Great Galactic Cook-Off. Captain Scratchy has bet the ship on your cooking."].concat(ACT2_BRIEF));}
+    else if(F('won')&&!F('act3')){S.done=false;run(ACT3_START);}}
+  else if(a==='undie'){hero.fx=null;Voice.stop();closeOv();}
+  else if(a==='close'){closeOv();}
+  else if(a==='travel'){travel(v);}
+  else if(a==='key'){keyPress(v);}
+  else if(a==='vkey'){vendKey(v);}
+  else if(a==='restart'){if(b.dataset.sure){newGame();}else{b.dataset.sure='1';b.textContent='Really? Tap again to start over';}}
+});
+function titleCard(){const j=loadSave();
+  openOv('title','<div class="stars"></div><h1>CRANKY CHICKENS<br><em>IN SPACE</em></h1><h2>The Spatula of Destiny</h2>'+
+    '<p>A point-and-peck adventure in three acts. Eleven worlds. 45 screens. No timers, no dead ends, and 45 ways to get fried.</p>'+
+    (j?'<button class="big" data-a="continue">▶ Keep Playing</button><button class="small" data-a="new">Start Over</button>':'<button class="big" data-a="new">▶ Start</button>'));}
+function newGame(){const snd=S.sound;S=fresh();S.sound=snd;S.started=true;sel=null;Q=[];hero.fx=null;hero.f=1;Voice.unlock();closeOv();gotoScreen('galley',96);renderInv();run(INTRO);}
+function die(id){const d=DEATHS[id],isNew=!S.deaths.includes(id);if(isNew)S.deaths.push(id);if(window.__sync)return;hero.fx={kind:d.fx,t0:T};Sfx.die();modal='dying';save();
+  setTimeout(()=>{const n=S.deaths.length,tot=Object.keys(DEATHS).length;
+    openOv('death','<div class="dicon">'+d.icon+'</div>'+(isNew?'<div class="badge">NEW! '+n+' of '+tot+' ways to get fried</div>':'<div class="badge old">You have done this one before. On purpose?</div>')+
+      '<h2>'+d.title+'</h2><p>'+d.text+'</p><button class="big" data-a="undie">🍗 Un-fry me</button>');
+    renderInv();Voice.say('NARRATOR',d.title+'. '+d.text);},1150);}
+function openAlbum(){const tot=Object.keys(DEATHS).length;let h='<h2>Ways I Got Fried</h2><p>'+S.deaths.length+' of '+tot+' found · 🧦 Lost socks: '+S.socks.length+' of '+SOCK_TOTAL+(F('sockHero')?' · Sock Legend':'')+' · Things you tried to flip: '+S.flipped.length+'</p><div class="grid">';
+  for(const id in DEATHS){const d=DEATHS[id],got=S.deaths.includes(id);h+=got?'<div class="dc"><i>'+d.icon+'</i><b>'+d.title+'</b><span>'+d.text+'</span></div>':'<div class="dc no"><i>❓</i><b>???</b><span>Still out there somewhere.</span></div>';}
+  h+='</div><button class="big" data-a="close">Back to the game</button><button class="small" data-a="restart">Start Over</button>';
+  if(/crankychickens\.com$/.test(location.hostname))h+='<a class="small" href="/games/">🏠 All games</a>';
+  openOv('album',h);}
+function openMap(){const here=SCR().world;let h='<h2>Where to, chef?</h2><div class="grid map">';
+  MAP.filter(m=>cond(m.when)).forEach(m=>{const at=m.id===here;h+='<button class="pl'+(at?' here':'')+'" '+(at?'disabled':'data-a="travel" data-v="'+m.id+'"')+'><i>'+m.icon+'</i><b>'+m.name+'</b><span>'+(at?'You are here':'Fly there')+'</span></button>';});
+  (F('act2')?MAP_SOON:[{name:'???',icon:'❓'},{name:'???',icon:'❓'},{name:'???',icon:'❓'}]).forEach(m=>{h+='<button class="pl soon" disabled><i>'+m.icon+'</i><b>'+m.name+'</b><span>Coming soon</span></button>';});
+  openOv('map',h+'</div><button class="small" data-a="close">Stay here</button>');}
+function travel(id){const m=MAP.find(x=>x.id===id);closeOv();modal='warp';warp={t0:T,m};Sfx.warp();$('loc').textContent='Somewhere in between';}
+function arrive(m){warp=null;modal=null;gotoScreen(m.screen,m.x);hero.f=1;
+  if(m.flag&&!F(m.flag)){S.flags[m.flag]=1;run(m.first);}else run(m.again);}
+let code='';
+function openKeypad(){code='';let h='<h2>Shuttle Hatch</h2><div id="kdisp">_ _</div><div class="keys">';
+  [1,2,3,4,5,6,7,8,9,0].forEach(n=>{h+='<button data-a="key" data-v="'+n+'">'+n+'</button>';});
+  openOv('keypad',h+'</div><button class="small" data-a="close">Give up for now</button>');}
+function keyPress(n){Sfx.key();code+=n;$('kdisp').textContent=code.length===1?code+' _':code[0]+' '+code[1];
+  if(code.length<2)return;const c=code;setTimeout(()=>{closeOv();
+    if(c==='67'){S.flags.shuttleOpen=1;Sfx.get();run(["N: BEEP. The hatch slides open.","SIXTYSEVEN: Six seven!","N: He seems proud of you. Or of the numbers. Hard to say.",{map:true}]);}
+    else{Sfx.bad();run(c==='76'?["N: BZZT. So close. And yet backwards."]:["N: BZZT. That is not the code.","N: If only someone nearby kept saying two numbers at you."]);}},350);}
+function openRecipe(){const a3=F('act3');let h='<h2>'+(a3?'Exact Change':'The Legendary Galactic Pancake')+'</h2><div class="grid">';
+  (a3?QUEST3:RECIPE).forEach(q=>{const st=F(q.inn)?(a3?'✅ In the slot':'✅ In the bowl'):F(q.got)?'🎒 You have it':'Find it: '+q.where;h+='<div class="dc'+(F(q.got)?'':' need')+'"><i>'+q.icon+'</i><b>'+q.name+'</b><span>'+st+'</span></div>';});
+  h+='</div><p>'+(a3?(F('freed')?'The ship is free. Lunch is saved.':F('vended')?'The ship is stuck behind the flap in the prize chute.':F('vendReady')?'Paid in full. Now pick B4 on the keypad in the control room.':'Three Galactic Quarters go in the coin slot on the front of the Mothership.'):F('won')?'Flipped. Perfect. You are the champion.':F('batter')?'The batter is on the griddle. It needs flipping.':'Bring all four to the griddle at the Frying Pan Station.')+'</p><button class="big" data-a="close">Back to the game</button>';
+  openOv('recipe',h);}
+let vsel='';
+function openVend(){vsel='';let h='<h2>Make a Selection</h2><div id="kdisp">_ _</div><div class="keys six">';
+  'ABCDEF123456'.split('').forEach(k=>{h+='<button data-a="vkey" data-v="'+k+'">'+k+'</button>';});
+  openOv('keypad',h+'</div><button class="small" data-a="close">Walk away</button>');}
+function vendKey(k){const L=/[A-F]/.test(k);if(!vsel.length){if(!L){Sfx.bad();return;}vsel=k;}else if(L)vsel=k;else vsel+=k;Sfx.key();
+  $('kdisp').textContent=vsel.length===1?vsel+' _':vsel[0]+' '+vsel[1];if(vsel.length<2)return;const c=vsel;setTimeout(()=>{closeOv();vendPick(c);},350);}
+function vendPick(c){const jump="N: You jump on "+c[0]+". Then you jump on "+c[1]+".";
+  if(!F('vendReady'))run([jump,"MOTHER: INSERT. COIN.","N: The price is three Galactic Quarters, in the slot out front. You have tried arguing with vending machines before."]);
+  else if(F('vended'))run("N: You already bought the only thing you wanted.");
+  else if(c==='B4')run([jump,"MOTHER: B. FOUR. ONE. SPACESHIP. DISPENSING.",{set:'vended'},"N: Far away, a giant coil begins to turn. Something very heavy goes THUNK into the prize chute.","N: Then, nothing. You know this feeling. It is stuck behind the flap."]);
+  else if(c==='A1')run([jump,"MOTHER: A. ONE. EXCELLENT. CHOICE. FREE. SAMPLE.",{die:'granola'}]);
+  else run([jump,"N: The machine dispenses "+VEND_OTHER[(c.charCodeAt(0)+c.charCodeAt(1))%VEND_OTHER.length]+". It lands somewhere far below.","MOTHER: FREE. SAMPLE. YOUR. CREDIT. REMAINS."]);}
+function openEnd(){const tot=Object.keys(DEATHS).length;Sfx.win();
+  openOv('end','<h1>THE END</h1><h2>...for now</h2><p>Ways you got fried: <b>'+S.deaths.length+' of '+tot+'</b><br>Things you tried to flip: <b>'+S.flipped.length+'</b></p>'+
+    '<p>Lost socks found: <b>'+S.socks.length+' of '+SOCK_TOTAL+'</b></p><p>You saved lunch, the ship, and one vending machine\'s feelings. More planets are on the way. Got an idea for a planet? Tell Uncle Nick.</p><button class="big" data-a="close">Keep exploring</button><button class="small" data-a="restart">Start Over</button>');}
+
+// ── input ──
+function toLogical(e){const b=cv.getBoundingClientRect();return{x:(e.clientX-b.left)*320/b.width,y:(e.clientY-b.top)*180/b.height};}
+function hotAt(p){const hs=SCR().hotspots;for(const m of [0,6]){for(let i=hs.length-1;i>=0;i--){const h=hs[i];if(!cond(h.when))continue;
+  if(p.x>=h.x-m&&p.x<=h.x+h.w+m&&p.y>=h.y-m&&p.y<=h.y+h.h+m)return h;}}return null;}
+$('stage').addEventListener('pointermove',e=>{if(modal==='mini'&&Mini.on){const p=toLogical(e);Mini.input('move',p.x,p.y);}});
+$('miniExit').addEventListener('pointerdown',e=>{e.stopPropagation();if(Mini.on&&!Mini.won)Mini.end(false);});
+$('stage').addEventListener('pointerdown',e=>{Sfx.unlock();if(modal==='mini'){if(Mini.on){const p=toLogical(e);Mini.input('down',p.x,p.y);}return;}if(modal)return;if(cur){advance();return;}
+  closeVerbs();const p=toLogical(e),h=hotAt(p);
+  if(!h){walkTo(p.x);return;}
+  const ax=standX(h);
+  if(h.exit){walkTo(ax,()=>{Sfx.door();gotoScreen(h.exit.to,h.exit.x);});return;}
+  if(sel){const it=sel;walkTo(ax,()=>useItem(it,h));return;}
+  walkTo(ax,()=>face(h));openVerbs(h);});
+addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&cur&&!modal){e.preventDefault();advance();}});
+
+// ── loop ──
+let last=0;
+function update(dt){
+  if(Mini.on){Mini.update(dt);return;}
+  if(warp&&T-warp.t0>1.5)arrive(warp.m);
+  if(hero.walking){const d=hero.tx-hero.x,stp=120*dt;hero.stepT+=dt;
+    if(Math.abs(d)<=stp){hero.x=hero.tx;hero.walking=false;const f=hero.onArrive;hero.onArrive=null;if(f)f();}else hero.x+=Math.sign(d)*stp;}}
+function drawHero(){const sc=SCR(),y=sc.floor,o={hat:'chef',spat:has('spatula'),f:hero.f,step:hero.walking?1+Math.floor(hero.stepT*8)%2:0,blink:Math.floor(T*0.9)%4===0&&(T%1)<0.15};
+  const bobY=hero.walking?Math.floor(hero.stepT*8)%2:0;
+  if(!hero.fx){ell(hero.x,y+1,12,2,'rgba(0,0,0,0.3)');chicken(hero.x,y-bobY,o);return;}
+  const a=Math.min(1,(T-hero.fx.t0)/1.0),k=hero.fx.kind;
+  X.save();X.translate(Math.round(hero.x),y);
+  if(k==='float'){X.translate(a*40*hero.f,-a*150);X.rotate(a*7);chicken(0,20,o);}
+  else if(k==='squish'){X.scale(1+a*0.7,Math.max(0.12,1-a*1.1));chicken(0,0,o);}
+  else if(k==='sink'){X.beginPath();X.rect(-40,-80,80,80);X.clip();chicken(0,a*52,o);}
+  else if(k==='spin'){X.translate(0,-20);X.rotate(a*22);X.scale(1-a*0.6,1-a*0.6);chicken(0,20,o);}
+  else if(k==='gulp'){X.scale(Math.max(0.01,1-a),Math.max(0.01,1-a));chicken(0,0,o);}
+  else if(k==='pop'){if(a<0.3){X.translate(Math.round(Math.sin(T*60)*2),0);chicken(0,0,o);}
+    else{const g=rnd(5),q=(a-0.3)/0.7;for(let i=0;i<14;i++){const an=g()*6.28,d=q*(20+g()*40);disc(Math.cos(an)*d,-22+Math.sin(an)*d-q*30,3,i%3?P.W:'#ffffaa');}}}
+  X.restore();
+  if(k==='pop'&&a>0.25&&a<0.4){X.globalAlpha=0.7;r(0,0,320,180,P.W);X.globalAlpha=1;}}
+function drawWarp(){const a=(T-warp.t0)/1.5;r(0,0,320,180,P.K);const g=rnd(77);
+  for(let i=0;i<70;i++){const an=g()*6.283,d0=g()*30,sp=40+g()*200,d=d0+a*a*sp,len=2+a*a*sp*0.25,c=i%5===0?P.LC:(i%7===0?P.Y:P.W);
+    for(let j=0;j<len;j+=2)r(160+Math.cos(an)*(d+j),90+Math.sin(an)*(d+j)*0.6,1,1,c);}
+  shuttle(160+Math.round(Math.sin(T*30)*1),104);}
+function draw(){
+  if(Mini.on){Mini.draw();return;}
+  if(warp){drawWarp();return;}
+  const sc=SCR();ART[S.screen](F,has,shake,FX);
+  sc.hotspots.forEach(h=>{if(!cond(h.when))return;
+    if(h.exit){const d=h.dir||'right';if(d==='left')arrow(h.x+5,sc.floor-22,'left',P.Y);else if(d==='right')arrow(h.x+h.w-6,sc.floor-22,'right',P.Y);else if(d==='down')arrow(h.x+h.w/2,h.y+Math.min(10,h.h/2),'down',P.Y);else arrow(h.x+h.w/2,h.y+10,'up',P.Y);}
+    else if(T<hintUntil&&Math.floor(T*4)%2===0){X.strokeStyle=P.Y;X.lineWidth=1;X.strokeRect(h.x+0.5,h.y+0.5,h.w-1,h.h-1);}});
+  if(verbHot){const h=verbHot;X.strokeStyle=P.W;X.lineWidth=1;X.strokeRect(h.x+0.5,h.y+0.5,h.w-1,h.h-1);}
+  if(modal!=='title')drawHero();}
+let lastDraw=0;
+function frame(ms){if(ms-lastDraw<30){requestAnimationFrame(frame);return;}lastDraw=ms;const t=ms/1000,dt=Math.min(0.08,t-last);last=t;T=t;update(dt);
+  X.save();try{draw();}finally{X.restore();}
+  requestAnimationFrame(frame);}
+
+// ── layout ──
+function fit(){const bar=$('bar'),W=innerWidth,H=innerHeight,bh=bar.offsetHeight||72;let w=Math.min(W,Math.floor((H-bh)*16/9));w=Math.max(200,w);
+  $('stage').style.width=w+'px';$('stage').style.height=Math.round(w*9/16)+'px';bar.style.width=w+'px';
+  document.body.className=W<H?'portrait':'';}
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,200));
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+Voice.init();fit();renderInv();titleCard();requestAnimationFrame(frame);
+window.__game={exec(scr,id,verb,item){if(S.screen!==scr)gotoScreen(scr);const h=SCR().hotspots.find(x=>x.id===id&&cond(x.when));if(!h)return 'NOHOT '+scr+'.'+id;
+    if(h.exit){gotoScreen(h.exit.to,h.exit.x);return 'exit';}if(item){sel=item;useItem(item,h);}else run((F('act3')&&h[verb+'3'])||h[verb]||[]);return this.drain();},
+  drain(){let n=0;while(n++<400){if(cur){next();continue;}if(modal==='map'||modal==='keypad'||modal==='end'||modal==='death'||modal==='dying'){if($('ov').className)closeOv();modal=null;hero.fx=null;continue;}break;}return 'ok';},
+  vendPick,Mini,S:()=>S,hero,run,travel,gotoScreen,state:()=>({modal,cur,sel,walking:hero.walking,Q:Q.length})};
+
+</script>
+</body>
+</html>
