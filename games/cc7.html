@@ -7,6 +7,10 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cranky Chickens VII">
 <title>Cranky Chickens VII — We Know You're Here</title>
 <style>
   :root{
@@ -126,6 +130,14 @@
   #fsBtn{display:none}
   body.can-fs #fsBtn{display:inline-block}
   html,body{overscroll-behavior:none;-webkit-touch-callout:none}
+  body{position:fixed;left:0;top:0;right:0;bottom:0;width:100%}     /* a page that cannot scroll, even on a phone that hides its toolbar by scrolling */
+  /* Narrow phone, a cabinet with two buttons: B goes above A or A falls off the edge. */
+  @media (max-width:500px){
+    #pad{gap:10px}
+    #abtns{flex-direction:column;align-items:flex-end;gap:8px}
+    body.needs-b .btn.jump{width:100px;height:88px}
+    .btn.bbtn{width:60px;height:60px}
+  }
   #shell{touch-action:none}
   #toggles button{touch-action:manipulation}
   @media (hover:none), (pointer:coarse){
@@ -164,6 +176,8 @@
   }
   @media (orientation:landscape) and (max-height:430px) and (pointer:coarse){
     #toggles button{padding:0}
+    #pad{left:max(8px, env(safe-area-inset-left));right:max(8px, env(safe-area-inset-right))}
+    #toggles{left:max(4px, env(safe-area-inset-left))}
     #fsBtn::before{content:'⛶';font-size:16px}
   }
   /* A browser too old for container units still gets words in roughly the right place. */
@@ -5036,7 +5050,11 @@ const Touchy = {
 
 (function(){
   const find = (list, id) => { for (let i = 0; i < list.length; i++) if (list[i].identifier === id) return list[i]; return null; };
-  cv.addEventListener('touchstart', e => { if (!Touchy.down && e.changedTouches[0]) Touchy.begin(e.changedTouches[0]); }, { passive: true });
+  cv.addEventListener('touchstart', e => {
+    // a finger whose lift was never reported (the screen changed under it) must not block the next one
+    if (Touchy.down && !find(e.touches, Touchy.id)) Touchy.end();
+    if (!Touchy.down && e.changedTouches[0]) Touchy.begin(e.changedTouches[0]);
+  }, { passive: true });
   cv.addEventListener('touchmove', e => { const p = Touchy.down && find(e.changedTouches, Touchy.id); if (p) Touchy.move(p); }, { passive: true });
   const up = e => { if (Touchy.down && find(e.changedTouches, Touchy.id)) Touchy.end(); };
   cv.addEventListener('touchend', up); cv.addEventListener('touchcancel', up);
@@ -5136,17 +5154,37 @@ touchSwipe(GAMES.parade);
       fs.textContent = isFs() ? '⛶ SMALL SCREEN' : '⛶ FULL SCREEN';
       fs.setAttribute('aria-pressed', String(isFs()));
     };
+    const can = !!(req && (document.fullscreenEnabled || document.webkitFullscreenEnabled));
+    // Full screen, and held sideways while it lasts: the biggest picture a phone or tablet can give.
+    const lock = () => { try { const o = screen.orientation; if (o && o.lock){ const q = o.lock('landscape'); if (q && q.catch) q.catch(() => {}); } } catch (err){} };
+    const enter = () => { try { const p = req.call(root, { navigationUI: 'hide' }); if (p && p.then) p.then(lock).catch(() => {}); else lock(); } catch (err){} };
+    let saidNo = false, was = false;                       // leave full screen once and it stops offering
     fs.addEventListener('click', e => {
       e.preventDefault();
       try {
-        if (isFs()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-        else { const p = req.call(root); if (p && p.catch) p.catch(() => {}); }
+        if (isFs()){ saidNo = true; (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else if (can) enter();
       } catch (err){}
       if (cv.focus) cv.focus();
     });
-    document.addEventListener('fullscreenchange', paint);
-    document.addEventListener('webkitfullscreenchange', paint);
+    const changed = () => { if (was && !isFs()) saidNo = true; was = isFs(); paint(); };
+    document.addEventListener('fullscreenchange', changed);
+    document.addEventListener('webkitfullscreenchange', changed);
+    // A phone or tablet already held sideways maximises itself on the first tap of the picture or the pad.
+    let coarse = false; try { coarse = matchMedia('(pointer:coarse)').matches; } catch (err){}
+    if (can && coarse) document.addEventListener('touchend', e => {
+      if (saidNo || isFs()) return;
+      const el = e.target;
+      if (!el || !el.closest || !(el === cv || el.closest('#pad'))) return;
+      let land = false; try { land = matchMedia('(orientation:landscape)').matches; } catch (err){}
+      if (land) enter();
+    }, true);
   }
+  // Nothing on this page scrolls or zooms, so no finger drag may move it. Some phones
+  // scroll the page to hide their toolbar whatever the stylesheet says; this says no.
+  document.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+  ['gesturestart', 'gesturechange'].forEach(n => document.addEventListener(n, e => e.preventDefault()));
+  addEventListener('scroll', () => { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); }, { passive: true });
   // a long press on a tablet must never open "save image" or select the words
   addEventListener('contextmenu', e => { if (TOUCH.on) e.preventDefault(); });
 })();
