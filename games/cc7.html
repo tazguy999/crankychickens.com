@@ -76,13 +76,17 @@
     display:flex;align-items:center;justify-content:center;touch-action:none;cursor:pointer}
   .btn:active,.btn.on{background:rgba(255,59,107,.28);color:var(--bone)}
   .btn.jump{width:112px;height:98px;border-radius:50%;font-size:30px}
+  #abtns{display:flex;align-items:flex-end;gap:10px}
+  .btn.bbtn{display:none;width:70px;height:70px;border-radius:50%;font-size:22px}
+  body.needs-b .btn.bbtn{display:flex}
+  canvas{touch-action:none}
   #hint{font-size:11px;letter-spacing:.18em;color:#6b5484;text-transform:uppercase;text-align:center}
   @media (hover:hover) and (pointer:fine){#pad{display:none}}
   @media (prefers-reduced-motion:reduce){#toast{transition:none}}
   .btn:focus-visible,canvas:focus-visible{outline:2px solid var(--bone);outline-offset:3px}
   /* Phone held sideways: the picture gets the whole height, the pad floats over its
      bottom corners, and captions are squeezed in between the two halves of the pad. */
-  @media (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+  @media (orientation:landscape) and (max-height:430px) and (pointer:coarse){
     #frame{--room:12px;
       width:min(100vw - 84px, (100vh - 12px) * 1.6667);
       width:min(100vw - 84px, (100dvh - 12px) * 1.6667)}
@@ -90,6 +94,7 @@
     #pad > *{pointer-events:auto}
     #dpad{grid-template-columns:repeat(3,52px)}
     .btn.jump{width:96px;height:96px}
+    #abtns{flex-direction:column;align-items:flex-end}
     #toggles{position:fixed;top:6px;left:4px;flex-direction:column;gap:6px;opacity:.85}
     #toggles button{font-size:0;letter-spacing:0;padding:0;width:30px;height:30px}
     #voiceBtn::before{content:'🗣';font-size:15px}
@@ -107,6 +112,69 @@
     #sub .who{font-size:9px}
     .tag small{display:none}          /* one HUD line; the second would sit on the play field */
   }
+
+  /* ---------- Touch screens ----------
+     The way out of a cabinet is a button on the picture, because a tablet has no Esc. */
+  #hudR{display:flex;align-items:flex-start;gap:1.6cqw}
+  #exitBtn{display:none;position:relative;pointer-events:auto;font-family:inherit;font-size:max(11px,1.9cqw);
+    font-weight:700;letter-spacing:.14em;line-height:1.2;color:var(--bone);background:rgba(6,3,12,.8);
+    border:1px solid var(--pink);border-radius:4px;padding:.7cqw 1.4cqw;cursor:pointer;white-space:nowrap;
+    touch-action:manipulation}
+  #exitBtn::after{content:'';position:absolute;inset:-12px}       /* a fingertip is bigger than the label */
+  #exitBtn:active{background:rgba(255,59,107,.4)}
+  body.in-arcade #exitBtn{display:block}
+  #fsBtn{display:none}
+  body.can-fs #fsBtn{display:inline-block}
+  html,body{overscroll-behavior:none;-webkit-touch-callout:none}
+  #shell{touch-action:none}
+  #toggles button{touch-action:manipulation}
+  @media (hover:none), (pointer:coarse){
+    #toggles button{padding:9px 12px}
+    #hint{display:none}
+  }
+  /* Tablet held upright: there is a lot of room under the picture, so the buttons grow. */
+  @media (pointer:coarse) and (orientation:portrait) and (min-width:560px){
+    #frame{--room:300px}
+    #shell{gap:16px}
+    #pad{width:min(700px,100%);padding:0 10px}
+    #dpad{grid-template-columns:repeat(3,86px);grid-template-rows:66px 66px;gap:8px}
+    .btn{font-size:24px}
+    .btn.jump{width:138px;height:138px;font-size:38px}
+    .btn.bbtn{width:92px;height:92px;font-size:28px}
+    #toggles button{font-size:12px}
+  }
+  /* Tablet held sideways: held like a handheld. The picture sits between the two
+     thumbs and the buttons never cover it. */
+  @media (pointer:coarse) and (orientation:landscape) and (min-height:431px) and (max-height:840px){
+    #shell{padding:6px 128px 6px 212px}
+    #frame{width:min(100vw - 340px, (100vh - 12px) * 1.6667);
+           width:min(100vw - 340px, (100dvh - 12px) * 1.6667)}
+    #pad{position:fixed;left:10px;right:10px;bottom:max(12px,13vh);width:auto;pointer-events:none}
+    #pad > *{pointer-events:auto}
+    #dpad{grid-template-columns:repeat(3,62px);grid-template-rows:58px 58px;gap:5px}
+    .btn{font-size:22px}
+    .btn.jump{width:108px;height:108px;font-size:32px}
+    .btn.bbtn{width:76px;height:76px}
+    #abtns{flex-direction:column;align-items:flex-end}
+    #toggles{position:fixed;top:8px;left:10px;gap:6px}
+    #toggles button{font-size:0;letter-spacing:0;padding:0;width:42px;height:42px}
+    #voiceBtn::before{content:'🗣';font-size:19px}
+    #sfxBtn::before{content:'♪';font-size:20px}
+    #fsBtn::before{content:'⛶';font-size:20px}
+  }
+  @media (orientation:landscape) and (max-height:430px) and (pointer:coarse){
+    #toggles button{padding:0}
+    #fsBtn::before{content:'⛶';font-size:16px}
+  }
+  /* A browser too old for container units still gets words in roughly the right place. */
+  @supports not (width:1cqw){
+    #hud{top:1vw;left:1.2vw;right:1.2vw}
+    .tag,#petals{font-size:max(9px,1.6vw)} .tag small{font-size:max(8px,1.2vw);margin-top:2px}
+    #exitBtn{font-size:max(11px,1.5vw);padding:4px 9px} #hudR{gap:8px}
+    #toast{font-size:max(10px,1.9vw)}
+    #sub{bottom:1.2vw;padding:0 2vw} #sub .who{font-size:max(8px,1.2vw);margin-bottom:3px}
+    #sub .said{font-size:max(11px,1.9vw);padding:5px 11px}
+  }
 </style>
 </head>
 <body>
@@ -115,7 +183,7 @@
     <canvas id="c" width="640" height="384" tabindex="0" aria-label="Cranky Chickens VII game"></canvas>
     <div id="hud">
       <div class="tag" id="zone">THE GARDEN<small id="coord">SCREEN (0,0)</small></div>
-      <div id="petals">✿ 0 / 12</div>
+      <div id="hudR"><div id="petals">✿ 0 / 12</div><button id="exitBtn" type="button" aria-label="Exit this game">✕ EXIT</button></div>
     </div>
     <div id="toast"></div>
     <div id="sub" aria-live="polite"><span class="who"></span><span class="said"></span></div>
@@ -123,6 +191,7 @@
   <div id="toggles">
     <button id="voiceBtn" aria-pressed="true">🗣 VOICES: ON</button>
     <button id="sfxBtn" aria-pressed="true">♪ SOUND: ON</button>
+    <button id="fsBtn" aria-pressed="false" aria-label="Full screen">⛶ FULL SCREEN</button>
   </div>
   <div id="pad">
     <div id="dpad">
@@ -131,7 +200,10 @@
       <div class="btn dn" data-k="down" aria-label="Down">▼</div>
       <div class="btn rt" data-k="right" aria-label="Right">▶</div>
     </div>
-    <div class="btn jump" data-k="jump" aria-label="A button: jump or fire">A</div>
+    <div id="abtns">
+      <div class="btn bbtn" data-k="b" aria-label="B button: break a block">B</div>
+      <div class="btn jump" data-k="jump" aria-label="A button: jump, fire or place">A</div>
+    </div>
   </div>
   <div id="hint">Arrows / WASD move · Space = A (jump, fire) · ▼ at a cabinet to play · Esc walks away</div>
 </div>
@@ -212,8 +284,8 @@ const Save = {
    The Handoff sets Input.driver = 'chickens' and writes to Input.auto. */
 const Input = {
   driver: 'human',
-  human: { left:false, right:false, up:false, down:false, jump:false, enter:false },
-  auto:  { left:false, right:false, up:false, down:false, jump:false, enter:false },
+  human: { left:false, right:false, up:false, down:false, jump:false, enter:false, b:false },
+  auto:  { left:false, right:false, up:false, down:false, jump:false, enter:false, b:false },
   read(){ return this.driver === 'human' ? this.human : this.auto; }
 };
 
@@ -224,7 +296,8 @@ const KEYMAP = {
   ArrowRight:'right', KeyD:'right',
   ArrowUp:'up', KeyW:'up',
   ArrowDown:'down', KeyS:'down',
-  Space:'jump', KeyZ:'jump', KeyX:'jump',
+  Space:'jump', KeyZ:'jump',
+  KeyX:'b', KeyB:'b',             // the B button: only the block world uses it
   Enter:'enter'
 };
 
@@ -275,12 +348,14 @@ document.querySelectorAll('#pad .btn').forEach(btn => {
 (function(){
   const c = document.getElementById('c');
   let held = false;
-  const on  = e => { e.preventDefault(); held = true; press('jump'); };
+  // A cabinet that reads the pointer itself (the block world: drag to look, tap to place) gets it untouched.
+  const own = () => mode === 'arcade' && Arcade.state === 'play' && Arcade.game && Arcade.game.pointer;
+  const on  = e => { if (own()) return; e.preventDefault(); if (Touchy.tap(e)) return; held = true; press('jump'); };
   const off = () => { if (held){ held = false; release('jump'); } };
   c.addEventListener('touchstart', on, {passive:false});
   c.addEventListener('touchend', off);
   c.addEventListener('touchcancel', off);
-  c.addEventListener('mousedown', () => { held = true; press('jump'); });
+  c.addEventListener('mousedown', e => { if (own()) return; if (Touchy.tap(e)) return; held = true; press('jump'); });
   addEventListener('mouseup', off);
 })();
 
@@ -890,6 +965,7 @@ const toastEl = document.getElementById('toast');
 let toastTimer = null;
 
 function paintHud(){
+  if (document.body) document.body.classList.toggle('in-arcade', mode === 'arcade');
   if (mode === 'arcade' && Arcade.game){
     const intro = Arcade.state === 'intro';
     zoneEl.nodeValue = intro ? 'THE ARCADE' : Arcade.game.short;
@@ -1994,7 +2070,7 @@ function drawCabinet(c){
   Cast.draw(c.maker, x + w + 30, GROUND_Y, -1, speaking, c.maker === 'KEVIN' ? 1 : 0.82);
 
   if (nearCabinet() === c){
-    const label = locked ? ('NEEDS ' + NEED_TICKETS + ' TICKETS · YOU HAVE ' + tickets()) : '▼  PLAY';
+    const label = locked ? ('NEEDS ' + NEED_TICKETS + ' TICKETS · YOU HAVE ' + tickets()) : say('▼  PLAY', 'TAP TO PLAY');
     g.font = 'bold 12px "Arial Narrow", Arial, sans-serif';
     const tw = g.measureText(label).width + 16;
     const top = y - (c.big ? 54 : 26);
@@ -2035,7 +2111,7 @@ const Takeover = {
       ['EL JAGUAR', 'EL JAGUAR requires the tallest cabinet.'],
       ['THE GAME', 'Unauthorised content detected. Arcade cabinets. They were not here before.']
     ]});
-    setTimeout(() => toast('THE CHICKENS BUILT AN ARCADE<br>FIND A CABINET · PRESS ▼ TO PLAY', 6000), 2800);
+    setTimeout(() => toast(say('THE CHICKENS BUILT AN ARCADE<br>FIND A CABINET · PRESS ▼ TO PLAY', 'THE CHICKENS BUILT AN ARCADE<br>FIND A CABINET · TAP IT TO PLAY'), 6000), 2800);
     paintHud();
     Bus.emit('takeover', {});
   },
@@ -2075,6 +2151,12 @@ function drawCabinets(){
    ============================================================ */
 const GAMES = {};
 
+/* Is a finger doing the playing? Decides which words the cards use, nothing else. */
+const TOUCH = { on: false };
+try { TOUCH.on = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches); } catch (err){}
+addEventListener('touchstart', () => { TOUCH.on = true; }, { capture: true, passive: true });
+const say = (keys, touch) => TOUCH.on ? touch : keys;
+
 const Arcade = {
   cab: null, game: null, state: 'intro', stateFrames: 0,
   lives: 3, score: 0, easy: false, flash: 0, leaveReq: false, quiet: false,
@@ -2089,6 +2171,7 @@ const Arcade = {
     this.prev = { left: true, right: true, up: true, down: true, a: true };
     Sfx.play('pick');
     Talk.interrupt({ lines: this.game.intro });
+    if (toastEl && toastEl.style) toastEl.style.opacity = '0';     // a garden notice does not follow you into a cabinet
     paintHud();
     Bus.emit('arcade:open', { id: cab.id });
   },
@@ -2101,6 +2184,7 @@ const Arcade = {
     this.lives = this.maxLives(); this.score = 0; this.flash = 0;
     this.game.init({ easy: this.easy, micro: false, speed: 1, host: this });
     this.state = 'play'; this.stateFrames = 0;
+    if (document.body) document.body.classList.toggle('needs-b', !!this.game.needsB);   // the second pad button
     Talk.hush();                                 // captions never sit on top of the play field
     paintHud();
   },
@@ -2154,6 +2238,8 @@ const Arcade = {
   },
 
   close(){
+    if (this.game && this.game.leave) this.game.leave();     // a sandbox saves on the way out
+    if (document.body) document.body.classList.remove('needs-b');
     mode = 'garden';
     jumpLock = true;
     P.vx = 0; P.vy = 0; P.buffer = 0;
@@ -2168,21 +2254,22 @@ const Arcade = {
     const pr = {
       left: inp.left && !this.prev.left, right: inp.right && !this.prev.right,
       up: inp.up && !this.prev.up, down: inp.down && !this.prev.down,
-      jump: a && !this.prev.a
+      jump: a && !this.prev.a, b: inp.b && !this.prev.b
     };
-    this.prev = { left: inp.left, right: inp.right, up: inp.up, down: inp.down, a };
+    this.prev = { left: inp.left, right: inp.right, up: inp.up, down: inp.down, a, b: inp.b };
     this.stateFrames++;
     if (this.flash > 0) this.flash--;
 
-    const leave = this.leaveReq; this.leaveReq = false;
+    const leave = this.leaveReq;
 
     if (this.state === 'play'){
-      if (leave){ this.close(); return; }
-      this.game.update({ left: inp.left, right: inp.right, up: inp.up, down: inp.down, jump: a }, pr);
+      if (leave){ this.leaveReq = false; this.close(); return; }
+      this.game.update({ left: inp.left, right: inp.right, up: inp.up, down: inp.down, jump: a, b: inp.b }, pr);
       return;
     }
     // Cards. A short dead zone stops the press that got you here from skipping it.
-    if (this.stateFrames < 24) return;
+    if (this.stateFrames < 24) return;            // (a tap on EXIT in here is kept, not lost)
+    this.leaveReq = false;
     if (leave || pr.down){
       if (this.state === 'won' && this.cab.finale && !Save.data.finished){ Ending.begin(); return; }
       this.close(); return;
@@ -2202,14 +2289,15 @@ const Arcade = {
       g.fillStyle = c.color; g.globalAlpha = 0.10; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
       txt(gm.title, W / 2, 88, gm.title.length > 30 ? 22 : 28, c.color);
       txt('A GAME BY ' + gm.maker, W / 2, 112, 13, '#cdbcda');
-      gm.how.forEach((s, i) => txt(s, W / 2, 150 + i * 23, 15, '#f2e9f7'));
+      ((TOUCH.on && gm.howTouch) || gm.how).forEach((s, i) => txt(s, W / 2, 150 + i * 23, 15, '#f2e9f7'));
       const best = (Save.data.best || {})[c.id];
       const note = (this.easy ? 'AUNT BARB HAS TURNED IT DOWN A NOTCH' : '') +
                    (this.easy && best ? '   ·   ' : '') + (best ? 'BEST  ' + best : '');
       if (note) txt(note, W / 2, 228, 12, this.easy ? '#ffd76b' : '#8a6ea8');
-      if (REDUCED || Math.floor(t / 28) % 2) txt('PRESS  A  /  SPACE  TO START', W / 2, 262, 16, '#ffd76b');
-      txt('ESC or ▼ to walk away', W / 2, 284, 11, '#6b5484');
-      Cast.draw(c.maker === 'KEVIN' ? 'KEVIN' : gm.maker, 70, 222, 1, Talk.speaking === gm.maker, 1.5);
+      if (REDUCED || Math.floor(t / 28) % 2) txt(say('PRESS  A  /  SPACE  TO START', 'TAP TO START'), W / 2, 262, 16, '#ffd76b');
+      txt(say('ESC or ▼ to walk away', 'or tap  ✕ EXIT  to walk away'), W / 2, 284, 11, '#6b5484');
+      const cc = gm.cardCast || [70, 222, 1.5];              // long instructions need the left margin
+      Cast.draw(c.maker === 'KEVIN' ? 'KEVIN' : gm.maker, cc[0], cc[1], 1, Talk.speaking === gm.maker, cc[2]);
     } else {
       this.quiet = this.state !== 'play';
       gm.draw();
@@ -2229,14 +2317,14 @@ const Arcade = {
           }
           txt('SCORE  ' + this.score, W / 2, 214, 13, '#cdbcda');
           if (this.stateFrames > 24 && (REDUCED || Math.floor(t / 28) % 2))
-            txt(c.finale && !Save.data.finished ? 'PRESS  A' : 'PRESS  A  TO GO BACK TO THE GARDEN', W / 2, 264, 15, '#f2e9f7');
+            txt(c.finale && !Save.data.finished ? say('PRESS  A', 'TAP') : say('PRESS  A  TO GO BACK TO THE GARDEN', 'TAP TO GO BACK TO THE GARDEN'), W / 2, 264, 15, '#f2e9f7');
         } else {
           txt('OUT OF LIVES', W / 2, 128, 28, '#ff3b6b');
           txt('NOBODY IS COUNTING.  (SCRATCHY IS COUNTING.)', W / 2, 162, 13, '#cdbcda');
           if (this.easy) txt('NEXT TRY IS A NOTCH EASIER', W / 2, 188, 13, '#ffd76b');
           if (this.stateFrames > 24 && (REDUCED || Math.floor(t / 28) % 2))
-            txt('PRESS  A  TO TRY AGAIN', W / 2, 244, 16, '#ffd76b');
-          txt('ESC or ▼ to walk away', W / 2, 268, 11, '#8a6ea8');
+            txt(say('PRESS  A  TO TRY AGAIN', 'TAP TO TRY AGAIN'), W / 2, 244, 16, '#ffd76b');
+          txt(say('ESC or ▼ to walk away', 'or tap  ✕ EXIT  to walk away'), W / 2, 268, 11, '#8a6ea8');
         }
       }
     }
@@ -2269,6 +2357,7 @@ function drawIguana(x, y, fr){
 GAMES.invaders = {
   title: 'FORM 7-B: CORN INVADERS', short: 'CORN INVADERS', maker: 'SCRATCHY',
   how: ['◀ ▶   MOVE', 'A / SPACE   THROW CORN', 'SEND ALL 47 IGUANAS HOME. SCRATCHY COUNTED.'],
+  howTouch: ['SLIDE YOUR FINGER   MOVE', 'KEEP TOUCHING   THROW CORN', 'SEND ALL 47 IGUANAS HOME. SCRATCHY COUNTED.'],
   intro: [['SCRATCHY', 'Forty-seven iguanas. One of you. I have done the paperwork.']],
   win: [['SCRATCHY', 'Forty-seven of forty-seven. I am filing this under JOY.'],
         ['PEARL', 'There is no form for joy.'], ['SCRATCHY', 'There is now.']],
@@ -2392,6 +2481,7 @@ GAMES.invaders = {
 GAMES.runner = {
   title: "PEARL'S GO GO GO GO", short: 'GO GO GO GO', maker: 'PEARL',
   how: ['A / SPACE   JUMP', 'PRESS AGAIN IN THE AIR TO FLAP', 'DO NOT JUMP INTO THE PAPER PLANES'],
+  howTouch: ['TAP   JUMP', 'TAP AGAIN IN THE AIR TO FLAP', 'DO NOT JUMP INTO THE PAPER PLANES'],
   intro: [['PEARL', 'It is called GO GO GO GO. You GO. That is the whole game!']],
   win: [['PEARL', 'YOU WENT! You went the WHOLE WAY!'], ['SCRATCHY', 'No falling blocks. I checked.']],
   lose: [['PEARL', 'You can jump TWICE. In the air. I allowed it.'], ['PEARL', 'Again again again!']],
@@ -2536,6 +2626,7 @@ GAMES.runner = {
 GAMES.standing = {
   title: 'REGINALD STANDS IN A GARDEN', short: 'REGINALD STANDS', maker: 'REGINALD',
   how: ['LEVEL 1:   YOU ARE REGINALD. DO NOT PRESS ANYTHING.', 'LEVEL 2:   ARROWS. CROSS THE GARDEN.', 'THE LAWNMOWERS ARE NOT A THREAT. AVOID THEM ANYWAY.'],
+  howTouch: ['LEVEL 1:   YOU ARE REGINALD. DO NOT TOUCH ANYTHING.', 'LEVEL 2:   SWIPE TO HOP. CROSS THE GARDEN.', 'THE LAWNMOWERS ARE NOT A THREAT. AVOID THEM ANYWAY.'],
   intro: [['REGINALD', 'You are me. Stand in the garden. Do not press anything.']],
   win: [['REGINALD', 'You stood. Then you crossed. That is everything I know.'],
         ['AUNT BARB', 'Well done, Reginald.'], ['REGINALD', 'I did nothing.'], ['AUNT BARB', 'Exactly, dear.']],
@@ -2700,6 +2791,7 @@ GAMES.standing = {
 GAMES.parade = {
   title: "AUNT BARB'S ROSE PARADE", short: 'ROSE PARADE', maker: 'AUNT BARB',
   how: ['ARROWS   STEER AUNT BARB', 'PICK THE ROSES. THE CHICKS WILL FOLLOW.', 'MIND THE GNOMES. AND YOUR OWN PARADE.'],
+  howTouch: ['SWIPE   STEER AUNT BARB', 'PICK THE ROSES. THE CHICKS WILL FOLLOW.', 'MIND THE GNOMES. AND YOUR OWN PARADE.'],
   intro: [['AUNT BARB', 'Pick the roses, dear. The chicks will follow you. Mind the gnomes.']],
   win: [['AUNT BARB', 'A full parade. Every rose accounted for.'], ['SCRATCHY', 'I counted. She is right.']],
   lose: [['AUNT BARB', 'Gnomes do not move, dear. You have to.'], ['AUNT BARB', 'Never mind. The roses will wait.']],
@@ -2796,6 +2888,7 @@ GAMES.parade = {
 GAMES.bricks = {
   title: "EL JAGUAR'S BRICK SPECTACULAR", short: 'BRICK SPECTACULAR', maker: 'EL JAGUAR',
   how: ['◀ ▶   MOVE', 'A / SPACE   SERVE THE BALL', 'GOLD BRICKS GIVE YOU ANOTHER BALL'],
+  howTouch: ['SLIDE YOUR FINGER   MOVE', 'TAP   SERVE THE BALL', 'GOLD BRICKS GIVE YOU ANOTHER BALL'],
   intro: [['EL JAGUAR', 'Behold. My name. In BRICKS. You may not touch it.'],
           ['PEARL', 'You HAVE to touch it. It is the game.']],
   win: [['EL JAGUAR', 'Enough! The rest are load-bearing.'], ['PEARL', 'The bricks said GERALD.'],
@@ -2912,7 +3005,7 @@ GAMES.bricks = {
       g.fillStyle = '#8a6ea8'; g.fillRect(b.x - 2, b.y - 1, 1.5, 1.5); g.fillRect(b.x + 1, b.y + 1, 1.5, 1.5);
     });
     txt('BRICKS  ' + Math.min(this.broken, this.goal) + ' / ' + this.goal, W / 2, 22, 11, '#cdbcda');
-    if (this.balls.some(b => b.stuck) && !this.o.micro) txt('PRESS  A  TO SERVE', W / 2, 230, 14, '#ffd76b');
+    if (this.balls.some(b => b.stuck) && !this.o.micro) txt(say('PRESS  A  TO SERVE', 'TAP TO SERVE'), W / 2, 230, 14, '#ffd76b');
   }
 };
 
@@ -2920,6 +3013,7 @@ GAMES.bricks = {
 GAMES.finale = {
   title: 'CRANKY CHICKENS VIII: ALL OF THEM AT ONCE', short: 'ALL OF THEM AT ONCE', maker: 'EVERYONE',
   how: ['FIVE GAMES. ONE AFTER ANOTHER. QUICKLY.', 'SAME BUTTONS AS BEFORE', 'MISS ONE AND YOU GET THAT ROUND AGAIN'],
+  howTouch: ['FIVE GAMES. ONE AFTER ANOTHER. QUICKLY.', 'SAME MOVES AS BEFORE', 'MISS ONE AND YOU GET THAT ROUND AGAIN'],
   intro: [['SCRATCHY', 'We put all five games in one cabinet.'], ['PEARL', 'ALL OF THEM. AT ONCE!'],
           ['SCRATCHY', 'One at a time. Quickly.']],
   win: [],
@@ -3056,7 +3150,7 @@ const Ending = {
     });
     txt('THE CHICKENS ARE PLAYING', W / 2, 30, 11, '#ff3b6b');
     if (this.f > 60 * 9 && (REDUCED || Math.floor(t / 30) % 2))
-      txt('PRESS ANY BUTTON TO TAKE IT BACK', W / 2, 60, 13, '#f2e9f7');
+      txt(say('PRESS ANY BUTTON TO TAKE IT BACK', 'TAP TO TAKE IT BACK'), W / 2, 60, 13, '#f2e9f7');
   }
 };
 
@@ -3108,6 +3202,9 @@ const ARCADE_TALK = [
   { id:'k-headset', lines:[
     ['PEARL','I found a headset! It is by my cabinet! It goes somewhere ELSE!'], ['SCRATCHY','We do not have a budget for somewhere else.'],
     ['PEARL','It is PRETEND somewhere else!'] ]},
+  { id:'k-blocks', lines:[
+    ['SCRATCHY','The falling blocks have a cabinet now. By the gate. They built a whole world in it.'], ['PEARL','Does anything FALL?'],
+    ['SCRATCHY','No. I have it in writing.'] ]},
   { id:'k-flowers', lines:[
     ['PEARL','Every four flowers is an extra life in the cabinets.'], ['SCRATCHY','I did not approve that.'],
     ['AUNT BARB','I did, dear.'] ]}
@@ -3816,7 +3913,7 @@ const Hint = {
     const reach = Leak.on('runner') ? 'If it is high, jump, then jump again in the air.'
                 : Leak.chicks() ? 'If it is high, hold ▼ and stand on the chicks.'
                 : 'If it is high, keep trying. Aunt Barb brings a plank.';
-    return [pair[0], pair[1].replace('{dir}', dir).replace('{MAKER}', (gl.maker || '').toLowerCase().replace(/\b[a-z]/g, ch => ch.toUpperCase())).replace('{reach}', reach)];
+    return [pair[0], pair[1].replace('{dir}', dir).replace('Press ▼.', say('Press ▼.', 'Tap it.')).replace('{MAKER}', (gl.maker || '').toLowerCase().replace(/\b[a-z]/g, ch => ch.toUpperCase())).replace('{reach}', reach)];
   },
 
   reset(){ this.ms = 0; this.level = 0; this.nagAt = 0; },
@@ -3999,7 +4096,7 @@ function drawHeadsetStand(c){
   g.fillStyle = '#6b5484'; g.fillRect(x, y - 46 + bob, 3, 5); g.fillRect(x + 29, y - 46 + bob, 3, 5);
   if (done){ g.fillStyle = '#ffd76b'; g.fillRect(x + 12, y - 60 + bob, 8, 6); }        // a little gold star-ish tag
   if (nearCabinet() === c){
-    const label = '▼  PUT ON THE HEADSET';
+    const label = say('▼  PUT ON THE HEADSET', 'TAP TO PUT ON THE HEADSET');
     g.font = 'bold 12px "Arial Narrow", Arial, sans-serif';
     const tw = g.measureText(label).width + 16, top = y - 90;
     g.fillStyle = 'rgba(6,3,12,.9)'; g.fillRect(x + 16 - tw / 2, top, tw, 20);
@@ -4012,6 +4109,7 @@ GAMES.meta = {
   title: "GRAYDORN'S WORLD: VIRTUALLY THERE", short: 'VIRTUALLY THERE', maker: 'PEARL',
   noLives: true, noScan: true, winTitle: 'FIELD GUIDE COMPLETE', winSub: 'ALL NINE ARE TUCKED IN AND BACK WHERE THEY BELONG',
   how: ["ARROWS   WALK AROUND GRAYDORN'S WORLD", 'BUMP INTO ANYTHING LOST   ·   A   THROWS A BLANKET', 'FIND ALL NINE. NOBODY CAN LOSE IN HERE.'],
+  howTouch: ['TOUCH WHERE YOU WANT TO WALK', 'BUMP INTO ANYTHING LOST   ·   TAP   THROWS A BLANKET', 'FIND ALL NINE. NOBODY CAN LOSE IN HERE.'],
   intro: [['PEARL', "I found a headset! It goes to Graydorn's world! But PRETEND!"],
           ['SCRATCHY', 'Augmented reality, inside virtual reality, inside a demo. I am out of forms.']],
   win: [['SCRATCHY', 'Nine of nine. The Field Guide is complete. Filed under G, for Graydorn.'],
@@ -4354,7 +4452,7 @@ GAMES.meta = {
 
     if (e.state === 'aim' || e.state === 'fly'){
       const bx = 170, bw = 300, by = 262;
-      if (e.state === 'aim') txt('PRESS  A  WHEN THE LINE IS IN THE BLUE', W / 2, 250, 12, '#f2e9f7');
+      if (e.state === 'aim') txt(say('PRESS  A  WHEN THE LINE IS IN THE BLUE', 'TAP WHEN THE LINE IS IN THE BLUE'), W / 2, 250, 12, '#f2e9f7');
       g.fillStyle = 'rgba(6,3,12,.85)'; g.fillRect(bx - 4, by - 4, bw + 8, 22);
       g.fillStyle = '#3d1f6e'; g.fillRect(bx, by, bw, 14);
       g.fillStyle = '#5bb8f2'; g.fillRect(bx + (e.centre - e.band / 2) * bw, by, e.band * bw, 14);
@@ -4382,6 +4480,676 @@ GAMES.meta = {
     if (this.mode === 'map') this.drawMap(); else this.drawLens();
   }
 };
+
+/* ============================================================
+   LAYER 6: STAY PUT — "Nothing in it falls. Especially not the sand."
+
+   The falling blocks (see the cage under the garden) are out on good
+   behaviour. They have built a cabinet, and inside it a world made
+   entirely of blocks that stay exactly where you put them.
+
+   It is a first-person block world, drawn by hand on the same 640x384
+   canvas as everything else. No 3D library, no GPU:
+
+     the WORLD   256 x 256 x 48 blocks in one Uint8Array, grown from a
+                 seed: hills, ponds, snow caps, trees, and a coop where
+                 you start. Only what you change is saved (seed + edits,
+                 in localStorage under cc7_world), so the save stays
+                 small however much you build.
+     the EYE     one ray per pixel of a small picture (320 x 192), walked
+                 through the block grid until it hits something, then
+                 stretched to fill the canvas. If a device cannot keep
+                 up, the picture gets smaller, not slower.
+     the HANDS   A places a block where you are looking, B breaks one.
+                 Drag the picture to look around. Tap the bar to pick a
+                 block. There is no goal and nobody can lose.
+
+   It is not one of the five ticket cabinets.
+   ============================================================ */
+CABINETS.push({ id:'craft', screen:'0,0', col:9, maker:'THE BLOCKS', color:'#9aa0ae', extra:true });
+
+// The makers: one reformed falling block, standing by its cabinet.
+(function(){
+  const base = Cast.draw.bind(Cast);
+  Cast.draw = function(who, x, y, fc, talk, sc, walk){
+    if (who !== 'THE BLOCKS') return base(who, x, y, fc, talk, sc, walk);
+    const s = (sc || 1) * 1.1, jig = REDUCED ? 0 : Math.round(Math.sin(t / 9) * 1.2);
+    g.save(); g.translate(x, y); g.scale(s, s);
+    g.globalAlpha = 0.18; g.fillStyle = '#000'; g.beginPath(); g.ellipse(0, 2, 15, 4, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = '#6b6b7a'; g.fillRect(-14, -30 + jig, 28, 30 - jig);
+    g.fillStyle = '#8a8a9a'; g.fillRect(-14, -30 + jig, 28, 5);
+    g.fillStyle = '#55555f'; g.fillRect(-14, -3, 28, 3);
+    g.fillStyle = '#fff'; g.fillRect(-9, -20 + jig, 6, 6); g.fillRect(3, -20 + jig, 6, 6);
+    g.fillStyle = '#111'; g.fillRect(-7, -18 + jig, 3, 3); g.fillRect(5, -18 + jig, 3, 3);
+    g.fillRect(-8, -9 + jig, 16, 2);                         // trying to smile
+    g.fillRect(-10, -11 + jig, 2, 2); g.fillRect(8, -11 + jig, 2, 2);
+    g.restore();
+  };
+})();
+
+const BLK = { AIR:0, GRASS:1, DIRT:2, STONE:3, SAND:4, WATER:5, LOG:6, LEAVES:7, PLANKS:8, RED:9, HAY:10, BRICK:11, SNOW:12, CORN:13, EGG:14, PINK:15, PURPLE:16, BED:17 };
+const BLK_NAME = ['', 'GRASS', 'DIRT', 'STONE', 'SAND', 'WATER', 'LOG', 'LEAVES', 'PLANKS', 'COOP RED', 'HAY', 'BRICK', 'SNOW', 'CORN GOLD', 'EGGSHELL', 'FLOWER PINK', 'GARDEN PURPLE', 'BEDROCK'];
+// [top, side, bottom] colours
+const BLK_RGB = [null,
+  [[106,170,72],[134,96,67],[134,96,67]], [[134,96,67],[134,96,67],[134,96,67]], [[130,130,138],[122,122,130],[110,110,118]],
+  [[226,210,154],[218,200,146],[200,184,132]], [[70,128,206],[62,118,196],[52,100,170]], [[164,132,88],[112,84,54],[164,132,88]],
+  [[62,138,66],[54,126,60],[46,108,52]], [[190,150,98],[180,140,90],[160,122,78]], [[196,64,52],[182,56,46],[150,46,38]],
+  [[222,188,78],[212,176,68],[190,156,58]], [[176,80,66],[168,74,62],[140,60,50]], [[244,247,252],[232,238,246],[214,220,230]],
+  [[252,208,44],[246,196,36],[214,168,28]], [[248,243,230],[240,234,220],[220,214,200]], [[244,126,176],[236,112,164],[204,92,140]],
+  [[104,62,170],[76,42,132],[60,32,104]], [[58,58,66],[50,50,58],[40,40,48]]
+];
+const HOTBAR = [BLK.GRASS, BLK.STONE, BLK.SAND, BLK.LOG, BLK.PLANKS, BLK.RED, BLK.BRICK, BLK.HAY, BLK.CORN, BLK.EGG, BLK.PINK, BLK.PURPLE];
+
+// 8x8 texels per block face, baked once: flat colour, a little grain, a darker edge so blocks read as blocks.
+const BLK_TEX = (function(){
+  const T = new Uint8Array(18 * 3 * 64 * 3);
+  for (let b = 1; b < 18; b++) for (let f = 0; f < 3; f++) for (let ty = 0; ty < 8; ty++) for (let tx = 0; tx < 8; tx++){
+    let c = BLK_RGB[b][f], k = 0.88 + 0.12 * hash2(tx + b * 31 + f * 7, ty + b * 17);
+    if (b === BLK.GRASS && f === 1 && ty < 2 + (hash2(tx, b) > .5 ? 1 : 0)) c = BLK_RGB[b][0];        // grass lip
+    if (b === BLK.LOG && f === 1 && tx % 3 === 0) k *= 0.82;                                         // bark
+    if (b === BLK.LOG && f !== 1 && (tx === 2 || tx === 5 || ty === 2 || ty === 5)) k *= 0.85;       // rings
+    if ((b === BLK.PLANKS || b === BLK.RED) && ty % 4 === 3) k *= 0.78;                              // boards
+    if (b === BLK.HAY && tx % 2 === 0) k *= 0.88;
+    if (b === BLK.BRICK && (ty % 4 === 3 || (tx + (ty >> 2) * 4) % 8 === 7)) c = [206, 196, 186];    // mortar
+    if (b === BLK.LEAVES && hash2(tx * 5 + 3, ty * 9 + 1) > 0.78) k *= 0.6;
+    if (b === BLK.CORN && (tx % 3 === 1 && ty % 3 === 1)) k *= 1.12;                                 // kernels
+    if (b === BLK.STONE && hash2(tx * 3 + 11, ty * 7 + 5) > 0.82) k *= 0.82;
+    if (tx === 0 || ty === 0) k *= 0.86;
+    const i = ((b * 3 + f) * 64 + ty * 8 + tx) * 3;
+    T[i] = Math.min(255, c[0] * k); T[i + 1] = Math.min(255, c[1] * k); T[i + 2] = Math.min(255, c[2] * k);
+  }
+  return T;
+})();
+
+// Extra keys only this cabinet uses (look up/down, pick a block). Everything else comes through Input.
+const CraftKeys = { held: {}, hit: [] };
+addEventListener('keydown', e => { if (!CraftKeys.held[e.code]) CraftKeys.hit.push(e.code); CraftKeys.held[e.code] = true; });
+addEventListener('keyup', e => { CraftKeys.held[e.code] = false; });
+
+// The pointer: drag to look, tap to place, long-press or right-click to break, wheel to change block.
+const CraftPtr = { down: false, id: null, x: 0, y: 0, sx: 0, sy: 0, dx: 0, dy: 0, moved: 0, frames: 0, taps: [], right: false, wheel: 0 };
+(function(){
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+  const live = () => mode === 'arcade' && Arcade.state === 'play' && Arcade.game === GAMES.craft;
+  cv.addEventListener('pointerdown', e => {
+    if (!live()) return;
+    const [x, y] = pos(e);
+    if (e.button === 2){ CraftPtr.right = true; e.preventDefault(); return; }
+    CraftPtr.down = true; CraftPtr.id = e.pointerId; CraftPtr.x = CraftPtr.sx = x; CraftPtr.y = CraftPtr.sy = y;
+    CraftPtr.moved = 0; CraftPtr.frames = 0; CraftPtr.long = false;
+    try { cv.setPointerCapture(e.pointerId); } catch(err){}
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!CraftPtr.down || e.pointerId !== CraftPtr.id) return;
+    const [x, y] = pos(e);
+    CraftPtr.dx += x - CraftPtr.x; CraftPtr.dy += y - CraftPtr.y;
+    CraftPtr.moved += Math.abs(x - CraftPtr.x) + Math.abs(y - CraftPtr.y);
+    CraftPtr.x = x; CraftPtr.y = y;
+  });
+  const up = e => {
+    if (!CraftPtr.down || (e.pointerId != null && e.pointerId !== CraftPtr.id)) return;
+    CraftPtr.down = false;
+    if (live() && CraftPtr.moved < 10 && !CraftPtr.long) CraftPtr.taps.push([CraftPtr.sx, CraftPtr.sy]);
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', () => { CraftPtr.down = false; });
+  cv.addEventListener('contextmenu', e => { if (live()) e.preventDefault(); });
+  cv.addEventListener('wheel', e => { if (live()){ CraftPtr.wheel += e.deltaY > 0 ? 1 : -1; e.preventDefault(); } }, { passive: false });
+})();
+
+GAMES.craft = {
+  title: 'STAY PUT: A WORLD MADE OF BLOCKS', short: 'STAY PUT', maker: 'THE BLOCKS',
+  noLives: true, noScan: true, mode: 'map', pointer: true, needsB: true, cardCast: [58, 100, 1.1],
+  how: ['ARROWS  WALK AND TURN   ·   DRAG THE PICTURE TO LOOK',
+        'A  PLACES A BLOCK   ·   B  BREAKS ONE   ·   TAP THE BAR TO CHOOSE',
+        'KEYBOARD:  SPACE = A    X = B    R / F  LOOK UP AND DOWN'],
+  howTouch: ['▲ ▼  WALK   ·   ◀ ▶  TURN   ·   DRAG THE PICTURE TO LOOK',
+        'TAP  PLACES A BLOCK   ·   PRESS AND HOLD  (OR B)  BREAKS ONE',
+        'TAP THE BAR AT THE BOTTOM TO CHOOSE A BLOCK'],
+  intro: [['SCRATCHY', 'The falling blocks are out on good behaviour. They built a world. Nothing in it falls.'],
+          ['PEARL', 'Not even the SAND?'], ['SCRATCHY', 'Especially not the sand.']],
+  win: [], lose: [['SCRATCHY', 'Nobody can lose at blocks.']],
+  WX: 256, WZ: 256, WY: 48, SEA: 15, MAXD: 44, KEY: 'cc7_world',
+  RES: [[320, 192], [240, 144], [160, 96], [107, 64]],        // best first; draw() steps down if a device is slow
+
+  hud(){ return this.placed + ' PLACED  ·  ' + this.broken + ' BROKEN'; },
+  idx(x, y, z){ return (y * this.WZ + z) * this.WX + x; },
+  inWorld(x, y, z){ return x >= 0 && z >= 0 && y >= 0 && x < this.WX && z < this.WZ && y < this.WY; },
+  get(x, y, z){ return this.inWorld(x, y, z) ? this.vox[(y * this.WZ + z) * this.WX + x] : (y < 0 ? BLK.BED : 0); },
+  solid(x, y, z){ const b = this.get(x, y, z); return b !== 0 && b !== BLK.WATER; },
+
+  /* ---------- the world, from a seed ---------- */
+  noise(x, z, s){
+    const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz;
+    const u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
+    const a = hash2(ix + s, iz - s), b = hash2(ix + 1 + s, iz - s), c = hash2(ix + s, iz + 1 - s), d = hash2(ix + 1 + s, iz + 1 - s);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  },
+  heightAt(x, z){
+    const s = this.seed;
+    const h = 11 + this.noise(x / 52, z / 52, s) * 15 + this.noise(x / 17, z / 17, s + 99) * 5 + this.noise(x / 6, z / 6, s + 7) * 1.5;
+    return clamp(Math.floor(h), 3, this.WY - 12);
+  },
+  generate(){
+    const { WX, WZ, WY, SEA } = this, v = this.vox = new Uint8Array(WX * WZ * WY);
+    const cx = WX >> 1, cz = WZ >> 1;
+    for (let z = 0; z < WZ; z++) for (let x = 0; x < WX; x++){
+      let h = this.heightAt(x, z);
+      const dc = Math.max(Math.abs(x - cx), Math.abs(z - cz));
+      if (dc < 12){ const home = Math.max(SEA + 3, this.heightAt(cx, cz)); h = dc < 8 ? home : Math.round(home + (h - home) * (dc - 8) / 4); }   // a level yard to start in
+      const top = h <= SEA + 1 ? BLK.SAND : h > 27 ? BLK.SNOW : BLK.GRASS;
+      for (let y = 0; y <= h; y++) v[(y * WZ + z) * WX + x] = y === 0 ? BLK.BED : y < h - 3 ? BLK.STONE : y < h ? (top === BLK.SAND ? BLK.SAND : BLK.DIRT) : top;
+      for (let y = h + 1; y <= SEA; y++) v[(y * WZ + z) * WX + x] = BLK.WATER;
+      if (top === BLK.GRASS && dc > 9 && x > 3 && z > 3 && x < WX - 4 && z < WZ - 4 && hash2(x * 7 + this.seed, z * 13) < 0.011){
+        const th = 4 + (hash2(x, z + 5) > .5 ? 1 : 0);
+        for (let y = 1; y <= th; y++) v[((h + y) * WZ + z) * WX + x] = BLK.LOG;
+        for (let dy = th - 1; dy <= th + 1; dy++) for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++){
+          const r = dy > th ? 1 : 2;
+          if (Math.abs(dx) > r || Math.abs(dz) > r || (Math.abs(dx) === 2 && Math.abs(dz) === 2)) continue;
+          const i = ((h + dy) * WZ + z + dz) * WX + x + dx;
+          if (!v[i]) v[i] = BLK.LEAVES;
+        }
+      }
+    }
+    // the coop you start beside: plank floor, red walls, hay roof, corn-gold corner posts, a door facing you
+    const gy = this.heightAt(cx, cz) < SEA + 3 ? SEA + 3 : this.heightAt(cx, cz);
+    const put = (x, y, z, b) => { v[(y * WZ + z) * WX + x] = b; };
+    for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++){
+      const x = cx + dx, z = cz - 6 + dz, edge = Math.abs(dx) === 3 || Math.abs(dz) === 3, corner = Math.abs(dx) === 3 && Math.abs(dz) === 3;
+      put(x, gy, z, BLK.PLANKS);
+      for (let y = 1; y <= 3; y++) put(x, gy + y, z, corner ? BLK.CORN : edge ? BLK.RED : 0);
+      put(x, gy + 4, z, BLK.HAY);
+      if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) put(x, gy + 5, z, BLK.HAY);
+    }
+    put(cx, gy + 1, cz - 3, 0); put(cx, gy + 2, cz - 3, 0);                 // the door
+    put(cx - 2, gy + 2, cz - 3, 0); put(cx + 2, gy + 2, cz - 3, 0);         // two windows
+    put(cx, gy + 1, cz - 8, BLK.EGG);                                       // one egg, inside
+    this.home = [cx + 0.5, gy + 1, cz + 2.5];
+  },
+
+  /* ---------- saving: the seed and what you changed, nothing else ---------- */
+  load(){
+    this.edits = new Map(); this.placed = 0; this.broken = 0; this.sel = 4; let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch(e){}
+    this.seed = saved && saved.seed ? saved.seed : 1 + Math.floor(Math.random() * 9000);
+    this.generate();
+    if (saved && saved.e){
+      saved.e.split(',').forEach(p => {
+        const q = p.split('.'); const i = parseInt(q[0], 36), b = parseInt(q[1], 36);
+        if (i >= 0 && i < this.vox.length && b >= 0 && b < 18){ this.vox[i] = b; this.edits.set(i, b); }
+      });
+      this.placed = saved.n || 0; this.broken = saved.k || 0; this.sel = clamp(saved.sel || 0, 0, HOTBAR.length - 1);
+    }
+    const p = saved && saved.p;
+    [this.x, this.y, this.z] = p ? p : this.home;
+    this.yaw = p ? p[3] : Math.PI; this.pitch = p ? p[4] : -0.05;         // facing the coop door
+  },
+  save(){
+    this.dirty = 0;
+    try {
+      const e = []; this.edits.forEach((b, i) => e.push(i.toString(36) + '.' + b.toString(36)));
+      localStorage.setItem(this.KEY, JSON.stringify({ v: 1, seed: this.seed, e: e.join(','), n: this.placed, k: this.broken, sel: this.sel,
+        p: [+this.x.toFixed(2), +this.y.toFixed(2), +this.z.toFixed(2), +this.yaw.toFixed(3), +this.pitch.toFixed(3)] }));
+    } catch(err){}
+  },
+  leave(){ this.save(); },
+  setBlock(x, y, z, b){
+    const i = this.idx(x, y, z);
+    this.vox[i] = b; this.edits.set(i, b); this.dirty = this.dirty || 1;
+  },
+
+  init(o){
+    this.o = o;
+    if (!this.vox) this.load();
+    this.vy = 0; this.grounded = false; this.eyeLag = 0; this.f = 0; this.cool = 0; this.target = null;
+    this.said = Save.data.craftSaid = Save.data.craftSaid || {};
+    this.res = this.res || 0; this.ms = 0; this.msN = 0; this.setRes(this.res);
+    if (!this.chicks){
+      this.chicks = [];
+      for (let i = 0; i < 7; i++){
+        const x = this.home[0] + rnd(-7, 7), z = this.home[2] + rnd(1, 9);
+        this.chicks.push({ x, z, y: this.ground(x, z, this.WY - 1), a: rnd(0, 6.28), w: rint(40, 200), hop: 0 });
+      }
+    }
+    CraftPtr.taps.length = 0; CraftPtr.dx = CraftPtr.dy = 0; CraftPtr.wheel = 0; CraftPtr.right = false; CraftKeys.hit.length = 0;
+  },
+  once(id, lines){ if (this.said[id]) return; this.said[id] = true; Talk.interrupt({ lines }); },
+  setRes(n){
+    this.res = n; const [rw, rh] = this.RES[n];
+    if (!this.off) this.off = document.createElement('canvas');
+    this.off.width = rw; this.off.height = rh;
+    this.octx = this.off.getContext('2d');
+    this.img = this.octx.createImageData(rw, rh);
+    this.px = new Uint32Array(this.img.data.buffer);
+    this.zb = new Float32Array(rw * rh);
+  },
+
+  /* ---------- you: a box 0.6 wide and 1.7 tall ---------- */
+  hits(x, y, z){
+    const x0 = Math.floor(x - 0.3), x1 = Math.floor(x + 0.3), z0 = Math.floor(z - 0.3), z1 = Math.floor(z + 0.3), y0 = Math.floor(y), y1 = Math.floor(y + 1.69);
+    for (let yy = y0; yy <= y1; yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) if (this.solid(xx, yy, zz)) return true;
+    return false;
+  },
+  forward(){ const cp = Math.cos(this.pitch); return [cp * Math.sin(this.yaw), Math.sin(this.pitch), cp * Math.cos(this.yaw)]; },
+
+  // Walk a ray from the eye through the grid. Returns the first solid block and the empty cell in front of it.
+  look(reach){
+    const [dx, dy, dz] = this.forward();
+    let ox = this.x, oy = this.y + 1.55, oz = this.z;
+    let ix = Math.floor(ox), iy = Math.floor(oy), iz = Math.floor(oz);
+    const sx2 = dx > 0 ? 1 : -1, sy2 = dy > 0 ? 1 : -1, sz2 = dz > 0 ? 1 : -1;
+    const tdx = Math.abs(1 / (dx || 1e-9)), tdy = Math.abs(1 / (dy || 1e-9)), tdz = Math.abs(1 / (dz || 1e-9));
+    let tx = (dx > 0 ? ix + 1 - ox : ox - ix) * tdx, ty = (dy > 0 ? iy + 1 - oy : oy - iy) * tdy, tz = (dz > 0 ? iz + 1 - oz : oz - iz) * tdz;
+    let px = ix, py = iy, pz = iz;
+    for (let n = 0; n < 40; n++){
+      px = ix; py = iy; pz = iz;
+      let tt;
+      if (tx < ty && tx < tz){ tt = tx; tx += tdx; ix += sx2; } else if (ty < tz){ tt = ty; ty += tdy; iy += sy2; } else { tt = tz; tz += tdz; iz += sz2; }
+      if (tt > reach) return null;
+      if (this.solid(ix, iy, iz)) return this.inWorld(ix, iy, iz) ? { x: ix, y: iy, z: iz, ax: px, ay: py, az: pz, i: this.idx(ix, iy, iz) } : null;
+    }
+    return null;
+  },
+
+  place(){
+    const h = this.target; if (!h) return false;
+    const { ax, ay, az } = h;
+    if (!this.inWorld(ax, ay, az) || ay >= this.WY - 1) return false;
+    const cur = this.get(ax, ay, az); if (cur && cur !== BLK.WATER) return false;
+    const b = HOTBAR[this.sel];
+    this.vox[this.idx(ax, ay, az)] = b;
+    if (this.hits(this.x, this.y, this.z)){ this.vox[this.idx(ax, ay, az)] = cur; return false; }     // not inside yourself
+    this.setBlock(ax, ay, az, b);
+    this.placed++; Sfx.play('thunk'); paintHud();
+    this.once('place', [['PEARL', 'It STAYED! You put it down and it STAYED!']]);
+    if (b === BLK.SAND && !this.solid(ax, ay - 1, az)) this.once('sand', [['SCRATCHY', 'Sand. In the air. Not falling. The blocks are very proud of this.']]);
+    if (this.placed === 100) Talk.interrupt({ lines: [['AUNT BARB', 'A hundred blocks, dear. That is a proper house.']] });
+    if (this.placed === 1000) Talk.interrupt({ lines: [['SCRATCHY', 'One thousand blocks placed. I counted every one. I regret nothing.']] });
+    return true;
+  },
+  dig(){
+    const h = this.target; if (!h) return false;
+    if (this.vox[h.i] === BLK.BED){ this.once('bed', [['THE GAME', 'That is the bottom of the world. It is load-bearing.']]); return false; }
+    this.setBlock(h.x, h.y, h.z, h.y <= this.SEA && this.nearWater(h.x, h.y, h.z) ? BLK.WATER : 0);
+    this.broken++; Sfx.play('pop'); paintHud();
+    this.once('dig', [['SCRATCHY', 'One block removed. I have logged it. I will log all of them.']]);
+    return true;
+  },
+  nearWater(x, y, z){
+    return this.get(x + 1, y, z) === BLK.WATER || this.get(x - 1, y, z) === BLK.WATER || this.get(x, y, z + 1) === BLK.WATER || this.get(x, y, z - 1) === BLK.WATER || this.get(x, y + 1, z) === BLK.WATER;
+  },
+  pick(n){ this.sel = ((n % HOTBAR.length) + HOTBAR.length) % HOTBAR.length; this.nameT = 150; Sfx.play('blip'); },
+
+  update(inp, pr){
+    this.f++;
+    // ---- looking ----
+    if (inp.left) this.yaw -= 0.042;
+    if (inp.right) this.yaw += 0.042;
+    if (CraftKeys.held.KeyR || CraftKeys.held.PageUp) this.pitch += 0.03;
+    if (CraftKeys.held.KeyF || CraftKeys.held.PageDown) this.pitch -= 0.03;
+    this.yaw += CraftPtr.dx * 0.0075; this.pitch -= CraftPtr.dy * 0.0075; CraftPtr.dx = CraftPtr.dy = 0;
+    this.pitch = clamp(this.pitch, -1.45, 1.45);
+
+    // ---- walking: one axis at a time, and a one-block step is just walked up ----
+    const wet = this.get(Math.floor(this.x), Math.floor(this.y + 0.4), Math.floor(this.z)) === BLK.WATER;
+    const sp = (wet ? 0.045 : 0.085) * ((inp.up ? 1 : 0) - (inp.down ? 0.7 : 0));
+    const mx = Math.sin(this.yaw) * sp, mz = Math.cos(this.yaw) * sp;
+    const tryMove = (nx, nz) => {
+      if (!this.hits(nx, this.y, nz)){ this.x = nx; this.z = nz; return; }
+      if (this.grounded && !this.hits(nx, this.y + 1.02, nz) && !this.hits(this.x, this.y + 1.02, this.z)){
+        this.x = nx; this.z = nz; this.y = Math.floor(this.y + 0.001) + 1; this.eyeLag = 1;      // step up
+      }
+    };
+    if (mx) tryMove(this.x + mx, this.z);
+    if (mz) tryMove(this.x, this.z + mz);
+    const lim = 1.4;
+    if (this.x < lim || this.z < lim || this.x > this.WX - lim || this.z > this.WZ - lim)
+      this.once('edge', [['THE GAME', 'The world ends here. 256 blocks each way is all the blocks could remember.']]);
+    this.x = clamp(this.x, lim, this.WX - lim); this.z = clamp(this.z, lim, this.WZ - lim);
+
+    this.vy = Math.max(wet ? -0.05 : -0.55, this.vy - (wet ? 0.004 : 0.014));
+    const ny = this.y + this.vy;
+    if (this.hits(this.x, ny, this.z)){
+      if (this.vy < 0){ this.y = Math.ceil(ny - 1e-6); this.grounded = true; }
+      this.vy = 0;
+    } else { this.y = ny; this.grounded = false; }
+    if (this.y < 1){ this.y = 1; this.vy = 0; this.grounded = true; }
+    if (this.eyeLag > 0) this.eyeLag = Math.max(0, this.eyeLag - 0.14);
+    if (wet) this.once('wet', [['REGINALD', 'Nice pond.']]);
+
+    // ---- hands ----
+    this.target = this.look(5.5);
+    if (this.cool > 0) this.cool--;
+    if (this.nameT > 0) this.nameT--;
+    while (CraftKeys.hit.length){
+      const c = CraftKeys.hit.shift();
+      if (c === 'KeyQ') this.pick(this.sel - 1); else if (c === 'KeyE') this.pick(this.sel + 1);
+      else if (/^Digit[0-9]$/.test(c)) this.pick((+c.slice(5) + 9) % 10);
+      else if (c === 'Minus') this.pick(10); else if (c === 'Equal') this.pick(11);
+    }
+    if (CraftPtr.wheel){ this.pick(this.sel + Math.sign(CraftPtr.wheel)); CraftPtr.wheel = 0; }
+    let wantPlace = pr.jump || (inp.jump && this.cool <= 0), wantDig = pr.b || (inp.b && this.cool <= 0);
+    while (CraftPtr.taps.length){
+      const [tx, ty] = CraftPtr.taps.shift(), hb = this.barRect();
+      if (ty >= hb.y - 4 && tx >= hb.x && tx < hb.x + hb.w){ this.pick(Math.floor((tx - hb.x) / hb.slot)); continue; }
+      wantPlace = true;
+    }
+    if (CraftPtr.right){ CraftPtr.right = false; wantDig = true; }
+    if (CraftPtr.down && CraftPtr.moved < 10 && ++CraftPtr.frames > 26){ CraftPtr.long = true; if (this.cool <= 0) wantDig = true; }   // press and hold to break
+    if (wantDig){ this.dig(); this.cool = 13; }
+    else if (wantPlace){ this.place(); this.cool = 13; }
+
+    // ---- the chickens that live here ----
+    for (const c of this.chicks){
+      if (--c.w < 0){ c.a += rnd(-1.6, 1.6); c.w = rint(50, 220); }
+      const nx = c.x + Math.sin(c.a) * 0.018, nz = c.z + Math.cos(c.a) * 0.018;
+      const gy = this.ground(nx, nz, Math.floor(c.y) + 2);
+      if (gy - c.y > 1.1 || gy - c.y < -3 || gy <= this.SEA || Math.hypot(nx - this.home[0], nz - this.home[2]) > 22){ c.a += 2.2; c.w = 30; }
+      else { c.x = nx; c.z = nz; c.y = gy; }
+      c.hop = (c.hop + 0.2) % 6.283;
+    }
+
+    if (this.dirty && ++this.dirty > 150) this.save();
+  },
+  ground(x, z, from){
+    const ix = Math.floor(x), iz = Math.floor(z);
+    for (let y = Math.min(this.WY - 1, from); y > 0; y--) if (this.solid(ix, y, iz)) return y + 1;
+    return 1;
+  },
+
+  /* ---------- the eye ---------- */
+  render(){
+    const rw = this.off.width, rh = this.off.height, px = this.px, zb = this.zb, vox = this.vox, TEX = BLK_TEX;
+    const WX = this.WX, WZ = this.WZ, WY = this.WY, MAXD = this.MAXD, LAYER = WX * WZ;
+    const ox = this.x, oy = this.y + 1.55 - this.eyeLag, oz = this.z;
+    const cy = Math.cos(this.yaw), sy = Math.sin(this.yaw), cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
+    const fx = cp * sy, fy = sp, fz = cp * cy, rx = cy, rz = -sy, ux = -sp * sy, uy = cp, uz = -sp * cy;
+    const hw = 0.72, hh = hw * rh / rw;
+    const ix0 = Math.floor(ox), iy0 = Math.floor(oy), iz0 = Math.floor(oz);
+    const tgt = this.target ? this.target.i : -1, wob = Math.sin(this.f / 20) * 6;
+    const fog0 = MAXD * 0.55, fogK = 1 / (MAXD * 0.45);
+    let p = 0;
+    for (let yy = 0; yy < rh; yy++){
+      const v = (1 - 2 * (yy + 0.5) / rh) * hh;
+      for (let xx = 0; xx < rw; xx++, p++){
+        const u = (2 * (xx + 0.5) / rw - 1) * hw;
+        let dx = fx + rx * u + ux * v, dy = fy + uy * v, dz = fz + rz * u + uz * v;
+        const il = 1 / Math.sqrt(dx * dx + dy * dy + dz * dz); dx *= il; dy *= il; dz *= il;
+        // sky first; a hit overwrites it
+        const sk = dy > 0 ? dy : 0;
+        let r = 196 - 104 * sk, gg = 224 - 70 * sk, b = 248 - 14 * sk, dist = 1e9;
+        const hr = r, hg = gg, hb = b;
+        let ix = ix0, iy = iy0, iz = iz0;
+        const stx = dx > 0 ? 1 : -1, sty = dy > 0 ? 1 : -1, stz = dz > 0 ? 1 : -1;
+        const tdx = dx ? Math.abs(1 / dx) : 1e9, tdy = dy ? Math.abs(1 / dy) : 1e9, tdz = dz ? Math.abs(1 / dz) : 1e9;
+        let tx = (dx > 0 ? ix + 1 - ox : ox - ix) * tdx, ty = (dy > 0 ? iy + 1 - oy : oy - iy) * tdy, tz = (dz > 0 ? iz + 1 - oz : oz - iz) * tdz;
+        let i = (iy * WZ + iz) * WX + ix, side = 1, tt = 0, wet = 0;
+        for (;;){
+          if (tx < ty && tx < tz){ tt = tx; tx += tdx; ix += stx; i += stx; side = 0; }
+          else if (ty < tz){ tt = ty; ty += tdy; iy += sty; i += sty * LAYER; side = 1; }
+          else { tt = tz; tz += tdz; iz += stz; i += stz * WX; side = 2; }
+          if (tt > MAXD || ix < 0 || iz < 0 || ix >= WX || iz >= WZ || iy < 0) break;
+          if (iy >= WY){ if (dy > 0) break; continue; }
+          const blk = vox[i];
+          if (!blk) continue;
+          if (blk === 5){ if (!wet){ wet = tt + 0.001; } continue; }             // look through water, tint later
+          const hx = ox + dx * tt, hy = oy + dy * tt, hz = oz + dz * tt;
+          let tu, tv, face, sh;
+          if (side === 0){ tu = hz - Math.floor(hz); tv = 1 - (hy - Math.floor(hy)); face = 1; sh = 0.80; }
+          else if (side === 1){ tu = hx - Math.floor(hx); tv = hz - Math.floor(hz); face = dy > 0 ? 2 : 0; sh = dy > 0 ? 0.55 : 1; }
+          else { tu = hx - Math.floor(hx); tv = 1 - (hy - Math.floor(hy)); face = 1; sh = 0.66; }
+          const ti = ((blk * 3 + face) * 64 + ((tv * 8) & 7) * 8 + ((tu * 8) & 7)) * 3;
+          if (i === tgt) sh *= 1.28 + 0.0 * wob;
+          r = TEX[ti] * sh; gg = TEX[ti + 1] * sh; b = TEX[ti + 2] * sh;
+          dist = tt;
+          break;
+        }
+        if (wet){                                                                 // water: blue over whatever is beneath
+          const depth = Math.min(1, ((dist < 1e8 ? dist : MAXD) - wet) * 0.22 + 0.45);
+          const rip = ((Math.floor((ox + dx * wet) * 2 + wob * 0.1) + Math.floor((oz + dz * wet) * 2)) & 1) ? 6 : 0;
+          r += (58 + rip - r) * depth; gg += (118 + rip - gg) * depth; b += (204 + rip - b) * depth;
+          if (dist > 1e8) dist = wet + 4;
+        }
+        if (dist < 1e8 && dist > fog0){ const k = Math.min(1, (dist - fog0) * fogK); r += (hr - r) * k; gg += (hg - gg) * k; b += (hb - b) * k; }
+        zb[p] = dist;
+        px[p] = 0xff000000 | ((b > 255 ? 255 : b) << 16) | ((gg > 255 ? 255 : gg) << 8) | (r > 255 ? 255 : r);
+      }
+    }
+    // the chickens: flat 8x8 sprites, depth-tested against what the rays found
+    const SPR = this.SPRITE, PAL = this.SPRITE_PAL;
+    for (const c of this.chicks){
+      const ex = c.x - ox, ey = c.y + 0.42 + Math.abs(Math.sin(c.hop)) * 0.06 - oy, ez = c.z - oz;
+      const d = ex * fx + ey * fy + ez * fz; if (d < 0.4 || d > MAXD) continue;
+      const scx = (ex * rx + ez * rz) / d / hw, scy = (ex * ux + ey * uy + ez * uz) / d / hh;
+      const size = 0.85 / d / hh * rh * 0.5; if (size < 1.5) continue;
+      const x0 = (scx * 0.5 + 0.5) * rw - size / 2, y0 = (0.5 - scy * 0.5) * rh - size / 2;
+      const dd = Math.sqrt(ex * ex + ey * ey + ez * ez), flip = Math.sin(c.a - this.yaw) < 0;
+      const fogk = dd > fog0 ? Math.min(1, (dd - fog0) * fogK) : 0;
+      for (let yy = Math.max(0, Math.floor(y0)); yy < Math.min(rh, y0 + size); yy++){
+        const ty = Math.min(7, Math.floor((yy - y0) / size * 8));
+        for (let xx = Math.max(0, Math.floor(x0)); xx < Math.min(rw, x0 + size); xx++){
+          let tx = Math.min(7, Math.floor((xx - x0) / size * 8)); if (flip) tx = 7 - tx;
+          const col = SPR[ty * 8 + tx]; if (!col) continue;
+          const q = yy * rw + xx; if (zb[q] < dd) continue;
+          const pc = PAL[col];
+          px[q] = 0xff000000 | ((pc[2] + (248 - pc[2]) * fogk) << 16) | ((pc[1] + (224 - pc[1]) * fogk) << 8) | (pc[0] + (196 - pc[0]) * fogk);
+        }
+      }
+    }
+    this.octx.putImageData(this.img, 0, 0);
+  },
+  SPRITE: [0,0,0,0,0,3,3,0, 0,0,0,0,1,1,1,0, 0,0,0,0,1,5,1,4, 1,0,0,1,1,1,1,0, 1,1,1,1,1,1,3,0, 0,1,1,1,1,1,0,0, 0,0,1,1,1,0,0,0, 0,0,4,0,4,0,0,0],
+  SPRITE_PAL: [null, [250, 244, 232], [255, 159, 28], [226, 52, 52], [255, 176, 40], [26, 22, 34]],
+
+  barRect(){ const slot = 30, w = slot * HOTBAR.length; return { x: (W - w) / 2, y: H - 38, w, slot }; },
+
+  draw(){
+    const t0 = performance.now();
+    this.render();
+    g.imageSmoothingEnabled = false;
+    g.drawImage(this.off, 0, 0, W, H);
+    g.imageSmoothingEnabled = true;
+    if (this.get(Math.floor(this.x), Math.floor(this.y + 1.55 - this.eyeLag), Math.floor(this.z)) === BLK.WATER){
+      g.fillStyle = 'rgba(40,96,190,.42)'; g.fillRect(0, 0, W, H);
+    }
+    // crosshair
+    g.fillStyle = 'rgba(6,3,12,.8)'; g.fillRect(W / 2 - 8, H / 2 - 2, 16, 4); g.fillRect(W / 2 - 2, H / 2 - 8, 4, 16);
+    g.fillStyle = '#f2e9f7'; g.fillRect(W / 2 - 6, H / 2 - 1, 12, 2); g.fillRect(W / 2 - 1, H / 2 - 6, 2, 12);
+    // the bar
+    const hb = this.barRect();
+    g.fillStyle = 'rgba(6,3,12,.78)'; g.fillRect(hb.x - 4, hb.y - 4, hb.w + 8, 36);
+    HOTBAR.forEach((b, i) => {
+      const x = hb.x + i * hb.slot + 3, y = hb.y + 2, c = BLK_RGB[b], on = i === this.sel;
+      g.fillStyle = 'rgb(' + c[1].join(',') + ')'; g.fillRect(x, y + 6, 24, 18);
+      g.fillStyle = 'rgb(' + c[0].join(',') + ')'; g.fillRect(x, y, 24, 8);
+      g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(x + 16, y + 8, 8, 16);
+      if (on){ g.strokeStyle = '#f2e9f7'; g.lineWidth = 3; g.strokeRect(x - 2.5, y - 2.5, 29, 29); }
+    });
+    // what you are holding, and the way out
+    g.fillStyle = 'rgba(6,3,12,.6)'; g.fillRect(0, 0, 236, 42);               // a dark corner so the HUD reads against a bright sky
+    g.fillStyle = 'rgba(6,3,12,.9)'; g.fillRect(W / 2 - 70, 10, 140, 17);
+    txt(BLK_NAME[HOTBAR[this.sel]], W / 2, 22, 11, '#f2e9f7');
+
+    // keep it smooth: if drawing is slow, draw a smaller picture
+    const ms = performance.now() - t0;
+    this.ms += ms; if (++this.msN >= 45){
+      const avg = this.ms / this.msN; this.ms = 0; this.msN = 0; this.lastAvg = avg;
+      if (avg > 15 && this.res < this.RES.length - 1) this.setRes(this.res + 1);
+      else if (avg < 4.5 && this.res > 0) this.setRes(this.res - 1);
+    }
+  }
+};
+
+/* ============================================================
+   LAYER 7 — FINGERS. Everything a tablet needs that a keyboard
+   never did. No cabinet's rules change in here: this layer only
+   turns a finger on the glass into the same inputs the buttons
+   make, and gives every cabinet a way out you can see.
+
+     the picture     tap = A, as before. Tap a cabinet to play it.
+     Iguanas, Bricks slide a finger and the chicken / tray follows it
+     Parade, Reginald swipe to steer / hop
+     The headset     touch where you want to walk
+     the d-pad       one rocker: slide a thumb across it, no lifting
+     ✕ EXIT          on the picture, in every cabinet, every card
+   ============================================================ */
+const Touchy = {
+  down: false, id: null, x: 0, y: 0,        // the finger on the picture, in canvas pixels
+  ax: 0, ay: 0,                             // where the current swipe started, in screen pixels
+  swipes: [], last: null,
+  SWIPE: 22,
+
+  pos(pt){
+    const r = cv.getBoundingClientRect();
+    return [(pt.clientX - r.left) / (r.width || W) * W, (pt.clientY - r.top) / (r.height || H) * H];
+  },
+
+  /* Called first for every tap on the picture. True means "that was not a jump". */
+  tap(e){
+    if (mode !== 'garden') return false;
+    const pt = (e.changedTouches && e.changedTouches[0]) || e;
+    if (pt.clientX == null) return false;
+    const c = nearCabinet();
+    if (!c) return false;
+    const [x, y] = this.pos(pt), cx = c.col * TILE + 20;
+    if (Math.abs(x - cx) > 64 || y < GROUND_Y - 150 || y > GROUND_Y + 14) return false;
+    press('enter'); release('enter');       // the latch holds it for one frame, which is all ▼ ever was
+    return true;
+  },
+
+  begin(pt){
+    this.down = true; this.id = pt.identifier;
+    [this.x, this.y] = this.pos(pt);
+    this.ax = pt.clientX; this.ay = pt.clientY; this.swipes.length = 0; this.last = null;
+  },
+  move(pt){
+    [this.x, this.y] = this.pos(pt);
+    const dx = pt.clientX - this.ax, dy = pt.clientY - this.ay;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < this.SWIPE) return;
+    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    this.ax = pt.clientX; this.ay = pt.clientY;
+    // One swipe is one hop however long the finger travels: a child's swipe is a
+    // big one. Turning a corner without lifting counts as a second swipe.
+    if (dir !== this.last && this.swipes.length < 3){ this.swipes.push(dir); this.last = dir; }
+  },
+  end(){ this.down = false; this.id = null; }
+};
+
+(function(){
+  const find = (list, id) => { for (let i = 0; i < list.length; i++) if (list[i].identifier === id) return list[i]; return null; };
+  cv.addEventListener('touchstart', e => { if (!Touchy.down && e.changedTouches[0]) Touchy.begin(e.changedTouches[0]); }, { passive: true });
+  cv.addEventListener('touchmove', e => { const p = Touchy.down && find(e.changedTouches, Touchy.id); if (p) Touchy.move(p); }, { passive: true });
+  const up = e => { if (Touchy.down && find(e.changedTouches, Touchy.id)) Touchy.end(); };
+  cv.addEventListener('touchend', up); cv.addEventListener('touchcancel', up);
+})();
+
+/* ---- slide to move: the chicken and the tray go where the finger is ---- */
+function touchDrag(game, speed){
+  const orig = game.update;
+  game.update = function(inp, pr){
+    if (Touchy.down && !inp.left && !inp.right){
+      const d = Touchy.x - this.px;
+      if (Math.abs(d) > 1) this.px += clamp(d, -speed, speed);
+    }
+    return orig.call(this, inp, pr);
+  };
+}
+touchDrag(GAMES.invaders, 7.5);
+touchDrag(GAMES.bricks, 11);
+
+/* ---- swipe to steer: one swipe is one press of an arrow ---- */
+function touchSwipe(game){
+  const orig = game.update;
+  game.update = function(inp, pr){
+    const d = Touchy.swipes.shift();
+    if (d && !(pr.left || pr.right || pr.up || pr.down)) pr[d] = true;
+    return orig.call(this, inp, pr);
+  };
+}
+touchSwipe(GAMES.standing);
+touchSwipe(GAMES.parade);
+
+/* ---- the headset map: walk towards the finger ---- */
+(function(){
+  const gm = GAMES.meta, orig = gm.updateMap;
+  gm.updateMap = function(inp){
+    if (Touchy.down && !(inp.left || inp.right || inp.up || inp.down)){
+      const cx = clamp(this.x - W / 2, 0, this.MW - W), cy = clamp(this.y - H / 2, 0, this.MH - H);
+      const dx = Touchy.x + cx - this.x, dy = Touchy.y + cy - (this.y - 10);
+      if (Math.hypot(dx, dy) > 14){
+        const a = Math.abs(dx), b = Math.abs(dy);
+        inp = Object.assign({}, inp);
+        if (a > b * 0.4){ if (dx > 0) inp.right = true; else inp.left = true; }
+        if (b > a * 0.4){ if (dy > 0) inp.down = true; else inp.up = true; }
+      }
+    }
+    return orig.call(this, inp);
+  };
+})();
+
+/* ---- the d-pad is one rocker. A thumb slides from ◀ to ▶ without lifting,
+        and a thumb that lands between two arrows still gets the nearer one. ---- */
+(function(){
+  const pad = document.getElementById('dpad');
+  if (!pad || !pad.addEventListener || !pad.querySelectorAll) return;
+  const btns = Array.prototype.slice.call(pad.querySelectorAll('.btn'));
+  const held = {};                                        // touch id -> button
+  const pick = pt => {
+    let best = null, bd = 1e9;
+    for (const b of btns){
+      const r = b.getBoundingClientRect();
+      const d = Math.hypot(pt.clientX - (r.left + r.width / 2), pt.clientY - (r.top + r.height / 2));
+      if (d < bd){ bd = d; best = b; }
+    }
+    const pr = pad.getBoundingClientRect();
+    const out = pt.clientX < pr.left - 44 || pt.clientX > pr.right + 44 || pt.clientY < pr.top - 44 || pt.clientY > pr.bottom + 44;
+    return out ? null : best;
+  };
+  const set = (id, b) => {
+    const was = held[id];
+    if (was === b) return;
+    if (was){ delete held[id]; if (!Object.keys(held).some(k => held[k] === was)){ release(was.dataset.k); was.classList.remove('on'); } }
+    if (b){ held[id] = b; press(b.dataset.k); b.classList.add('on'); }
+  };
+  const each = (e, fn) => { e.preventDefault(); e.stopPropagation(); for (let i = 0; i < e.changedTouches.length; i++) fn(e.changedTouches[i]); };
+  // capture: the rocker answers before the single buttons underneath do
+  pad.addEventListener('touchstart', e => each(e, p => set(p.identifier, pick(p))), { capture: true, passive: false });
+  pad.addEventListener('touchmove',  e => each(e, p => set(p.identifier, pick(p))), { capture: true, passive: false });
+  const up = e => each(e, p => set(p.identifier, null));
+  pad.addEventListener('touchend', up, { capture: true, passive: false });
+  pad.addEventListener('touchcancel', up, { capture: true, passive: false });
+})();
+
+/* ---- the way out, and the whole screen ---- */
+(function(){
+  const ex = document.getElementById('exitBtn');
+  if (ex && ex.addEventListener){
+    const go = e => { e.preventDefault(); if (mode === 'arcade') Arcade.leaveReq = true; if (cv.focus) cv.focus(); };
+    ex.addEventListener('click', go);
+    ex.addEventListener('touchend', go, { passive: false });      // no waiting for the browser to decide it was a click
+  }
+  const fs = document.getElementById('fsBtn'), root = document.documentElement;
+  if (fs && fs.addEventListener && root){
+    const req = root.requestFullscreen || root.webkitRequestFullscreen;
+    const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (req && (document.fullscreenEnabled || document.webkitFullscreenEnabled) && document.body) document.body.classList.add('can-fs');
+    const paint = () => {
+      fs.textContent = isFs() ? '⛶ SMALL SCREEN' : '⛶ FULL SCREEN';
+      fs.setAttribute('aria-pressed', String(isFs()));
+    };
+    fs.addEventListener('click', e => {
+      e.preventDefault();
+      try {
+        if (isFs()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        else { const p = req.call(root); if (p && p.catch) p.catch(() => {}); }
+      } catch (err){}
+      if (cv.focus) cv.focus();
+    });
+    document.addEventListener('fullscreenchange', paint);
+    document.addEventListener('webkitfullscreenchange', paint);
+  }
+  // a long press on a tablet must never open "save image" or select the words
+  addEventListener('contextmenu', e => { if (TOUCH.on) e.preventDefault(); });
+})();
 
 /* ---------- Boot ---------- */
 function boot(){

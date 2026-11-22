@@ -67,6 +67,7 @@
       items.push({ s: 'CONTROL: ' + label, src: 'control', l: r.left, r: r.right, t: r.top, b: r.bottom });
     };
     ctl(document.getElementById('voiceBtn'), 'voices button'); ctl(document.getElementById('sfxBtn'), 'sound button');
+    ctl(document.getElementById('fsBtn'), 'full screen button'); ctl(document.getElementById('exitBtn'), 'exit button');
     if (getComputedStyle(document.getElementById('pad')).display !== 'none')
       document.querySelectorAll('#pad .btn').forEach(b => ctl(b, 'pad ' + (b.dataset.k || '')));
     dom(document.querySelector('#hud .tag'), 'HUD');

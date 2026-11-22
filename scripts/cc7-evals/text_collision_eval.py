@@ -31,13 +31,16 @@ for who in NAMES:
 pairs = sorted(set(pairs), key=lambda p: -len(p[1]))
 LONGEST_BASE = pairs[:6]
 KID = ('PEARL', 'I think the chickens should have a trampoline and a slide and also a very big cake for everybody', 'Cannon Master')
-TOASTS = sorted(set(re.findall(r"toast\('([^']+)'", src)))
+TOASTS = sorted(set(re.findall(r"toast\((?:say\()?'([^']+)'", src) + re.findall(r"toast\(say\('[^']+', '([^']+)'", src)))
 
 VIEWPORTS = [
     ('desktop',         1280, 800, False),
     ('laptop-short',    1024, 560, False),
     ('tablet',           820, 1180, True),
     ('phone-landscape',  844, 390, True),
+    ('fire-landscape',  1024, 528, True),
+    ('fire-hd8-landscape', 853, 450, True),
+    ('fire-portrait',    600, 912, True),
     ('phone-land-small', 667, 375, True),
     ('big-desktop',     1920, 1080, False),
     ('phone-portrait',   390, 844, True),
@@ -224,6 +227,16 @@ async def run_viewport(b, name, w, h, touch):
                     await say([tuple(cr['line'])] + lens_line[:1])
                     await hush()
                 await pg.evaluate("() => { const g = Arcade.game; g.mode = 'map'; g.enc = null; Save.data.guide = {}; g.guide = Save.data.guide; }")
+            if gid == 'craft':
+                craft_lines = [('PEARL', 'It STAYED! You put it down and it STAYED!'), ('SCRATCHY', 'Sand. In the air. Not falling. The blocks are very proud of this.'),
+                               ('THE GAME', 'The world ends here. 256 blocks each way is all the blocks could remember.'), ('SCRATCHY', 'One thousand blocks placed. I counted every one. I regret nothing.'),
+                               ('THE GAME', 'That is the bottom of the world. It is load-bearing.'), ('SCRATCHY', 'One block removed. I have logged it. I will log all of them.')]
+                await scene('playing: craft' + (' easy' if easy else ''))
+                n = await pg.evaluate("HOTBAR.length")
+                for i in range(n):
+                    await pg.evaluate("i => { const g = Arcade.game; g.sel = i; g.placed = 8888; g.broken = 8888; paintHud(); }", i)
+                    await say(craft_lines[i % len(craft_lines):][:2])
+                await hush()
             if gid == 'invaders':
                 await pg.evaluate("() => { const g = Arcade.game; g.inv.slice(0, 40).forEach(v => { v.alive = false; g.pops.push({x:v.x+14,y:v.y+9,life:18}); }); }")
                 await pg.wait_for_timeout(500)
