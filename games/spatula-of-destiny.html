@@ -63,7 +63,11 @@ body.portrait #say{position:fixed;left:8px;right:8px;bottom:10px;max-height:40%}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:10px;text-align:left}
 .dc{background:#1c1c4a;border-radius:10px;padding:8px;display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}
 .dc i{font-style:normal;font-size:28px;grid-row:span 2}.dc b{color:#ffcc02;font-size:14px}.dc span{font-size:12px;color:#bbc;line-height:1.3}
-.dc.no{opacity:.5}.dc.need{border:2px dashed #5555ff}
+.dc.no{opacity:.5}
+.grid.cook{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.rc{background:#1c1c4a;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px}.rc b{color:#ffcc02;font-size:15px}.rc .who{font-size:12px;color:#bbc}.rc.legend{border:2px solid #ffcc02}.rc.done{opacity:.6}
+.needs{display:flex;flex-direction:column;gap:2px}.needs span{font-size:12px;line-height:1.3}.needs .ok{color:#8f8}.needs .no{color:#fa8}.rc i{font-style:normal;font-size:13px;color:#ffcc02}.rc button{min-height:44px;background:#ffcc02;color:#1a1200;border-radius:10px;font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:16px}
+textarea{width:100%;background:#000;color:#8f8;border:2px solid #5555ff;border-radius:10px;padding:8px;font:12px monospace;-webkit-user-select:text;user-select:text}
+.bakebar{height:22px;background:#000;border-radius:11px;overflow:hidden;margin:10px 0}#bakeFill{height:100%;width:0;background:linear-gradient(90deg,#f0d890,#f0a020 70%,#884400);animation:bake 3.2s linear forwards}@keyframes bake{to{width:100%}}.pz{font-size:64px}.dc.need{border:2px dashed #5555ff}
 .grid.map{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
 .pl{background:#1c1c4a;border:3px solid #5555ff;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:110px}
 .pl i{font-style:normal;font-size:40px;line-height:1.1}.pl b{font-family:'Fredoka One','Trebuchet MS',system-ui,sans-serif;font-size:17px;color:#ffcc02}.pl span{font-size:12px;color:#bbc}
@@ -92,6 +96,7 @@ body.portrait #say{position:fixed;left:8px;right:8px;bottom:10px;max-height:40%}
     <div id="inv"></div>
     <div id="tools">
       <button class="tool" id="bRecipe" style="display:none"><i>📖</i><span>Recipe</span></button>
+      <button class="tool" id="bCook" style="display:none"><i>📒</i><span>Cook</span></button>
       <button class="tool" id="bHint"><i>💡</i><span>Hint</span></button>
       <button class="tool" id="bDeaths"><i>🍗</i><span>0/10</span></button>
       <button class="tool" id="bSound"><i>🔊</i><span>Sound</span></button>
@@ -133,6 +138,7 @@ function chicken(x,y,o){o=o||{};const s=o.s||2,f=o.f||1,st=o.step||0,b=o.body||P
   else if(o.hat==='helm'){r(0,-25,9,7,P.LG);r(0,-19,9,1,P.DG);r(5,-21,4,2,P.K);r(4,-28,2,3,P.R);}
   else if(o.hat==='captain'){r(0,-25,9,3,P.W);r(0,-22,9,1,P.K);r(4,-24,1,1,P.Y);}
   else{r(3,-23,2,2,o.comb||P.R);r(5,-24,2,3,o.comb||P.R);}
+  if(o.pom){disc(4,-31,2,P.LR);r(3,-32,1,1,P.W);}
   if(o.blink){r(5,-18,2,1,P.K);}else{r(5,-19,2,2,P.W);r(6,-19,1,2,P.K);}
   r(4,-20,3,1,o.brow||P.DG);
   r(8,-17,3,2,o.beak||P.Y);r(7,-15,1,2,P.R);
@@ -651,6 +657,83 @@ chute(F,has){vendBg();r(0,100,20,64,P.K);mini9000(62,162);
   if(F('freed')){r(130,60,120,100,P.K);r(130,60,120,10,P.LG);bigShip(196,162);}
   else{r(130,60,120,100,P.LG);r(130,60,120,3,P.W);txt('PUSH',180,104,P.K);if(F('vended')){r(150,150,80,10,P.K);r(160,152,60,6,'#cccccc');r(160,154,60,1,P.R);}}}
 });
+
+// ───────────────────────── ART: COOP HOLLOW ─────────────────────────
+function house(x,w,h,wall,roof,label,door){const y=164-h;r(x,y,w,h,wall);for(let i=0;i<14;i++)r(x-6+i*2,y-14+i,w+12-i*4>0?w+12-i*4:0,1,roof);r(x-6,y-1,w+12,3,roof);
+  r(x+8,y+12,14,12,P.LC);r(x+8,y+17,14,1,wall);r(x+14,y+12,1,12,wall);if(w>70){r(x+w-22,y+12,14,12,P.LC);r(x+w-16,y+12,1,12,wall);}
+  if(door!==false){r(x+w/2-9,164-34,18,34,'#553311');r(x+w/2+4,164-18,2,3,P.Y);}
+  if(label){r(x+w/2-label.length*2-4,y-2,label.length*4+8,9,P.W);txt(label,x+w/2-label.length*2,y,P.K);}}
+function corgi(x,y,f){X.save();X.translate(Math.round(x),Math.round(y));X.scale(f||1,1);
+  ell(0,-9,12,5,'#cc8844');r(-12,-11,10,6,P.K);ell(4,-7,6,3,P.W);r(-9,-4,3,4,'#cc8844');r(5,-4,3,4,P.W);r(-10,-1,4,1,P.W);r(4,-1,4,1,P.W);
+  disc(12,-13,5,'#cc8844');r(14,-12,6,4,P.W);r(19,-12,2,2,P.K);r(11,-15,2,2,P.K);r(7,-25,4,10,'#cc8844');r(13,-25,4,10,'#cc8844');r(8,-23,2,6,'#ffbbaa');r(14,-23,2,6,'#ffbbaa');r(-14,-12,3,3,P.W);
+  X.restore();}
+function floof(x,y){ell(x,y-14,40,15,P.W);ell(x-6,y-10,30,9,'#eeeeee');disc(x+36,y-14,12,P.W);r(x+28,y-24,5,10,'#dddddd');r(x+42,y-24,5,10,'#dddddd');r(x+32,y-15,5,1,P.K);r(x+40,y-15,5,1,P.K);r(x+46,y-11,4,3,P.K);ell(x-40,y-18,8,6,P.W);
+  r(x-22,y-3,8,3,'#dddddd');r(x+10,y-3,8,3,'#dddddd');const k=Math.floor(T*1.2)%3;txt('Z',x+52+k*3,y-34-k*5,P.W);}
+function lunchbox(x,y,c,l){r(x,y-14,22,14,c);r(x,y-14,22,2,P.W);r(x+7,y-18,8,4,P.DG);r(x+9,y-17,4,2,c);txt(l,x+9,y-9,P.K);}
+function person(x,y,o){chicken(x,y,o);}
+
+Object.assign(ART,{
+town(F,has){
+  r(0,0,960,120,'#66aaee');r(0,70,960,50,'#88c4f4');disc(120,30,12,P.Y);for(let i=0;i<6;i++){const cx=((i*190+T*4)%1100)-60;ell(cx,24+i%3*12,22,5,P.W);}
+  ell(200,126,220,34,'#55aa55');ell(620,128,260,30,'#449944');ell(900,126,160,28,'#55aa55');
+  r(0,120,960,60,'#77bb55');r(0,160,960,20,'#c8b080');r(0,160,960,1,'#a89060');for(let x=10;x<960;x+=26)r(x,170,10,1,'#e8d8a8');
+  shuttle(38,162);
+  house(92,92,62,'#f0d8a0','#aa5522','BAKERY',false);r(112,126,52,6,P.BR);r(116,118,10,8,'#d9a050');r(130,116,12,10,'#c08030');r(146,119,10,7,'#e8c070');
+  chicken(138,164,{body:'#f8e8d0',belly:'#fff4e4',wing:'#e8d0b0',comb:'#ff6688',brow:P.K,hat:'chef'});
+  house(206,82,58,'#c8e0b0','#557733','OMA');for(let i=0;i<5;i++){r(196+i*4,150-i%2*3,2,14+i%2*3,P.G);disc(197+i*4,148-i%2*3,2,[P.LR,P.Y,P.LM,P.W,P.LR][i]);}
+  house(312,88,74,'#b8a0e0','#553388','STAR LIBRARY');disc(356,84,5,P.Y);r(350,84,13,1,P.Y);r(356,78,1,13,P.Y);
+  r(424,150,36,12,P.DG);r(430,138,6,12,P.LG);r(444,132,10,18,P.LB);disc(449,130,4,Math.floor(T*4)%2?P.Y:P.LR);for(let i=0;i<3;i++)r(432+i*2,128-((T*20+i*7)%14),2,2,P.LG);
+  chicken(440,164,{f:-1,body:'#e8d8c0',belly:'#fff0dd',wing:'#c8b090',glasses:true,brow:P.K});r(428,140,8,2,P.K);
+  if(F('d_banana')){floof(528,112);}else{floof(528,166);}
+  house(586,84,66,'#e8b070','#883311','PIZZA CORRAL');r(590,96,76,3,P.BR);r(596,99,3,20,P.BR);r(657,99,3,20,P.BR);
+  // tailgate lot
+  r(680,150,24,12,P.DG);r(678,146,28,5,P.K);r(684,143,16,3,P.LR);r(690,162,3,4,P.DG);const st=Math.floor(T*4)%3;r(686+st*3,134-st*2,2,5,P.LG);
+  chicken(712,164,{f:-1,body:'#e0c8a8',belly:'#f4e4cc',wing:'#b89868',brow:P.K});r(704,140,10,3,P.G);r(706,137,6,3,P.Y);
+  [760,784,808].forEach((x,i)=>{chicken(x,164,{f:i===1?-1:1,body:['#d8c0a0','#e8d0b0','#c8b090'][i],belly:'#f4e4cc',wing:'#a88858',brow:P.K,step:Math.floor(T*3+i)%3===0?1:0});r(x-2,138,12,4,P.Y);r(x,134,8,4,P.Y);r(x+3,131,2,3,P.Y);});
+  r(770,48,72,34,P.K);r(772,50,68,30,'#113311');txt('COMETS 3',778,54,P.Y);txt('VISITORS 3',778,62,P.W);txt('SINCE 1997',778,70,P.LG);r(804,82,4,82,P.DG);
+  chicken(852,164,{body:'#c8c8c8',belly:'#e8e8e8',wing:'#999999',brow:P.W,glasses:true});r(846,138,14,3,P.G);
+  chicken(892,164,{f:-1,body:'#f0e0e8',belly:'#fff0f6',wing:'#d8b8c8',comb:'#ff6688',brow:P.LG,glasses:true});
+  r(668,120,10,44,P.R);r(664,116,18,6,P.LG);txt('T-SHIRTS',652,108,P.W);
+  r(916,96,44,68,'#885533');r(912,90,52,8,'#ffe14d');r(922,112,32,52,'#553311');txt('CLUB',928,100,P.Y);r(940,84,3,8,'#7fc7f2');r(943,84,10,6,'#7fc7f2');
+},
+garden(F,has){
+  r(0,0,320,120,'#66aaee');disc(270,26,10,P.Y);ell(160,126,200,30,'#55aa55');r(0,120,320,60,'#77bb55');r(0,160,320,20,'#8a6a40');for(let x=4;x<320;x+=12)r(x,164+(x*7)%10,6,2,'#6a4a28');
+  r(0,76,22,88,'#557733');r(2,80,18,84,'#c8e0b0');
+  for(let i=0;i<8;i++){r(28+i*5,150-i%3*4,2,12+i%3*4,P.G);disc(29+i*5,148-i%3*4,2,[P.LR,P.Y,P.LM,P.W][i%4]);}
+  chicken(76,164,{body:'#e8e0f0',belly:'#f8f4ff',wing:'#b8a8d0',comb:'#cc88cc',brow:P.LG,glasses:true});r(64,146,24,6,P.LM);r(66,152,20,3,'#cc88cc');r(88,150,10,2,P.LG);disc(99,152,3,P.LR);
+  r(114,92,3,72,P.BR);r(151,92,3,72,P.BR);r(114,92,40,3,P.BR);r(114,130,40,3,P.BR);for(let i=0;i<9;i++)r(118+i*4,95,1,35,[P.LR,P.Y,P.LB,P.LGR,P.LM][i%5]);for(let j=0;j<4;j++)r(117,100+j*8,34,2,[P.LM,P.LC,P.Y,P.LR][j]);
+  if(!F('p_vanilla')){r(178,150,12,12,P.BR);r(183,134,2,16,P.G);disc(184,132,4,P.W);disc(184,132,2,P.Y);r(178,140,5,2,P.G);}else{r(178,150,12,12,P.BR);r(183,142,2,8,P.G);}
+  const zx=F('p_banana')?212+Math.round(Math.sin(T*3)*14):212;corgi(zx,164,F('p_banana')&&Math.cos(T*3)<0?-1:1);
+  r(262,40,10,124,'#885533');for(let i=0;i<30;i++)r(232+i,150-i*1.6,10,3,'#885533');
+  disc(266,36,24,P.G);disc(250,44,14,'#008800');disc(284,42,14,P.LGR);
+  if(!F('p_banana')){r(258,52,3,10,P.Y);r(262,54,3,10,P.Y);r(266,52,3,10,'#cccc22');r(259,50,9,2,P.BR);}
+},
+library(F,has){
+  room('#3a2a5a','#2e2048','#5a4a3a',P.Y);doorL('#b8a0e0');
+  for(let s=0;s<4;s++){r(190,30+s*30,110,3,P.BR);for(let i=0;i<16;i++)r(192+i*6.6,12+s*30+(i*5)%6,5,18-(i*5)%6,[P.LR,P.LB,P.G,P.Y,P.LM,P.C][(i+s)%6]);}
+  for(let i=0;i<14;i++)r(46+(i%2)*3,152-i*8,34-(i%3)*4,8,[P.LR,P.LB,P.G,P.Y,P.LM][i%5]);
+  disc(118,60,24,P.W);disc(118,60,22,'#f8f0ff');for(let i=0;i<9;i++){const a=i*0.698-1.57;r(118+Math.cos(a)*18,60+Math.sin(a)*18,3,3,[P.LR,P.O,P.Y,P.LGR,P.G,P.LC,P.LB,P.M,P.LM][i]);}for(let i=0;i<9;i++){const a=i*0.698-1.57,b=((i*4)%9)*0.698-1.57;for(let t=0;t<1;t+=0.08)r(118+Math.cos(a)*16*(1-t)+Math.cos(b)*16*t,60+Math.sin(a)*16*(1-t)+Math.sin(b)*16*t,1,1,P.LG);}
+  r(134,134,60,28,'#553311');r(132,130,64,5,'#774422');r(140,122,12,8,P.W);r(176,120,10,10,P.LC);
+  chicken(164,134,{body:'#d8c0f0',belly:'#f0e4ff',wing:'#a888d0',comb:'#ff66cc',brow:'#553388',glasses:true});r(160,104,3,3,P.Y);r(170,100,2,2,P.Y);r(154,108,2,2,P.Y);
+  disc(256,140,12,P.B);disc(256,140,10,'#2233aa');r(250,136,3,2,P.Y);r(258,142,2,2,P.W);r(254,152,4,10,P.BR);r(248,160,16,3,P.BR);
+},
+corral(F,has){
+  room('#8a5a30','#7a4a24','#aa7a44','#553311');doorL('#e8b070');for(let x=0;x<320;x+=20)r(x,152,1,28,'#8a5a30');
+  r(60,96,60,66,P.DG);r(64,100,52,34,P.K);r(66,102,48,30,Math.floor(T*6)%2?'#aa2200':'#cc4400');for(let i=0;i<5;i++)r(70+i*9,124-((T*30+i*5)%14),3,5,P.Y);r(60,90,60,7,P.LG);txt('OVEN',80,84,P.W);r(74,140,32,4,P.LG);
+  r(150,126,90,36,'#553311');r(148,122,94,5,'#774422');r(160,112,16,10,P.W);ell(168,112,8,2,'#f0a020');r(196,110,10,12,P.R);r(214,114,14,8,P.Y);
+  cow(196,124);r(208,84,22,4,P.BR);r(212,76,14,8,P.BR);
+  r(264,140,36,10,P.BR);ell(282,134,18,8,'#774422');r(296,124,8,10,'#774422');r(300,120,3,5,P.W);r(303,120,3,5,P.W);r(280,150,4,12,P.DG);r(270,160,24,3,P.DG);
+  r(130,30,70,22,P.Y);txt('PIZZA CORRAL',142,34,P.R);txt('EST. LAST WEEK',138,42,P.K);
+},
+clubhouse(F,has){
+  room('#2a4a6a','#223c58','#6a5a4a','#ffe14d');doorL('#885533');
+  r(40,40,80,56,'#f0e8d0');r(42,42,76,52,'#c8e0a0');r(50,50,20,14,'#66aaee');r(84,60,24,20,'#b5703d');for(let a=0;a<6.3;a+=0.3){r(96+Math.cos(a)*10,70+Math.sin(a)*10,1,1,P.R);r(96+Math.cos(a)*13,70+Math.sin(a)*13,1,1,P.R);}txt('MAP',70,100,P.W);
+  r(120,138,90,5,P.BR);r(126,143,4,20,P.BR);r(200,143,4,20,P.BR);
+  lunchbox(132,138,'#ffe14d','G');lunchbox(170,138,'#7fc7f2','B');if(F('d_pbj')){r(138,120,10,4,'#d9a050');}if(F('d_sourpbj')){r(176,120,10,4,'#c08030');}
+  r(150,60,36,26,P.W);txt('OUT',160,64,P.K);txt('SAVING',156,71,P.K);txt('WORLD',158,78,P.R);
+  r(226,96,70,3,P.BR);cat(244,96,'#ff9ecb',{belly:'#ffd0e4',eye:P.K});cat(274,96,'#cc8844',{belly:'#eebb88',eye:P.K});
+  r(250,126,34,36,P.LC);r(254,116,26,12,P.W);disc(267,112,6,P.W);r(284,134,10,5,P.LG);txt('SNOW',256,140,P.B);
+}});
 
 // ───────────────────────── WORLD DATA ─────────────────────────
 // Everything a planet needs except its picture lives here as plain data.
@@ -1856,6 +1939,223 @@ chute:{world:'mother',name:'Prize Chute',floor:164,xs:[24,296],hotspots:[
   HINTS.splice(HINTS.findIndex(h=>h[0]==='!gotHelmet'),1,[['!gotHelmet','!has:helmet'],"The hundred-year siege is over. Sir Clucksalot owes you one. Go and talk to him."],['!gotHelmet',"Show the knight's helmet to the safety robot at the Quantum Cannon Fields."]);
 })();
 
+// ───────────────────────── WORLD DATA: COOP HOLLOW + COOKING ─────────────────────────
+// Pantry: ingredients are found once and then stay in the pantry forever.
+const PANTRY={
+  bread:{name:'Bread',hint:'Mom, at the bakery in Coop Hollow'},
+  sourdough:{name:"Mom's Sourdough",hint:'Mom bakes it once five villagers are your friends'},
+  pb:{name:'Peanut Butter',hint:'The Space Hounds keep a jar in their mess hall'},
+  jelly:{name:'Glow Jelly',hint:'The jellyfish drip it on the Sticky Shore'},
+  banana:{name:'Banana',hint:"Top of the tree in Oma's garden. Ask someone fast"},
+  egg:{name:'Egg',hint:'Something is soft-boiling by the Popcorn Geysers'},
+  cinnamon:{name:'Cinnamon',hint:'An old offering at the Waffle Ruins'},
+  vanilla:{name:'Vanilla',hint:"A flower in Oma's garden"},
+  dough:{name:'Pizza Dough',hint:'Ask the Marshal at the Pizza Corral'},
+  pizza:{name:'Frozen Pizza',hint:'The freezer cart in the Cook-Off lobby'},
+  mac:{name:'Box of Macaroni',hint:'Somebody lost one. Try the Lost and Found'},
+  cheese1:{name:'Moon Cheese',hint:'Nap Plateau, Cat Crater'},
+  cheese2:{name:'Royal Cheddar',hint:'The dungeon gift shop at Castle Cluckingham'},
+  cheese3:{name:'Snack Cheese',hint:'The Coil Walk, inside the Mothership'},
+  cheese4:{name:'Squeaky Cheese',hint:'The Park Deck in the Canine Nebula'},
+  butter:{name:'Star Butter',hint:'Chef Biscuit trades it for The Ball',flag:'gotButter'},
+  syrup:{name:'Star Syrup',hint:'A syrup-sicle from the Syrup Grove',flag:'gotSyrup'},
+  cream:{name:'Milky Way Cream',hint:"The cats' fountain in Cat Crater",flag:'gotCream'},
+  cheese:{name:'Any cheese',hint:'Cat Crater has the nearest one'}
+};
+const RECIPES=[
+  {id:'banana',name:'Banana',icon:'🍌',needs:['banana'],who:'Big Floof'},
+  {id:'softserve',name:'Milky Way Soft Serve',icon:'🍦',needs:['cream','vanilla'],who:'Aunt Cece'},
+  {id:'grilled',name:'Grilled Cheese of Destiny',icon:'🧀',needs:['bread','cheese','butter'],who:'Papa D'},
+  {id:'sticks',name:'Corral Cheese Sticks',icon:'🥖',needs:['dough','cheese'],who:'Nana C'},
+  {id:'dessert',name:'Corral Dessert Sticks',icon:'🍩',needs:['dough','cinnamon','butter'],who:'Oma'},
+  {id:'pbj',name:'Peanut Butter and Jellyfish',icon:'🥪',needs:['bread','pb','jelly'],who:"Graydorn's lunchbox"},
+  {id:'pizza',name:'Barely-Baked Cheese Pizza',icon:'🍕',needs:['pizza'],who:'Daddy'},
+  {id:'toast',name:'Star Toast Sticks',icon:'🍞',needs:['bread','egg','cinnamon','syrup'],who:'Uncle Gizmo'},
+  {id:'macdish',name:'Four-Moon Mac and Cheese',icon:'🍲',needs:['mac','cheese1','cheese2','cheese3','cheese4'],who:'The Uncles'},
+  {id:'sourpbj',name:"Mom's Sourdough PB&J",icon:'🏅',needs:['sourdough','pb','jelly'],who:"Batdorn's lunchbox",legend:true}
+];
+RECIPES.forEach(q=>{ITEMS['dish_'+q.id]={name:q.name,icon:q.icon};});
+const FRIEND_TOTAL=10;
+
+Object.assign(DEATHS,{
+  tshirt:{icon:'👕',fx:'float',title:'Fan Favourite',text:"You looked down the T-shirt cannon. You were launched into Section 12. The crowd went wild."},
+  loom:{icon:'🧣',fx:'spin',title:'Woven In',text:"You got too close to Oma's loom. You are now part of a very nice scarf."},
+  books:{icon:'📚',fx:'squish',title:'Overdue',text:"You pulled out the bottom book. The other nine hundred came with it."},
+  bull:{icon:'🤠',fx:'float',title:'Eight Seconds',text:"You rode the mechanical bull. The record is eight seconds. You lasted point eight."},
+  snow:{icon:'⛄',fx:'pop',title:'Snow Day',text:"You pressed the button on Graydorn's snowball machine. All of the snowballs. At once."}
+});
+
+MAP.push({id:'village',name:'Coop Hollow',icon:'🏡',screen:'town',x:84,when:'act2',flag:'seenTown',
+  first:["N: Coop Hollow. A little village on a little green moon, where everybody knows everybody, and everybody is hungry.","N: Something smells like fresh bread. Follow your beak."],again:"N: Coop Hollow. Somebody waves. Somebody else argues about last night's game."});
+
+const FEAST=[{if:'allFriends',then:[{if:'feast',then:[],else:[{set:'feast'},{fx:'win'},
+  "N: That is everybody. Ten dishes, ten friends. Coop Hollow throws a feast in the middle of the road.",
+  "N: Big Floof gets a banana. The uncles agree about something for the first time since 1997.",
+  "N: Mom hands you an apron. It says HONORARY VILLAGER. It is the best thing anybody has ever given you. It is in your album now."]}],else:[]}];
+const GIVE=(dish,friend,lines)=>lines.concat([{take:'dish_'+dish},{set:'d_'+dish},{friend:friend}],FEAST);
+const WANT=(dish,yes,no)=>[{if:'d_'+dish,then:yes,else:no}];
+
+Object.assign(WORLD.screens,{
+
+town:{world:'village',name:'Main Street',floor:164,w:960,xs:[20,940],block:{x:474,unless:'d_banana'},hotspots:[
+  SHUT("N: Your shuttle, parked on the village green. A small sign has already appeared on it: PLEASE DO NOT PARK ON THE VILLAGE GREEN."),
+  {id:'mom',name:'Mom',x:112,y:104,w:54,h:60,at:186,
+   look:"N: Mom, at the bakery window. Flour on her apron, flour on her beak, and a look that says you have not been eating enough.",
+   talk:[{if:'p_bread',then:[{if:['friends5','!p_sourdough'],then:["N: Mom says anybody who has fed half this village has earned the good stuff.","N: She hands you a warm loaf of her sourdough. She started the starter before you were hatched. Its name is Gerald.",{pantry:'sourdough'}],
+       else:[{if:'p_sourdough',then:"N: Mom asks if you are eating enough. You are holding a spatula and four dishes. She asks again.",
+         else:"N: Mom says the sourdough is not ready. Sourdough is ready when Mom says it is ready. Make some friends first. Five should do it."}]}],
+     else:["N: Mom looks you up and down. She says a cook with no bread is just a chicken with a spatula.",{pantry:'bread'},{set:'cookbook'},{toast:'📒 You got the Cook Book'},
+       "N: She also gives you her old Cook Book. Ten recipes. Everybody in Coop Hollow has a favourite.","N: Find the ingredients out in the galaxy. Cook at the oven in the Pizza Corral. Feed the village."]}],
+   peck:"N: You do not peck Mom."},
+  {id:'oma',name:"Oma's Garden",x:236,y:118,w:24,h:46,exit:{to:'garden',x:40},dir:'up'},
+  {id:'lib',name:'Star Library',x:344,y:112,w:26,h:52,exit:{to:'library',x:40},dir:'up'},
+  {id:'gizmo',name:'Uncle Gizmo',x:416,y:106,w:48,h:58,at:398,
+   look:"N: Uncle Gizmo, the travelling inventor. He is building nine things at once. Seven of them are on fire. He seems delighted.",
+   talk:WANT('toast',"N: Uncle Gizmo is inventing a toast stick that dips itself. It has dipped his hat.",
+     ["N: Uncle Gizmo says he has an idea for a game. And a robot. And a game about a robot. And a sandwich.","N: He says he thinks best with something to dunk. Star Toast Sticks, ideally. With syrup."]),
+   peck:"N: He does not notice. He has already started a tenth thing.",
+   use:{dish_toast:GIVE('toast','gizmo',["N: You hand Uncle Gizmo the Star Toast Sticks. He dunks one. His eyes go wide.","N: He has eleven new ideas before he has finished chewing. One of them is you."]),
+     spatula:"N: He asks if he can borrow the spatula for an experiment. You say no. You have seen the experiments."}},
+  {id:'floof',name:'Big Floof',x:486,y:128,w:92,h:36,when:'!d_banana',at:468,
+   look:"N: Big Floof. A dog the size of a cloud, asleep across the only road in the village. Nobody has ever moved him. Several have tried. One is still under there.",
+   talk:"N: You ask Big Floof to move. One eyebrow goes up. It goes back down.",
+   peck:"N: You push. It is like pushing a warm, snoring hill.",
+   use:{dish_banana:GIVE('banana','floof',["N: You peel the banana. Two enormous eyes open.","N: Big Floof eats it in one polite bite, stands up, and wanders off to lie on the hill instead. The road is open."])}},
+  {id:'floof2',name:'Big Floof',x:490,y:84,w:86,h:32,when:'d_banana',at:520,
+   look:"N: Big Floof, asleep on the hill, where the view is better. His tail thumps when you walk past.",
+   peck:"N: You give him a pat. Your whole wing disappears into the floof. You get it back eventually."},
+  {id:'corral',name:'Pizza Corral',x:618,y:112,w:24,h:52,exit:{to:'corral',x:40},dir:'up'},
+  {id:'cannon',name:'T-Shirt Cannon',x:660,y:104,w:22,h:60,at:650,
+   look:"N: A T-shirt cannon, for game days. The sign says DO NOT LOOK INTO THE CANNON. You have a history with signs.",
+   peck:["N: You look into the cannon. It is dark in there.","N: Somewhere, a crowd starts chanting.",{die:'tshirt'}]},
+  {id:'daddy',name:'Daddy',x:694,y:106,w:36,h:58,at:740,
+   look:"N: Daddy, running the tailgate grill in a foam cheese hat. He takes two things seriously: the Curdville Comets, and how long a pizza should be in the oven.",
+   talk:WANT('pizza',"N: Daddy says that was a perfect pizza. Pale. Soft. No spots. He is going to tell people about it for years.",
+     ["N: Daddy says he would love a cheese pizza. Barely baked. He holds up one wing.","N: 'No. Brown. Spots.' He says it the way other people say a wedding vow."]),
+   peck:"N: He does not look round. He says 'not during the game.' There is no game on.",
+   use:{dish_pizza:GIVE('pizza','daddy',["N: Daddy inspects the pizza from every angle. He holds it up to the light.","N: Not one brown spot. He nods. From Daddy, that is a standing ovation."])}},
+  {id:'uncles',name:'The Uncles',x:748,y:104,w:76,h:60,at:738,
+   look:"N: Daddy's three little brothers: Rye, Ace and Atom. Giant Curdville Comets fans. They have been arguing about the same play since they were kids.",
+   talk:WANT('macdish',"N: The uncles are too full to argue. It is the quietest the tailgate has ever been. Somebody should write it down.",
+     ["N: Rye says the Comets will win this year. Ace says they said that last year. Atom says they say that every year.","N: The only thing all three agree on is macaroni and cheese. Four cheeses. From a box. It has to be from a box."]),
+   peck:"N: You peck one of them. He blames the other two. A new argument begins.",
+   use:{dish_macdish:GIVE('macdish','uncles',["N: You set down the Four-Moon Mac and Cheese. Three spoons appear from nowhere.","N: For one whole minute, nobody argues about anything."])}},
+  {id:'score',name:'Scoreboard',x:768,y:46,w:76,h:38,at:800,
+   look:"N: The scoreboard. COMETS 3, VISITORS 3. It has said that since 1997. The uncles are sure it is about to change."},
+  {id:'papa',name:'Papa D',x:838,y:106,w:32,h:58,at:822,
+   look:"N: Papa D, head of the tailgate family. He owns the good seats and the folding chairs. He settles every argument by raising one eyebrow.",
+   talk:WANT('grilled',"N: Papa D says that was a proper sandwich. He says it twice, which is a speech for him.",
+     "N: Papa D says a tailgate is not a tailgate without a grilled cheese. Golden. Flipped once. He looks at your spatula for a long time."),
+   peck:"N: The eyebrow goes up. You stop.",
+   use:{dish_grilled:GIVE('grilled','papa',["N: Papa D takes one bite of the Grilled Cheese of Destiny.","N: Both eyebrows go up. Nobody in the family has ever seen both."])}},
+  {id:'nana',name:'Nana C',x:876,y:106,w:34,h:58,at:862,
+   look:"N: Nana C. She runs the snack table, remembers every birthday, and has never once let anybody leave hungry.",
+   talk:WANT('sticks',"N: Nana C has saved you the last cheese stick. She saves everybody the last one. Nobody knows how.",
+     "N: Nana C says the boys have been asking for cheese sticks all day. The Pizza Corral kind. She would make them herself, but somebody has to watch the uncles."),
+   peck:"N: She gives you a snack for the road. You were not going anywhere.",
+   use:{dish_sticks:GIVE('sticks','nana',["N: You hand Nana C a basket of Corral Cheese Sticks.","N: She tries one, smiles, and immediately gives the rest away. That is how you know she liked them."])}},
+  {id:'club',name:'The Clubhouse',x:924,y:110,w:30,h:54,exit:{to:'clubhouse',x:40},dir:'up'}
+]},
+
+garden:{world:'village',name:"Oma's Garden",floor:164,xs:[30,300],hotspots:[
+  EXL('town',248,'Main Street'),
+  {id:'oma',name:'Oma',x:56,y:106,w:42,h:58,at:112,
+   look:"N: Oma, knitting in the garden. She knits, she weaves, she grows things nobody else can grow. Her tomatoes have feelings. She says that is why they taste better.",
+   talk:WANT('dessert',"N: Oma says your new hat suits you. She says it brings out your comb. Nobody has ever said that to you before.",
+     ["N: Oma says every hat she knits is one of a kind, like the chicken who wears it.","N: She says she knits fastest with something sweet nearby. Dessert sticks. The cinnamon kind."]),
+   peck:"N: She pats your head and keeps knitting. You have been included in a scarf pattern.",
+   use:{dish_dessert:GIVE('dessert','oma',["N: You give Oma the Corral Dessert Sticks. Her needles start to blur.","N: Four minutes later she hands you a knitted pom-pom for your chef hat. It is exactly your colour. How did she know your colour.",{set:'knitHat'}])}},
+  {id:'loom',name:'Loom',x:112,y:90,w:44,h:74,at:166,
+   look:"N: Oma's loom. It is weaving something enormous and very beautiful. The shuttle flies back and forth faster than you can see.",
+   peck:["N: You lean in to see how it works.","N: It works very fast.",{die:'loom'}]},
+  {id:'vanilla',name:'Vanilla Flower',x:172,y:128,w:24,h:36,when:'!p_vanilla',at:164,
+   look:"N: A vanilla orchid. Oma says it only blooms for polite visitors.",
+   peck:["N: You say please. The flower bends toward you.",{pantry:'vanilla'}]},
+  {id:'rocket',name:'Rocket',x:196,y:136,w:36,h:28,at:186,
+   look:"N: Rocket, Oma's corgi. Enormous ears. Stubby, crooked little legs. She is the fastest thing in Coop Hollow, and she does not know that corgis are not supposed to fly.",
+   talk:[{if:'p_banana',then:"N: Rocket does three laps of the garden to celebrate. You count them by the breeze.",
+     else:["N: You point at the bananas, way up at the top of the tree. Rocket's ears go up.","N: She backs up. She runs straight at the trunk. She runs straight UP the trunk, and off the top, into the sky.",
+       "N: She comes down with a banana in her mouth and lands like it was nothing.",{pantry:'banana'}]}],
+   peck:"N: You try. She is already somewhere else."},
+  {id:'tree',name:'Banana Tree',x:240,y:14,w:58,h:150,at:230,
+   look:"N: Oma's banana tree. Bananas do not grow on moons. Nobody has told the tree.",
+   peck:"N: The bananas are far too high. You flap. Nothing. You need somebody fast, with no fear of heights and no idea what gravity is."}
+]},
+
+library:{world:'village',name:'Star Library',floor:164,xs:[30,300],hotspots:[
+  EXL('town',356,'Main Street'),
+  {id:'stack',name:'Book Tower',x:44,y:44,w:40,h:118,at:98,
+   look:"N: A tower of books, floor to ceiling. The one you want is always the one on the bottom.",
+   peck:["N: The bottom book looks interesting. You give it a little tug.",{die:'books'}]},
+  {id:'wheel',name:'The Nine Types',x:92,y:34,w:52,h:54,
+   look:"N: A chart with nine points, all joined up with lines. Aunt Cece has sorted everybody in the village into one of nine types. Big Floof is a Nine. Rocket is all of them at once."},
+  {id:'cece',name:'Aunt Cece',x:146,y:92,w:38,h:42,at:118,
+   look:"N: Aunt Cece, keeper of the Star Library. She has read every book in it. She sparkles slightly when she learns a new fact.",
+   talk:WANT('softserve',"N: Aunt Cece says soft serve is the only food you can eat while reading. She has checked. There is a chart.",
+     ["N: Aunt Cece studies you over her glasses. She says you are a Six. Loyal. A little worried. Carries a spatula for safety.","N: You ask what she is. She says a Five, obviously. Fives like to know things, be left alone, and eat vanilla soft serve.",
+       "N: She looks at you. You realise that last part was a hint."]),
+   peck:"N: She writes that down. It will be in your file.",
+   use:{dish_softserve:GIVE('softserve','cece',["N: You hand Aunt Cece the Milky Way Soft Serve. She sparkles so brightly you have to squint.","N: She says you might be a Two after all. She is going to need another look at your file."])}},
+  {id:'globe',name:'Star Globe',x:240,y:124,w:32,h:40,
+   look:"N: A globe of the whole galaxy. Somebody has stuck little flags on every place you have ever been fried.",
+   peck:"N: You spin it. It lands on the Mothership. You spin it again."}
+]},
+
+corral:{world:'village',name:'The Pizza Corral',floor:164,xs:[30,300],hotspots:[
+  EXL('town',630,'Main Street'),
+  {id:'oven',name:'The Oven',x:58,y:84,w:64,h:80,at:134,
+   look:"N: The Pizza Corral's oven. Big, hot, and open to any cook with a recipe. This is where the cooking happens.",
+   peck:[{if:'cookbook',then:[{cook:true}],else:"N: You have nothing to cook from. Somebody in this village must have a recipe book. Try the bakery."}]},
+  {id:'marshal',name:'Marshal Moo',x:168,y:76,w:64,h:50,at:142,
+   look:"N: Marshal Moo, owner of the Pizza Corral, the galaxy's only cowboy pizza restaurant. She is the Moo-notaur's cousin. Sense of direction: much better.",
+   talk:[{if:'p_dough',then:"N: Marshal Moo tips her hat. She says the oven is yours any time, partner. Just leave it how you found it. Hot.",
+     else:["N: Marshal Moo says any cook is welcome at her oven. And the first ball of dough is on the house.",{pantry:'dough'},"N: She says her cheese sticks and dessert sticks are famous in three systems. She says the recipe is in Mom's book, if you can read Mom's writing."]}],
+   peck:"N: She says 'easy there, partner.' She says it to everybody. She says it to the oven."},
+  {id:'bull',name:'Mechanical Bull',x:260,y:118,w:46,h:46,at:248,
+   look:"N: A mechanical bull. The record is eight seconds. It is held by Rocket, who did not know it was switched on.",
+   peck:["N: How hard can it be? You climb on and press START.",{die:'bull'}]}
+]},
+
+clubhouse:{world:'village',name:'The Clubhouse',floor:164,xs:[30,300],hotspots:[
+  EXL('town',920,'Main Street'),
+  {id:'map',name:'Hero Map',x:40,y:40,w:80,h:60,
+   look:"N: A hand-drawn map of Graydorn's World. The Bark Lady's fortress is circled. Twice. In red."},
+  {id:'note',name:'Note',x:150,y:60,w:36,h:26,
+   look:"N: A note: OUT SAVING THE WORLD. BACK BY SNACK TIME. PLEASE FILL LUNCHBOXES. It is signed with a G and a B."},
+  {id:'gbox',name:"Graydorn's Lunchbox",x:128,y:116,w:30,h:24,at:112,
+   look:[{if:'d_pbj',then:"N: Graydorn's lunchbox. Packed. A hero cannot throw snowballs on an empty stomach.",else:"N: A yellow lunchbox with a G on it. Empty. A sticker inside says: PB AND J ONLY. NO CRUSTS IS FINE. CRUSTS IS ALSO FINE."}],
+   peck:"N: You open it. It is the kind of empty that a sandwich fixes.",
+   use:{dish_pbj:GIVE('pbj','graydorn',["N: You pack the Peanut Butter and Jellyfish into Graydorn's lunchbox. It glows a little through the lid.","N: Somewhere out there, a hero in yellow is about to have a very good snack time."])}},
+  {id:'bbox',name:"Batdorn's Lunchbox",x:166,y:116,w:30,h:24,at:204,
+   look:[{if:'d_sourpbj',then:"N: Batdorn's lunchbox, packed with the legendary sandwich. He is going to fly home early for this.",else:"N: A blue lunchbox with a B on it. Empty. A sticker inside says: THE ONE ON MOM'S SOURDOUGH. ACCEPT NO OTHER."}],
+   peck:"N: Empty. And very specific about it.",
+   use:{dish_sourpbj:GIVE('sourpbj','batdorn',["N: You pack Mom's Sourdough PB&J into Batdorn's lunchbox. The legendary sandwich. The lid clicks shut with a sound like a tiny trumpet.","N: Somewhere out there, a hero in blue just felt it."]),
+     dish_pbj:"N: Close. But the sticker is clear. It has to be the one on Mom's sourdough."}},
+  {id:'stuffies',name:'Stuffy Squad',x:228,y:68,w:66,h:30,at:214,
+   look:"N: Strawberry and Cinnamon, of the Stuffy Squad. Strawberry is the pink one. He is in charge while the heroes are out, and he is taking it very seriously.",
+   talk:"N: You ask Strawberry when the heroes will be back. He says nothing. He is a stuffy. But he says it with authority."},
+  {id:'snow',name:'Snowball Machine',x:248,y:108,w:48,h:56,at:234,
+   look:"N: Graydorn's snowball machine. One button. The button says ALL.",
+   peck:["N: Just one snowball. You press the button.","N: The button did say ALL.",{die:'snow'}]}
+]}
+
+});
+
+// ── ingredients hidden around the existing worlds ──
+(function(){const S0=WORLD.screens,HS=(scr,id)=>S0[scr].hotspots.find(h=>h.id===id);
+  const P_=(scr,id,x,y,name,look,line,col)=>S0[scr].hotspots.push({id:'p_'+id,name,x,y,w:18,h:16,when:'!p_'+id,icon:col,look,peck:[line,{pantry:id}]});
+  P_('mess','pb',74,148,'Peanut Butter',"N: A jar of peanut butter, hidden behind the doggy door. Every hound on the station knows it is here. None of them can get the lid off.","N: You get the lid off. Somewhere behind you, forty tails start wagging. You take the jar and walk away quickly.",'#aa7733');
+  P_('shore','jelly',232,146,'Glowing Puddle',"N: A little puddle where the jellyfish drip. It glows. It wobbles. It smells, somehow, of grape.","N: You scoop it into a jar. Glow jelly. It hums a little.",'#aa55ff');
+  P_('geyser','egg',112,146,'Lost Egg',"N: An egg, sitting beside the butter spring, soft-boiling gently in the steam.","N: You check the label. It is not one of yours. It is not anybody you know. You take it.",'#ffffff');
+  P_('ruins','cinnamon',84,148,'Old Offering',"N: A little clay pot, left for the breakfast gods. It smells amazing.","N: Cinnamon. Nine thousand years old and still good. The breakfast gods knew what they were doing.",'#aa5522');
+  P_('nap','cheese1',200,148,'Moon Cheese',"N: A wedge of moon. This moon is cheese under the dust. The cats have never noticed. They are not cheese people.","N: You break off a wedge of Moon Cheese. Mild. A little dusty.",'#ffff88');
+  P_('coilr','cheese3',42,148,'Snack Cheese',"N: A single slice of cheese in a plastic wrapper, fallen off a shelf. The wrapper says CHEESE-STYLE PRODUCT.","N: Snack Cheese. It will never go off. It will outlive the stars.",'#ffaa22');
+  P_('park','cheese4',272,148,'Squeaky Cheese',"N: A rubber cheese. No. A real cheese. It squeaks when you poke it. The hounds cannot decide if it is a toy or a snack.","N: You take the Squeaky Cheese. It squeaks the whole way into your pantry.",'#ffdd44');
+  P_('lobby','pizza',198,148,'Freezer Cart',"N: A freezer cart from the Cook-Off concession stand. One frozen cheese pizza left. The box says COOK UNTIL GOLDEN BROWN. Somebody has crossed that out.","N: You take the frozen pizza. It is as hard as a hubcap.",'#66ccff');
+  const sh=HS('dungeon','shop');sh.peck=[{if:'p_cheese2',then:"N: Just mugs now. So many mugs.",else:["N: Behind the mugs is a wheel of Royal Cheddar, aged one hundred years, because nobody could get past the dinosaur to eat it.",{pantry:'cheese2'}]}];
+  const lf=HS('lostfound','shelf');lf.peck=[{if:'p_mac',then:"N: Umbrellas. All the way down.",else:["N: Between two umbrellas: one box of macaroni. The label says FOUR CHEESE. The cheese packet is missing. Of course it is.",{pantry:'mac'}]}];
+})();
+
 // ───────────────────────── ARCADE CABINETS ─────────────────────────
 // Three tiny games played on the same canvas. No lives, no game over, big Exit button.
 const MINI={
@@ -1915,15 +2215,15 @@ const Mini={on:false,id:null,t:0,score:0,won:false,winT:0,px:160,g:null,
 const $=id=>document.getElementById(id);
 const SAVE_KEY='cc_spatula_of_destiny_v1';
 const cv=$('cv');X=cv.getContext('2d');X.imageSmoothingEnabled=false;
-const fresh=()=>({screen:'galley',x:96,flags:{},inv:[],deaths:[],flipped:[],socks:[],sound:true,done:false,started:false});
+const fresh=()=>({screen:'galley',x:96,flags:{},inv:[],deaths:[],flipped:[],socks:[],friends:[],sound:true,done:false,started:false});
 let S=fresh();
 function save(){S.x=hero.x;try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
 function loadSave(){try{const j=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(j&&j.started&&WORLD.screens[j.screen])return Object.assign(fresh(),j);}catch(e){}return null;}
 const has=i=>S.inv.includes(i);
 const F=n=>!!S.flags[n];
-function cond(c){if(c==null)return true;if(c==='allSocks')return S.socks.length>=SOCK_TOTAL;if(Array.isArray(c))return c.every(cond);if(c[0]==='!')return !cond(c.slice(1));if(c.indexOf('has:')===0)return has(c.slice(4));return F(c);}
+function cond(c){if(c==null)return true;if(c==='allSocks')return S.socks.length>=SOCK_TOTAL;if(c==='allFriends')return S.friends.length>=FRIEND_TOTAL;if(c==='friends5')return S.friends.length>=5;if(Array.isArray(c))return c.every(cond);if(c[0]==='!')return !cond(c.slice(1));if(c.indexOf('has:')===0)return has(c.slice(4));return F(c);}
 const SCR=()=>WORLD.screens[S.screen];
-const WORLD_NAMES={ship:'C.S.S. Overeasy',corn:'The Corn Moon',lint:'Planet Lint',dogs:'Canine Nebula',cats:'Cat Crater',swamp:'Syrup Swamp',pan:'Frying Pan Station'};
+const WORLD_NAMES={ship:'C.S.S. Overeasy',corn:'The Corn Moon',lint:'Planet Lint',dogs:'Canine Nebula',cats:'Cat Crater',swamp:'Syrup Swamp',pan:'Frying Pan Station',village:'Coop Hollow'};
 
 // ── sound ──
 const Sfx={ctx:null,
@@ -1956,10 +2256,10 @@ const Voice={pool:[],pick:null,
 
 // ── hero & state ──
 const hero={x:60,tx:60,f:1,walking:false,onArrive:null,fx:null,stepT:0};
-const BUILD_STAMP='2026-11-22-spatula-1';
+const BUILD_STAMP='2026-11-22-spatula-2-coop-hollow';
 let Q=[],cur=null,shownAt=0,modal='title',sel=null,verbHot=null,hintUntil=0,shake=false,warp=null,fbI=0;const FX={flipT:0};
 
-function walkTo(x,cb){const xs=SCR().xs;x=Math.max(xs[0],Math.min(xs[1],x));hero.onArrive=cb||null;
+function walkTo(x,cb){const sc0=SCR(),xs=sc0.xs;let mx=xs[1];if(sc0.block&&!cond(sc0.block.unless))mx=Math.min(mx,sc0.block.x);x=Math.max(xs[0],Math.min(mx,x));hero.onArrive=cb||null;
   if(Math.abs(x-hero.x)<2){hero.walking=false;const f=hero.onArrive;hero.onArrive=null;if(f)f();return;}
   hero.tx=x;hero.f=x>hero.x?1:-1;hero.walking=true;}
 function standX(h){if(h.at!=null)return h.at;const c=h.x+h.w/2;if(h.exit)return c;const l=h.x-16,rr=h.x+h.w+16;
@@ -1975,9 +2275,12 @@ function next(){cur=null;
     if(st.if!==undefined){Q=norm(cond(st.if)?st.then:st.else).concat(Q);continue;}
     if(st.give){if(!has(st.give)){S.inv.push(st.give);toast(ITEMS[st.give].icon+' Got: '+ITEMS[st.give].name);Sfx.get();}renderInv();continue;}
     if(st.take){S.inv=S.inv.filter(i=>i!==st.take);if(sel===st.take)sel=null;renderInv();continue;}
-    if(st.set){S.flags[st.set]=1;continue;}
+    if(st.set){S.flags[st.set]=1;if(st.set==='cookbook'||st.set==='act2'||st.set==='act3')renderInv();continue;}
     if(st.fx){if(st.fx==='shake'){shake=true;Sfx.tone(70,1.2,'sawtooth',0.05);}else if(st.fx==='stop'){shake=false;Sfx.get();}else if(st.fx==='win')Sfx.win();else if(st.fx==='flip'){FX.flipT=T;Sfx.tone(200,1.4,'sine',0.07,1600);}continue;}
     if(st.toast){toast(st.toast);continue;}
+    if(st.pantry){if(!F('p_'+st.pantry)){S.flags['p_'+st.pantry]=1;toast('🧺 Pantry: '+PANTRY[st.pantry].name);Sfx.get();}continue;}
+    if(st.friend){if(!S.friends.includes(st.friend)){S.friends.push(st.friend);toast('💛 Village friend '+S.friends.length+' of '+FRIEND_TOTAL);Sfx.win();}continue;}
+    if(st.cook){Q=[];hideSay();openCook(true);return;}
     if(st.sock){if(!S.socks.includes(st.sock)){S.socks.push(st.sock);S.flags['sock_'+st.sock]=1;toast('🧦 Lost sock '+S.socks.length+' of '+SOCK_TOTAL);Sfx.get();}continue;}
     if(st.act3start){Q=ACT3_START.concat(Q);continue;}
     if(st.play){Q=[];hideSay();if(window.__sync){run(MINI_WIN[st.play]);return;}Mini.start(st.play);return;}
@@ -2002,15 +2305,16 @@ let toastT=null;
 function toast(t){const el=$('toast');el.textContent=t;el.className='on';clearTimeout(toastT);toastT=setTimeout(()=>{el.className='';},1900);}
 
 // ── screens ──
-function gotoScreen(id,x){S.screen=id;const sc=SCR();hero.x=hero.tx=(x!=null?x:(sc.xs[0]+sc.xs[1])/2);hero.walking=false;hero.onArrive=null;closeVerbs();shake=false;
+function gotoScreen(id,x){S.screen=id;const sc=SCR();hero.x=hero.tx=(x!=null?x:(sc.xs[0]+sc.xs[1])/2);camFix();hero.walking=false;hero.onArrive=null;closeVerbs();shake=false;
   $('loc').textContent=WORLD_NAMES[sc.world]+' · '+sc.name;save();}
 
 // ── verbs ──
+let cam=0;function camFix(){const w=SCR().w||320;cam=Math.max(0,Math.min(w-320,hero.x-160));}
 function openVerbs(h){verbHot=h;const el=$('verbs');let html='<div class="vname">'+h.name+'</div><div class="vrow">';
   html+='<button data-v="look">👀<span>Look</span></button><button data-v="peck">🐔<span>Peck</span></button>';
   if(h.talk)html+='<button data-v="talk">💬<span>Talk</span></button>';
   el.innerHTML=html+'</div>';
-  const cx=(h.x+h.w/2)/320*100,top=h.y/180*100,bot=(h.y+h.h)/180*100;
+  const cx=(h.x-cam+h.w/2)/320*100,top=h.y/180*100,bot=(h.y+h.h)/180*100;
   el.style.left=Math.max(20,Math.min(80,cx))+'%';
   if(top>42){el.style.top='auto';el.style.bottom=(100-top+2)+'%';}else{el.style.bottom='auto';el.style.top=Math.min(60,bot+2)+'%';}
   el.className='on';}
@@ -2030,12 +2334,13 @@ function renderInv(){const el=$('inv');el.innerHTML='';
     b.innerHTML='<i>'+ITEMS[id].icon+'</i><span>'+ITEMS[id].name+'</span>';el.appendChild(b);});
   const u=$('using');if(sel){u.textContent=ITEMS[sel].icon+' Now tap what to use the '+ITEMS[sel].name+' on';u.className='on';}else u.className='';$('loc').style.visibility=sel?'hidden':'visible';
   $('bDeaths').querySelector('span').textContent=S.deaths.length+'/'+Object.keys(DEATHS).length;
-  $('bSound').querySelector('i').textContent=S.sound?'🔊':'🔇';$('bRecipe').style.display=F('act2')?'':'none';$('bRecipe').querySelector('span').textContent=F('act3')?'Quest':'Recipe';}
+  $('bSound').querySelector('i').textContent=S.sound?'🔊':'🔇';$('bRecipe').style.display=F('act2')?'':'none';$('bCook').style.display=F('cookbook')?'':'none';$('bRecipe').querySelector('span').textContent=F('act3')?'Quest':'Recipe';}
 $('inv').addEventListener('pointerdown',e=>{const b=e.target.closest('.item');if(!b||modal)return;if(cur){advance();return;}
   closeVerbs();sel=sel===b.dataset.id?null:b.dataset.id;Sfx.key();renderInv();});
 $('bHint').addEventListener('click',()=>{if(modal)return;if(cur){advance();return;}closeVerbs();hintUntil=T+4;
   const h=HINTS.find(x=>cond(x[0]));run(["N: The spatula says nothing. But if a spatula could talk, it would say:","N: "+h[1]]);});
 $('bRecipe').addEventListener('click',()=>{if(modal&&modal!=='recipe')return;if(modal==='recipe'){closeOv();return;}openRecipe();});
+$('bCook').addEventListener('click',()=>{if(modal&&modal!=='recipe')return;if(modal==='recipe'){closeOv();return;}openCook(false);});
 $('bSound').addEventListener('click',()=>{S.sound=!S.sound;if(!S.sound)Voice.stop();else Sfx.unlock();renderInv();save();});
 $('bDeaths').addEventListener('click',()=>{if(modal&&modal!=='album')return;if(modal==='album'){closeOv();return;}openAlbum();});
 
@@ -2044,7 +2349,7 @@ function openOv(kind,html){modal=kind;closeVerbs();const o=$('ov');o.innerHTML='
 function closeOv(){$('ov').className='';$('ov').innerHTML='';modal=null;}
 $('ov').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;Sfx.unlock();const a=b.dataset.a,v=b.dataset.v;
   if(a==='new'){newGame();}
-  else if(a==='continue'){const j=loadSave();if(j){S=j;}if(!S.flipped)S.flipped=[];if(!S.socks)S.socks=[];Voice.unlock();closeOv();gotoScreen(S.screen,S.x);renderInv();
+  else if(a==='continue'){const j=loadSave();if(j){S=j;}if(!S.flipped)S.flipped=[];if(!S.socks)S.socks=[];if(!S.friends)S.friends=[];Voice.unlock();closeOv();gotoScreen(S.screen,S.x);renderInv();
     if(F('fixed')&&!F('act2')){S.done=false;run(["N: While you were away, the ship jumped to the Great Galactic Cook-Off. Captain Scratchy has bet the ship on your cooking."].concat(ACT2_BRIEF));}
     else if(F('won')&&!F('act3')){S.done=false;run(ACT3_START);}}
   else if(a==='undie'){hero.fx=null;Voice.stop();closeOv();}
@@ -2052,21 +2357,26 @@ $('ov').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)
   else if(a==='travel'){travel(v);}
   else if(a==='key'){keyPress(v);}
   else if(a==='vkey'){vendKey(v);}
+  else if(a==='cook'){cookDish(v);}
+  else if(a==='bake'){bakeOut();}
+  else if(a==='savecode'){openSaveCode();}
+  else if(a==='copycode'){const t=$('codeBox');t.select();try{navigator.clipboard.writeText(t.value).then(()=>{b.textContent='Copied!';},()=>{b.textContent='Select the code and copy it';});}catch(e){b.textContent='Select the code and copy it';}}
+  else if(a==='loadcode'){loadCode($('codeIn').value,b);}
   else if(a==='restart'){if(b.dataset.sure){newGame();}else{b.dataset.sure='1';b.textContent='Really? Tap again to start over';}}
 });
 function titleCard(){const j=loadSave();
   openOv('title','<div class="stars"></div><h1>CRANKY CHICKENS<br><em>IN SPACE</em></h1><h2>The Spatula of Destiny</h2>'+
-    '<p>A point-and-peck adventure in three acts. Eleven worlds. 45 screens. No timers, no dead ends, and 45 ways to get fried.</p>'+
-    (j?'<button class="big" data-a="continue">▶ Keep Playing</button><button class="small" data-a="new">Start Over</button>':'<button class="big" data-a="new">▶ Start</button>'));}
+    '<p>A point-and-peck adventure in three acts. Twelve worlds, 50 screens, ten recipes to cook, and 50 ways to get fried. No timers. No dead ends.</p>'+
+    (j?'<button class="big" data-a="continue">▶ Keep Playing</button><button class="small" data-a="new">Start Over</button>':'<button class="big" data-a="new">▶ Start</button>')+'<button class="small" data-a="savecode">Have a save code?</button>');}
 function newGame(){const snd=S.sound;S=fresh();S.sound=snd;S.started=true;sel=null;Q=[];hero.fx=null;hero.f=1;Voice.unlock();closeOv();gotoScreen('galley',96);renderInv();run(INTRO);}
 function die(id){const d=DEATHS[id],isNew=!S.deaths.includes(id);if(isNew)S.deaths.push(id);if(window.__sync)return;hero.fx={kind:d.fx,t0:T};Sfx.die();modal='dying';save();
   setTimeout(()=>{const n=S.deaths.length,tot=Object.keys(DEATHS).length;
     openOv('death','<div class="dicon">'+d.icon+'</div>'+(isNew?'<div class="badge">NEW! '+n+' of '+tot+' ways to get fried</div>':'<div class="badge old">You have done this one before. On purpose?</div>')+
       '<h2>'+d.title+'</h2><p>'+d.text+'</p><button class="big" data-a="undie">🍗 Un-fry me</button>');
     renderInv();Voice.say('NARRATOR',d.title+'. '+d.text);},1150);}
-function openAlbum(){const tot=Object.keys(DEATHS).length;let h='<h2>Ways I Got Fried</h2><p>'+S.deaths.length+' of '+tot+' found · 🧦 Lost socks: '+S.socks.length+' of '+SOCK_TOTAL+(F('sockHero')?' · Sock Legend':'')+' · Things you tried to flip: '+S.flipped.length+'</p><div class="grid">';
+function openAlbum(){const tot=Object.keys(DEATHS).length;let h='<h2>Ways I Got Fried</h2><p>'+S.deaths.length+' of '+tot+' found · 🧦 Lost socks: '+S.socks.length+' of '+SOCK_TOTAL+(F('sockHero')?' · Sock Legend':'')+' · 💛 Village friends: '+S.friends.length+' of '+FRIEND_TOTAL+(F('feast')?' · Honorary Villager':'')+' · Things you tried to flip: '+S.flipped.length+'</p><div class="grid">';
   for(const id in DEATHS){const d=DEATHS[id],got=S.deaths.includes(id);h+=got?'<div class="dc"><i>'+d.icon+'</i><b>'+d.title+'</b><span>'+d.text+'</span></div>':'<div class="dc no"><i>❓</i><b>???</b><span>Still out there somewhere.</span></div>';}
-  h+='</div><button class="big" data-a="close">Back to the game</button><button class="small" data-a="restart">Start Over</button>';
+  h+='</div><button class="big" data-a="close">Back to the game</button><button class="small" data-a="savecode">Save code (move to another tablet)</button><button class="small" data-a="restart">Start Over</button>';
   if(/crankychickens\.com$/.test(location.hostname))h+='<a class="small" href="/games/">🏠 All games</a>';
   openOv('album',h);}
 function openMap(){const here=SCR().world;let h='<h2>Where to, chef?</h2><div class="grid map">';
@@ -2100,12 +2410,35 @@ function vendPick(c){const jump="N: You jump on "+c[0]+". Then you jump on "+c[1
   else if(c==='B4')run([jump,"MOTHER: B. FOUR. ONE. SPACESHIP. DISPENSING.",{set:'vended'},"N: Far away, a giant coil begins to turn. Something very heavy goes THUNK into the prize chute.","N: Then, nothing. You know this feeling. It is stuck behind the flap."]);
   else if(c==='A1')run([jump,"MOTHER: A. ONE. EXCELLENT. CHOICE. FREE. SAMPLE.",{die:'granola'}]);
   else run([jump,"N: The machine dispenses "+VEND_OTHER[(c.charCodeAt(0)+c.charCodeAt(1))%VEND_OTHER.length]+". It lands somewhere far below.","MOTHER: FREE. SAMPLE. YOUR. CREDIT. REMAINS."]);}
+// ── cooking ──
+function pantryHas(n){if(n==='cheese')return F('p_cheese1')||F('p_cheese2')||F('p_cheese3')||F('p_cheese4');const p=PANTRY[n];return p.flag?F(p.flag)||F('p_'+n):F('p_'+n);}
+let cookAt=false;
+function openCook(atOven){cookAt=!!atOven;let h='<h2>Mom\'s Cook Book</h2><p>'+(atOven?'The oven is hot. Pick a dish.':'Find ingredients out in the galaxy. Cook at the oven in the Pizza Corral.')+'</p><div class="grid cook">';
+  RECIPES.forEach(q=>{const done=F('d_'+q.id),hasIt=has('dish_'+q.id),ready=q.needs.every(pantryHas);
+    h+='<div class="rc'+(done?' done':'')+(q.legend?' legend':'')+'"><b>'+q.icon+' '+q.name+'</b><span class="who">For: '+q.who+'</span><div class="needs">';
+    q.needs.forEach(n=>{const ok=pantryHas(n);h+='<span class="'+(ok?'ok':'no')+'">'+(ok?'✓ ':'')+PANTRY[n].name+(ok?'':' · '+PANTRY[n].hint)+'</span>';});
+    h+='</div>'+(done?'<i>Delivered 💛</i>':hasIt?'<i>Cooked. Go and deliver it.</i>':ready?(atOven?'<button data-a="cook" data-v="'+q.id+'">🍳 Cook it</button>':'<i>Ready to cook at the oven.</i>'):'')+'</div>';});
+  openOv('recipe',h+'</div><button class="big" data-a="close">Back to the game</button>');}
+let bakeT=null;
+function cookDish(id){const q=RECIPES.find(x=>x.id===id);if(!q||!q.needs.every(pantryHas))return;
+  if(id==='pizza'&&!window.__sync){openOv('bake','<h2>Barely-Baked Cheese Pizza</h2><p>Take it out before a single brown spot appears.</p><div class="bakebar"><div id="bakeFill"></div></div><div class="pz">🍕</div><button class="big" data-a="bake">🧤 Take it out NOW</button>');
+    clearTimeout(bakeT);bakeT=setTimeout(()=>{if(modal!=='bake')return;Sfx.bad();openOv('bake','<h2>Brown spots.</h2><p>Three of them. Daddy would send it back. Daddy would send YOU back.</p><button class="big" data-a="cook" data-v="pizza">Try again</button><button class="small" data-a="close">Walk away</button>');},3200);return;}
+  dishDone(q);}
+function bakeOut(){clearTimeout(bakeT);dishDone(RECIPES.find(x=>x.id==='pizza'));}
+function dishDone(q){closeOv();const lines={banana:"N: You peel one banana and put it on a plate. That is the whole recipe. You feel slightly overqualified.",softserve:"N: The soft serve machine is broken. It is always broken. You make it by hand, with the spatula, out of spite.",pizza:"N: Out it comes. Pale. Soft. Not one brown spot. Technically it is still mostly frozen in the middle.",grilled:"N: Butter. Bread. Cheese. One flip, with the Spatula of Destiny. This is what it was forged for.",macdish:"N: Four cheeses from four worlds, and macaroni from a lost box. You stir. It turns the colour of a traffic cone. Perfect.",sourpbj:"N: Peanut butter, glow jelly, and Mom's sourdough. You cut it corner to corner. It hums. This is the legendary one."};
+  run([lines[q.id]||"N: You cook. The oven roars. The Pizza Corral fills with a very good smell.",{give:'dish_'+q.id},"N: "+q.name+". Somebody in Coop Hollow has been waiting for this."]);}
+// ── save codes ──
+function openSaveCode(){let code='';try{code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));}catch(e){}
+  openOv('recipe','<h2>Save Code</h2>'+(S.started?'<p>This code is your whole game. Copy it somewhere safe, or type it into another tablet.</p><textarea id="codeBox" readonly rows="4">'+code+'</textarea><button class="big" data-a="copycode">Copy my code</button>':'')+
+    '<p>Have a code from another tablet? Paste it here.</p><textarea id="codeIn" rows="3" placeholder="Paste a save code"></textarea><button class="big" data-a="loadcode">Load this code</button><button class="small" data-a="close">Close</button>');}
+function loadCode(txt,btn){try{const j=JSON.parse(decodeURIComponent(escape(atob(String(txt).trim()))));if(!j||!j.started||!WORLD.screens[j.screen]||!Array.isArray(j.inv))throw 0;
+    S=Object.assign(fresh(),j);sel=null;Q=[];hero.fx=null;Voice.unlock();closeOv();gotoScreen(S.screen,S.x);renderInv();save();toast('Save code loaded');}catch(e){btn.textContent='That code did not work. Check it and try again';}}
 function openEnd(){const tot=Object.keys(DEATHS).length;Sfx.win();
   openOv('end','<h1>THE END</h1><h2>...for now</h2><p>Ways you got fried: <b>'+S.deaths.length+' of '+tot+'</b><br>Things you tried to flip: <b>'+S.flipped.length+'</b></p>'+
     '<p>Lost socks found: <b>'+S.socks.length+' of '+SOCK_TOTAL+'</b></p><p>You saved lunch, the ship, and one vending machine\'s feelings. More planets are on the way. Got an idea for a planet? Tell Uncle Nick.</p><button class="big" data-a="close">Keep exploring</button><button class="small" data-a="restart">Start Over</button>');}
 
 // ── input ──
-function toLogical(e){const b=cv.getBoundingClientRect();return{x:(e.clientX-b.left)*320/b.width,y:(e.clientY-b.top)*180/b.height};}
+function toLogical(e){const b=cv.getBoundingClientRect();return{x:(e.clientX-b.left)*320/b.width+(Mini.on||modal==='mini'?0:cam),y:(e.clientY-b.top)*180/b.height};}
 function hotAt(p){const hs=SCR().hotspots;for(const m of [0,6]){for(let i=hs.length-1;i>=0;i--){const h=hs[i];if(!cond(h.when))continue;
   if(p.x>=h.x-m&&p.x<=h.x+h.w+m&&p.y>=h.y-m&&p.y<=h.y+h.h+m)return h;}}return null;}
 $('stage').addEventListener('pointermove',e=>{if(modal==='mini'&&Mini.on){const p=toLogical(e);Mini.input('move',p.x,p.y);}});
@@ -2125,8 +2458,9 @@ function update(dt){
   if(Mini.on){Mini.update(dt);return;}
   if(warp&&T-warp.t0>1.5)arrive(warp.m);
   if(hero.walking){const d=hero.tx-hero.x,stp=120*dt;hero.stepT+=dt;
-    if(Math.abs(d)<=stp){hero.x=hero.tx;hero.walking=false;const f=hero.onArrive;hero.onArrive=null;if(f)f();}else hero.x+=Math.sign(d)*stp;}}
-function drawHero(){const sc=SCR(),y=sc.floor,o={hat:'chef',spat:has('spatula'),f:hero.f,step:hero.walking?1+Math.floor(hero.stepT*8)%2:0,blink:Math.floor(T*0.9)%4===0&&(T%1)<0.15};
+    if(Math.abs(d)<=stp){hero.x=hero.tx;hero.walking=false;const f=hero.onArrive;hero.onArrive=null;if(f)f();}else hero.x+=Math.sign(d)*stp;}
+  if(!warp){const w=SCR().w||320,want=Math.max(0,Math.min(w-320,hero.x-160));cam+=(want-cam)*Math.min(1,dt*6);if(Math.abs(want-cam)<0.5)cam=want;}}
+function drawHero(){const sc=SCR(),y=sc.floor,o={hat:'chef',pom:F('knitHat'),spat:has('spatula'),f:hero.f,step:hero.walking?1+Math.floor(hero.stepT*8)%2:0,blink:Math.floor(T*0.9)%4===0&&(T%1)<0.15};
   const bobY=hero.walking?Math.floor(hero.stepT*8)%2:0;
   if(!hero.fx){ell(hero.x,y+1,12,2,'rgba(0,0,0,0.3)');chicken(hero.x,y-bobY,o);return;}
   const a=Math.min(1,(T-hero.fx.t0)/1.0),k=hero.fx.kind;
@@ -2147,12 +2481,13 @@ function drawWarp(){const a=(T-warp.t0)/1.5;r(0,0,320,180,P.K);const g=rnd(77);
 function draw(){
   if(Mini.on){Mini.draw();return;}
   if(warp){drawWarp();return;}
-  const sc=SCR();ART[S.screen](F,has,shake,FX);
+  const sc=SCR();X.save();X.translate(-Math.round(cam),0);ART[S.screen](F,has,shake,FX);
   sc.hotspots.forEach(h=>{if(!cond(h.when))return;
+    if(h.icon){const ix=h.x+h.w/2,iy=h.y+h.h;r(ix-5,iy-9,10,9,h.icon);r(ix-5,iy-9,10,2,P.W);r(ix-6,iy-1,12,1,P.K);if(Math.floor(T*3)%2){r(ix+5,iy-14,1,5,P.W);r(ix+3,iy-12,5,1,P.W);}}
     if(h.exit){const d=h.dir||'right';if(d==='left')arrow(h.x+5,sc.floor-22,'left',P.Y);else if(d==='right')arrow(h.x+h.w-6,sc.floor-22,'right',P.Y);else if(d==='down')arrow(h.x+h.w/2,h.y+Math.min(10,h.h/2),'down',P.Y);else arrow(h.x+h.w/2,h.y+10,'up',P.Y);}
     else if(T<hintUntil&&Math.floor(T*4)%2===0){X.strokeStyle=P.Y;X.lineWidth=1;X.strokeRect(h.x+0.5,h.y+0.5,h.w-1,h.h-1);}});
   if(verbHot){const h=verbHot;X.strokeStyle=P.W;X.lineWidth=1;X.strokeRect(h.x+0.5,h.y+0.5,h.w-1,h.h-1);}
-  if(modal!=='title')drawHero();}
+  if(modal!=='title')drawHero();X.restore();}
 let lastDraw=0;
 function frame(ms){if(ms-lastDraw<30){requestAnimationFrame(frame);return;}lastDraw=ms;const t=ms/1000,dt=Math.min(0.08,t-last);last=t;T=t;update(dt);
   X.save();try{draw();}finally{X.restore();}
@@ -2168,8 +2503,8 @@ document.addEventListener('contextmenu',e=>e.preventDefault());
 Voice.init();fit();renderInv();titleCard();requestAnimationFrame(frame);
 window.__game={exec(scr,id,verb,item){if(S.screen!==scr)gotoScreen(scr);const h=SCR().hotspots.find(x=>x.id===id&&cond(x.when));if(!h)return 'NOHOT '+scr+'.'+id;
     if(h.exit){gotoScreen(h.exit.to,h.exit.x);return 'exit';}if(item){sel=item;useItem(item,h);}else run((F('act3')&&h[verb+'3'])||h[verb]||[]);return this.drain();},
-  drain(){let n=0;while(n++<400){if(cur){next();continue;}if(modal==='map'||modal==='keypad'||modal==='end'||modal==='death'||modal==='dying'){if($('ov').className)closeOv();modal=null;hero.fx=null;continue;}break;}return 'ok';},
-  vendPick,Mini,S:()=>S,hero,run,travel,gotoScreen,state:()=>({modal,cur,sel,walking:hero.walking,Q:Q.length})};
+  drain(){let n=0;while(n++<400){if(cur){next();continue;}if(modal==='map'||modal==='keypad'||modal==='end'||modal==='death'||modal==='dying'||modal==='recipe'||modal==='bake'){if($('ov').className)closeOv();modal=null;hero.fx=null;continue;}break;}return 'ok';},
+  vendPick,Mini,cookDish,cam:()=>cam,S:()=>S,hero,run,travel,gotoScreen,state:()=>({modal,cur,sel,walking:hero.walking,Q:Q.length})};
 
 </script>
 </body>
