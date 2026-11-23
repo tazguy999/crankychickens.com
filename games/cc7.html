@@ -180,6 +180,16 @@
     #toggles{left:max(4px, env(safe-area-inset-left))}
     #fsBtn::before{content:'⛶';font-size:16px}
   }
+  /* A television: nobody is clicking anything, so the picture takes the whole screen.
+     A sliver is kept clear all round because many TVs crop the edges. */
+  body.tv #frame{width:min(96vw, (100vh - 40px) * 1.6667);max-width:none}
+  body.tv #hint, body.tv #pad{display:none}
+  body.tv #toggles{position:fixed;top:50%;left:12px;transform:translateY(-50%);flex-direction:column;gap:8px;opacity:.55}
+  body.tv #toggles button{font-size:0;letter-spacing:0;padding:0;width:44px;height:44px}
+  body.tv #voiceBtn::before{content:'🗣';font-size:20px}
+  body.tv #sfxBtn::before{content:'♪';font-size:21px}
+  body.tv #fsBtn::before{content:'⛶';font-size:21px}
+  body.in-arcade #toast{transition:none}      /* a garden notice is gone the moment you walk into a cabinet, not fading over the card */
   /* A browser too old for container units still gets words in roughly the right place. */
   @supports not (width:1cqw){
     #hud{top:1vw;left:1.2vw;right:1.2vw}
@@ -2169,7 +2179,12 @@ const GAMES = {};
 const TOUCH = { on: false };
 try { TOUCH.on = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches); } catch (err){}
 addEventListener('touchstart', () => { TOUCH.on = true; }, { capture: true, passive: true });
-const say = (keys, touch) => TOUCH.on ? touch : keys;
+/* Is this a television? A remote has arrows, OK and Back, and nothing called A or Esc. */
+const TV = { on: false };
+try { TV.on = /SMART-TV|SmartTV|Tizen|Web0S|WebOS|NetCast|HbbTV|BRAVIA|GoogleTV|Android TV|AFT[A-Z]|CrKey/i.test(navigator.userAgent || ''); } catch (err){}
+const tvWords = s => !TV.on ? s : s.replace(/A\s*\/\s*SPACE/g, 'OK').replace(/PRESS(\s+)A\b/g, 'PRESS$1OK')
+  .replace('ESC or ▼', 'BACK or ▼').replace('PRESS ANY BUTTON', 'PRESS OK');
+const say = (keys, touch) => TOUCH.on ? touch : tvWords(keys);
 
 const Arcade = {
   cab: null, game: null, state: 'intro', stateFrames: 0,
@@ -2303,7 +2318,7 @@ const Arcade = {
       g.fillStyle = c.color; g.globalAlpha = 0.10; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
       txt(gm.title, W / 2, 88, gm.title.length > 30 ? 22 : 28, c.color);
       txt('A GAME BY ' + gm.maker, W / 2, 112, 13, '#cdbcda');
-      ((TOUCH.on && gm.howTouch) || gm.how).forEach((s, i) => txt(s, W / 2, 150 + i * 23, 15, '#f2e9f7'));
+      ((TOUCH.on && gm.howTouch) || gm.how.map(tvWords)).forEach((s, i) => txt(s, W / 2, 150 + i * 23, 15, '#f2e9f7'));
       const best = (Save.data.best || {})[c.id];
       const note = (this.easy ? 'AUNT BARB HAS TURNED IT DOWN A NOTCH' : '') +
                    (this.easy && best ? '   ·   ' : '') + (best ? 'BEST  ' + best : '');
@@ -5187,6 +5202,96 @@ touchSwipe(GAMES.parade);
   addEventListener('scroll', () => { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); }, { passive: true });
   // a long press on a tablet must never open "save image" or select the words
   addEventListener('contextmenu', e => { if (TOUCH.on) e.preventDefault(); });
+})();
+
+/* ============================================================
+   LAYER 8 — THE BIG SCREEN. A television has no keyboard and no
+   glass to touch. It has a remote (arrows, OK, Back) and, if you
+   are lucky, a game controller. Both end up as the same inputs
+   the keyboard makes; no cabinet knows the difference.
+
+     remote       arrows move · OK is A · Back leaves a cabinet
+     controller   stick or d-pad move · A is A · B or X is B
+                  Back/View leaves a cabinet · Start is A
+                  block world: right stick looks, bumpers change block,
+                  right trigger places, left trigger breaks
+   ============================================================ */
+
+if (TV.on && document.body && document.body.classList) document.body.classList.add('tv');
+
+/* ---- remote: keys that arrive with a number and no name, OK as A, Back as the way out ---- */
+(function(){
+  const BY_NUMBER = { 37: 'left', 38: 'up', 39: 'right', 40: 'down', 32: 'jump' };
+  const isBack = e => e.keyCode === 10009 || e.keyCode === 461 || e.key === 'XF86Back' || e.key === 'GoBack' || e.key === 'BrowserBack';
+  const isOk = e => e.code === 'Enter' || e.code === 'NumpadEnter' || (!e.code && e.keyCode === 13);
+  let okJump = false, okEnter = false;
+  addEventListener('keydown', e => {
+    if (isBack(e)){
+      if (mode === 'arcade'){ Arcade.leaveReq = true; e.preventDefault(); }     // in the garden, Back is still the browser's
+      return;
+    }
+    if (isOk(e)){
+      // OK walks into a cabinet you are standing at; everywhere else it is the A button
+      if (mode === 'garden' && nearCabinet()){ if (!e.code){ press('enter'); okEnter = true; } }
+      else { press('jump'); okJump = true; }
+      e.preventDefault();
+      return;
+    }
+    if (!e.code && BY_NUMBER[e.keyCode]){ press(BY_NUMBER[e.keyCode]); e.preventDefault(); }
+  }, true);
+  addEventListener('keyup', e => {
+    if (isOk(e)){
+      if (okJump){ release('jump'); okJump = false; }
+      if (okEnter){ release('enter'); okEnter = false; }
+      return;
+    }
+    if (!e.code && BY_NUMBER[e.keyCode]) release(BY_NUMBER[e.keyCode]);
+  }, true);
+})();
+
+/* ---- game controller ---- */
+const Gamepads = {
+  held: {},                       // which of our inputs the controller is holding
+  prev: {}, seen: false,
+  set(k, on){
+    if (!!this.held[k] === on) return;
+    this.held[k] = on;
+    if (on) press(k); else release(k);
+  },
+  poll(){
+    let pads = null;
+    try { pads = navigator.getGamepads ? navigator.getGamepads() : null; } catch (err){}
+    let gp = null;
+    if (pads) for (let i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected !== false && pads[i].buttons && pads[i].buttons.length){ gp = pads[i]; break; }
+    if (!gp){ if (this.seen) for (const k in this.held) this.set(k, false); return; }
+    const b = i => { const x = gp.buttons[i]; return !!x && (x.pressed || x.value > 0.5); };
+    const ax = i => (gp.axes && Math.abs(gp.axes[i] || 0) > 0.18 ? gp.axes[i] : 0);
+    const std = gp.mapping === 'standard';
+    const any = gp.buttons.some(x => x && x.pressed) || Math.abs(ax(0)) > 0.5 || Math.abs(ax(1)) > 0.5;
+    if (!this.seen && any){
+      this.seen = true; TOUCH.on = false;                 // a controller in hand: the cards talk about buttons again
+      toast('CONTROLLER CONNECTED<br>A IS A · B IS B · BACK LEAVES A GAME', 4500);
+    }
+    this.set('left',  ax(0) < -0.45 || (std && b(14)));
+    this.set('right', ax(0) >  0.45 || (std && b(15)));
+    this.set('up',    ax(1) < -0.45 || (std && b(12)));
+    this.set('down',  ax(1) >  0.45 || (std && b(13)));
+    this.set('jump',  b(0) || (std && (b(7) || b(9))));
+    this.set('b',     b(1) || b(2) || (std && b(6)));
+    const edge = (name, on) => { const was = this.prev[name]; this.prev[name] = on; return on && !was; };
+    if (edge('back', std ? b(8) : false) && mode === 'arcade') Arcade.leaveReq = true;
+    const prevBlock = edge('lb', std && b(4)), nextBlock = edge('rb', std && b(5));
+    if (mode === 'arcade' && Arcade.state === 'play' && Arcade.game === GAMES.craft){
+      if (std){ CraftPtr.dx += ax(2) * 6; CraftPtr.dy += ax(3) * 5; }          // right stick looks around
+      if (prevBlock) CraftKeys.hit.push('KeyQ');
+      if (nextBlock) CraftKeys.hit.push('KeyE');
+    }
+  }
+};
+(function(){
+  if (typeof navigator === 'undefined' || !navigator.getGamepads || typeof requestAnimationFrame !== 'function') return;
+  const tick = () => { Gamepads.poll(); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
 })();
 
 /* ---------- Boot ---------- */
