@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GP4SZY2B0Z"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GP4SZY2B0Z');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Cranky Chickens — Concept Slayer: Slice the Monster</title>
+<meta property="og:title" content="Concept Slayer: Slice the Monster">
+<meta property="og:description" content="Slice the Large Language Monster into five bits and find out how it really works. A Cranky Chickens game demo.">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:#140c24;color:#efe9fa;font-family:'Fredoka One',cursive;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:8px;}
+#wrap{width:100%;max-width:720px;}
+#top{display:flex;align-items:center;gap:8px;padding:2px 0 8px;}
+#exit{font-family:inherit;font-size:16px;color:#1a1024;background:#ff8fb3;border:3px solid #1a1024;border-radius:12px;padding:10px 14px;text-decoration:none;min-height:48px;display:flex;align-items:center;}
+#ttl{flex:1;text-align:center;color:#ffcc02;font-size:clamp(14px,3.6vw,20px);}
+#mute{font-family:inherit;font-size:18px;background:rgba(255,204,2,0.12);border:2px solid rgba(255,204,2,0.4);color:#ffcc02;border-radius:12px;min-width:48px;min-height:48px;}
+#dots{display:flex;gap:8px;justify-content:center;padding-bottom:8px;}
+#dots i{width:34px;height:10px;border-radius:5px;background:rgba(255,255,255,0.15);}
+#dots i.on{background:#ffcc02;}
+canvas{display:block;width:100%;border-radius:14px;background:#4a3560;touch-action:none;}
+#say{background:#fffdf2;color:#1a1024;border:3px solid #1a1024;border-radius:14px;padding:12px 14px;margin-top:10px;font-size:clamp(15px,3.6vw,19px);line-height:1.35;}
+#say b{color:#c8502e;font-weight:normal;font-size:0.75em;display:block;letter-spacing:1px;}
+#panel{margin-top:10px;display:flex;flex-direction:column;gap:10px;}
+.prompt{font-size:clamp(18px,4.6vw,26px);text-align:center;color:#ffcc02;padding:4px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+button.big{font-family:inherit;font-size:clamp(16px,4vw,22px);color:#1a1024;background:#ffcc02;border:3px solid #1a1024;border-radius:14px;padding:14px 18px;min-height:60px;min-width:120px;flex:1;cursor:pointer;}
+button.big:active{transform:scale(0.96);}
+button.big.alt{background:#efe9fa;}
+button.big.go{background:#49c96d;}
+button.big:disabled{opacity:0.45;}
+.bars{background:#231639;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.bar{display:flex;align-items:center;gap:10px;font-size:16px;}
+.bar span{width:110px;text-align:right;}
+.bar div{flex:1;height:16px;background:rgba(255,255,255,0.12);border-radius:8px;overflow:hidden;}
+.bar div i{display:block;height:100%;background:#3fa9f5;border-radius:8px;transition:width 0.5s;}
+.note{font-size:13px;color:#c3b8dc;text-align:center;line-height:1.4;}
+.tries{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:15px;}
+.tries em{font-style:normal;padding:6px 10px;border-radius:10px;background:#3a2530;color:#ffb3b3;}
+.tries em.ok{background:#1f3a2a;color:#9ff0b5;}
+.made{font-size:clamp(20px,5vw,30px);text-align:center;color:#fff;min-height:40px;letter-spacing:1px;}
+.fact{background:#fff6dc;color:#1a1024;border:3px solid #1a1024;border-radius:14px;padding:12px;font-size:16px;line-height:1.35;text-align:center;}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="top"><a id="exit" href="/">✕ EXIT</a><div id="ttl">CONCEPT SLAYER · SLICE THE MONSTER</div><button id="mute" aria-label="Sound on or off">🔊</button></div>
+<div id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<canvas id="c" width="640" height="300"></canvas>
+<div id="say"></div>
+<div id="panel"></div>
+</div>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=640,H=300,GY=262;
+const FF="'Fredoka One',cursive";
+let muted=false,fr_g=0;
+// ══ AUDIO ══
+let AC=null;
+function ac(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,v,tp,when){if(muted)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();o.type=tp;o.connect(g);g.connect(a.destination);o.frequency.setValueAtTime(f,when);g.gain.setValueAtTime(v,when);g.gain.exponentialRampToValueAtTime(0.001,when+d);o.start(when);o.stop(when+d+0.02);}catch(e){}}
+function sfx(n){if(muted)return;try{const t=ac().currentTime;
+  if(n==='ding'){tone(1319,0.45,0.2,'sine',t);tone(1760,0.5,0.12,'sine',t+0.08);}
+  else if(n==='buzz'){tone(110,0.4,0.22,'sawtooth',t);tone(104,0.4,0.18,'sawtooth',t);}
+  else if(n==='slice'){tone(1800,0.18,0.2,'sawtooth',t);tone(900,0.22,0.18,'sawtooth',t+0.05);tone(300,0.3,0.18,'square',t+0.14);}
+  else if(n==='pop'){tone(500,0.06,0.22,'square',t);}
+  else if(n==='chop'){tone(700,0.05,0.22,'square',t);tone(240,0.08,0.2,'square',t+0.05);}
+  else if(n==='fanfare'){[0,0.14,0.28,0.42].forEach((tt,i)=>tone([392,494,587,784][i],0.22,0.2,'square',t+tt));}
+}catch(e){}}
+document.getElementById('mute').addEventListener('click',()=>{muted=!muted;document.getElementById('mute').textContent=muted?'🔇':'🔊';});
+
+// ══ ART (same drawings as Episode 13) ══
+const INK='#1a1024';
+const _pc={};function P(d){return _pc[d]||(_pc[d]=new Path2D(d));}
+const SL_PONY='M124,120 C70,118 48,180 70,236 C84,214 100,200 126,196 Z';
+const SL_COMB='M146,104 C128,62 168,40 186,74 C190,34 236,30 240,70 C256,44 292,60 268,108 Z';
+const SL_FRINGE='M148,98 C176,88 208,94 232,112 C202,110 174,114 148,98 Z';
+function slayerArt(x,y,k,o){
+  o=o||{};const fr=o.fr||0,fc=o.fc||1;
+  const c={body:'#c8502e',belly:'#f6b98a',comb:'#ff3d7f',jacket:'#2a1f3d',jl:'#43345f'};
+  ctx.save();ctx.translate(x,y);
+  if(!o.noShadow){ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,150*k,34*k,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+  ctx.scale(k*fc,k);ctx.translate(-200,-476-Math.abs(Math.sin(fr*0.05))*5);
+  const lw=Math.max(7,1/k);ctx.lineWidth=lw;ctx.strokeStyle=INK;ctx.lineJoin='round';ctx.lineCap='round';
+  const el=(cx,cy,rx,ry,rot,f)=>{ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,rot,0,Math.PI*2);if(f){ctx.fillStyle=f;ctx.fill();}ctx.stroke();};
+  const pg=(pts,f)=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f;ctx.fill();ctx.stroke();};
+  const rr=(rx,ry,w,h,r,f)=>{ctx.beginPath();ctx.roundRect(rx,ry,w,h,r);ctx.fillStyle=f;ctx.fill();ctx.stroke();};
+  const pp=(d,f)=>{ctx.fillStyle=f;ctx.fill(P(d));ctx.stroke(P(d));};
+  const ls=o.walk?Math.sin(fr*0.3)*9:0;
+  rr(170+ls,428,16,26,0,'#ff7a00');rr(214-ls,428,16,26,0,'#ff7a00');
+  rr(152+ls,450,44,26,11,c.jacket);rr(206-ls,450,44,26,11,c.jacket);
+  pp(SL_PONY,c.comb);pp(SL_COMB,c.comb);
+  el(200,320,118,120,0,c.body);
+  ctx.save();ctx.beginPath();ctx.ellipse(200,320,118,120,0,0,Math.PI*2);ctx.clip();
+  ctx.fillStyle=c.jacket;ctx.fillRect(60,246,280,210);pg([[176,236],[224,236],[240,450],[160,450]],c.belly);
+  ctx.strokeStyle=c.jl;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(112,366);ctx.lineTo(142,356);ctx.moveTo(258,356);ctx.lineTo(288,366);ctx.stroke();
+  ctx.restore();
+  el(200,320,118,120,0,null);
+  pg([[126,264],[180,250],[166,310]],c.jl);pg([[274,264],[220,250],[234,310]],c.jl);
+  el(86,324,28,58,20*Math.PI/180,c.jacket);
+  const sw=(o.sw===undefined?25:o.sw)*Math.PI/180;
+  if(o.weapon!==false){ctx.save();ctx.translate(352,246);ctx.rotate(sw);
+    pg([[-14,-150],[14,-150],[0,-196]],'#f2c38b');pg([[-5,-180],[5,-180],[0,-196]],INK);
+    rr(-14,-150,28,190,0,'#ffd400');rr(-14,40,28,18,0,'#c9c9d6');rr(-14,58,28,24,8,'#ff8fa3');ctx.restore();}
+  el(322,300,28,58,28*Math.PI/180,c.jacket);
+  el(200,170,88,88,0,c.body);
+  pp(SL_FRINGE,c.comb);
+  const aha=o.expr==='aha',px=o.expr==='side'?10:6,blink=(fr%210)<7;
+  [166,234].forEach(cx=>{
+    el(cx,168,30,30,0,'#ffffff');
+    ctx.fillStyle=INK;ctx.beginPath();ctx.arc(cx+(aha?0:px),aha?168:172,aha?16:13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx+(aha?5:px+5),164,4,0,Math.PI*2);ctx.fill();
+    if(!aha||blink){const ly=blink?192:160;
+      ctx.save();ctx.beginPath();ctx.arc(cx,168,30,0,Math.PI*2);ctx.clip();
+      ctx.fillStyle=c.body;ctx.fillRect(cx-35,130,70,ly-130);ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(cx-35,ly);ctx.lineTo(cx+35,ly);ctx.stroke();ctx.restore();
+      el(cx,168,30,30,0,null);}
+  });
+  ctx.lineWidth=Math.max(10,1.3/k);ctx.beginPath();
+  if(aha){ctx.moveTo(134,128);ctx.quadraticCurveTo(162,108,190,124);ctx.moveTo(210,124);ctx.quadraticCurveTo(238,108,266,128);}
+  else{ctx.moveTo(130,130);ctx.lineTo(190,148);ctx.moveTo(212,140);ctx.lineTo(270,116);}
+  ctx.stroke();ctx.lineWidth=lw;
+  if(o.talk||aha){const mo=o.talk?Math.abs(Math.sin(fr*0.4))*12:6;
+    pg([[184,198],[216,198],[200,212]],'#ff7a00');pg([[189,212+mo*0.3],[211,212+mo*0.3],[200,224+mo]],'#ff7a00');}
+  else pg([[184,200],[216,200],[200,226]],'#ff7a00');
+  ctx.restore();
+}
+// ── the Large Language Monster ──
+const BLOB='M150,350 C100,320 100,220 150,180 C140,110 240,70 300,110 C360,60 480,100 470,190 C530,230 530,330 470,360 C440,420 190,420 150,350 Z';
+function monsterArt(x,y,s,o){
+  o=o||{};const fr=o.fr||0;if(s<=0.01)return;
+  ctx.save();ctx.translate(x,y);
+  ctx.globalAlpha=0.2;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,190*s,26*s,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const wob=1+Math.sin(fr*0.08)*0.03;ctx.scale(s*(2-wob),s*wob);ctx.translate(-312,-404);
+  const lw=Math.max(7,1/s);ctx.lineWidth=lw;ctx.strokeStyle=INK;ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.fillStyle=o.col||'#6c4bd8';ctx.fill(P(BLOB));ctx.stroke(P(BLOB));
+  ctx.beginPath();ctx.moveTo(250,96);ctx.lineTo(236,48);ctx.stroke();
+  ctx.fillStyle='#36e0c2';ctx.beginPath();ctx.arc(234,40,12,0,Math.PI*2);ctx.fill();ctx.stroke();
+  [[250,200,36],[340,180,28],[402,226,22]].forEach(e=>{
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(e[0],e[1],e[2],0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle=INK;ctx.beginPath();ctx.arc(e[0]+(o.friendly?-4:5)+Math.sin(fr*0.03)*2,e[1]+4,e[2]*0.42,0,Math.PI*2);ctx.fill();});
+  if(o.friendly){
+    ctx.lineWidth=Math.max(10,1.4/s);ctx.beginPath();ctx.arc(325,282,56,0.15*Math.PI,0.85*Math.PI);ctx.stroke();
+    if(o.talk){ctx.fillStyle=INK;ctx.beginPath();ctx.ellipse(325,330,26,8+Math.abs(Math.sin(fr*0.4))*14,0,0,Math.PI*2);ctx.fill();}
+  }else{
+    const hh=o.talk?350+Math.abs(Math.sin(fr*0.35))*56:368;
+    ctx.fillStyle=INK;ctx.beginPath();ctx.moveTo(210,290);ctx.quadraticCurveTo(325,268,440,290);ctx.quadraticCurveTo(325,hh,210,290);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';[250,292,334,376].forEach(tx=>{ctx.beginPath();ctx.moveTo(tx,287);ctx.lineTo(tx+26,287);ctx.lineTo(tx+13,308);ctx.closePath();ctx.fill();});
+  }
+  ctx.restore();
+}
+// ── the five bits ──
+const BITS={guesser:['#3fa9f5','?'],reader:['#49c96d','Aa'],chopper:['#ffd400','ch|op'],oopser:['#ff9f1c','x'],bluffer:['#ff8fb3','']};
+const BIT_ORDER=['guesser','reader','chopper','oopser','bluffer'];
+function bitArt(x,y,s,col,glyph,o){
+  o=o||{};const fr=o.fr||0;
+  ctx.save();ctx.translate(x,y);
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(0,2,46*s,10*s,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.translate(0,-Math.abs(Math.sin(fr*0.09+(o.ph||0)))*(o.talk?5:2));
+  ctx.scale(s,s);ctx.translate(-60,-124);
+  const lw=Math.max(6,1/s);ctx.lineWidth=lw;ctx.strokeStyle=INK;ctx.lineJoin='round';
+  ctx.fillStyle='#ff7a00';ctx.fillRect(34,108,14,16);ctx.strokeRect(34,108,14,16);ctx.fillRect(72,108,14,16);ctx.strokeRect(72,108,14,16);
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(60,66,48,0,Math.PI*2);ctx.fill();ctx.stroke();
+  [44,76].forEach(ex=>{ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex,52,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle=INK;ctx.beginPath();ctx.arc(ex+2,54,5,0,Math.PI*2);ctx.fill();});
+  if(o.tie){ctx.fillStyle='#e63946';ctx.beginPath();ctx.moveTo(60,84);ctx.lineTo(68,92);ctx.lineTo(60,112);ctx.lineTo(52,92);ctx.closePath();ctx.fill();ctx.stroke();}
+  else if(glyph){ctx.fillStyle=INK;ctx.font=`bold 26px ${FF}`;ctx.textAlign='center';ctx.fillText(glyph,60,100);ctx.textAlign='left';}
+  if(o.talk){ctx.fillStyle=INK;ctx.beginPath();ctx.ellipse(60,72,7,2+Math.abs(Math.sin(fr*0.4))*6,0,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+}
+
+
+// ══ THE TINY GUESSER ══
+// A real (very small) next-word guesser. It counts which word came next
+// in the sentences it has read, and guesses the one it saw most.
+const CORPUS=[
+ 'the dog crossed the pond','kevin chased the squirrel','pearl loves juice boxes','scratchy is a cranky chicken','the farm is very quiet','aunt barb said that is nice dear','the squirrel took the corn','once upon a time there was a farm',
+ 'kevin crossed the yard','the chicken counted the corn','pearl played the arcade game','once upon a time there was a chicken','the cranky chicken guarded the corn','kevin chased the ball','scratchy counted the corn again','the dog crossed the yard',
+ 'the chicken crossed the road','why did the chicken cross the road','pearl crossed the road to get juice','once upon a time there was a dog','corn on the cob is the best','the squirrel took the corn again','kevin chased the squirrel again','the chicken crossed the road again',
+ 'scratchy crossed the road slowly','the chicken crossed the road to count corn','peanut butter and jelly is for lunch','kevin loves peanut butter and jelly','corn on the cob for dinner','once upon a time there was a monster','the monster was just a lot of words','the cranky chicken crossed the road'];
+const VOCAB=[...new Set(CORPUS.join(' ').split(' '))];
+function train(n){const m={};const add=(k,w)=>{(m[k]=m[k]||{})[w]=(m[k][w]||0)+1;};
+  for(let i=0;i<n&&i<CORPUS.length;i++){const w=CORPUS[i].split(' ');
+    for(let j=0;j<w.length-1;j++){add(w[j],w[j+1]);if(j>0)add(w[j-1]+' '+w[j],w[j+1]);}}
+  return m;}
+function predict(m,text){const w=text.toLowerCase().split(' ');const c=m[w.slice(-2).join(' ')]||m[w[w.length-1]];
+  if(!c)return null;const tot=Object.values(c).reduce((a,b)=>a+b,0);
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>[e[0],e[1]/tot]);}
+const FULL=train(CORPUS.length);
+
+// ══ GAME STATE ══
+const say=document.getElementById('say'),panel=document.getElementById('panel');
+const G={stage:0,slices:0,shake:0,burst:0,round:0,fed:0,tries:[],parts:[],made:[],q:0,caught:0,missed:0,answered:false,slash:null,bluffS:1};
+function speak(t){say.innerHTML='<b>CONCEPT SLAYER</b>'+t;}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;}
+function btn(label,fn,cls){const b=el('button','big'+(cls?' '+cls:''),label);b.addEventListener('click',()=>{ac();fn(b);});return b;}
+function bars(list){const d=el('div','bars');list.forEach(p=>{const r=el('div','bar');r.appendChild(el('span','',p[0]));const o=el('div'),i=el('i');i.style.width='0%';o.appendChild(i);r.appendChild(o);d.appendChild(r);setTimeout(()=>{i.style.width=Math.round(p[1]*100)+'%';},40);});return d;}
+function dots(){document.querySelectorAll('#dots i').forEach((d,i)=>d.classList.toggle('on',i<=G.stage));}
+function go(n){G.stage=n;G.t0=fr_g;dots();panel.innerHTML='';STAGES[n]();try{window.scrollTo(0,0);}catch(e){}}
+
+const ROUNDS=[['the chicken crossed the',['road','moon','sandwich']],['once upon a',['tractor','time','banana']],['kevin chased the',['ball','moon','squirrel']],['peanut butter and',['gravel','honey','jelly']]];
+const PIECES=['SUPER','UN','CRANK','CLUCK','CORN','ZILLA','Y','ING'];
+const CLAIMS=[
+ ['Chickens have feathers.',true,'Checked it: yes. Chickens have feathers.'],
+ ['The moon was invented in 1842 by a chicken named Gerald.',false,'Checked it: nobody invented the moon. There is no Gerald.'],
+ ['A week has seven days.',true,'Checked it: yes. Seven days.'],
+ ['Corn grows on corn trees that are 900 feet tall.',false,'Checked it: corn grows on stalks. They are about as tall as a grown-up.'],
+ ['Spiders have eight legs.',true,'Checked it: yes. Eight legs.'],
+ ['The sun is a giant ball of cheese.',false,'Checked it: the sun is a star. It is very hot gas, not cheese.'],
+];
+const STAGES=[
+ function slice(){G.slices=0;G.burst=0;
+   speak('The Large Language Monster is too big to understand. Swipe across it to slice it! Three slices should do.');
+   panel.appendChild(el('div','note','You can also tap the button.'));
+   const r=el('div','row');r.appendChild(btn('SLICE!',()=>doSlice()));panel.appendChild(r);},
+ function guesser(){G.round=0;speak('Bit one: the Guesser. All it does is guess the next word. Can you guess like it does?');askRound();},
+ function reader(){G.fed=0;G.tries=[];G.wild=null;speak('Bits two and four: the Reader and the Oopser. The Guesser only knows what it has read. Right now it has read nothing. Feed it some sentences!');drawReader();},
+ function chopper(){G.parts=[];G.made=[];speak('Bit three: the Chopper. It chops words into pieces, then snaps pieces together. Tap two or three pieces and make two brand new words.');drawChopper();},
+ function bluffer(){G.q=0;G.caught=0;G.missed=0;G.bluffS=1;speak('Bit five: the Bluffer. It sounds sure every single time. Some of this is true and some is a bluff. You decide, then we check.');askClaim();},
+ function end(){sfx('fanfare');speak('You did it. It is a giant next-word guesser that practiced on a mountain of writing, and it sounds sure even when it is wrong. So we check it.');
+   panel.appendChild(el('div','note','You caught '+G.caught+' of 3 bluffs. The Bluffer sounded just as sure every time. That is why we check.'));
+   const r=el('div','row');r.appendChild(btn('PLAY AGAIN',()=>go(0),'go'));
+   r.appendChild(btn('WATCH THE EPISODE',()=>{location.href='/shows/episode-13.html';},'alt'));
+   r.appendChild(btn('EXIT',()=>{location.href='/';},'alt'));panel.appendChild(r);},
+];
+function doSlice(){if(G.stage!==0||G.slices>=3)return;G.slices++;G.shake=18;sfx('slice');
+  G.slash={t:fr_g};
+  if(G.slices>=3){G.burst=fr_g;[0,1,2,3,4].forEach(i=>setTimeout(()=>sfx('pop'),250+i*140));
+    speak('It fell apart into five little bits. That is all it ever was. Let us meet them.');
+    panel.innerHTML='';const r=el('div','row');r.appendChild(btn('MEET THE BITS',()=>go(1),'go'));panel.appendChild(r);}
+  else speak(['','Good slice! Again!','One more!'][G.slices]);}
+function askRound(){panel.innerHTML='';const R=ROUNDS[G.round];
+  panel.appendChild(el('div','prompt',R[0]+' ____'));
+  const r=el('div','row');R[1].forEach(w=>r.appendChild(btn(w.toUpperCase(),()=>answerRound(w))));panel.appendChild(r);
+  panel.appendChild(el('div','note','Round '+(G.round+1)+' of '+ROUNDS.length));}
+function answerRound(w){const R=ROUNDS[G.round],p=predict(FULL,R[0]),top=p[0][0];panel.innerHTML='';
+  panel.appendChild(el('div','prompt',R[0]+' '+top.toUpperCase()));
+  panel.appendChild(bars(p));
+  if(w===top){sfx('ding');speak('You guessed the same word as the Guesser: '+top.toUpperCase()+'. It has seen that word come next the most.');}
+  else{sfx('pop');speak('You said '+w.toUpperCase()+'. The Guesser picked '+top.toUpperCase()+', because that is what it has seen come next the most. The bars show its guesses.');}
+  const r=el('div','row');const last=G.round>=ROUNDS.length-1;
+  r.appendChild(btn(last?'NEXT BIT':'NEXT ROUND',()=>{if(last)go(2);else{G.round++;askRound();}},'go'));panel.appendChild(r);}
+function drawReader(){panel.innerHTML='';const text='the chicken crossed the';
+  const m=train(G.fed),p=predict(m,text);
+  let guess;if(!p){if(!G.wild){const pool=VOCAB.filter(v=>v!=='road'&&v.length>3);G.wild=pool[Math.floor(Math.random()*pool.length)];}guess=G.wild;}else guess=p[0][0];
+  const done=guess==='road';
+  if(G._lastFed!==G.fed||!G.tries.length){G._lastFed=G.fed;G.tries.push([guess,done]);sfx(done?'ding':'buzz');}
+  panel.appendChild(el('div','prompt',text+' '+guess.toUpperCase()+(done?'':'?')));
+  panel.appendChild(p?bars(p):el('div','note','It has read nothing yet, so this is a wild guess.'));
+  const tr=el('div','tries');G.tries.forEach(t=>{const e=el('em',t[1]?'ok':'',(t[1]?'yes: ':'oops: ')+t[0]);tr.appendChild(e);});panel.appendChild(tr);
+  panel.appendChild(el('div','note','Sentences read: '+G.fed+' of '+CORPUS.length+'. This is a real tiny guesser running right here. The big ones read billions.'));
+  const r=el('div','row');
+  if(done){speak('There it is: ROAD. Nobody told it the answer. It guessed, got it wrong, read more, and got nudged. The big ones do that billions of times.');
+    r.appendChild(btn('NEXT BIT',()=>go(3),'go'));}
+  else{if(G.fed>0)speak('Oops. Still wrong. It guesses whatever it has seen most so far. Feed it more!');
+    r.appendChild(btn('FEED IT 8 SENTENCES',()=>{G.fed=Math.min(CORPUS.length,G.fed+8);drawReader();}));}
+  panel.appendChild(r);}
+function drawChopper(){panel.innerHTML='';
+  panel.appendChild(el('div','made',G.parts.length?G.parts.join(' + '):'tap some pieces'));
+  const r=el('div','row');PIECES.forEach(pc=>{const b=btn(pc,()=>{if(G.parts.length<3){G.parts.push(pc);sfx('chop');drawChopper();}},'alt');b.style.flex='0 1 auto';b.style.minWidth='84px';r.appendChild(b);});panel.appendChild(r);
+  const r2=el('div','row');
+  const snap=btn('SNAP!',()=>{const w=G.parts.join('');G.made.push(w);G.parts=[];sfx('ding');
+    speak(G.made.length>=2?'Two words nobody ever wrote before. That is the fun part. It is also how it can make things up.':w+'! That is a new word. Make one more.');drawChopper();});
+  snap.disabled=G.parts.length<2;r2.appendChild(snap);
+  const clr=btn('START OVER',()=>{G.parts=[];drawChopper();},'alt');clr.disabled=!G.parts.length;r2.appendChild(clr);
+  if(G.made.length>=2)r2.appendChild(btn('NEXT BIT',()=>go(4),'go'));
+  panel.appendChild(r2);
+  if(G.made.length)panel.appendChild(el('div','note','Your new words: '+G.made.join(', ')));}
+function askClaim(){panel.innerHTML='';G.answered=false;const c=CLAIMS[G.q];
+  panel.appendChild(el('div','prompt','"'+c[0]+'"'));
+  const r=el('div','row');r.appendChild(btn('TRUE',()=>answerClaim(true)));r.appendChild(btn('BLUFF!',()=>answerClaim(false),'alt'));panel.appendChild(r);
+  panel.appendChild(el('div','note','Question '+(G.q+1)+' of '+CLAIMS.length));}
+function answerClaim(a){const c=CLAIMS[G.q],right=a===c[1];G.answered=true;panel.innerHTML='';
+  panel.appendChild(el('div','prompt','"'+c[0]+'"'));
+  panel.appendChild(el('div','fact',c[2]));
+  if(!c[1]){if(right){G.caught++;G.bluffS=Math.max(0.55,G.bluffS-0.15);}else G.missed++;}
+  sfx(right?'ding':'buzz');
+  speak(right?(c[1]?'Right. That one was true. It sounded exactly the same as the bluffs, though.':'Caught it! That was a bluff. It was not lying. It was guessing what sounds right.')
+             :(c[1]?'That one was actually true. See? You cannot tell from how sure it sounds.':'It got you. That was a bluff, and it sounded completely sure. That is why we check.'));
+  const r=el('div','row');const last=G.q>=CLAIMS.length-1;
+  r.appendChild(btn(last?'FINISH':'NEXT ONE',()=>{if(last)go(5);else{G.q++;askClaim();}},'go'));panel.appendChild(r);}
+
+// ══ SWIPE TO SLICE ══
+let drag=null;
+function pos(e){const r=C.getBoundingClientRect();return [(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H];}
+C.addEventListener('pointerdown',e=>{ac();drag={a:pos(e),b:pos(e)};});
+C.addEventListener('pointermove',e=>{if(drag)drag.b=pos(e);});
+function endDrag(){if(!drag)return;const dx=drag.b[0]-drag.a[0],dy=drag.b[1]-drag.a[1],mx=(drag.a[0]+drag.b[0])/2;
+  const long=Math.hypot(dx,dy)>70,tap=Math.hypot(dx,dy)<12&&drag.a[0]>330;
+  if(G.stage===0&&((long&&mx>300)||tap))doSlice();drag=null;}
+C.addEventListener('pointerup',endDrag);C.addEventListener('pointercancel',()=>{drag=null;});C.addEventListener('pointerleave',endDrag);
+
+// ══ DRAW ══
+const BOOKC=['#c8502e','#3fa9f5','#49c96d','#ffd400','#ff8fb3','#8f6ad8','#e8e0d0','#ff9f1c'];
+const BIT_X=[330,400,470,540,600];
+function bg(){
+  ctx.fillStyle='#4a3560';ctx.fillRect(0,0,W,GY);
+  for(let r=0;r<2;r++){const sy=20+r*86;
+    for(let i=0;i<36;i++){const bw=11+(i*7+r*3)%6,bx=6+i*17.6,bh=40+((i*13+r*29)%22);ctx.fillStyle=BOOKC[(i+r*3)%BOOKC.length];ctx.fillRect(bx,sy+64-bh,bw,bh);}
+    ctx.fillStyle='#5a3b22';ctx.fillRect(0,sy+64,W,8);}
+  ctx.fillStyle='rgba(26,16,40,0.55)';ctx.fillRect(0,0,W,GY);
+  ctx.fillStyle='#6d5788';ctx.fillRect(0,184,W,GY-184);
+  ctx.fillStyle='#6b4a2c';ctx.fillRect(0,GY,W,H-GY);
+}
+function bitAt(i,x,s,talk){const k=BIT_ORDER[i];bitArt(x,GY,s,BITS[k][0],BITS[k][1],{fr:fr_g,ph:i*1.3,tie:k==='bluffer',talk:talk});}
+function draw(){
+  fr_g++;ctx.clearRect(0,0,W,H);bg();
+  const st=G.stage;
+  let sw=25;if(G.slash&&fr_g-G.slash.t<16)sw=25-Math.sin((fr_g-G.slash.t)/16*Math.PI)*110;
+  slayerArt(120,GY,0.36,{fr:fr_g,sw:sw,expr:st===5?'aha':st===4?'side':'cranky'});
+  if(st===0){
+    if(!G.burst){const sh=G.shake>0?Math.sin(fr_g*1.6)*G.shake*0.5:0;if(G.shake>0)G.shake--;
+      monsterArt(450+sh,GY,0.5-G.slices*0.04,{fr:fr_g,talk:fr_g%160<60});
+      if(fr_g%160<60){ctx.font='bold 13px '+FF;ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(['TOKENS!','PARAMETERS!','GRADIENT DESCENT!'][Math.floor(fr_g/160)%3],450,36);ctx.textAlign='left';}
+    }else{const q=Math.min(1,(fr_g-G.burst)/40),e=1-(1-q)*(1-q);
+      for(let i=0;i<5;i++){const k=BIT_ORDER[i];bitArt(450+(BIT_X[i]-450)*e,GY-90*(1-e)-Math.sin(q*Math.PI)*50,0.42,BITS[k][0],BITS[k][1],{fr:fr_g,ph:i*1.3,tie:k==='bluffer'});}}
+    if(drag){ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(drag.a[0],drag.a[1]);ctx.lineTo(drag.b[0],drag.b[1]);ctx.stroke();}
+    if(G.slash&&fr_g-G.slash.t<14){ctx.strokeStyle='rgba(255,255,255,'+(1-(fr_g-G.slash.t)/14)+')';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(340,40);ctx.lineTo(580,250);ctx.stroke();}
+  }else if(st===1){bitAt(0,440,1.25,true);}
+  else if(st===2){
+    const n=G.fed*2;let k=0;for(let r=0;r<16&&k<n;r++){const cnt=Math.max(1,6-Math.floor(r/3));for(let c=0;c<cnt&&k<n;c++,k++){
+      const bx=560-cnt*10+c*20,by=GY-13-r*13;ctx.fillStyle=BOOKC[(k*3)%BOOKC.length];ctx.fillRect(bx,by,19,12);ctx.strokeStyle='rgba(26,16,36,0.7)';ctx.lineWidth=1;ctx.strokeRect(bx,by,19,12);}}
+    bitAt(1,330,0.95,false);bitAt(3,440,0.95,true);
+  }else if(st===3){bitAt(2,440,1.25,true);}
+  else if(st===4){bitAt(4,440,1.45*G.bluffS,!G.answered);
+    if(G.answered){ctx.fillStyle='#fff6dc';ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(560,GY-70,60,70,6);ctx.fill();ctx.stroke();ctx.font='bold 11px '+FF;ctx.fillStyle=INK;ctx.textAlign='center';ctx.fillText('BIG',590,GY-44);ctx.fillText('BOOK',590,GY-30);ctx.textAlign='left';}
+  }else{const q=Math.min(1,(fr_g-G.t0)/50);
+    if(q<1){for(let i=0;i<5;i++){const k=BIT_ORDER[i];bitArt(BIT_X[i]+(450-BIT_X[i])*q,GY-Math.sin(q*Math.PI)*60,0.42,BITS[k][0],BITS[k][1],{fr:fr_g,ph:i*1.3,tie:k==='bluffer'});}}
+    else monsterArt(450,GY,0.36,{fr:fr_g,friendly:true,talk:fr_g%120<50});}
+  requestAnimationFrame(draw);
+}
+go(0);
+requestAnimationFrame(draw);
+</script>
+<script src="/support.js" defer></script>
+</body>
+</html>
