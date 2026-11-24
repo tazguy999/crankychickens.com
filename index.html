@@ -27,6 +27,17 @@ body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hi
 .new-callout .nc-text small{display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:clamp(11px,2.8vw,14px)}
 .new-callout .nc-btn{background:#ea4f8c;color:#fff;border:3px solid #1d1a1f;box-shadow:3px 3px 0 #1d1a1f;padding:4px 14px;font-size:clamp(12px,3vw,15px);white-space:nowrap}
 .new-callout:hover .nc-btn,.new-callout:focus-visible .nc-btn{transform:translate(2px,2px);box-shadow:1px 1px 0 #1d1a1f}
+.gb-shelf{max-width:700px;margin:0 auto;padding:26px 16px 44px}
+.gb-shelf h2{font-family:'Fredoka One',cursive;font-size:clamp(17px,4.2vw,24px);color:#ffe14d;letter-spacing:1px;margin:0 0 2px;text-align:center}
+.gb-shelf p{margin:0 0 12px;text-align:center;font-size:12px;color:rgba(255,255,255,0.45)}
+.gb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.gb-grid a{display:flex;flex-direction:column;gap:2px;height:100%;padding:9px 11px;background:#120820;border:2px solid rgba(255,225,77,0.28);border-radius:4px;text-decoration:none;color:#fff;transition:border-color .15s,transform .15s}
+.gb-grid a:hover,.gb-grid a:focus-visible{border-color:#ffe14d;transform:translateY(-2px);outline:none}
+.gb-k{font-family:'Fredoka One',cursive;font-size:10px;letter-spacing:1.5px;color:rgba(255,225,77,0.75)}
+.gb-k b{font-weight:400;background:#ea4f8c;color:#fff;padding:0 6px;margin-left:5px;border-radius:2px}
+.gb-t{font-family:'Fredoka One',cursive;font-size:clamp(13px,3.2vw,15px);color:#ffe14d;line-height:1.15}
+.gb-d{font-size:11.5px;line-height:1.3;color:rgba(255,255,255,0.6)}
+@media (max-width:520px){.gb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .hero-canvas-wrap{position:relative;width:100%;max-width:640px;margin:0 auto;display:block;}
 #heroCanvas{display:block;width:100%;image-rendering:pixelated;}
 .hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
@@ -255,6 +266,20 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
 
 </section>
 
+<!-- ── GRAYDORN & BATDORN: EVERYTHING IN ONE PLACE ── -->
+<section class="gb-shelf" id="graydorn" aria-labelledby="gbShelfH">
+  <h2 id="gbShelfH">🦕 GRAYDORN &amp; BATDORN</h2>
+  <p>A Kids Studio original. Four issues, one giant world, one very cranky dog.</p>
+  <ul class="gb-grid">
+    <li><a href="/games/graydorn-issue-4.html"><span class="gb-k">ISSUE #4<b>NEW</b></span><span class="gb-t">Before the Bark</span><span class="gb-d">The origin story. Watch it or read it.</span></a></li>
+    <li><a href="/games/graydorn-issue-1.html"><span class="gb-k">ISSUE #1</span><span class="gb-t">The Bark Lady Strikes!</span><span class="gb-d">Comic + chase game. She took Dino.</span></a></li>
+    <li><a href="/games/graydorn-issue-2.html"><span class="gb-k">ISSUE #2</span><span class="gb-t">Halloween Mayhem!</span><span class="gb-d">Comic + game. A haunted house and a molerat.</span></a></li>
+    <li><a href="/games/graydorn-issue-3.html"><span class="gb-k">ISSUE #3</span><span class="gb-t">The Sky Tore Open</span><span class="gb-d">Comic + game. The Cranky Chickens crossover.</span></a></li>
+    <li><a href="/games/graydorns-world.html"><span class="gb-k">OPEN WORLD</span><span class="gb-t">Graydorn's World</span><span class="gb-d">Play it. Ten heroes, no game over, ever.</span></a></li>
+    <li><a href="/games/graydorn-cast.html"><span class="gb-k">THE CAST</span><span class="gb-t">Heroes &amp; Villains</span><span class="gb-d">Everybody, animated.</span></a></li>
+  </ul>
+</section>
+
 <!-- ── THE MERCH TABLE ── -->
 <section class="trailers" id="merch" style="padding-top:0;">
   <h2 class="section-hdr">👕 THE MERCH TABLE</h2>
@@ -418,10 +443,7 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <a href="/games/graydorns-world.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffe14d;border-color:#ffe14d;color:#1d1a1f;font-family:inherit;font-size:inherit;">▶ PLAY NOW</a>
-        <a href="/games/graydorn-issue-1.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">📖 ISSUE #1</a>
-        <a href="/games/graydorn-issue-2.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">🎃 ISSUE #2</a>
-        <a href="/games/graydorn-issue-3.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">🐔 ISSUE #3</a>
-        <a href="/games/graydorn-cast.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">👥 CAST</a>
+        <a href="#graydorn" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">📚 ALL ISSUES &amp; CAST</a>
         <button class="wishlist" style="background:transparent;border-color:rgba(255,100,50,0.5);color:#ff6633;" onclick="shareCard('cardGWF','Graydorn\'s World')">🔗 SHARE</button>
       </div>
     </div>
@@ -585,10 +607,7 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
       <p class="game-desc">A hand-drawn, Hyrule-sized open world starring Graydorn, Batdorn, Charliescope, Jewels, Dino and the Stuffy Squad. Nine heroes to unlock, two bosses to bonk, treasure to find, and no game over, ever. Halloween costumes included.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <a href="/games/graydorns-world.html" class="wishlist" style="display:inline-block;text-decoration:none;background:#ffe14d;border-color:#ffe14d;color:#1d1a1f;font-family:inherit;font-size:inherit;">▶ PLAY GRAYDORN'S WORLD</a>
-        <a href="/games/graydorn-issue-1.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">📖 ISSUE #1</a>
-        <a href="/games/graydorn-issue-2.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">🎃 ISSUE #2</a>
-        <a href="/games/graydorn-issue-3.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">🐔 ISSUE #3</a>
-        <a href="/games/graydorn-cast.html" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">👥 THE CAST</a>
+        <a href="#graydorn" class="wishlist" style="display:inline-block;text-decoration:none;background:transparent;border-color:rgba(255,225,77,0.4);color:#ffe14d;">📚 ALL ISSUES &amp; CAST</a>
       </div>
     </div>
   </div>
