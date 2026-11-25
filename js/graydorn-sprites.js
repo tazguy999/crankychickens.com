@@ -585,7 +585,85 @@ function snow(w,h,dt,drift){
 }
 
 
+/* ---------- Issue #4 drawings (the good girl, the Hypno Squirrels, the Dorn Den) ---------- */
+function spiral(x,y,r,rot,col,lw,turns=2.5){
+  g.beginPath();const n=44;for(let i=0;i<=n;i++){const f=i/n,a=rot+f*turns*Math.PI*2,px=x+Math.cos(a)*f*r,py=y+Math.sin(a)*f*r;i?g.lineTo(px,py):g.moveTo(px,py)}
+  g.lineWidth=lw;g.strokeStyle=col;g.lineCap='round';g.lineJoin='round';g.stroke();
+}
+function heart(x,y,r,col='#ea4f8c'){setSeed(boil*61+Math.floor(x));blob(x-r*.48,y,r*.62,r*.62,col,.4,10,0);blob(x+r*.48,y,r*.62,r*.62,col,.4,10,0);poly([[x-r*1.02,y+r*.28],[x+r*1.02,y+r*.28],[x,y+r*1.35]],col,.4,0)}
+function ball(x,y,r=10){setSeed(boil*61+Math.floor(x));blob(x,y,r,r,'#c8e63c',.6,10,2.5);g.beginPath();g.arc(x-r*.9,y,r,-.8,.8);g.lineWidth=1.6;g.strokeStyle='#fff';g.stroke()}
+function acorn(x,y,rot=0){setSeed(boil*61+Math.floor(x));g.save();g.translate(x,y);g.rotate(rot);blob(0,2,7,8,'#c08a4e',.5,8,2);blob(0,-5,8.5,4.5,'#6e4a2c',.5,8,2);line(0,-9,1,-13,2);g.restore()}
+function beam(x1,y1,x2,y2,w=6){for(let k=0;k<6;k++){g.beginPath();g.moveTo(x1,y1+(k-2.5)*w*.5);g.lineTo(x2,y2+(k-2.5)*w*1.6);g.lineWidth=w;g.strokeStyle=RAINBOW[k];g.lineCap='round';g.stroke()}}
+function stamp(x,y,s,rot=-.2,col='#2f9a4a',sc=1){g.save();g.translate(x,y);g.rotate(rot);g.scale(sc,sc);setSeed(boil*67+3);poly([[-110,-30],[110,-30],[110,30],[-110,30]],'#ffffffee',1.5,0);g.lineWidth=6;g.strokeStyle=col;g.strokeRect(-108,-28,216,56);txt(s,0,2,s.length>9?28:38,col,null);g.restore()}
+/* The family goldendoodle: good girl, hypnotized, or Bark Lady. Faces left; dir:-1 faces right. */
+function doodle(x,y,s,o={}){
+  const t=o.t||0,p=t*13,m=o.mood||'happy';setSeed(boil*41+3);
+  g.save();g.translate(x,y);g.scale(s*(o.dir||1),s);
+  const a1=o.run?Math.sin(p)*16:6,a2=o.run?-Math.sin(p)*16:-6;
+  limb(-6,-40,-6+a2,-4,13,'#d9a24c');blob(-8+a2,-4,9,5,'#c88e3d',.5,8,2);
+  const wag=(m==='happy'||o.wag)?Math.sin(time*18)*10:0;
+  blob(32,-60+wag,11,7,'#e7b762',1,10,2.5);
+  limb(8,-40,8+a1,-4,13,'#d9a24c');blob(6+a1,-4,9,5,'#c88e3d',.5,8,2);
+  blob(4,-62,28,30,'#e3b05b',2.4,16);
+  for(let k=0;k<9;k++){const a=k/9*Math.PI*2;blob(4+Math.cos(a)*25,-62+Math.sin(a)*27,8,7,'#ebbf6c',1,8,2)}
+  setSeed(boil*41+9);
+  limb(-12,-78,0,-52,11,'#e3b05b');blob(2,-49,7,6,'#e3b05b',.5,8,2);
+  if(o.badge){blob(14,-66,9,9,'#f2c230',.5,10,2.5);txt('★',14,-65,11,'#fff',null)}
+  blob(14,-100,9,19,'#c88e3d',1,10);
+  blob(-6,-106,24,23,'#e3b05b',2,14);
+  blob(-16,-128,7,6,'#ebbf6c',1,8,2);blob(-4,-131,7,6,'#ebbf6c',1,8,2);blob(8,-127,7,6,'#ebbf6c',1,8,2);
+  if(o.bow!==false){poly([[0,-134],[15,-143],[15,-125]],'#ea4f8c',.6,2.5);poly([[0,-134],[-15,-143],[-15,-125]],'#ea4f8c',.6,2.5);blob(0,-134,4,4,'#ea4f8c',.3,8,2)}
+  blob(-29,-98,14,10,'#f0cf92',1,12);
+  blob(-42,-101,5,4,INK,.4,8,1);
+  if(o.bark){blob(-29,-88,8,6,'#7a2630',.6,10,2.5);poly([[-34,-92],[-31,-87],[-28,-92]],'#fff',.3,1)}
+  else if(o.ball){ball(-40,-88,8)}
+  else if(m==='happy'){blob(-29,-89,8,5,'#7a2630',.5,10,2.5);blob(-28,-84,4.5,6,'#f28c96',.4,8,2)}
+  else if(m==='sad'){g.beginPath();g.arc(-30,-84,7,Math.PI+.4,-.4);strokeIt(2.5)}
+  else{line(-36,-90,-24,-91,2.5)}
+  if(m==='hypno'){
+    blob(-15,-111,7.5,7.5,'#fff',.3,10,2);blob(0,-112,6.5,6.5,'#fff',.3,10,2);
+    spiral(-15,-111,6.5,time*7,'#8a3fd1',1.8,2);spiral(0,-112,5.5,time*7+1,'#8a3fd1',1.8,2);
+  }else{
+    blob(-14,-111,5,6,'#fff',.4,10,2);blob(-1,-112,4,5,'#fff',.4,10,2);
+    g.fillStyle=INK;const dy=m==='sad'?2:0;g.beginPath();g.arc(-16,-110+dy,2.3,0,7);g.arc(-3,-111+dy,2,0,7);g.fill();
+    if(m==='happy'){g.fillStyle='#fff';g.beginPath();g.arc(-15,-112,.9,0,7);g.arc(-2,-113,.8,0,7);g.fill()}
+  }
+  if(m==='angry'){line(-22,-122,-8,-115,4);line(-5,-116,6,-122,4)}
+  if(m==='sad'){line(-22,-117,-10,-121,3);line(-5,-121,6,-118,3)}
+  if(o.pearls)for(let k=0;k<6;k++){g.fillStyle='#fff';g.beginPath();g.arc(-20+k*6,-82+Math.abs(k-2.5)*1.4,3,0,7);g.fill();strokeIt(1.5)}
+  blob(18,-82,6,5,'#e8508a',.5,8,0);
+  g.restore();
+}
+const SQ=[{body:'#a9643a',tail:'#c07a48',belly:'#f3dcc0'},{body:'#8d8a92',tail:'#a8a5ae',belly:'#efeef2'},{body:'#d98b3a',tail:'#eba350',belly:'#fbe8cf'}];
+function squirrel(x,y,s,o={}){
+  const k=o.k||0,C=SQ[k];setSeed(boil*131+k*17+5);
+  g.save();g.translate(x,y);if(o.rot)g.rotate(o.rot);g.scale(s*(o.dir||1),s);
+  const tw=Math.sin(time*5+k)*3;
+  blob(-27+tw,-50,17,30,C.tail,2,14,3);blob(-36+tw,-78,13,12,C.tail,1.6,10,3);
+  line(-30+tw,-36,-27+tw,-66,2,C.body);
+  blob(-7,-3,10,5,C.body,.5,8,2.5);blob(11,-3,10,5,C.body,.5,8,2.5);
+  blob(0,-25,18,24,C.body,1.2,12,3);blob(5,-20,10,15,C.belly,.6,10,0);
+  limb(8,-34,22,-28,6,C.body);
+  poly([[-9,-70],[-5,-86],[2,-72]],C.body,.6,2.5);poly([[9,-73],[15,-87],[19,-70]],C.body,.6,2.5);
+  blob(6,-58,20,17,C.body,1,12,3);
+  blob(18,-51,9,7,C.belly,.5,8,2);blob(26,-55,3.2,2.6,INK,.3,8,0);
+  if(o.asleep){line(-4,-61,6,-60,2.5);line(11,-62,20,-61,2.5);g.beginPath();g.arc(19,-46,3,0,7);g.fillStyle='#7a2630';g.fill()}
+  else{
+    poly([[15,-47],[23,-47],[22,-39],[16,-39]],'#fff',.3,1.6);line(19,-47,19,-39,1.2);
+    const r1=k===2?9:7.5,r2=k===2?5.5:7;
+    blob(0,-62,r1,r1,'#fff',.3,10,2);blob(15,-63,r2,r2,'#fff',.3,10,2);
+    const col=o.dizzy?'#9aa0a8':['#8a3fd1','#2f9a4a','#e0508a'][k],sp=o.dizzy?-3:7;
+    spiral(0,-62,r1-1,time*sp+k,col,1.9,2);spiral(15,-63,r2-1,time*sp+k+1,col,1.9,2);
+  }
+  g.restore();
+}
+function dogBed(x,y){setSeed(boil*7+71);blob(x,y-14,76,22,'#e8508a',1.5,14,3);blob(x,y-19,54,12,'#f7b5cf',1,12,2);line(x+70,y-10,x+70,y-96,4);poly([[x+14,y-96],[x+126,y-96],[x+126,y-136],[x+14,y-136]],'#fffaf0',.8,3);txt('RESERVED',x+70,y-115,18,'#ea4f8c',null)}
+
+
 window.GBS={graydorn,batdorn,charlie,dino,barkLady,molerat,stuffy,jewels,burst,bubble,pumpkin,ghost,snowball,scenery,snow,hscenery,falling,txt,
   scratchy,pearl,auntBarb,kevin,elJaguar,egg,corn,juiceBox,skyTear,coop,
+  blob,poly,line,limb,wedges,shard,cheetah,candy,poop,blanket,loaf,starterJar,openBook,sleepyZ,
+  spiral,heart,ball,acorn,beam,stamp,doodle,squirrel,dogBed,RAINBOW,
+  seed:function(n){setSeed(boil*7+n)},setClock:function(t){time=t;boil=reduce?0:Math.floor(t*8)},
   setG:function(ctx){g=ctx},tick:function(dt){time+=dt;boil=reduce?0:Math.floor(time*8)},get time(){return time}};
 })();

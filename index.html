@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cranky Chickens — Coming Soon</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&family=Permanent+Marker&family=Patrick+Hand&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hidden;}
 
@@ -38,6 +38,14 @@ body{background:#0a0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow-x:hi
 .gb-t{font-family:'Fredoka One',cursive;font-size:clamp(13px,3.2vw,15px);color:#ffe14d;line-height:1.15}
 .gb-d{font-size:11.5px;line-height:1.3;color:rgba(255,255,255,0.6)}
 @media (max-width:520px){.gb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gb-reel{margin-top:16px;padding:12px 12px 14px;background:#120820;border:2px solid rgba(255,225,77,0.28);border-radius:4px}
+.gb-reel h3{font-family:'Fredoka One',cursive;font-size:13px;letter-spacing:2px;color:#ffe14d;margin:0 0 9px;text-align:center}
+.gb-reel h3+.gb-row+h3{margin-top:14px;color:#ff9ecb}
+.gb-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.gb-row button{font-family:'Fredoka One',cursive;font-size:12.5px;letter-spacing:.5px;min-height:44px;padding:8px 13px;background:rgba(255,225,77,0.12);border:1px solid #ffe14d;color:#ffe14d;border-radius:3px;cursor:pointer;transition:background .15s,transform .15s}
+.gb-row button:hover,.gb-row button:focus-visible{background:rgba(255,225,77,0.28);transform:translateY(-2px);outline:none}
+.gb-row.soon button{border-color:#ff9ecb;color:#ff9ecb;background:rgba(234,79,140,0.14)}
+.gb-row.soon button:hover,.gb-row.soon button:focus-visible{background:rgba(234,79,140,0.3)}
 .hero-canvas-wrap{position:relative;width:100%;max-width:640px;margin:0 auto;display:block;}
 #heroCanvas{display:block;width:100%;image-rendering:pixelated;}
 .hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
@@ -278,6 +286,22 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     <li><a href="/games/graydorns-world.html"><span class="gb-k">OPEN WORLD</span><span class="gb-t">Graydorn's World</span><span class="gb-d">Play it. Ten heroes, no game over, ever.</span></a></li>
     <li><a href="/games/graydorn-cast.html"><span class="gb-k">THE CAST</span><span class="gb-t">Heroes &amp; Villains</span><span class="gb-d">Everybody, animated.</span></a></li>
   </ul>
+  <div class="gb-reel" id="graydornTrailers">
+    <h3>🎬 TRAILERS</h3>
+    <div class="gb-row">
+      <button type="button" onclick="playTrailer('gb1')">▶ Issue #1: The Bark Lady Strikes!</button>
+      <button type="button" onclick="playTrailer('gb2')">▶ Issue #2: Halloween Mayhem!</button>
+      <button type="button" onclick="playTrailer('gb3')">▶ Issue #3: The Sky Tore Open</button>
+      <button type="button" onclick="playTrailer('gb4')">▶ Issue #4: Before the Bark</button>
+      <button type="button" onclick="playTrailer('gbw')">▶ Graydorn's World</button>
+    </div>
+    <h3>🔮 COMING SOON</h3>
+    <div class="gb-row soon">
+      <button type="button" onclick="playTrailer('gb5')">▶ Issue #5: Top Secret</button>
+      <button type="button" onclick="playTrailer('gbd')">▶ Dino's New Power</button>
+      <button type="button" onclick="playTrailer('gbs')">▶ Name the Starter</button>
+    </div>
+  </div>
 </section>
 
 <!-- ── THE MERCH TABLE ── -->
@@ -419,6 +443,7 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     <div class="screen-wrap">
       <canvas class="screen-canvas" id="cGW" width="640" height="200"></canvas>
       <div class="screen-tag">SNOWY STREET — HOME · 12 KM × 10 KM</div>
+      <button class="play-hint" onclick="playTrailer('gbw')"><span style="border-color:#ffe14d;color:#ffe14d;background:rgba(255,225,77,0.2);">▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num" style="color:#ffe14d">GRAYDORN &amp; BATDORN — OPEN WORLD</div>
@@ -454,6 +479,7 @@ footer strong{color:#ffcc02;font-family:'Fredoka One',cursive;letter-spacing:2px
     <div class="screen-wrap">
       <canvas class="screen-canvas" id="cGI3" width="640" height="200"></canvas>
       <div class="screen-tag">THE SNOWY STREET — SKY: TORN (POLITELY)</div>
+      <button class="play-hint" onclick="playTrailer('gb3')"><span style="border-color:#ff9f1c;color:#ff9f1c;background:rgba(255,159,28,0.2);">▶ WATCH TRAILER</span></button>
     </div>
     <div class="card-body">
       <div class="game-num" style="color:#ff9f1c">GRAYDORN &amp; BATDORN — ISSUE #3</div>
@@ -5567,6 +5593,7 @@ function cluck(msg){
   };
 })();
 </script>
+<script src="/js/graydorn-trailers.js"></script>
 <script src="/support.js" defer></script>
 </body>
 </html>
