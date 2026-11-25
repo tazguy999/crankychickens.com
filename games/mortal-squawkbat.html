@@ -175,7 +175,7 @@ function sfx(n){
   else if(n==='soul'){bleep(300,900,0.3,0.2,'sine');}
   else if(n==='poof'){noise(0.16,0.22,1800);bleep(700,200,0.14,0.14,'sine');}
 }
-function toggleMute(){muted=!muted;SAVE.mute=muted;save();ga();if(MG)MG.gain.value=muted?0:1;if(!muted)sfx('tick');}
+function toggleMute(){muted=!muted;SAVE.mute=muted;save();ga();if(MG)MG.gain.value=muted?0:1;if(muted)stopSpeech();else sfx('tick');}
 // tiny music loop, scheduled on the audio clock
 const BASS=[110,0,110,165,0,110,196,165,98,0,98,147,0,98,175,147];
 const LEAD=[440,0,523,0,659,0,523,440,0,392,0,440,0,523,0,0,392,0,466,0,587,0,466,392,0,349,0,392,0,466,0,0];
@@ -194,6 +194,37 @@ function music(){
     musI++;musT+=spb;
   }
 }
+
+// ── VOICES ── same approach as the episodes: browser speech, a pitch/rate profile per speaker, voice picked by name hash
+const VOICE_PROFILES={
+  'ANNOUNCER':{pitch:0.45,rate:0.82},
+  'SCRATCHY':{pitch:0.7,rate:0.95},
+  'BELMONDO':{pitch:1.35,rate:1.05},
+  'SUB-YOLK':{pitch:0.6,rate:0.8},
+  'SHANG':{pitch:0.9,rate:0.8},
+  'EL JAGUAR':{pitch:0.5,rate:0.85},
+};
+const VOICE_OF={scratchy:'SCRATCHY',belmondo:'BELMONDO',subyolk:'SUB-YOLK',shang:'SHANG',jaguar:'EL JAGUAR'};
+const SAY_NAME={scratchy:'Scratchy Cage',belmondo:'Bawk Bawk Belmondo',subyolk:'Sub Yolk',shang:'Shang Squawk',jaguar:'El Jaguar'};
+const HAS_TTS='speechSynthesis' in window&&typeof SpeechSynthesisUtterance!=='undefined';
+let voicePool=[],sayHold=0;
+function loadVoices(){try{voicePool=(speechSynthesis.getVoices()||[]).filter(v=>v.lang&&v.lang.startsWith('en'));}catch(e){}}
+if(HAS_TTS){loadVoices();try{speechSynthesis.onvoiceschanged=loadVoices;}catch(e){}}
+function say(who,text,minor){
+  if(muted||!HAS_TTS)return;
+  if(minor&&GF<sayHold)return;            // fighter shouts never cut off the announcer
+  const clean=String(text).replace(/K\.O\./g,'kay oh').replace(/[^A-Za-z0-9 .,!?'-]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+  if(!clean)return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(clean),prof=VOICE_PROFILES[who]||{pitch:1,rate:1};
+    u.pitch=prof.pitch;u.rate=prof.rate;u.volume=0.9;
+    if(voicePool.length>0){const idx=Math.abs(who.split('').reduce((a,ch)=>a+ch.charCodeAt(0),0))%voicePool.length;u.voice=voicePool[idx];}
+    speechSynthesis.speak(u);
+    if(!minor)sayHold=GF+55;
+  }catch(e){}
+}
+function stopSpeech(){if(HAS_TTS)try{speechSynthesis.cancel();}catch(e){}}
 
 // ── CHARS ──
 const CH={
@@ -704,11 +735,11 @@ const comboFx=[null,null],CALL=[null,null];
 const Q=[];function after(n,fn){Q.push({t:n,fn});}
 function runQ(){for(let i=Q.length-1;i>=0;i--){if(--Q[i].t<=0){const f=Q[i].fn;Q.splice(i,1);f();}}}
 function go(s){gst=s;gT=0;}
-function callout(f){CALL[f===p1?0:1]={s:f.ch.spn,c:f.ch.col,t:60};}
+function callout(f){CALL[f===p1?0:1]={s:f.ch.spn,c:f.ch.col,t:60};say(VOICE_OF[f.key],f.ch.spn,true);}
 let annTxt='',annT=0,annM=1,annCol='#ffcc02',annSub='';
-function ann(txt,col,dur,sub){annTxt=txt;annT=annM=dur||90;annCol=col||'#ffcc02';annSub=sub||'';if(annM>50)sfx('ann');}
+function ann(txt,col,dur,sub){annTxt=txt;annT=annM=dur||90;annCol=col||'#ffcc02';annSub=sub||'';if(annM>50)sfx('ann');say('ANNOUNCER',txt.replace(' — ','. '));}
 let bolt=null,boltT=0;
-function toTitle(){Q.length=0;PT.length=0;PROJ.length=0;annT=0;musOn=false;paused=false;p1=p2=null;go('title');}
+function toTitle(){stopSpeech();Q.length=0;PT.length=0;PROJ.length=0;annT=0;musOn=false;paused=false;p1=p2=null;go('title');}
 function startLadder(){
   const pk=SEL[selIdx];SAVE.sel=selIdx;SAVE.mode=mode;save();
   ladder=SEL.filter(k=>k!==pk).concat(['jaguar']);ladIdx=0;conts=3;rndNum=1;w1=w2=0;lossHere=0;
@@ -734,7 +765,7 @@ function endRound(){
       ann('TOURNAMENT CHAMPION!','#ffcc02',170,'The egg is satisfied.');after(175,()=>go('victory'));
     }else{save();ann('YOU WIN!','#aaffaa',110,'Next opponent incoming...');after(125,()=>{rndNum=1;w1=w2=0;go('vs');});}
   }else if(w2>=2){
-    conts--;lossHere++;ann('YOU LOSE!','#ff4444',100);after(108,()=>go(conts>0?'cont':'gameover'));
+    conts--;lossHere++;ann('YOU LOSE!','#ff4444',100);after(108,()=>{go(conts>0?'cont':'gameover');say('ANNOUNCER',conts>0?'Continue?':'Game over. The egg is disappointed.');});
   }else{
     if(!a&&!b)ann('DRAW!','#ff8844',60);
     rndNum++;after(a||b?70:90,startRound);
@@ -771,7 +802,7 @@ function step(){
     case'title':
       if(hit('help')||EDGE.help)help=true;
       else if(hit('snd'))toggleMute();
-      else if(anyOk()||TAP){sfx('ok');go('select');}
+      else if(anyOk()||TAP){sfx('ok');go('select');say('ANNOUNCER','Select your fighter!');}
       break;
     case'select':{
       if(EDGE.left&&selIdx>0){selIdx--;sfx('tick');}
@@ -783,6 +814,7 @@ function step(){
       if(goNow)startLadder();
       break;}
     case'vs':
+      if(gT===2)say('ANNOUNCER',SAY_NAME[SEL[selIdx]]+', versus, '+SAY_NAME[ladder[ladIdx]]+'!');
       if(gT===30&&CH[ladder[ladIdx]].boss)sfx('roar');
       if(gT>=170||(gT>30&&(anyOk()||TAP)))startRound();
       break;
@@ -814,7 +846,10 @@ function step(){
       if((gT>25&&(anyOk()||TAP))||gT>200){dfr=0;go('dancer');sfx('cheer');hype=1;}
       break;
     case'dancer':
-      dfr++;if(dfr>=185||(dfr>50&&(anyOk()||TAP)))endRound();
+      dfr++;
+      if(dfr===2)say('ANNOUNCER',(DANCES[p1.key]||DANCES.scratchy).name);
+      if(dfr===132)say('ANNOUNCER','Friendship!');
+      if(dfr>=185||(dfr>50&&(anyOk()||TAP)))endRound();
       break;
     case'rndend':simFight(false);break;
     case'cont':
@@ -1108,7 +1143,7 @@ function drawPause(){
   txt('PAUSED',W/2,92,40,'#ffcc02','center',0,'#cc8800');
   ui('resume',W/2-120,122,240,46,'RESUME','#aaffaa',20);
   ui('phelp',W/2-120,178,240,42,'HOW TO PLAY','#ffcc02',17);
-  ui('psnd',W/2-120,230,240,42,muted?'SOUND: OFF':'SOUND: ON','#9fd0ff',17);
+  ui('psnd',W/2-120,230,240,42,muted?'SOUND + VOICES: OFF':'SOUND + VOICES: ON','#9fd0ff',17);
   ui('quit',W/2-120,282,240,42,'QUIT TO TITLE','#ff8866',17);
 }
 function draw(){
@@ -1222,7 +1257,7 @@ function frame(ts){
   music();draw();
   if(!manual)requestAnimationFrame(frame);
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(gst==='fight')paused=true;for(const k in IN)IN[k]=false;if(AC&&AC.state==='running')AC.suspend();}else{last=0;acc=0;}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSpeech();if(gst==='fight')paused=true;for(const k in IN)IN[k]=false;if(AC&&AC.state==='running')AC.suspend();}else{last=0;acc=0;}});
 window.__msb={
   get s(){return{gst,gT,p1,p2,rndT,w1,w2,ladIdx,conts,mode,paused,help,BT,PT,PROJ,ladder,selIdx};},
   step,draw,frame,MV,CH,Brain,aiParams,Fighter,IN,EDGE,press,release,
