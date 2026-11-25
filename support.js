@@ -42,3 +42,29 @@
   }
   fetch('/configs/support.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():{};}).then(function(cfg){render(cfg);decorate(cfg);}).catch(function(){});
 })();
+
+// Keep the screen awake while an episode is actually playing (not while paused or after it ends).
+// Episode players call ccMark(T,TOTAL) every frame; T only moves during playback.
+(function(){
+  var orig=window.ccMark;
+  if(typeof orig!=='function'||!navigator.wakeLock)return;
+  var lock=null,pending=false,lastT=null,lastMove=0;
+  function off(){if(lock){var l=lock;lock=null;try{l.release().catch(function(){});}catch(e){}}}
+  function on(){
+    if(lock||pending||document.hidden)return;
+    pending=true;
+    try{
+      navigator.wakeLock.request('screen').then(function(l){
+        pending=false;lock=l;
+        l.addEventListener('release',function(){if(lock===l)lock=null;});
+        if(Date.now()-lastMove>2000)off();
+      },function(){pending=false;});
+    }catch(e){pending=false;}
+  }
+  window.ccMark=function(t,total){
+    if(lastT===null)lastT=t;
+    else if(t!==lastT){lastT=t;lastMove=Date.now();on();}
+    return orig.apply(this,arguments);
+  };
+  setInterval(function(){if(lock&&Date.now()-lastMove>2000)off();},1000);
+})();
