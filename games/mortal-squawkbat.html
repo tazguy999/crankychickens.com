@@ -784,12 +784,43 @@ function endRound(){
 // Host = left fighter (player 0), guest = right fighter (player 1). Only numbers cross the wire: no names, no chat.
 const NETV=1,NETABC='ABCDEFGHJKMNPQRSTUVWXYZ',NETPRE='ccmsb-';
 const NET={on:false,me:0,host:false,code:'',entry:'',msg:'',peer:null,conn:null,up:false,reg:false,D:3,gid:0,simF:0,sendF:0,loc:{},rem:{},e:0,wait:0,
-  picks:[0,1],mr:false,rr:false,rp:0,mp:0,ck:{},rck:{},snapAt:-1,snap:undefined,desyncs:0,res:-1,cT:0};
+  picks:[0,1],mr:false,rr:false,rp:0,mp:0,ck:{},rck:{},snapAt:-1,snap:undefined,desyncs:0,res:-1,cT:0,diag:'',ans:false,failing:false};
 const NBUF=[{p:0,k:0,s:0},{p:0,k:0,s:0}];
 const NC=[0,1].map(i=>({mx:0,up:false,dn:false,blk:false,btn:null,ok:false,take(){const b=NBUF[i];b.p=b.k=b.s=0;this.btn=null;}}));
 const FST=['idle','walk','crouch','block','jump','attack','hit','blockstun','down','getup','lag','tell','ko'];
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 let finW=0;
+// Keep the screen awake during friend play: a phone that dims while showing the room code cannot answer a join.
+let WL=null,WLwant=false;
+function wake(on){
+  WLwant=on;
+  try{
+    if(on){if(!WL&&navigator.wakeLock&&!document.hidden)navigator.wakeLock.request('screen').then(l=>{if(!WLwant){l.release().catch(()=>{});return;}WL=l;l.addEventListener('release',()=>{if(WL===l)WL=null;});}).catch(()=>{});}
+    else if(WL){const l=WL;WL=null;l.release().catch(()=>{});}
+  }catch(e){}
+}
+// Why a join did not finish, in a line a grown-up can read back: did the other side answer, and which network paths each side offered.
+function netWhy(c){
+  const pc=c&&c.peerConnection;if(!pc)return Promise.resolve('no link');
+  const base=(NET.ans?'answered':'no answer')+' · ice '+pc.iceConnectionState;
+  let q;
+  try{q=pc.getStats().then(st=>{
+    const L={},R={};let ok=0;
+    st.forEach(r=>{if(r.type==='local-candidate')L[r.candidateType]=(L[r.candidateType]||0)+1;else if(r.type==='remote-candidate')R[r.candidateType]=(R[r.candidateType]||0)+1;else if(r.type==='candidate-pair'&&r.state==='succeeded')ok++;});
+    const f=o=>Object.keys(o).map(k=>k+' '+o[k]).join(', ')||'none';
+    return base+' · mine: '+f(L)+' · theirs: '+f(R)+' · paths ok: '+ok;
+  });}catch(e){q=Promise.resolve(base);}
+  return Promise.race([q,new Promise(r=>setTimeout(()=>r(base),1200))]).catch(()=>base);
+}
+function netJoinFail(){
+  const N=NET,c=N.conn;if(N.failing)return;
+  if(!c){netBack('Could not reach the room server. Check your wifi.');return;}
+  N.failing=true;const ans=N.ans;
+  netWhy(c).then(d=>{
+    if(N.conn!==c)return;
+    netBack(ans?'These two devices could not reach each other on this network.':'Your friend\u2019s device did not answer. Keep its screen on the room code.');N.diag=d;
+  });
+}
 function netSend(o){const c=NET.conn;if(c&&NET.up)try{c.send(o);}catch(e){}}
 function netCode(){
   let s='';const r=new Uint32Array(4);
@@ -797,10 +828,10 @@ function netCode(){
   for(let i=0;i<4;i++)s+=NETABC[r[i]%NETABC.length];return s;
 }
 function netClose(){
-  const N=NET,c=N.conn,p=N.peer;N.on=false;N.up=false;N.reg=false;N.conn=null;N.peer=null;N.mr=N.rr=false;
+  const N=NET,c=N.conn,p=N.peer;N.on=false;N.up=false;N.reg=false;N.conn=null;N.peer=null;N.mr=N.rr=false;N.ans=false;N.failing=false;wake(false);
   try{if(c)c.close();}catch(e){}try{if(p)p.destroy();}catch(e){}
 }
-function netBack(m){const h=NET.host;netClose();NET.msg=m||'';NET.entry='';go(h?'nmenu':'njoin');}
+function netBack(m){const h=NET.host;netClose();NET.msg=m||'';NET.diag='';NET.entry='';go(h?'nmenu':'njoin');}
 function netLost(m){
   netClose();stopSpeech();Q.length=0;PT.length=0;PROJ.length=0;annT=0;musOn=false;paused=false;help=false;p1=p2=null;
   NET.msg=m||'Your friend left the game.';go('nlost');
@@ -820,18 +851,22 @@ function netErr(e){
   netBack(t==='peer-unavailable'?'No room with that code. Check the letters!':t==='browser-incompatible'?'This browser cannot do friend play.':'Could not reach the room server. Check your wifi.');
 }
 function netHost(){
-  const N=NET;netClose();N.host=true;N.msg='';N.cT=0;const code=N.code=netCode();go('nhost');
+  const N=NET;netClose();N.host=true;N.msg='';N.diag='';N.cT=0;const code=N.code=netCode();go('nhost');wake(true);
   loadPeer(()=>{
     if(gst!=='nhost'||N.code!==code||N.peer)return;
     const p=N.peer=new Peer(NETPRE+code,netOpts());
     p.on('open',()=>{if(N.peer===p)N.reg=true;});
-    p.on('connection',c=>{if(N.peer!==p||N.conn){try{c.close();}catch(e){}return;}N.cT=0;netWire(c);});
+    p.on('connection',c=>{
+      if(N.peer!==p||N.up){try{c.close();}catch(e){}return;}
+      if(N.conn){const o=N.conn;N.conn=null;try{o.close();}catch(e){}} // a fresh try replaces one that never finished
+      N.cT=0;N.msg='';N.diag='';netWire(c);
+    });
     p.on('error',e=>{if(N.peer!==p)return;if(e&&e.type==='unavailable-id'&&!N.up)netHost();else netErr(e);});
     p.on('disconnected',()=>{if(N.peer===p&&!N.up)try{p.reconnect();}catch(e){}});
   });
 }
 function netJoin(code){
-  const N=NET;netClose();N.host=false;N.msg='';N.code=code;N.cT=0;go('nconn');
+  const N=NET;netClose();N.host=false;N.msg='';N.diag='';N.code=code;N.cT=0;go('nconn');wake(true);
   loadPeer(()=>{
     if(gst!=='nconn'||N.code!==code||N.peer)return;
     const p=N.peer=new Peer(netOpts());
@@ -840,9 +875,13 @@ function netJoin(code){
   });
 }
 function netWire(c){
-  const N=NET;N.conn=c;
-  const drop=()=>{if(N.conn!==c)return;if(N.up)netLost();else if(N.host)N.conn=null;else netBack('Could not connect. Are you both on wifi?');};
-  c.on('open',()=>{if(N.conn!==c)return;N.up=true;N.me=N.host?0:1;netSend({t:'hi',v:NETV});sfx('ok');ev('msb_friend_connect');netToSelect();});
+  const N=NET;N.conn=c;N.ans=false;N.failing=false;
+  const pc=c.peerConnection;
+  if(pc&&pc.addEventListener)pc.addEventListener('signalingstatechange',()=>{if(N.conn===c&&pc.signalingState==='stable'&&pc.remoteDescription)N.ans=true;});
+  const hostDrop=()=>{if(N.conn!==c||N.up)return;N.conn=null;N.cT=0;N.msg='A friend tried to join but it did not connect. Try the code again.';netWhy(c).then(d=>{if(gst==='nhost')N.diag=d;try{c.close();}catch(e){}});};
+  c.hostDrop=hostDrop;
+  const drop=()=>{if(N.conn!==c)return;if(N.up)netLost();else if(N.host)hostDrop();else netJoinFail();};
+  c.on('open',()=>{if(N.conn!==c)return;N.up=true;N.msg='';N.diag='';N.me=N.host?0:1;netSend({t:'hi',v:NETV});sfx('ok');ev('msb_friend_connect');netToSelect();});
   c.on('data',d=>{if(N.conn===c)netMsg(d);});
   c.on('close',drop);c.on('error',drop);
 }
@@ -1055,7 +1094,7 @@ function step(){
       else if(hit('back')||EDGE.pause){sfx('tick');go('title');}
       break;
     case'nhost':
-      if(NET.conn&&!NET.up&&++NET.cT>600){const c=NET.conn;NET.conn=null;NET.cT=0;try{c.close();}catch(e){}}
+      if(NET.conn&&!NET.up&&++NET.cT>1200)NET.conn.hostDrop();
       if(hit('ncancel')||EDGE.pause){sfx('tick');netClose();go('nmenu');}
       break;
     case'njoin':
@@ -1065,7 +1104,7 @@ function step(){
       break;
     case'nconn':
       if(hit('ncancel')||EDGE.pause){sfx('tick');NET.host=true;netBack('');}
-      else if(++NET.cT>900)netBack('Could not connect. Are you both on wifi?');
+      else if(++NET.cT>1200)netJoinFail();
       break;
     case'nsel':
       if(hit('back')){toTitle();break;}
@@ -1399,7 +1438,9 @@ function drawLobby(){
     if(N.reg){
       drawCode(N.code,84,72,88,56);
       txt('Your friend taps JOIN A ROOM and types this code.',W/2,208,14,'rgba(255,255,255,0.85)','center',W-40);
-      txt('Waiting for your friend'+dots,W/2,246,17,'#9fd0ff');
+      txt(N.conn?'A friend is joining'+dots:'Waiting for your friend'+dots,W/2,244,17,N.conn?'#aaffaa':'#9fd0ff');
+      if(N.msg&&!N.conn)txt(N.msg,W/2,270,13,'#ff8866','center',W-40);
+      if(N.diag&&!N.conn)txt('Details: '+N.diag,W/2,366,10,'rgba(255,255,255,0.5)','center',W-30);
     }else txt('Making your room'+dots,W/2,140,18,'#9fd0ff');
     ui('ncancel',W/2-90,296,180,46,'CANCEL','#ff8866',18);
   }else if(gst==='njoin'){
@@ -1410,7 +1451,7 @@ function drawLobby(){
       const x=x0+(i%8)*(kw+g),y=140+Math.floor(i/8)*(kh+g);
       if(i<23)ui('k'+NETABC[i],x,y,kw,kh,NETABC[i],'#ffffff',22);else ui('kdel',x,y,kw,kh,'DEL','#ff8866',16);
     }
-    if(N.msg)txt(N.msg,W/2,326,15,'#ff8866','center',W-40);
+    if(N.msg){txt(N.msg,W/2,322,15,'#ff8866','center',W-40);if(N.diag)txt('Details: '+N.diag,W/2,344,10,'rgba(255,255,255,0.5)','center',W-30);}
     else txt('Ask your friend for the 4 letters on their screen.',W/2,326,13,'rgba(255,255,255,0.6)','center',W-40);
     ui('back',10,8,74,28,'← BACK','rgba(255,255,255,0.6)',12);
   }else if(gst==='nconn'){
@@ -1565,7 +1606,7 @@ function frame(ts){
   music();draw();
   if(!manual)requestAnimationFrame(frame);
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSpeech();if(gst==='fight')paused=true;for(const k in IN)IN[k]=false;if(AC&&AC.state==='running')AC.suspend();}else{last=0;acc=0;}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSpeech();if(gst==='fight')paused=true;for(const k in IN)IN[k]=false;if(AC&&AC.state==='running')AC.suspend();}else{last=0;acc=0;if(WLwant)wake(true);}});
 window.__msb={
   get s(){return{gst,gT,p1,p2,rndT,w1,w2,ladIdx,conts,mode,paused,help,BT,PT,PROJ,ladder,selIdx};},
   step,draw,frame,MV,CH,Brain,aiParams,Fighter,IN,EDGE,press,release,NET,netWire,
