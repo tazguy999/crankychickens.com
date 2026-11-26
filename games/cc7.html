@@ -232,6 +232,7 @@
   <div id="hint">Arrows / WASD move · Space = A (jump, fire) · ▼ at a cabinet to play · Esc walks away</div>
 </div>
 
+<script src="../js/cc-room.js" defer></script>
 <script>
 "use strict";
 /* ============================================================
@@ -4714,17 +4715,189 @@ GAMES.craft = {
   },
   save(){
     this.dirty = 0;
+    if (this.guest) return;                 // visiting a friend's world: my own save is left alone
     try {
       const e = []; this.edits.forEach((b, i) => e.push(i.toString(36) + '.' + b.toString(36)));
       localStorage.setItem(this.KEY, JSON.stringify({ v: 1, seed: this.seed, e: e.join(','), n: this.placed, k: this.broken, sel: this.sel,
         p: [+this.x.toFixed(2), +this.y.toFixed(2), +this.z.toFixed(2), +this.yaw.toFixed(3), +this.pitch.toFixed(3)] }));
     } catch(err){}
   },
-  leave(){ this.save(); },
+  leave(){ this.save(); const R = this.room(); if (R && R.st !== 'idle'){ R.close(); this.netDown(false); } this.ui = null; },
   setBlock(x, y, z, b){
     const i = this.idx(x, y, z);
     this.vox[i] = b; this.edits.set(i, b); this.dirty = this.dirty || 1;
+    if (this.online()){ this.recent.set(i, this.f); this.room().send({ t: 'b', i, b }); }
   },
+  /* ---------- building with a friend: one room code, two devices, one world ----------
+     The room maker's world is the shared one. A visitor's own world is never touched: it is not saved
+     over while visiting, and it comes back when the room closes. Only block numbers and positions are sent. */
+  NETPRE: 'ccblk-', FB: [W - 94, 48, 86, 24],
+  FRIEND_PAL: [null, [120, 200, 255], [255, 159, 28], [226, 52, 52], [255, 176, 40], [26, 22, 34]],
+  room(){ return window.CCRoom || null; },
+  online(){ const R = this.room(); return !!R && R.st === 'up'; },
+  netHook(){
+    const R = this.room(); if (!R || this.hooked) return; this.hooked = true;
+    R.onup = host => this.netUp(host); R.onmsg = d => this.netMsg(d); R.ondown = () => this.netDown(true);
+  },
+  netOpen(){ this.netHook(); this.ui = this.online() ? 'on' : 'menu'; this.entry = ''; this.btn = {}; Sfx.play('blip'); },
+  netUp(host){
+    this.ui = null; this.friend = null; this.recent = new Map(); Sfx.play('pick');
+    const R = this.room();
+    if (host){
+      const e = []; this.edits.forEach((b, i) => e.push(i.toString(36) + '.' + b.toString(36)));
+      const s = e.join(','), parts = []; for (let k = 0; k < s.length; k += 12000) parts.push(s.slice(k, k + 12000));
+      R.send({ t: 'w', seed: this.seed, n: parts.length, p: [+this.x.toFixed(2), +this.y.toFixed(2), +this.z.toFixed(2)] });
+      parts.forEach((q, k) => R.send({ t: 'e', k, s: q }));
+      Talk.interrupt({ lines: [['PEARL', 'A FRIEND! In the SAME blocks!'], ['SCRATCHY', 'Two builders. I will need a second log.']] });
+    } else { this.save(); this.guest = true; this.loading = { n: -1, got: [], seed: 0, p: null }; }
+  },
+  netDown(byFriend){
+    const was = this.guest || !!this.friend || !!this.loading;
+    this.friend = null; this.fscr = null; this.loading = null; this.ui = null;
+    if (this.guest){
+      this.guest = false; this.load(); this.mkChicks(); this.vy = 0;
+      if (was) Talk.interrupt({ lines: [['SCRATCHY', 'Back in your own world. It waited.']] });
+    } else if (was && byFriend) Talk.interrupt({ lines: [['SCRATCHY', 'Your friend has gone home. Their blocks are staying.']] });
+  },
+  netWorld(){
+    const L = this.loading; this.loading = null;
+    this.seed = L.seed; this.generate(); this.edits = new Map(); this.placed = 0; this.broken = 0;
+    L.got.join('').split(',').forEach(p => {
+      const q = p.split('.'); const i = parseInt(q[0], 36), b = parseInt(q[1], 36);
+      if (i >= 0 && i < this.vox.length && b >= 0 && b < 18){ this.vox[i] = b; this.edits.set(i, b); }
+    });
+    this.x = clamp(L.p[0] + 1.5, 1.5, this.WX - 1.5); this.z = clamp(L.p[2], 1.5, this.WZ - 1.5);
+    this.y = this.ground(this.x, this.z, this.WY - 1); this.vy = 0;
+    this.mkChicks(); paintHud();
+    Talk.interrupt({ lines: [['PEARL', 'You are in your friend’s world now!'], ['SCRATCHY', 'Visitors wipe their feet. The blocks insisted.']] });
+  },
+  netMsg(d){
+    const R = this.room(), int = Number.isInteger, num = v => typeof v === 'number' && isFinite(v);
+    if (d.t === 'w'){
+      if (R.host || !this.loading || !int(d.seed) || d.seed < 1 || d.seed > 1e6 || !int(d.n) || d.n < 0 || d.n > 400 || !Array.isArray(d.p) || !num(d.p[0]) || !num(d.p[2])) return;
+      this.loading = { n: d.n, got: [], seed: d.seed, p: d.p };
+      if (!d.n) this.netWorld();
+    } else if (d.t === 'e'){
+      const L = this.loading;
+      if (!L || L.n < 0 || d.k !== L.got.length || typeof d.s !== 'string' || d.s.length > 12000 || !/^[0-9a-z.,]*$/.test(d.s)) return;
+      L.got.push(d.s); if (L.got.length === L.n) this.netWorld();
+    } else if (d.t === 'b'){
+      if (this.loading || !int(d.i) || d.i < 0 || d.i >= this.vox.length || !int(d.b) || d.b < 0 || d.b >= BLK.BED) return;
+      if (this.vox[d.i] === BLK.BED) return;                                   // the bottom of the world stays put for everyone
+      if (R.host && this.recent.has(d.i) && this.f - this.recent.get(d.i) < 90){ R.send({ t: 'b', i: d.i, b: this.vox[d.i] }); return; }   // both touched it: the room maker's block wins
+      this.vox[d.i] = d.b; this.edits.set(d.i, d.b); this.dirty = this.dirty || 1;
+      let n = 0; while (this.hits(this.x, this.y, this.z) && n++ < this.WY) this.y = Math.floor(this.y) + 1;    // never sealed inside a friend's block
+      const bx = d.i % this.WX, bz = Math.floor(d.i / this.WX) % this.WZ;
+      if (Math.hypot(bx - this.x, bz - this.z) < 14) Sfx.play(d.b && d.b !== BLK.WATER ? 'thunk' : 'pop');
+    } else if (d.t === 'p'){
+      if (!num(d.x) || !num(d.y) || !num(d.z) || !num(d.a)) return;
+      const tx = clamp(d.x, 0, this.WX), ty = clamp(d.y, 0, this.WY + 4), tz = clamp(d.z, 0, this.WZ);
+      if (!this.friend) this.friend = { x: tx, y: ty, z: tz, a: d.a };
+      const F = this.friend; F.tx = tx; F.ty = ty; F.tz = tz; F.a = d.a;
+      if (!R.host && Array.isArray(d.c) && d.c.length === this.chicks.length * 4 && d.c.every(num))
+        this.chicks.forEach((c, k) => { c.tx = d.c[k * 4]; c.ty = d.c[k * 4 + 1]; c.tz = d.c[k * 4 + 2]; c.a = d.c[k * 4 + 3]; });
+    }
+  },
+  netTick(){
+    if (!this.online()) return;
+    const R = this.room();
+    if (this.f % 6 === 0 && !this.loading){
+      const m = { t: 'p', x: +this.x.toFixed(2), y: +this.y.toFixed(2), z: +this.z.toFixed(2), a: +this.yaw.toFixed(2) };
+      if (R.host && this.f % 12 === 0){ m.c = []; for (const c of this.chicks) m.c.push(+c.x.toFixed(2), +c.y.toFixed(2), +c.z.toFixed(2), +c.a.toFixed(2)); }
+      R.send(m);
+    }
+    const F = this.friend; if (F && F.tx !== undefined){ F.x += (F.tx - F.x) * 0.25; F.y += (F.ty - F.y) * 0.25; F.z += (F.tz - F.z) * 0.25; }
+  },
+  uiUpdate(){
+    const R = this.room(), taps = CraftPtr.taps.splice(0), keys = CraftKeys.hit.splice(0);
+    CraftPtr.dx = CraftPtr.dy = 0; CraftPtr.wheel = 0; CraftPtr.right = false;
+    const hit = n => { const b = this.btn[n]; return !!b && taps.some(([x, y]) => x >= b[0] && x < b[0] + b[2] && y >= b[1] && y < b[1] + b[3]); };
+    if (!R){ if (taps.length) this.ui = null; return; }
+    if (this.ui === 'host' && R.st === 'idle') this.ui = 'menu';              // it failed: the menu says why
+    if (this.ui === 'conn' && R.st === 'idle'){ this.ui = 'join'; this.entry = ''; }
+    const letter = ch => { if (this.entry.length >= 4 || !R.ABC.includes(ch)) return; R.msg = ''; R.diag = ''; this.entry += ch; Sfx.play('blip'); if (this.entry.length === 4){ R.join(this.NETPRE, this.entry); this.ui = 'conn'; } };
+    switch (this.ui){
+      case 'menu':
+        if (hit('make')){ R.make(this.NETPRE); this.ui = 'host'; Sfx.play('blip'); }
+        else if (hit('join')){ this.entry = ''; R.msg = ''; R.diag = ''; this.ui = 'join'; Sfx.play('blip'); }
+        else if (hit('close')) this.ui = null;
+        break;
+      case 'host': if (hit('cancel')){ R.close(); this.ui = 'menu'; } break;
+      case 'join':
+        if (hit('cancel')){ this.ui = 'menu'; break; }
+        if (hit('del')) this.entry = this.entry.slice(0, -1);
+        for (const ch of R.ABC) if (hit('k' + ch)){ letter(ch); break; }
+        for (const c of keys){ if (c === 'Backspace') this.entry = this.entry.slice(0, -1); else if (/^Key[A-Z]$/.test(c) && this.ui === 'join') letter(c[3]); }
+        break;
+      case 'conn': if (hit('cancel')){ R.close(); this.ui = 'join'; this.entry = ''; } break;
+      case 'on':
+        if (hit('leave')){ R.close(); this.netDown(false); }
+        else if (hit('close')) this.ui = null;
+        break;
+    }
+  },
+  uiBtn(n, x, y, w, h, label, col, size){
+    this.btn[n] = [x, y, w, h];
+    g.fillStyle = 'rgba(16,8,30,.92)'; g.fillRect(x, y, w, h);
+    g.strokeStyle = col; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    if (label) txt(label, x + w / 2, y + h / 2 + size * 0.36, size, col);
+  },
+  uiCode(s, y, bw, bh, size){
+    const gap = 8, x0 = W / 2 - (4 * bw + 3 * gap) / 2;
+    for (let i = 0; i < 4; i++){
+      const x = x0 + i * (bw + gap), ch = s[i] || '';
+      g.fillStyle = 'rgba(16,8,30,.92)'; g.fillRect(x, y, bw, bh);
+      g.strokeStyle = ch ? '#ffcc02' : 'rgba(242,233,247,.4)'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, bw - 2, bh - 2);
+      if (ch) txt(ch, x + bw / 2, y + bh / 2 + size * 0.36, size, '#f2e9f7');
+    }
+  },
+  uiDraw(){
+    const R = this.room(), dots = '.'.repeat(1 + Math.floor(this.f / 25) % 3);
+    this.btn = {};
+    g.fillStyle = 'rgba(6,3,12,.86)'; g.fillRect(0, 0, W, H);
+    if (!R){ txt('FRIEND PLAY COULD NOT LOAD', W / 2, 160, 18, '#ff8f7a'); txt('Check your wifi, then tap to go back.', W / 2, 186, 12, '#f2e9f7'); return; }
+    const warn = y => { if (R.msg) txt(R.msg, W / 2, y, 12, '#ff8f7a'); if (R.diag) txt('Details: ' + R.diag, W / 2, y + 16, 9, 'rgba(242,233,247,.55)'); };
+    if (this.ui === 'menu'){
+      txt('BUILD WITH A FRIEND', W / 2, 76, 22, '#ffcc02');
+      txt('Two tablets or phones. One world.', W / 2, 96, 12, '#f2e9f7');
+      this.uiBtn('make', W / 2 - 210, 112, 200, 84, '', '#9be28a', 0);
+      txt('MAKE A ROOM', W / 2 - 110, 150, 18, '#9be28a'); txt('Your friend visits YOUR world', W / 2 - 110, 172, 11, 'rgba(242,233,247,.75)');
+      this.uiBtn('join', W / 2 + 10, 112, 200, 84, '', '#9fd0ff', 0);
+      txt('JOIN A ROOM', W / 2 + 110, 150, 18, '#9fd0ff'); txt('You visit THEIR world', W / 2 + 110, 172, 11, 'rgba(242,233,247,.75)');
+      warn(222);
+      txt('Only someone with your code can join. No chat, no names.', W / 2, 264, 11, 'rgba(242,233,247,.6)');
+      this.uiBtn('close', W / 2 - 80, 284, 160, 36, 'BACK TO BLOCKS', '#f2e9f7', 13);
+    } else if (this.ui === 'host'){
+      txt('YOUR ROOM CODE', W / 2, 76, 22, '#ffcc02');
+      if (R.st === 'making') txt('Making your room' + dots, W / 2, 140, 15, '#9fd0ff');
+      else {
+        this.uiCode(R.code, 90, 60, 72, 44);
+        txt('Your friend opens these blocks, taps FRIEND, then JOIN A ROOM.', W / 2, 186, 12, '#f2e9f7');
+        txt(R.pending ? 'A friend is joining' + dots : 'Waiting for your friend' + dots, W / 2, 210, 14, R.pending ? '#9be28a' : '#9fd0ff');
+        if (!R.pending) warn(234);
+      }
+      this.uiBtn('cancel', W / 2 - 80, 284, 160, 36, 'CANCEL', '#ff8f7a', 13);
+    } else if (this.ui === 'join'){
+      txt('TYPE THE ROOM CODE', W / 2, 70, 20, '#ffcc02');
+      this.uiCode(this.entry, 80, 44, 46, 28);
+      const kw = 62, kh = 34, gp = 6, x0 = (W - (8 * kw + 7 * gp)) / 2;
+      for (let i = 0; i < 24; i++){
+        const x = x0 + (i % 8) * (kw + gp), y = 136 + Math.floor(i / 8) * (kh + gp);
+        if (i < 23) this.uiBtn('k' + R.ABC[i], x, y, kw, kh, R.ABC[i], '#f2e9f7', 17); else this.uiBtn('del', x, y, kw, kh, 'DEL', '#ff8f7a', 13);
+      }
+      if (R.msg) warn(270); else txt('Ask your friend for the 4 letters on their screen.', W / 2, 272, 11, 'rgba(242,233,247,.6)');
+      this.uiBtn('cancel', W / 2 - 80, 296, 160, 34, 'BACK', '#f2e9f7', 13);
+    } else if (this.ui === 'conn'){
+      txt('JOINING ROOM ' + R.code + dots, W / 2, 160, 20, '#9fd0ff');
+      this.uiBtn('cancel', W / 2 - 80, 284, 160, 36, 'CANCEL', '#ff8f7a', 13);
+    } else {
+      txt('YOU ARE BUILDING WITH A FRIEND', W / 2, 100, 20, '#9be28a');
+      txt(this.guest ? 'You are visiting. Your own world is safe and waiting.' : 'This is your world. What you both build is saved here.', W / 2, 126, 12, '#f2e9f7');
+      this.uiBtn('close', W / 2 - 170, 170, 160, 40, 'BACK TO BLOCKS', '#f2e9f7', 13);
+      this.uiBtn('leave', W / 2 + 10, 170, 160, 40, 'LEAVE ROOM', '#ff8f7a', 13);
+    }
+  },
+
 
   init(o){
     this.o = o;
@@ -4732,14 +4905,16 @@ GAMES.craft = {
     this.vy = 0; this.grounded = false; this.eyeLag = 0; this.f = 0; this.cool = 0; this.target = null;
     this.said = Save.data.craftSaid = Save.data.craftSaid || {};
     this.res = this.res || 0; this.ms = 0; this.msN = 0; this.setRes(this.res);
-    if (!this.chicks){
-      this.chicks = [];
-      for (let i = 0; i < 7; i++){
-        const x = this.home[0] + rnd(-7, 7), z = this.home[2] + rnd(1, 9);
-        this.chicks.push({ x, z, y: this.ground(x, z, this.WY - 1), a: rnd(0, 6.28), w: rint(40, 200), hop: 0 });
-      }
-    }
+    if (!this.chicks) this.mkChicks();
+    this.netHook(); this.ui = null; this.btn = {};
     CraftPtr.taps.length = 0; CraftPtr.dx = CraftPtr.dy = 0; CraftPtr.wheel = 0; CraftPtr.right = false; CraftKeys.hit.length = 0;
+  },
+  mkChicks(){
+    this.chicks = [];
+    for (let i = 0; i < 7; i++){
+      const x = this.home[0] + rnd(-7, 7), z = this.home[2] + rnd(1, 9);
+      this.chicks.push({ x, z, y: this.ground(x, z, this.WY - 1), a: rnd(0, 6.28), w: rint(40, 200), hop: 0 });
+    }
   },
   once(id, lines){ if (this.said[id]) return; this.said[id] = true; Talk.interrupt({ lines }); },
   setRes(n){
@@ -4810,6 +4985,9 @@ GAMES.craft = {
 
   update(inp, pr){
     this.f++;
+    this.netTick();
+    if (this.ui){ this.uiUpdate(); return; }
+    if (this.loading){ CraftPtr.taps.length = 0; CraftKeys.hit.length = 0; CraftPtr.dx = CraftPtr.dy = 0; return; }
     // ---- looking ----
     if (inp.left) this.yaw -= 0.042;
     if (inp.right) this.yaw += 0.042;
@@ -4851,6 +5029,7 @@ GAMES.craft = {
     if (this.nameT > 0) this.nameT--;
     while (CraftKeys.hit.length){
       const c = CraftKeys.hit.shift();
+      if (c === 'KeyG'){ this.netOpen(); CraftPtr.taps.length = 0; return; }
       if (c === 'KeyQ') this.pick(this.sel - 1); else if (c === 'KeyE') this.pick(this.sel + 1);
       else if (/^Digit[0-9]$/.test(c)) this.pick((+c.slice(5) + 9) % 10);
       else if (c === 'Minus') this.pick(10); else if (c === 'Equal') this.pick(11);
@@ -4858,7 +5037,8 @@ GAMES.craft = {
     if (CraftPtr.wheel){ this.pick(this.sel + Math.sign(CraftPtr.wheel)); CraftPtr.wheel = 0; }
     let wantPlace = pr.jump || (inp.jump && this.cool <= 0), wantDig = pr.b || (inp.b && this.cool <= 0);
     while (CraftPtr.taps.length){
-      const [tx, ty] = CraftPtr.taps.shift(), hb = this.barRect();
+      const [tx, ty] = CraftPtr.taps.shift(), hb = this.barRect(), fb = this.FB;
+      if (tx >= fb[0] - 6 && tx < fb[0] + fb[2] + 6 && ty >= fb[1] - 6 && ty < fb[1] + fb[3] + 6){ this.netOpen(); CraftPtr.taps.length = 0; return; }
       if (ty >= hb.y - 4 && tx >= hb.x && tx < hb.x + hb.w){ this.pick(Math.floor((tx - hb.x) / hb.slot)); continue; }
       wantPlace = true;
     }
@@ -4869,6 +5049,7 @@ GAMES.craft = {
 
     // ---- the chickens that live here ----
     for (const c of this.chicks){
+      if (this.guest && c.tx !== undefined){ c.x += (c.tx - c.x) * 0.15; c.y += (c.ty - c.y) * 0.3; c.z += (c.tz - c.z) * 0.15; c.hop = (c.hop + 0.2) % 6.283; continue; }   // a visitor sees the room maker's chickens
       if (--c.w < 0){ c.a += rnd(-1.6, 1.6); c.w = rint(50, 220); }
       const nx = c.x + Math.sin(c.a) * 0.018, nz = c.z + Math.cos(c.a) * 0.018;
       const gy = this.ground(nx, nz, Math.floor(c.y) + 2);
@@ -4943,15 +5124,14 @@ GAMES.craft = {
         px[p] = 0xff000000 | ((b > 255 ? 255 : b) << 16) | ((gg > 255 ? 255 : gg) << 8) | (r > 255 ? 255 : r);
       }
     }
-    // the chickens: flat 8x8 sprites, depth-tested against what the rays found
-    const SPR = this.SPRITE, PAL = this.SPRITE_PAL;
-    for (const c of this.chicks){
-      const ex = c.x - ox, ey = c.y + 0.42 + Math.abs(Math.sin(c.hop)) * 0.06 - oy, ez = c.z - oz;
-      const d = ex * fx + ey * fy + ez * fz; if (d < 0.4 || d > MAXD) continue;
+    const SPR = this.SPRITE, yawNow = this.yaw;
+    const spr = (wx, wy, wz, ang, sz, PAL) => {
+      const ex = wx - ox, ey = wy - oy, ez = wz - oz;
+      const d = ex * fx + ey * fy + ez * fz; if (d < 0.4 || d > MAXD) return null;
       const scx = (ex * rx + ez * rz) / d / hw, scy = (ex * ux + ey * uy + ez * uz) / d / hh;
-      const size = 0.85 / d / hh * rh * 0.5; if (size < 1.5) continue;
+      const size = sz / d / hh * rh * 0.5; if (size < 1.5) return null;
       const x0 = (scx * 0.5 + 0.5) * rw - size / 2, y0 = (0.5 - scy * 0.5) * rh - size / 2;
-      const dd = Math.sqrt(ex * ex + ey * ey + ez * ez), flip = Math.sin(c.a - this.yaw) < 0;
+      const dd = Math.sqrt(ex * ex + ey * ey + ez * ez), flip = Math.sin(ang - yawNow) < 0;
       const fogk = dd > fog0 ? Math.min(1, (dd - fog0) * fogK) : 0;
       for (let yy = Math.max(0, Math.floor(y0)); yy < Math.min(rh, y0 + size); yy++){
         const ty = Math.min(7, Math.floor((yy - y0) / size * 8));
@@ -4962,6 +5142,20 @@ GAMES.craft = {
           const pc = PAL[col];
           px[q] = 0xff000000 | ((pc[2] + (248 - pc[2]) * fogk) << 16) | ((pc[1] + (224 - pc[1]) * fogk) << 8) | (pc[0] + (196 - pc[0]) * fogk);
         }
+      }
+      return [(x0 + size / 2) / rw, y0 / rh];
+    };
+    // the chickens: flat 8x8 sprites, depth-tested against what the rays found
+    for (const c of this.chicks) spr(c.x, c.y + 0.42 + Math.abs(Math.sin(c.hop)) * 0.06, c.z, c.a, 0.85, this.SPRITE_PAL);
+    // your friend: a bigger, blue one
+    this.fscr = null;
+    const F = this.friend;
+    if (F){
+      const q = spr(F.x, F.y + 0.95, F.z, F.a, 1.9, this.FRIEND_PAL);
+      if (q && q[0] > 0.04 && q[0] < 0.96 && q[1] > 0 && q[1] < 0.9) this.fscr = [q[0] * W, q[1] * H];
+      else {
+        const ex = F.x - ox, ez = F.z - oz;
+        this.fdir = [(ex * rx + ez * rz) >= 0 ? 1 : -1, Math.round(Math.hypot(ex, ez))];
       }
     }
     this.octx.putImageData(this.img, 0, 0);
@@ -4997,6 +5191,22 @@ GAMES.craft = {
     g.fillStyle = 'rgba(6,3,12,.6)'; g.fillRect(0, 0, 236, 42);               // a dark corner so the HUD reads against a bright sky
     g.fillStyle = 'rgba(6,3,12,.9)'; g.fillRect(W / 2 - 70, 10, 140, 17);
     txt(BLK_NAME[HOTBAR[this.sel]], W / 2, 22, 11, '#f2e9f7');
+    // a friend, if one is here
+    const fb = this.FB, on = this.online();
+    g.fillStyle = 'rgba(6,3,12,.82)'; g.fillRect(fb[0], fb[1], fb[2], fb[3]);
+    g.strokeStyle = on ? '#9be28a' : '#f2e9f7'; g.lineWidth = 2; g.strokeRect(fb[0] + 1, fb[1] + 1, fb[2] - 2, fb[3] - 2);
+    txt(on ? 'FRIEND IS HERE' : '+ FRIEND', fb[0] + fb[2] / 2, fb[1] + 16, on ? 10 : 11, on ? '#9be28a' : '#f2e9f7');
+    if (this.friend && !this.ui && !this.loading){
+      if (this.fscr){
+        const lx = clamp(this.fscr[0], 34, W - 34), ly = clamp(this.fscr[1] - 6, 62, H - 62);
+        g.fillStyle = 'rgba(6,3,12,.8)'; g.fillRect(lx - 26, ly - 11, 52, 14); txt('FRIEND', lx, ly, 10, '#9fd0ff');
+      } else if (this.fdir){
+        g.fillStyle = 'rgba(6,3,12,.8)'; g.fillRect(W / 2 - 84, 32, 168, 15);
+        txt((this.fdir[0] < 0 ? '\u25C0 ' : '') + 'FRIEND  ' + this.fdir[1] + ' BLOCKS' + (this.fdir[0] > 0 ? ' \u25B6' : ''), W / 2, 43, 10, '#9fd0ff');
+      }
+    }
+    if (this.loading){ g.fillStyle = 'rgba(6,3,12,.86)'; g.fillRect(0, 0, W, H); txt('LOADING YOUR FRIEND\u2019S WORLD...', W / 2, H / 2, 18, '#9fd0ff'); }
+    if (this.ui) this.uiDraw();
 
     // keep it smooth: if drawing is slow, draw a smaller picture
     const ms = performance.now() - t0;
