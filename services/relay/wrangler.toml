@@ -7,10 +7,21 @@ workers_dev = true
 # Served at rooms.crankychickens.com (the games look for it there). Cloudflare creates the DNS record.
 routes = [{ pattern = "rooms.crankychickens.com", custom_domain = true }]
 
+# The daily budget, in Cloudflare "requests" (20 relayed messages = 1 request). The free plan stops at 100,000.
+#   DAILY_BUDGET: no new rooms open past this.   HARD_STOP: running rooms are closed past this.
+# For a phone alert at 50%, 80% and 100%:  npx wrangler secret put ALERT_URL   (any URL that accepts a text POST)
+[vars]
+DAILY_BUDGET = "60000"
+HARD_STOP = "85000"
+
 [[durable_objects.bindings]]
 name = "ROOMS"
 class_name = "Room"
 
+[[durable_objects.bindings]]
+name = "METER"
+class_name = "Meter"
+
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["Room"]
+new_sqlite_classes = ["Room", "Meter"]

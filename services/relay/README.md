@@ -18,11 +18,39 @@ From this folder, on a machine with Node:
 
 Check it: open https://rooms.crankychickens.com in a browser. It should say `Cranky Chickens room relay.`
 
-## Cost
+## Cost and the daily budget
 
-Runs on the Workers Free plan. If a daily free limit is ever reached, new messages fail until the
-limits reset at 00:00 UTC; nothing is charged. Games batch their messages (one frame every 30ms) to
-stay well inside it.
+Runs on the Workers Free plan, which allows 100,000 Durable Object requests a day and counts every
+20 relayed messages as one request. Past that, Cloudflare fails requests until 00:00 UTC; nothing is
+charged. The relay does not wait for that. It keeps its own running estimate and enforces a budget:
+
+| When the estimate reaches | What happens |
+|---|---|
+| `DAILY_BUDGET` (60,000) | No new rooms open. Players see "Friend play is resting for today." Matches already running may finish. |
+| `HARD_STOP` (85,000) | Running rooms are closed too. |
+| 50%, 80%, 100% of the budget | One line of text is POSTed to `ALERT_URL`, once each per day, if that is set. |
+
+Each room is also bounded on its own: a device sending more than 90 messages a second gets the room
+closed, a room nobody joins closes after 30 minutes, and a room in use closes after 3 hours.
+
+For scale: a ten-minute Mortal Squawkbat match is roughly 2,150 requests, so the budget is about 28
+of those a day. Building together in the block world uses far less.
+
+**See today's usage:** https://rooms.crankychickens.com/status (cached for a minute).
+
+**Get an alert on your phone:** any URL that accepts a text POST works. With the free ntfy app,
+pick a hard-to-guess topic name, subscribe to it in the app, then:
+
+    npx wrangler secret put ALERT_URL      # paste https://ntfy.sh/<your-topic>
+
+**Change the numbers:** edit `DAILY_BUDGET` and `HARD_STOP` in `wrangler.toml` and deploy again.
+
+The estimate is deliberately a little high (it counts each connection as 4 requests), and Cloudflare's
+own dashboard is the true count: Workers & Pages, then Durable Objects, then Metrics.
+
+What this does not stop: someone hammering the address from outside a browser still uses up plain
+Worker requests (a separate 100,000 a day). A Cloudflare rate-limiting rule on `rooms.crankychickens.com`
+is the tool for that, if it ever happens.
 
 ## Who can use it
 

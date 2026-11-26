@@ -866,12 +866,12 @@ function netRelay(role,code,direct){
   });
   c.on('data',d=>{if(N.conn===c)netMsg(d);});
   c.on('close',why=>{
-    if(N.conn===c){netLost();return;}
+    if(N.conn===c){netLost(why===4429?CCRoom.RESTING:why===4408?'That room ran out of time.':undefined);return;}
     if(N.rc!==c)return;
     N.rc=null;
-    if(role==='host'){if(why===4409)netHost();else netBack('The room closed. Make a new one.');}
+    if(role==='host'){if(why===4409)netHost();else netBack(why===4429?CCRoom.RESTING:'The room closed. Make a new one.');}
     else if(why===4404)direct();                   // not on the relay: the room may have been made the direct way
-    else netBack(why===4403?'That room already has two players.':'Could not reach the room. Check your wifi.');
+    else netBack(why===4403?'That room already has two players.':why===4429?CCRoom.RESTING:'Could not reach the room. Check your wifi.');
   });
   c.on('error',()=>{if(N.rc!==c)return;N.rc=null;direct();});   // relay not reachable: try the direct link
 }

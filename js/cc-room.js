@@ -53,6 +53,8 @@
     }, 0);
     return c;
   };
+  var RESTING = 'Friend play is resting for today. It comes back tomorrow.';
+  R.RESTING = RESTING;
   function wireRelay(c, prefix, code, role){
     rc = c;
     c.on('room', function(){ if (rc === c && R.st === 'making') R.st = 'waiting'; });
@@ -68,11 +70,11 @@
     });
     c.on('close', function(why){
       if (rc !== c) return;
-      if (R.st === 'up'){ fail('Your friend left.'); return; }
+      if (R.st === 'up'){ fail(why === 4429 ? RESTING : why === 4408 ? 'That room ran out of time. Make a new one.' : 'Your friend left.'); return; }
       rc = null;
-      if (role === 'host'){ if (why === 4409) R.make(prefix); else fail('The room closed. Make a new one.'); }
+      if (role === 'host'){ if (why === 4409) R.make(prefix); else fail(why === 4429 ? RESTING : 'The room closed. Make a new one.'); }
       else if (why === 4404) peerJoin(prefix, code);          // not on the relay: the room may have been made the direct way
-      else fail(why === 4403 ? 'That room already has two players.' : 'Could not reach the room. Check your wifi.');
+      else fail(why === 4403 ? 'That room already has two players.' : why === 4429 ? RESTING : 'Could not reach the room. Check your wifi.');
     });
     c.on('error', function(){ if (rc !== c) return; rc = null; if (role === 'host') peerMake(prefix, code); else peerJoin(prefix, code); });
   }
