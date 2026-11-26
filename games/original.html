@@ -6,103 +6,544 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GP4SZY2B0Z');</script>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cranky Chicken! 🐔</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Baloo+2:wght@400;700;800&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
   body{font-family:'Baloo 2',cursive;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;min-height:100vh;background:#1a1a2e;overflow:hidden;}
-  #title{font-family:'Fredoka One',cursive;font-size:clamp(1.1rem,4.5vw,2.2rem);color:#fff;
-    text-shadow:3px 3px 0 #c0392b,5px 5px 0 #7b241c;margin-bottom:5px;letter-spacing:1px;
-    cursor:pointer;user-select:none;}
-  #ui-bar{display:flex;gap:clamp(5px,2vw,18px);margin-bottom:5px;
-    font-size:clamp(0.65rem,2vw,0.95rem);font-weight:800;color:#fff;
-    text-shadow:1px 1px 0 #333;flex-wrap:wrap;justify-content:center;}
-  #ui-bar span{background:rgba(0,0,0,0.35);padding:2px 10px;border-radius:20px;}
-  #gameCanvas{border-radius:16px;border:4px solid #fff;
-    box-shadow:0 8px 40px rgba(0,0,0,0.6);cursor:crosshair;display:block;max-width:100%;height:auto;}
-  #message{margin-top:6px;font-size:clamp(0.65rem,1.8vw,0.9rem);font-weight:700;color:#fff;
-    text-shadow:1px 1px 0 #333;min-height:1.4em;text-align:center;padding:0 8px;}
-  #restartBtn{margin-top:7px;font-family:'Fredoka One',cursive;font-size:clamp(0.85rem,2.5vw,1.05rem);
-    background:#e74c3c;color:#fff;border:none;border-radius:30px;padding:7px 26px;cursor:pointer;
-    box-shadow:0 4px 0 #922b21;transition:transform 0.1s,box-shadow 0.1s;}
-  #restartBtn:active{transform:translateY(3px);box-shadow:0 1px 0 #922b21;}
+    justify-content:center;min-height:100vh;min-height:100dvh;background:#1a1a2e;overflow:hidden;
+    user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
+  #top{display:flex;align-items:center;justify-content:center;gap:clamp(5px,1.6vw,14px);
+    flex-wrap:wrap;margin-bottom:5px;padding:0 6px;}
+  #home{color:#fff;text-decoration:none;font-weight:800;background:rgba(255,255,255,0.14);
+    border-radius:20px;padding:2px 12px;font-size:clamp(0.75rem,2vw,0.95rem);}
+  #title{font-family:'Fredoka One',cursive;font-size:clamp(1rem,3.4vw,1.7rem);color:#fff;
+    text-shadow:2px 2px 0 #c0392b,4px 4px 0 #7b241c;letter-spacing:1px;cursor:pointer;}
+  #ui-bar{display:flex;gap:clamp(4px,1.2vw,10px);font-size:clamp(0.65rem,1.9vw,0.95rem);
+    font-weight:800;color:#fff;text-shadow:1px 1px 0 #333;flex-wrap:wrap;justify-content:center;}
+  #ui-bar span.pill{background:rgba(0,0,0,0.35);padding:2px 10px;border-radius:20px;white-space:nowrap;}
+  #gameCanvas{display:block;border-radius:14px;border:3px solid #fff;box-shadow:0 8px 40px rgba(0,0,0,0.6);
+    width:min(calc(100vw - 12px),calc((100vh - 104px) * 1.905));
+    width:min(calc(100vw - 12px),calc((100dvh - 104px) * 1.905));
+    aspect-ratio:800/420;height:auto;cursor:grab;touch-action:none;}
+  #bottom{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;padding:0 8px;}
+  #message{font-size:clamp(0.65rem,1.8vw,0.9rem);font-weight:700;color:#fff;
+    text-shadow:1px 1px 0 #333;min-height:1.4em;text-align:center;}
+  #restartBtn{font-family:'Fredoka One',cursive;font-size:clamp(0.7rem,2vw,0.9rem);white-space:nowrap;
+    background:#e74c3c;color:#fff;border:none;border-radius:30px;padding:5px 16px;cursor:pointer;
+    box-shadow:0 3px 0 #922b21;}
+  #restartBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #922b21;}
   #levelBanner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    font-family:'Fredoka One',cursive;font-size:clamp(2rem,8vw,4rem);
+    font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,7vw,3.6rem);
     color:#FFD700;text-shadow:4px 4px 0 #c0392b;pointer-events:none;opacity:0;
-    transition:opacity 0.4s;z-index:99;text-align:center;line-height:1.3;}
-  #easterMsg{position:fixed;top:12%;left:50%;transform:translateX(-50%);
-    font-family:'Fredoka One',cursive;font-size:clamp(0.85rem,2.8vw,1.4rem);
+    transition:opacity 0.3s;z-index:99;text-align:center;line-height:1.25;}
+  #easterMsg{position:fixed;top:14%;left:50%;transform:translateX(-50%);
+    font-family:'Fredoka One',cursive;font-size:clamp(0.8rem,2.6vw,1.3rem);
     color:#FFD700;text-shadow:2px 2px 0 #c0392b;pointer-events:none;opacity:0;
-    transition:opacity 0.3s;z-index:100;text-align:center;white-space:nowrap;
+    transition:opacity 0.3s;z-index:100;text-align:center;max-width:92vw;
     background:rgba(0,0,0,0.55);padding:6px 18px;border-radius:20px;}
-  #hintBox{position:fixed;bottom:6px;right:8px;font-size:0.58rem;
-    color:rgba(255,255,255,0.3);font-family:'Baloo 2',cursive;text-align:right;
-    line-height:1.7;pointer-events:none;}
+  #hintBox{position:fixed;bottom:4px;right:8px;font-size:0.56rem;color:rgba(255,255,255,0.28);
+    pointer-events:none;}
 </style>
 </head>
 <body>
-<div id="title">🐔 Cranky Chicken!</div>
-<div id="ui-bar">
-  <span>⭐ <span id="score">0</span></span>
-  <span>🏆 <span id="best">0</span></span>
-  <span>🐔 x<span id="birds">99</span></span>
-  <span>🌿 Lvl <span id="levelNum">1</span>/100</span>
-  <span id="breedTag">🐔 Cranky</span>
+<div id="top">
+  <a id="home" href="/games/">← Games</a>
+  <div id="title">🐔 Cranky Chicken!</div>
+  <div id="ui-bar">
+    <span class="pill">⭐ <span id="score">0</span></span>
+    <span class="pill">🏆 <span id="best">0</span></span>
+    <span class="pill">🐔 x<span id="birds">0</span></span>
+    <span class="pill">🌿 <span id="levelNum">1</span>/100</span>
+    <span class="pill" id="breedTag">🐔 Cranky</span>
+  </div>
 </div>
 <canvas id="gameCanvas" width="800" height="420"></canvas>
-<div id="message">Pull the chicken back and launch! 🐔💥</div>
-<button id="restartBtn" onclick="restart()">🔄 Restart</button>
+<div id="bottom">
+  <div id="message">Pull back and let go! 🐔💥</div>
+  <button id="restartBtn">🔄 Restart</button>
+</div>
 <div id="levelBanner"></div>
 <div id="easterMsg"></div>
-<div id="hintBox">Secrets: click title 3x • click chicken 5x • press G or C</div>
+<div id="hintBox">Secrets: tap title 3x • tap chicken 5x • G or C</div>
 
 <script>
+// ═══ CRANKY CHICKEN — REDUX ═══════════════════════════════════════
+// Same game: slingshot, five breeds, eight scenes, 100 levels, cow.
+// Tightened: fixed 60Hz physics, real collisions, stacked targets,
+// a chicken budget per level, pointer input, hit-stop + shake.
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
-const W=canvas.width, H=canvas.height;
-const GROUND_Y=H-90;
-const GRAVITY=0.45;
+const W=800,H=420,GROUND_Y=H-90,GRAVITY=0.45,POWER=0.16,MAX_PULL=120,STEP=1000/60;
+const DPR=Math.min(window.devicePixelRatio||1,2);
+canvas.width=W*DPR;canvas.height=H*DPR;
+const $=id=>document.getElementById(id);
 
 // ── SOUND ──────────────────────────────────────────────────────────
-const AC=new(window.AudioContext||window.webkitAudioContext)();
-function beep(freq,type,dur,vol,f0){
-  try{const o=AC.createOscillator(),g=AC.createGain();
-    o.connect(g);g.connect(AC.destination);o.type=type;
-    if(f0){o.frequency.setValueAtTime(f0,AC.currentTime);
-      o.frequency.exponentialRampToValueAtTime(freq,AC.currentTime+dur*0.6);}
-    else o.frequency.setValueAtTime(freq,AC.currentTime);
-    g.gain.setValueAtTime(vol||0.15,AC.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
-    o.start();o.stop(AC.currentTime+dur);}catch(e){}
+let AC=null;
+function unlockAudio(){
+  try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();}catch(e){}
 }
+function beep(freq,type,dur,vol,f0){
+  if(!AC)return;
+  try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;
+    o.connect(g);g.connect(AC.destination);o.type=type;
+    if(f0){o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(freq,t+dur*0.6);}
+    else o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(vol||0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.start();o.stop(t+dur);}catch(e){}
+}
+const arp=(fs,gap)=>fs.forEach((f,i)=>setTimeout(()=>beep(f,'sine',0.28,0.16),i*gap));
 const sfx={
   launch: ()=>beep(180,'sawtooth',0.25,0.12,600),
   bounce: ()=>beep(90,'sine',0.2,0.13,200),
   hit:    ()=>beep(260,'square',0.15,0.14,80),
   smash:  ()=>beep(50,'sawtooth',0.35,0.2,300),
-  win:    ()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,'sine',0.3,0.16),i*110)),
+  thud:   ()=>beep(60,'sine',0.18,0.16,140),
+  win:    ()=>arp([523,659,784,1047],110),
+  lose:   ()=>arp([392,330,262],140),
   moo:    ()=>beep(160,'sine',0.6,0.18,200),
   giant:  ()=>beep(80,'sawtooth',0.5,0.22,40),
   shoot:  ()=>beep(500,'square',0.12,0.09,900),
-  boing:  ()=>beep(700,'sine',0.22,0.13,200),
-  levelup:()=>[400,600,800].forEach((f,i)=>setTimeout(()=>beep(f,'sine',0.25,0.16),i*85)),
 };
 
-// ── SEASONS ────────────────────────────────────────────────────────
+// ── SCENES (fixed order, so level 12 is always level 12) ───────────
 const SCENE_POOL=['spring','summer','autumn','winter','night','storm','mountain','mountain_snow'];
-// Generate 100 levels: first 5 are easy farm, then shuffle variety in blocks of 8
 const SEASONS=(()=>{
+  let a=20240607;
+  const r=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
   const s=['spring','spring','summer','autumn','winter'];
-  const pool=[...SCENE_POOL];
   while(s.length<100){
-    // Shuffle a copy of the pool and append, never two identical in a row
-    const block=[...pool].sort(()=>Math.random()-0.5);
-    block.forEach(b=>{ if(b!==s[s.length-1]) s.push(b); else s.push(pool.find(p=>p!==b)); });
+    const b=[...SCENE_POOL];
+    for(let i=b.length-1;i>0;i--){const j=r()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]];}
+    if(b[0]===s[s.length-1])b.push(b.shift());
+    s.push(...b);
   }
   return s.slice(0,100);
 })();
+const SCENE_EMOJI={spring:'🌸',summer:'☀️',autumn:'🍂',winter:'❄️',night:'🌙',storm:'⛈️',mountain:'⛰️',mountain_snow:'🏔️'};
+function getSeason(){return SEASONS[Math.min(level-1,99)];}
+function getPal(){return PAL[getSeason()]||PAL.spring;}
+
+// ── LEVELS ─────────────────────────────────────────────────────────
+// [width, height, toughness]
+const TYPES={hay:[54,48,1],fence:[28,80,1],barrel:[44,56,2],trough:[70,36,2],crate:[50,50,2],windmill:[42,104,3]};
+function lvlCfg(l){
+  return{count:Math.min(3+Math.floor(l/3),12),hpCap:l<=6?1:l<=25?2:3,shoots:l>=8};
+}
+
+// ── STATE ──────────────────────────────────────────────────────────
+const BREEDS=['normal','bomb','boomerang','freeze','fire'];
+const BREED_NAMES={normal:'🐔 Cranky',bomb:'💣 Bomber',boomerang:'🌀 Boomerang',freeze:'❄️ Freezer',fire:'🔥 Fireball'};
+const BREED_TIP={normal:'Cranky: a good solid WHACK.',bomb:'Bomber: blows up everything nearby!',
+  boomerang:'Boomerang: flies through stuff, then comes back.',freeze:'Freezer: one touch and it shatters.',
+  fire:'Fireball: burns through three things in a row.'};
+const TRAIL_CLR={normal:'255,255,255',bomb:'255,110,60',boomerang:'180,120,255',freeze:'120,225,255',fire:'255,160,30'};
+let score=0,best=0,birdsLeft=0,level=1,levelStartScore=0;
+let phase='aim',settleT=0,combo=0;
+let obstacles=[],particles=[],enemyShots=[],flameTrail=[],floats=[],timers=[];
+let giantMode=false,cowVisible=false,cowAngle=0,cowTimer=0;
+let clickCount=0,titleClicks=0,eggTO=null,bannerTO=null,cloudOff=0;
+let hitStop=0,shake=0,flash=0,lastBreed='';
+let drag=null;
+const sling={x:110,y:305};
+let chicken=null;
+const cam={x:0,y:0,z:1};
+
+function after(frames,fn){timers.push({t:frames,fn});}
+function hud(){
+  $('score').textContent=score;$('best').textContent=best;
+  $('birds').textContent=birdsLeft;$('levelNum').textContent=level;
+  if(chicken)$('breedTag').textContent=BREED_NAMES[chicken.breed];
+}
+function msg(t){$('message').textContent=t;}
+function banner(html){
+  const el=$('levelBanner');el.innerHTML=html;el.style.opacity=1;
+  clearTimeout(bannerTO);bannerTO=setTimeout(()=>el.style.opacity=0,1500);
+}
+function easterMsg(txt){
+  const el=$('easterMsg');el.textContent=txt;el.style.opacity=1;
+  clearTimeout(eggTO);eggTO=setTimeout(()=>el.style.opacity=0,2600);
+}
+function addScore(n,x,y,label){
+  score+=n;if(score>best)best=score;
+  floats.push({x,y,txt:label||('+'+n),life:50,maxLife:50,vy:-1.1,size:label?18:14});
+  hud();
+}
+
+function newChicken(){
+  const unlocked=BREEDS.slice(0,Math.min(BREEDS.length,level));
+  let breed;
+  if(level<=BREEDS.length&&lastBreed!=='intro'+level){   // first chicken of a new breed's level shows it off
+    breed=unlocked[unlocked.length-1];lastBreed='intro'+level;
+    if(level>1)easterMsg('NEW! '+BREED_NAMES[breed]);
+  }else breed=unlocked[Math.random()*unlocked.length|0];
+  chicken={x:sling.x,y:sling.y,vx:0,vy:0,r:giantMode?50:22,flying:false,gone:false,
+    sq:1,st:1,breed,t:0,slow:0,burns:0};
+  flameTrail=[];combo=0;drag=null;phase='aim';
+  obstacles.forEach(o=>{o.boomed=false;});
+  msg(BREED_TIP[breed]);hud();
+}
+
+function mkObstacles(){
+  obstacles=[];
+  const cfg=lvlCfg(level);
+  const pool=level<3?['hay','fence','barrel','trough']:
+             level<5?['hay','fence','barrel','trough','crate']:
+                     ['hay','fence','barrel','trough','crate','windmill'];
+  const picked=[];
+  for(let i=0;i<cfg.count;i++)picked.push(pool[i%pool.length]);
+  for(let i=picked.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[picked[i],picked[j]]=[picked[j],picked[i]];}
+  // five columns; each item goes on the shortest stack that still has headroom
+  const cols=[0,1,2,3,4].map(i=>({cx:455+i*70,h:0,items:[],k:Math.random()}));
+  picked.forEach(t=>{
+    const h=TYPES[t][1];
+    const fits=cols.filter(c=>c.h+h<=235);
+    const c=(fits.length?fits:cols).slice().sort((a,b)=>a.h-b.h||a.k-b.k)[0];
+    c.items.push(t);c.h+=h;
+  });
+  let n=0;
+  cols.forEach(c=>{
+    c.items.sort((a,b)=>TYPES[b][0]-TYPES[a][0]);   // widest on the bottom
+    let y=GROUND_Y;
+    c.items.forEach(t=>{
+      const [w,h,tough]=TYPES[t];y-=h;
+      const hp=Math.min(tough,cfg.hpCap);
+      obstacles.push({type:t,x:c.cx-w/2,y,w,h,hp,maxHp:hp,wobble:0,spin:0,vy:0,boomed:false,falling:false,
+        deathTimer:0,gone:false,frozen:false,frozenTimer:0,onFire:false,
+        shoots:cfg.shoots&&(n++%3===0),shootTimer:90+(Math.random()*90|0)});
+    });
+  });
+}
+
+function startLevel(){
+  timers=[];enemyShots=[];particles=[];
+  mkObstacles();
+  const totalHp=obstacles.reduce((s,o)=>s+o.maxHp,0);
+  birdsLeft=Math.max(4,Math.min(10,Math.ceil(totalHp*0.4)+2));
+  levelStartScore=score;
+  newChicken();saveProgress();
+  if(level===8)easterMsg('😤 The grumpy ones throw corn now!');
+}
+
+// ── INPUT (pointer events: mouse, touch, pen) ──────────────────────
+function getPos(e){
+  const r=canvas.getBoundingClientRect();
+  return{x:(e.clientX-r.left)*(W/r.width),y:(e.clientY-r.top)*(H/r.height)};
+}
+canvas.addEventListener('pointerdown',e=>{
+  unlockAudio();e.preventDefault();
+  if(phase!=='aim'||drag)return;
+  const p=getPos(e);
+  // drag from anywhere — your finger doesn't have to cover the chicken
+  drag={id:e.pointerId,sx:p.x,sy:p.y,onBird:Math.hypot(p.x-sling.x,p.y-sling.y)<60,moved:0};
+  try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  const p=getPos(e);
+  let dx=p.x-drag.sx,dy=p.y-drag.sy;const d=Math.hypot(dx,dy);
+  drag.moved=Math.max(drag.moved,d);
+  if(d>MAX_PULL){dx=dx/d*MAX_PULL;dy=dy/d*MAX_PULL;}
+  chicken.x=sling.x+dx;chicken.y=sling.y+dy;
+});
+function endDrag(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  const d=drag;drag=null;
+  if(phase!=='aim')return;
+  const pull=Math.hypot(chicken.x-sling.x,chicken.y-sling.y);
+  if(pull<14||e.type==='pointercancel'){
+    chicken.x=sling.x;chicken.y=sling.y;
+    if(d.onBird&&d.moved<14&&++clickCount>=5){clickCount=0;toggleGiant();}
+    return;
+  }
+  chicken.vx=(sling.x-chicken.x)*POWER;
+  chicken.vy=(sling.y-chicken.y)*POWER;
+  chicken.flying=true;phase='flying';
+  birdsLeft--;hud();sfx.launch();
+}
+canvas.addEventListener('pointerup',endDrag);
+canvas.addEventListener('pointercancel',endDrag);
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+$('title').addEventListener('click',()=>{
+  unlockAudio();
+  if(++titleClicks>=3){titleClicks=0;showCow();}
+});
+let restartArmed=0;
+function askRestart(){
+  const b=$('restartBtn');
+  if(phase==='gameover'||Date.now()<restartArmed){restartArmed=0;b.textContent='🔄 Restart';restart();return;}
+  restartArmed=Date.now()+2500;b.textContent='Back to level 1? Tap again';
+  setTimeout(()=>{if(restartArmed&&Date.now()>=restartArmed){restartArmed=0;b.textContent='🔄 Restart';}},2600);
+}
+$('restartBtn').addEventListener('click',()=>{unlockAudio();askRestart();});
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='r')askRestart();
+  if(k==='g'){unlockAudio();toggleGiant();}
+  if(k==='c'){unlockAudio();showCow();}
+});
+
+// ── EASTER EGGS ────────────────────────────────────────────────────
+function toggleGiant(){
+  giantMode=!giantMode;
+  if(chicken&&!chicken.flying)chicken.r=giantMode?50:22;
+  sfx.giant();
+  easterMsg(giantMode?'💥 GIANT CHICKEN ACTIVATED!! 💥':'🐔 Back to normal...');
+}
+function showCow(){
+  cowVisible=true;cowTimer=320;sfx.moo();
+  easterMsg('🐄 A WILD DANCING COW APPEARS! MOO!!');
+}
+
+// ── FX ─────────────────────────────────────────────────────────────
+function burst(x,y,color,n,spd,life,r0){
+  for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-0.5)*(spd||7),vy:(Math.random()-0.5)*(spd||7),
+    life:life||35,maxLife:life||35,color:typeof color==='function'?color(i):color,r:(r0||3)+Math.random()*4});
+}
+const EXPLODE_CLR=['#FFD700','#ff6600','#ff2200','#fff','#ffcc00'];
+function spawnExplode(x,y){burst(x,y,i=>EXPLODE_CLR[i%5],22,14,45,5);}
+function spawnDust(x,y,n){
+  for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-0.5)*4,vy:-Math.random()*3,
+    life:22,maxLife:22,color:'#c8a050',r:3+Math.random()*4});
+}
+function spawnIce(x,y){burst(x,y,()=>`hsl(${180+Math.random()*40},80%,80%)`,12,6,30);}
+function spawnFire(x,y){
+  for(let i=0;i<10;i++)particles.push({x,y,vx:(Math.random()-0.5)*9,vy:-Math.random()*8,
+    life:35,maxLife:35,color:`hsl(${Math.random()*40},100%,55%)`,r:4+Math.random()*6});
+}
+const GLYPHS=['⭐','💥','✨','💫','❗'];
+function stars(x,y){
+  for(let i=0;i<3;i++)floats.push({x:x+(Math.random()-0.5)*40,y:y-10-Math.random()*20,
+    txt:GLYPHS[Math.random()*GLYPHS.length|0],life:40,maxLife:40,vx:(Math.random()-0.5)*2,vy:-1.5-Math.random()*1.5,size:22,g:0.08});
+}
+
+// ── OBSTACLE EVENTS ────────────────────────────────────────────────
+function kill(o,t){o.hp=0;o.deathTimer=Math.max(1,t|0);}
+function damage(o,n,clr){
+  const cx=o.x+o.w/2,cy=o.y+o.h/2;
+  o.hp-=n;o.wobble=22;sfx.hit();
+  burst(cx,cy,clr,10);stars(cx,o.y);addScore(50,cx,o.y);
+  if(o.hp<=0)kill(o,24);
+}
+function freezeObs(o){
+  o.frozen=true;kill(o,45);o.frozenTimer=45;o.wobble=0;sfx.hit();
+  spawnIce(o.x+o.w/2,o.y+o.h/2);stars(o.x+o.w/2,o.y);addScore(80,o.x+o.w/2,o.y);
+}
+function ignite(o){
+  o.onFire=true;kill(o,35);sfx.hit();
+  spawnFire(o.x+o.w/2,o.y+o.h/2);stars(o.x+o.w/2,o.y);addScore(80,o.x+o.w/2,o.y);
+}
+function explode(x,y){
+  obstacles.forEach(o=>{
+    if(o.deathTimer>0)return;
+    const d=Math.hypot(o.x+o.w/2-x,o.y+o.h/2-y);
+    if(d<130)kill(o,3+d/14);          // ripples outward
+  });
+  spawnExplode(x,y);spawnExplode(x-35,y-25);spawnExplode(x+35,y-25);
+  for(let i=0;i<20;i++){const a=i/20*Math.PI*2;
+    particles.push({x,y,vx:Math.cos(a)*8,vy:Math.sin(a)*8,life:20,maxLife:20,color:'#FFD700',r:6});}
+  flash=0.55;shake=16;hitStop=4;sfx.smash();
+  chicken.gone=true;settle();
+}
+
+// ── SIMULATION (fixed 60Hz steps) ──────────────────────────────────
+function settle(){chicken.flying=false;phase='settle';settleT=0;}
+
+function stepChicken(){
+  const c=chicken;
+  if(!c.flying){c.sq+=(1-c.sq)*0.18;c.st+=(1-c.st)*0.18;return;}
+  c.t++;
+  c.vy+=GRAVITY;
+  if(c.breed==='boomerang'){
+    if(c.vy>0)c.vx-=0.35;
+    flameTrail.push({x:c.x,y:c.y,life:18,maxLife:18,r:5,color:'#aa66ff'});
+  }else if(c.breed==='fire'){
+    for(let i=0;i<3;i++)flameTrail.push({x:c.x+(Math.random()-0.5)*16,y:c.y+(Math.random()-0.5)*16,
+      life:30,maxLife:30,r:16+Math.random()*12,color:`hsl(${Math.random()*40},100%,${50+Math.random()*20}%)`});
+  }else if(c.breed==='bomb'){
+    c.r=Math.min(c.r+0.25,giantMode?70:42);
+    flameTrail.push({x:c.x+(Math.random()-0.5)*c.r,y:c.y+(Math.random()-0.5)*c.r,
+      life:16,maxLife:16,r:c.r*0.6+Math.random()*6,color:Math.random()>0.5?'#ff6600':'#ffcc00'});
+  }else if(c.breed==='freeze'){
+    flameTrail.push({x:c.x,y:c.y,life:20,maxLife:20,r:6+Math.random()*4,color:'#aaeeff'});
+  }
+  c.x+=c.vx;c.y+=c.vy;
+  c.sq+=(1-c.sq)*0.18;c.st+=(1-c.st)*0.18;
+
+  if(c.y+c.r>=GROUND_Y&&c.vy>0){               // vy>0: a low pull-back may start below the grass line
+    c.y=GROUND_Y-c.r;
+    const spd=Math.abs(c.vy);
+    if(c.breed==='bomb'&&spd>2){explode(c.x,c.y);return;}
+    c.vy*=-0.55;c.vx*=0.8;
+    if(spd>3){c.sq=1.5;c.st=0.6;sfx.bounce();spawnDust(c.x,GROUND_Y,8);}
+  }
+
+  for(const o of obstacles){
+    if(o.deathTimer>0)continue;               // already going — fly through the wreckage
+    const qx=Math.max(o.x,Math.min(c.x,o.x+o.w)),qy=Math.max(o.y,Math.min(c.y,o.y+o.h));
+    const dx=c.x-qx,dy=c.y-qy,d=Math.hypot(dx,dy);
+    if(d>=c.r)continue;
+    if(c.breed==='bomb'){explode(c.x,c.y);return;}
+    if(c.breed==='boomerang'){if(!o.boomed){o.boomed=true;damage(o,1,'#aa66ff');}continue;}   // one whack each, no stopping
+    if(c.breed==='fire'){                     // burns through three things, then fizzles out
+      ignite(o);c.vx*=0.7;c.vy*=0.5;
+      if(++c.burns>=3){burst(c.x,c.y,'#888',14,5,30);c.gone=true;settle();return;}
+      continue;}
+    // solid hit: push out along the contact normal, then bounce
+    let nx,ny,pen;
+    if(d>0.001){nx=dx/d;ny=dy/d;pen=c.r-d;}
+    else{
+      const l=c.x-o.x,r=o.x+o.w-c.x,t=c.y-o.y,b=o.y+o.h-c.y,m=Math.min(l,r,t,b);
+      if(m===t){nx=0;ny=-1;pen=t+c.r;}else if(m===l){nx=-1;ny=0;pen=l+c.r;}
+      else if(m===r){nx=1;ny=0;pen=r+c.r;}else{nx=0;ny=1;pen=b+c.r;}
+    }
+    c.x+=nx*pen;c.y+=ny*pen;
+    const vn=c.vx*nx+c.vy*ny;
+    if(vn>=0)continue;
+    c.vx-=1.4*vn*nx;c.vy-=1.4*vn*ny;c.vx*=0.9;
+    if(-vn<2.5)continue;                       // resting or rolling: no damage
+    if(c.breed==='freeze'){freezeObs(o);c.vy=Math.min(c.vy,-3);}
+    else damage(o,(-vn>13||giantMode)?2:1,obsClr(o.type));
+    c.sq=1.4;c.st=0.65;hitStop=5;shake=Math.max(shake,6);
+  }
+
+  c.slow=Math.hypot(c.vx,c.vy)<1.3?c.slow+1:0;
+  if(c.slow>18||c.t>480||c.x>W+90||c.x<-90)settle();
+}
+
+function stepObstacles(){
+  let removed=false;
+  for(const o of obstacles){
+    if(o.type==='windmill')o.spin+=0.03+level*0.001;
+    const cx=o.x+o.w/2,cy=o.y+o.h/2;
+    if(o.deathTimer>0){
+      o.deathTimer--;
+      o.wobble=o.frozen?0:6+Math.sin(o.deathTimer*1.2)*8;
+      if(o.frozen)o.frozenTimer=o.deathTimer;
+      if(o.onFire&&o.deathTimer%4===0)spawnFire(cx,cy);
+      if(o.deathTimer===0){
+        o.gone=removed=true;combo++;
+        sfx.smash();spawnExplode(cx,cy);if(o.frozen)spawnIce(cx,cy);
+        shake=Math.max(shake,5);
+        const m=Math.min(combo,5);addScore(150*m,cx,o.y-14,m>1?`+${150*m}  x${m}!`:null);
+      }
+      continue;
+    }
+    if(o.wobble>0)o.wobble--;
+    // gravity: rest on the ground or on whatever is still underneath
+    let floor=GROUND_Y;
+    for(const p of obstacles){
+      if(p===o||p.gone)continue;
+      if(p.x<o.x+o.w-2&&p.x+p.w>o.x+2&&p.y>=o.y+o.h-0.5)floor=Math.min(floor,p.y);
+    }
+    if(o.y+o.h<floor-0.5){
+      o.falling=true;o.vy+=0.6;o.y+=o.vy;
+      if(o.y+o.h>=floor){
+        o.y=floor-o.h;
+        if(o.vy>3){spawnDust(cx,floor,6);sfx.thud();shake=Math.max(shake,3);o.wobble=12;}
+        o.vy=0;o.falling=false;
+      }
+    }else{o.falling=false;o.vy=0;}
+    if(o.shoots&&chicken.flying&&--o.shootTimer<=0){
+      o.shootTimer=110+(Math.random()*80|0);
+      const tx=chicken.x-cx,ty=chicken.y-cy,ld=Math.hypot(tx,ty)||1;
+      enemyShots.push({x:cx,y:cy,vx:tx/ld*4.8,vy:ty/ld*4.8,r:7,life:100});
+      sfx.shoot();
+    }
+  }
+  if(removed)obstacles=obstacles.filter(o=>!o.gone);
+}
+
+function stepShots(){
+  for(const s of enemyShots){
+    s.x+=s.vx;s.y+=s.vy;s.vy+=GRAVITY*0.2;s.life--;
+    if(s.y>GROUND_Y)s.life=0;
+    if(chicken.flying&&Math.hypot(s.x-chicken.x,s.y-chicken.y)<chicken.r+s.r){
+      s.life=0;chicken.vx+=s.vx*0.6;chicken.vy+=s.vy*0.6;
+      sfx.hit();shake=Math.max(shake,4);easterMsg('😤 They shot back!! SO RUDE!');
+    }
+  }
+  enemyShots=enemyShots.filter(s=>s.life>0);
+}
+
+function stepFx(){
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life--;}
+  particles=particles.filter(p=>p.life>0);
+  for(const f of flameTrail)f.life--;
+  flameTrail=flameTrail.filter(f=>f.life>0);
+  for(const f of floats){f.x+=f.vx||0;f.y+=f.vy;f.vy+=f.g||0;f.life--;}
+  floats=floats.filter(f=>f.life>0);
+  shake*=0.86;if(shake<0.3)shake=0;
+  flash*=0.88;if(flash<0.02)flash=0;
+  cloudOff=(cloudOff+0.12)%W;
+  if(cowVisible){cowAngle+=0.08;if(--cowTimer<=0)cowVisible=false;}
+  // camera: a gentle lean toward the action, never hiding the targets
+  const tz=phase==='flying'?1.1:1;
+  const tx=phase==='flying'?Math.min(0,Math.max(W-W*tz,W/2-chicken.x*tz)):0;
+  const ty=phase==='flying'?Math.min(0,Math.max(H-H*tz,H/2-chicken.y*tz+40)):0;
+  cam.x+=(tx-cam.x)*0.08;cam.y+=(ty-cam.y)*0.08;cam.z+=(tz-cam.z)*0.08;
+}
+
+function resolve(){
+  if(!obstacles.length){
+    const bonus=birdsLeft*100;
+    if(bonus)addScore(bonus,W/2,150,`🐔 x${birdsLeft} left  +${bonus}`);
+    sfx.win();
+    if(level>=100){
+      phase='gameover';saveProgress();
+      msg('👑 YOU BEAT ALL 100 LEVELS!! ULTIMATE CRANKY CHICKEN LEGEND!! 🐔🏆');
+      banner('👑 LEGEND! 👑<br>🐔🐔🐔');
+      return;
+    }
+    phase='levelwin';level++;hud();
+    const s=getSeason();
+    banner(`LEVEL ${level}! ${SCENE_EMOJI[s]||'🌿'}`);
+    after(80,startLevel);
+  }else if(birdsLeft<=0){
+    phase='retry';score=levelStartScore;hud();sfx.lose();
+    banner('SO CLOSE! 😤<br>Try again!');msg('Out of chickens — same level, fresh farm.');
+    after(85,startLevel);
+  }else{
+    phase='between';after(18,newChicken);
+  }
+}
+
+function step(){
+  for(const t of timers)t.t--;
+  const due=timers.filter(t=>t.t<=0);timers=timers.filter(t=>t.t>0);
+  due.forEach(t=>t.fn());
+  stepFx();
+  if(hitStop>0){hitStop--;return;}             // the WHACK hangs in the air
+  stepChicken();stepObstacles();stepShots();
+  if(phase==='settle'){
+    settleT++;
+    if(settleT>14&&obstacles.every(o=>o.deathTimer<=0&&!o.falling))resolve();
+  }
+}
+
+// ── SAVE ───────────────────────────────────────────────────────────
+function saveProgress(){
+  try{localStorage.setItem('crankyChicken',JSON.stringify({level,score:levelStartScore,best}));}catch(e){}
+}
+function loadProgress(){
+  try{
+    const d=JSON.parse(localStorage.getItem('crankyChicken')||'{}');
+    if(d.level){level=Math.max(1,Math.min(100,d.level|0));score=d.score|0;best=d.best|0;return true;}
+  }catch(e){}
+  return false;
+}
+function restart(){
+  score=0;level=1;giantMode=false;cowVisible=false;clickCount=0;titleClicks=0;lastBreed='';
+  floats=[];startLevel();
+  msg('Pull back and let go! 🐔💥');
+}
+
+// ── ART (unchanged from the original) ──────────────────────────────
 const PAL={
   spring:       {sky1:'#87CEEB',sky2:'#d8f0ff',g1:'#6abf3a',g2:'#52a82a',dirt:'#a0662a'},
   summer:       {sky1:'#5BC8F5',sky2:'#ffe8a0',g1:'#5db82e',g2:'#3e8a18',dirt:'#8a5a20'},
@@ -113,436 +554,6 @@ const PAL={
   mountain:     {sky1:'#6a9abf',sky2:'#c8e8f8',g1:'#4a7a3a',g2:'#2a5a1a',dirt:'#5a3a1a'},
   mountain_snow:{sky1:'#b8cce0',sky2:'#deeeff',g1:'#c8dde8',g2:'#a0b8c8',dirt:'#7a8898'},
 };
-function getSeason(){return SEASONS[Math.min(level-1,99)];}
-function getPal(){return PAL[getSeason()]||PAL['spring'];}
-
-// ── LEVEL CONFIG ────────────────────────────────────────────────────
-function lvlCfg(l){
-  return{
-    count: Math.min(3+Math.floor(l*0.5),16),
-    hp:    l<=5?1:l<=20?2:l<=50?3:4,
-    scale: 1+(l-1)*0.025,
-    shoots:l>=8,
-  };
-}
-
-// ── STATE ──────────────────────────────────────────────────────────
-const BREEDS=['normal','bomb','boomerang','freeze','fire'];
-const BREED_NAMES={normal:'🐔 Cranky',bomb:'💣 Bomber',boomerang:'🌀 Boomerang',freeze:'❄️ Freezer',fire:'🔥 Fireball'};
-let score=0,best=0,birdsLeft=99,level=1;
-let phase='aim';
-let obstacles=[],particles=[],enemyShots=[],flameTrail=[];
-let giantMode=false,cowVisible=false,cowAngle=0,cowTimer=0;
-let clickCount=0,titleClicks=0;
-let eggTO=null,birdUsed=false,cloudOff=0;
-let currentBreed='normal';
-let cartoonStars=[];  // floating impact stars
-
-const sling={x:110,y:305};
-let chicken=mkChicken();
-let drag=false;
-
-function mkChicken(){
-  currentBreed=BREEDS[Math.floor(Math.random()*BREEDS.length)];
-  flameTrail=[];
-  return{x:sling.x,y:sling.y,vx:0,vy:0,r:giantMode?50:22,
-    flying:false,settled:false,sq:1,st:1,breed:currentBreed,freezeTimer:0,
-    hangTimer:0};  // cartoon hang-in-air
-}
-
-// ── OBSTACLES ──────────────────────────────────────────────────────
-function mkObstacles(){
-  obstacles=[];
-  const cfg=lvlCfg(level);
-  const pool=level<3?['hay','fence','barrel','trough']:
-             level<5?['hay','fence','barrel','trough','crate']:
-                     ['hay','fence','barrel','trough','crate','windmill'];
-  const picked=[];
-  for(let i=0;i<cfg.count;i++) picked.push(pool[i%pool.length]);
-  picked.sort(()=>Math.random()-0.5);
-  const startX=440;
-  const gap=Math.max(26,(W-startX-55)/cfg.count);
-  picked.forEach((t,i)=>{
-    const x=startX+i*gap+(Math.random()*10|0);
-    obstacles.push(mkObs(t,x,cfg.hp,cfg.scale,cfg.shoots&&i%3===0));
-  });
-}
-
-function mkObs(type,x,hp,s,shoots){
-  const b={type,x,hp,maxHp:hp,wobble:0,shoots,shootTimer:150+(Math.random()*100|0),spin:0,deathTimer:0};
-  if(type==='hay')      return{...b,w:54*s|0,h:48*s|0,y:GROUND_Y-48*s};
-  if(type==='fence')    return{...b,w:28*s|0,h:80*s|0,y:GROUND_Y-80*s};
-  if(type==='barrel')   return{...b,w:44*s|0,h:56*s|0,y:GROUND_Y-56*s};
-  if(type==='trough')   return{...b,w:70*s|0,h:36*s|0,y:GROUND_Y-36*s};
-  if(type==='crate')    return{...b,w:50*s|0,h:50*s|0,y:GROUND_Y-50*s};
-  if(type==='windmill') return{...b,w:42*s|0,h:104*s|0,y:GROUND_Y-104*s};
-}
-
-// ── INPUT ──────────────────────────────────────────────────────────
-function getPos(e){
-  const r=canvas.getBoundingClientRect();
-  const cx=e.touches?e.touches[0].clientX:e.clientX;
-  const cy=e.touches?e.touches[0].clientY:e.clientY;
-  return{x:(cx-r.left)*(W/r.width),y:(cy-r.top)*(H/r.height)};
-}
-canvas.addEventListener('mousedown',startDrag);
-canvas.addEventListener('touchstart',startDrag,{passive:true});
-canvas.addEventListener('mousemove',moveDrag);
-canvas.addEventListener('touchmove',moveDrag,{passive:true});
-canvas.addEventListener('mouseup',endDrag);
-canvas.addEventListener('touchend',endDrag);
-
-function startDrag(e){
-  if(phase!=='aim') return;
-  if(AC.state==='suspended') AC.resume();
-  const p=getPos(e);
-  const dx=p.x-chicken.x,dy=p.y-chicken.y;
-  if(Math.sqrt(dx*dx+dy*dy)<60){
-    drag=true; clickCount++;
-    if(clickCount>=5){clickCount=0;toggleGiant();}
-  }
-}
-function moveDrag(e){
-  if(!drag) return;
-  const p=getPos(e);
-  let dx=p.x-sling.x,dy=p.y-sling.y;
-  const d=Math.sqrt(dx*dx+dy*dy);
-  if(d>120){dx=dx/d*120;dy=dy/d*120;}
-  chicken.x=sling.x+dx; chicken.y=sling.y+dy;
-}
-function endDrag(e){
-  if(!drag||phase!=='aim') return;
-  drag=false;
-  const rawVx=(sling.x-chicken.x)*0.55;
-  const rawVy=(sling.y-chicken.y)*0.55;
-  // Bomb ignores angle penalty — always full power
-  const upwardFactor=chicken.breed==='bomb'?1.0:Math.max(0.35, Math.min(1.0, -rawVy/(Math.abs(rawVx)+1)+0.5));
-  chicken.vx=rawVx*upwardFactor;
-  chicken.vy=rawVy;
-  chicken.flying=true; phase='flying';
-  sfx.launch();
-}
-
-document.getElementById('title').addEventListener('click',()=>{
-  if(AC.state==='suspended') AC.resume();
-  titleClicks++;
-  if(titleClicks>=3){titleClicks=0;showCow();}
-});
-window.addEventListener('keydown',e=>{
-  if(e.key==='r'||e.key==='R') restart();
-  if(e.key==='g'||e.key==='G'){if(AC.state==='suspended')AC.resume();toggleGiant();}
-  if(e.key==='c'||e.key==='C'){if(AC.state==='suspended')AC.resume();showCow();}
-});
-
-// ── EASTER EGGS ────────────────────────────────────────────────────
-function toggleGiant(){
-  giantMode=!giantMode; chicken.r=giantMode?50:22;
-  sfx.giant();
-  easterMsg(giantMode?'💥 GIANT CHICKEN ACTIVATED!! 💥':'🐔 Back to normal...');
-}
-function showCow(){
-  cowVisible=true; cowTimer=320; sfx.moo();
-  easterMsg('🐄 A WILD DANCING COW APPEARS! MOO!!');
-}
-function easterMsg(txt){
-  const el=document.getElementById('easterMsg');
-  el.textContent=txt; el.style.opacity=1;
-  if(eggTO) clearTimeout(eggTO);
-  eggTO=setTimeout(()=>el.style.opacity=0,2800);
-}
-
-// ── CAMERA ─────────────────────────────────────────────────────────
-let camX=0, camY=0, camZ=1;          // current camera state
-let targetX=0, targetY=0, targetZ=1; // what we're easing toward
-let manualZoom=1;                     // player-controlled offset
-
-function updateCamera(){
-  if(chicken.flying){
-    // Follow chicken, zoomed in
-    targetZ=1.35*manualZoom;
-    targetX=W/2 - chicken.x*targetZ;
-    targetY=H/2 - chicken.y*targetZ + 40;
-    // Clamp so we don't pan off-canvas
-    targetX=Math.min(0, Math.max(W-W*targetZ, targetX));
-    targetY=Math.min(0, Math.max(H-H*targetZ, targetY));
-  } else {
-    // Return to full view
-    targetZ=1.0*manualZoom;
-    targetX=0; targetY=0;
-  }
-  // Smooth easing
-  camX+=(targetX-camX)*0.08;
-  camY+=(targetY-camY)*0.08;
-  camZ+=(targetZ-camZ)*0.08;
-}
-
-function zoomIn() { manualZoom=Math.min(manualZoom+0.15,2.0); }
-function zoomOut(){ manualZoom=Math.max(manualZoom-0.15,0.5); }
-
-function drawZoomButtons(){
-  // Draw in screen space — save/restore so camera transform doesn't affect them
-  ctx.save();
-  ctx.setTransform(1,0,0,1,0,0); // reset to screen coords
-  const bw=32,bh=26,gap=4,margin=8;
-  const x1=W-margin-bw*2-gap, x2=W-margin-bw, y=margin;
-  [x1,x2].forEach((bx,i)=>{
-    ctx.fillStyle='rgba(0,0,0,0.45)';
-    ctx.beginPath();ctx.roundRect(bx,y,bw,bh,6);ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1;ctx.stroke();
-    ctx.fillStyle='#fff';ctx.font='bold 17px sans-serif';ctx.textAlign='center';
-    ctx.fillText(i===0?'−':'+',bx+bw/2,y+bh-6);
-  });
-  ctx.textAlign='left';
-  ctx.restore();
-}
-
-canvas.addEventListener('click',e=>{
-  const p=getPos(e);
-  const bw=32,bh=26,gap=4,margin=8;
-  const x1=W-margin-bw*2-gap,x2=W-margin-bw,y=margin;
-  if(p.x>x1&&p.x<x1+bw&&p.y>y&&p.y<y+bh){zoomOut();return;}
-  if(p.x>x2&&p.x<x2+bw&&p.y>y&&p.y<y+bh){zoomIn();return;}
-});
-
-
-function updateChicken(){
-  if(!chicken.flying) return;
-
-  // Cartoon hang time
-  if(chicken.hangTimer>0){
-    chicken.hangTimer--;
-    chicken.sq+=(1-chicken.sq)*0.18;
-    chicken.st+=(1-chicken.st)*0.18;
-    updateDyingObstacles();
-    return;
-  }
-
-  chicken.vy+=GRAVITY;
-
-  // 🌀 BOOMERANG — strong rightward then curves hard left
-  if(chicken.breed==='boomerang'){
-    if(chicken.vy>0) chicken.vx-=0.35;
-    // Leave purple arc trail
-    flameTrail.push({x:chicken.x,y:chicken.y,life:18,maxLife:18,r:5,color:'#aa66ff'});
-  }
-
-  // 🔥 FIRE — massive flame trail
-  if(chicken.breed==='fire'){
-    for(let i=0;i<5;i++) flameTrail.push({
-      x:chicken.x+(Math.random()-0.5)*16,
-      y:chicken.y+(Math.random()-0.5)*16,
-      life:35,maxLife:35,r:18+Math.random()*14,
-      color:`hsl(${Math.random()*40},100%,${50+Math.random()*20}%)`
-    });
-  }
-
-  // 💣 BOMB — grows as it flies
-  if(chicken.breed==='bomb'){
-    chicken.r=Math.min(chicken.r+0.25, giantMode?70:42);
-    for(let i=0;i<2;i++) flameTrail.push({
-      x:chicken.x+(Math.random()-0.5)*chicken.r,
-      y:chicken.y+(Math.random()-0.5)*chicken.r,
-      life:16,maxLife:16,r:chicken.r*0.6+Math.random()*6,
-      color:Math.random()>0.5?'#ff6600':'#ffcc00'
-    });
-  }
-
-  // ❄️ FREEZE — ice crystal trail
-  if(chicken.breed==='freeze'){
-    flameTrail.push({x:chicken.x,y:chicken.y,life:20,maxLife:20,r:6+Math.random()*4,color:'#aaeeff'});
-  }
-
-  flameTrail=flameTrail.filter(f=>f.life>0);
-  flameTrail.forEach(f=>f.life--);
-
-  chicken.x+=chicken.vx;
-  chicken.y+=chicken.vy;
-  chicken.sq+=(1-chicken.sq)*0.18;
-  chicken.st+=(1-chicken.st)*0.18;
-
-  if(chicken.y+chicken.r>=GROUND_Y){
-    chicken.y=GROUND_Y-chicken.r;
-    const spd=Math.abs(chicken.vy);
-    if(chicken.breed==='bomb'&&spd>2){triggerBombExplosion(chicken.x,chicken.y);return;}
-    chicken.vy*=-0.62; chicken.vx*=0.82;
-    chicken.sq=1.65; chicken.st=0.5;
-    if(spd>3){sfx.bounce();spawnDust(chicken.x,GROUND_Y,8);}
-    if(spd>1.5) sfx.boing();
-    if(Math.abs(chicken.vy)<0.85&&Math.abs(chicken.vx)<0.55){
-      chicken.flying=false;chicken.settled=true;phase='settle';
-    }
-  }
-  if(chicken.x>W+90||chicken.x<-90){chicken.settled=true;phase='settle';}
-
-  obstacles.forEach(obs=>{
-    if(obs.hp<=0||obs.deathTimer>0) return;
-    if(obs.frozen&&obs.frozenTimer>0){obs.frozenTimer--;return;}
-    if(obs.frozenTimer<=0) obs.frozen=false;
-
-    if(chicken.x+chicken.r>obs.x&&chicken.x-chicken.r<obs.x+obs.w&&
-       chicken.y+chicken.r>obs.y&&chicken.y-chicken.r<obs.y+obs.h){
-
-      // 💣 BOMB — big explosion radius
-      if(chicken.breed==='bomb'){triggerBombExplosion(chicken.x,chicken.y);return;}
-
-      // ❄️ FREEZE — obstacle freezes solid, shatters after delay
-      if(chicken.breed==='freeze'){
-        obs.frozen=true; obs.frozenTimer=220; obs.wobble=0;
-        score+=80; sfx.hit();
-        spawnFreezeParticles(obs.x+obs.w/2,obs.y+obs.h/2);
-        obs.hp=0; obs.deathTimer=45; // freeze then shatter
-        spawnCartoonStars(obs.x+obs.w/2,obs.y);
-        document.getElementById('score').textContent=score;
-        chicken.vx*=0.6; chicken.vy=Math.min(chicken.vy*0.3,-3);
-        chicken.hangTimer=18;
-        return;
-      }
-
-      // 🔥 FIRE — obstacle catches fire, burns then explodes
-      if(chicken.breed==='fire'){
-        obs.onFire=true; obs.deathTimer=35;
-        score+=180; sfx.hit();
-        spawnFireParticles(obs.x+obs.w/2,obs.y+obs.h/2);
-        spawnCartoonStars(obs.x+obs.w/2,obs.y);
-        document.getElementById('score').textContent=score;
-        chicken.vx*=0.7; chicken.vy*=0.5;
-        return;
-      }
-
-      // 🌀 BOOMERANG — passes THROUGH obstacles, weakening each
-      if(chicken.breed==='boomerang'){
-        obs.hp--; obs.wobble=25; score+=80; sfx.hit();
-        spawnParticles(obs.x+obs.w/2,obs.y+obs.h/2,'#aa66ff',12);
-        spawnCartoonStars(obs.x+obs.w/2,obs.y);
-        if(obs.hp<=0){obs.deathTimer=22;score+=120;}
-        document.getElementById('score').textContent=score;
-        // Does NOT slow down — passes through!
-        return;
-      }
-
-      // 🐔 NORMAL — satisfying WHACK with hang time
-      obs.hp--; obs.wobble=22; score+=50; sfx.hit();
-      spawnParticles(obs.x+obs.w/2,obs.y+obs.h/2,obsClr(obs.type),10);
-      spawnCartoonStars(obs.x+obs.w/2,obs.y);
-      const spd2=Math.sqrt(chicken.vx**2+chicken.vy**2);
-      if(spd2>5){chicken.vx*=0.25;chicken.vy=-2;chicken.hangTimer=22;}
-      else{chicken.vx*=0.55;chicken.vy=Math.min(chicken.vy*0.4,-2);}
-      chicken.sq=1.4;chicken.st=0.65;
-      if(obs.hp<=0){obs.deathTimer=28;score+=120;spawnCartoonStars(obs.x+obs.w/2,obs.y+obs.h/2);}
-      document.getElementById('score').textContent=score;
-    }
-    if(obs.wobble>0) obs.wobble--;
-    if(obs.type==='windmill') obs.spin+=0.025+level*0.004;
-    if(obs.shoots&&obs.hp>0&&phase==='flying'){
-      obs.shootTimer--;
-      if(obs.shootTimer<=0){
-        obs.shootTimer=120+(Math.random()*80|0);
-        const tx=chicken.x-obs.x,ty=chicken.y-obs.y;
-        const ld=Math.sqrt(tx*tx+ty*ty)||1;
-        enemyShots.push({x:obs.x+obs.w/2,y:obs.y+obs.h/2,vx:tx/ld*4.8,vy:ty/ld*4.8,r:7,life:100});
-        sfx.shoot();
-      }
-    }
-  });
-  updateDyingObstacles();
-}
-
-function updateDyingObstacles(){
-  obstacles.forEach(obs=>{
-    if(obs.deathTimer<=0) return;
-    obs.deathTimer--;
-    obs.wobble=6+Math.sin(obs.deathTimer*1.2)*8;
-    // Fire: spawn fire particles while burning
-    if(obs.onFire&&obs.deathTimer>0&&obs.deathTimer%3===0){
-      spawnFireParticles(obs.x+obs.w/2,obs.y+obs.h/2);
-    }
-    if(obs.deathTimer===0){
-      obs.hp=0;
-      sfx.smash();
-      spawnExplode(obs.x+obs.w/2,obs.y+obs.h/2);
-      if(obs.frozen) spawnFreezeParticles(obs.x+obs.w/2,obs.y+obs.h/2);
-    }
-  });
-}
-
-function spawnCartoonStars(x,y){
-  const glyphs=['⭐','💥','✨','💫','❗'];
-  for(let i=0;i<3;i++) cartoonStars.push({
-    x:x+(Math.random()-0.5)*40,
-    y:y-10-Math.random()*20,
-    glyph:glyphs[Math.floor(Math.random()*glyphs.length)],
-    life:40,maxLife:40,
-    vx:(Math.random()-0.5)*2,
-    vy:-1.5-Math.random()*1.5,
-  });
-}
-
-function triggerBombExplosion(x,y){
-  const radius=130;
-  obstacles.forEach(obs=>{
-    if(obs.hp<=0) return;
-    const cx=obs.x+obs.w/2,cy=obs.y+obs.h/2;
-    if(Math.sqrt((cx-x)**2+(cy-y)**2)<radius){
-      obs.hp=0;score+=150;spawnExplode(cx,cy);
-    }
-  });
-  spawnExplode(x,y);spawnExplode(x-35,y-25);spawnExplode(x+35,y-25);
-  // Screen flash
-  ctx.fillStyle='rgba(255,200,50,0.45)';ctx.fillRect(0,0,W,H);
-  // Shockwave ring particle
-  for(let i=0;i<20;i++){
-    const a=i/20*Math.PI*2;
-    particles.push({x,y,vx:Math.cos(a)*8,vy:Math.sin(a)*8,life:20,maxLife:20,color:'#FFD700',r:6});
-  }
-  sfx.smash();document.getElementById('score').textContent=score;
-  chicken.flying=false;chicken.settled=true;phase='settle';
-}
-
-function updateEnemyShots(){
-  enemyShots=enemyShots.filter(s=>s.life>0);
-  enemyShots.forEach(s=>{
-    s.x+=s.vx; s.y+=s.vy; s.vy+=GRAVITY*0.2; s.life--;
-    if(chicken.flying){
-      const dx=s.x-chicken.x,dy=s.y-chicken.y;
-      if(Math.sqrt(dx*dx+dy*dy)<chicken.r+s.r){
-        s.life=0; chicken.vx+=s.vx*0.6; chicken.vy+=s.vy*0.6;
-        sfx.hit(); easterMsg('😤 They shot back!! SO RUDE!');
-      }
-    }
-  });
-}
-
-function updateParticles(){
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life--;});
-}
-
-function spawnParticles(x,y,color,n){
-  for(let i=0;i<(n||8);i++) particles.push({
-    x,y,vx:(Math.random()-0.5)*7,vy:(Math.random()-0.5)*7,
-    life:35,maxLife:35,color,r:3+Math.random()*4});
-}
-function spawnExplode(x,y){
-  const cls=['#FFD700','#ff6600','#ff2200','#fff','#ffcc00'];
-  for(let i=0;i<22;i++) particles.push({
-    x,y,vx:(Math.random()-0.5)*14,vy:(Math.random()-0.5)*14,
-    life:45,maxLife:45,color:cls[i%cls.length],r:5+Math.random()*7});
-}
-function spawnDust(x,y,n){
-  for(let i=0;i<(n||5);i++) particles.push({
-    x,y,vx:(Math.random()-0.5)*4,vy:-Math.random()*3,
-    life:22,maxLife:22,color:'#c8a050',r:3+Math.random()*4});
-}
-function spawnFreezeParticles(x,y){
-  for(let i=0;i<12;i++) particles.push({
-    x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,
-    life:30,maxLife:30,color:`hsl(${180+Math.random()*40},80%,80%)`,r:3+Math.random()*4});
-}
-function spawnFireParticles(x,y){
-  for(let i=0;i<18;i++) particles.push({
-    x,y,vx:(Math.random()-0.5)*9,vy:-Math.random()*8,
-    life:35,maxLife:35,color:`hsl(${Math.random()*40},100%,55%)`,r:4+Math.random()*6});
-}
 function obsClr(t){
   return{hay:'#f0c040',fence:'#a0662a',barrel:'#8B4513',
     trough:'#5599cc',crate:'#d4a84b',windmill:'#c8a46a'}[t]||'#888';
@@ -551,7 +562,6 @@ function obsClr(t){
 // ── BACKGROUND ─────────────────────────────────────────────────────
 function drawBackground(){
   const pal=getPal(),season=getSeason();
-  cloudOff=(cloudOff+0.12)%W;
   const sg=ctx.createLinearGradient(0,0,0,GROUND_Y);
   sg.addColorStop(0,pal.sky1); sg.addColorStop(1,pal.sky2);
   ctx.fillStyle=sg; ctx.fillRect(0,0,W,GROUND_Y);
@@ -740,60 +750,6 @@ function drawSlingshot(){
   } else {
     ctx.beginPath();ctx.moveTo(sling.x-13,sling.y-20);ctx.lineTo(sling.x+13,sling.y-20);ctx.stroke();}
 }
-
-function drawTrajectory(){
-  if(!drag) return;
-  const rawVx=(sling.x-chicken.x)*0.55;
-  const rawVy=(sling.y-chicken.y)*0.55;
-  const upwardFactor=Math.max(0.35, Math.min(1.0, -rawVy/(Math.abs(rawVx)+1)+0.5));
-  let vx=rawVx*upwardFactor, vy=rawVy;
-  let px=chicken.x, py=chicken.y;
-  const breed=chicken.breed||'normal';
-  const trailColor={normal:'rgba(255,255,255,0.5)',bomb:'rgba(255,100,50,0.6)',
-    boomerang:'rgba(170,100,255,0.6)',freeze:'rgba(100,220,255,0.6)',fire:'rgba(255,150,0,0.6)'}[breed];
-
-  ctx.setLineDash([6,7]);ctx.strokeStyle=trailColor;ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.moveTo(px,py);
-  for(let i=0;i<80;i++){
-    vy+=GRAVITY;
-    // Simulate boomerang curve in preview
-    if(breed==='boomerang'&&vy>2) vx-=0.35;
-    px+=vx; py+=vy;
-    if(py>GROUND_Y||px>W+50) break;
-    if(i%2===0) ctx.lineTo(px,py);
-  }
-  ctx.stroke();ctx.setLineDash([]);
-
-  // Breed label on trajectory end
-  ctx.font='13px serif';
-  ctx.globalAlpha=0.85;
-  const label={normal:'🐔',bomb:'💣',boomerang:'🌀',freeze:'❄️',fire:'🔥'}[breed];
-  ctx.fillText(label, px-8, py-8);
-  ctx.globalAlpha=1;
-}
-
-function drawFlameTrail(){
-  flameTrail.forEach(f=>{
-    const t=f.life/f.maxLife;
-    ctx.globalAlpha=t*0.75;
-    ctx.fillStyle=f.color||`hsl(${t*40},100%,55%)`;
-    ctx.beginPath();ctx.arc(f.x,f.y,f.r*t,0,Math.PI*2);ctx.fill();
-  });
-  ctx.globalAlpha=1;
-}
-
-function drawCartoonStars(){
-  cartoonStars=cartoonStars.filter(s=>s.life>0);
-  cartoonStars.forEach(s=>{
-    s.x+=s.vx; s.y+=s.vy; s.vy+=0.08; s.life--;
-    const scale=0.5+0.5*(s.life/s.maxLife);
-    ctx.globalAlpha=s.life/s.maxLife;
-    ctx.font=`${Math.round(22*scale)}px serif`;
-    ctx.textAlign='center';
-    ctx.fillText(s.glyph,s.x,s.y);
-  });
-  ctx.globalAlpha=1; ctx.textAlign='left';
-}
 function drawChicken(x,y){
   ctx.save();ctx.translate(x,y);
   let sx=chicken.sq,sy=chicken.st;
@@ -847,7 +803,6 @@ function drawChicken(x,y){
 // ── OBSTACLES DRAW ─────────────────────────────────────────────────
 function drawObstacles(){
   obstacles.forEach(obs=>{
-    if(obs.hp<=0) return;
     const wx=obs.wobble>0?Math.sin(obs.wobble*0.8)*4:0;
     const dmg=(obs.maxHp-obs.hp)/obs.maxHp;
     ctx.save();ctx.translate(obs.x+wx,0);
@@ -927,22 +882,9 @@ function drawObstacles(){
   });
 }
 
-function drawEnemyShots(){
-  enemyShots.forEach(s=>{
-    ctx.globalAlpha=Math.min(1,s.life/30);
-    ctx.font='16px serif';ctx.fillText('🌽',s.x-8,s.y+6);ctx.globalAlpha=1;});
-}
-
-function drawParticles(){
-  particles.forEach(p=>{ctx.globalAlpha=p.life/p.maxLife;ctx.fillStyle=p.color;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.r*(p.life/p.maxLife),0,Math.PI*2);ctx.fill();});
-  ctx.globalAlpha=1;
-}
-
 // ── COW ────────────────────────────────────────────────────────────
 function drawCow(){
   if(!cowVisible) return;
-  cowAngle+=0.08;
   const cx=375,cy=GROUND_Y-55,bounce=Math.abs(Math.sin(cowAngle))*16;
   ctx.save();ctx.translate(cx,cy-bounce);
   ctx.fillStyle='#f5f5f0';ctx.beginPath();ctx.ellipse(0,0,38,24,0,0,Math.PI*2);ctx.fill();
@@ -971,108 +913,98 @@ function drawCow(){
     ctx.fillStyle='rgba(255,255,255,0.92)';ctx.beginPath();ctx.roundRect(28,-56,58,27,8);ctx.fill();
     ctx.fillStyle='#333';ctx.font='bold 13px sans-serif';ctx.fillText('MOO! 🎉',33,-38);}
   ctx.restore();
-  cowTimer--;if(cowTimer<=0) cowVisible=false;
 }
 
-// ── PHASE LOGIC ────────────────────────────────────────────────────
-function showLevelBanner(html){
-  const el=document.getElementById('levelBanner');el.innerHTML=html;el.style.opacity=1;
-  setTimeout(()=>el.style.opacity=0,2400);}
-function updateMsg(txt){document.getElementById('message').textContent=txt;}
-
-let levelTransitioning=false;
-
-function checkPhase(){
-  if(phase!=='settle') return;
-  if(levelTransitioning) return;
-  if(!birdUsed){birdUsed=true;birdsLeft--;document.getElementById('birds').textContent=birdsLeft;}
-  const allGone=obstacles.length>0&&obstacles.every(o=>o.hp<=0);
-  if(allGone){
-    levelTransitioning=true;
-    score+=birdsLeft*5;document.getElementById('score').textContent=score;
-    if(score>best){best=score;document.getElementById('best').textContent=best;}
-    sfx.win();
-    if(level>=100){
-      phase='gameover';levelTransitioning=false;
-      updateMsg('👑 YOU BEAT ALL 100 LEVELS!! ULTIMATE CRANKY CHICKEN LEGEND!! 🐔🏆');
-      showLevelBanner('👑 LEGEND! 👑<br>🐔🐔🐔');
-    } else {
-      phase='levelwin'; level++;
-      document.getElementById('levelNum').textContent=level;
-      const s=getSeason();
-      const em={spring:'🌸',summer:'☀️',autumn:'🍂',winter:'❄️',night:'🌙',storm:'⛈️',mountain:'⛰️',mountain_snow:'🏔️'}[s]||'🌿';
-      sfx.levelup();
-      showLevelBanner(`LEVEL ${level}! ${em}<br>${s.toUpperCase()}`);
-      updateMsg(`Level ${level}! The farm changes to ${s}! ${em}${level>=5?' 😤 Obstacles shoot back!':''}`);
-      setTimeout(()=>{mkObstacles();enemyShots=[];birdUsed=false;resetChicken();phase='aim';levelTransitioning=false;saveProgress();},2500);
-    }
-  } else if(birdsLeft<=0){
-    levelTransitioning=true;
-    phase='gameover';
-    if(score>best){best=score;document.getElementById('best').textContent=best;}
-    updateMsg('😤 Out of chickens! Hit Restart!');showLevelBanner('GAME OVER! 😤');
-  } else {
-    birdUsed=false;setTimeout(()=>{resetChicken();updateMsg('Pull and launch! 🐔');},1100);
+// ── DRAW: AIM + FX ─────────────────────────────────────────────────
+function drawTrajectory(){
+  if(!drag||phase!=='aim')return;
+  let vx=(sling.x-chicken.x)*POWER,vy=(sling.y-chicken.y)*POWER,px=chicken.x,py=chicken.y;
+  if(Math.hypot(vx,vy)<14*POWER)return;
+  const breed=chicken.breed,rgb=TRAIL_CLR[breed];
+  for(let i=1;i<=66;i++){                      // same maths as the real flight
+    vy+=GRAVITY;
+    if(breed==='boomerang'&&vy>0)vx-=0.35;
+    px+=vx;py+=vy;
+    if((vy>0&&py>GROUND_Y-6)||px>W+20||px<-20)break;
+    if(i%3)continue;
+    ctx.fillStyle=`rgba(${rgb},${0.85-i/66*0.6})`;
+    ctx.beginPath();ctx.arc(px,py,3.6-i/66*1.6,0,Math.PI*2);ctx.fill();
   }
 }
-
-function saveProgress(){
-  try{localStorage.setItem('crankyChicken',JSON.stringify({level,score,best,birdsLeft}));}catch(e){}
+function drawFlameTrail(){
+  for(const f of flameTrail){
+    const t=f.life/f.maxLife;
+    ctx.globalAlpha=t*0.75;ctx.fillStyle=f.color;
+    ctx.beginPath();ctx.arc(f.x,f.y,f.r*t,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
 }
-function loadProgress(){
-  try{
-    const d=JSON.parse(localStorage.getItem('crankyChicken')||'{}');
-    if(d.level){
-      level=d.level;score=d.score||0;best=d.best||0;birdsLeft=d.birdsLeft||99;
-      document.getElementById('levelNum').textContent=level;
-      document.getElementById('score').textContent=score;
-      document.getElementById('best').textContent=best;
-      document.getElementById('birds').textContent=birdsLeft;
-      updateMsg(`Welcome back! Resuming Level ${level} 🐔`);
+function drawParticles(){
+  for(const p of particles){
+    ctx.globalAlpha=p.life/p.maxLife;ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r*(p.life/p.maxLife),0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawFloats(){
+  ctx.textAlign='center';
+  for(const f of floats){
+    const t=f.life/f.maxLife;
+    ctx.globalAlpha=Math.min(1,t*1.6);
+    if(f.g){ctx.font=`${Math.round(f.size*(0.5+0.5*t))}px serif`;ctx.fillText(f.txt,f.x,f.y);}
+    else{
+      ctx.font=`bold ${f.size}px 'Fredoka One','Baloo 2',sans-serif`;
+      ctx.lineWidth=4;ctx.strokeStyle='rgba(60,20,0,0.85)';ctx.lineJoin='round';
+      ctx.strokeText(f.txt,f.x,f.y);ctx.fillStyle='#FFE033';ctx.fillText(f.txt,f.x,f.y);
     }
-  }catch(e){}
+  }
+  ctx.globalAlpha=1;ctx.textAlign='left';
 }
-
-function resetChicken(){
-  chicken={x:sling.x,y:sling.y,vx:0,vy:0,r:giantMode?50:22,
-    flying:false,settled:false,sq:1,st:1,breed:'normal',freezeTimer:0};
-  currentBreed=BREEDS[Math.floor(Math.random()*BREEDS.length)];
-  chicken.breed=currentBreed; flameTrail=[];
-  document.getElementById('breedTag').textContent=BREED_NAMES[currentBreed];
-  drag=false;phase='aim';
+function drawHpPips(){
+  for(const o of obstacles){
+    if(o.maxHp<2||o.deathTimer>0)continue;
+    const y=o.y-(o.type==='fence'?20:o.shoots?22:9);
+    for(let i=0;i<o.maxHp;i++){
+      ctx.fillStyle=i<o.hp?'#fff':'rgba(0,0,0,0.35)';
+      ctx.beginPath();ctx.arc(o.x+o.w/2+(i-(o.maxHp-1)/2)*9,y,3,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();
+    }
+  }
 }
-function restart(){
-  score=0;birdsLeft=99;level=1;giantMode=false;cowVisible=false;
-  clickCount=0;titleClicks=0;birdUsed=false;levelTransitioning=false;
-  document.getElementById('score').textContent=0;
-  document.getElementById('birds').textContent=99;
-  document.getElementById('levelNum').textContent=1;
-  document.getElementById('best').textContent=best;
-  particles=[];enemyShots=[];cartoonStars=[];mkObstacles();resetChicken();
-  saveProgress();
-  updateMsg('Pull the chicken back and launch! 🐔💥');
+function drawEnemyShots(){
+  ctx.font='16px serif';
+  for(const s of enemyShots){ctx.globalAlpha=Math.min(1,s.life/30);ctx.fillText('🌽',s.x-8,s.y+6);}
+  ctx.globalAlpha=1;
 }
 
 // ── MAIN LOOP ──────────────────────────────────────────────────────
-let lastPhase='';
-function loop(){
-  ctx.clearRect(0,0,W,H);
-  updateCamera();
-  // Apply camera transform to entire scene
-  ctx.save();
-  ctx.setTransform(camZ,0,0,camZ,camX,camY);
+function render(){
+  const pal=getPal();
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle=pal.sky1;ctx.fillRect(0,0,W,H/2);       // backing, so shake never shows bare canvas
+  ctx.fillStyle=pal.dirt;ctx.fillRect(0,H/2,W,H/2);
+  const sx=shake?(Math.random()-0.5)*shake:0,sy=shake?(Math.random()-0.5)*shake:0;
+  ctx.setTransform(DPR*cam.z,0,0,DPR*cam.z,DPR*(cam.x+sx),DPR*(cam.y+sy));
   drawBackground();drawSlingshot();drawTrajectory();
-  drawObstacles();drawEnemyShots();drawParticles();
-  drawFlameTrail();drawCartoonStars();drawCow();drawChicken(chicken.x,chicken.y);
-  ctx.restore();
-  // Zoom buttons drawn in screen space (inside restore)
-  drawZoomButtons();
-  updateChicken();updateEnemyShots();updateParticles();
-  if(phase==='settle'&&lastPhase!=='settle') checkPhase();
-  lastPhase=phase;
-  requestAnimationFrame(loop);
+  drawObstacles();drawHpPips();drawEnemyShots();drawParticles();
+  drawFlameTrail();drawCow();
+  if(chicken&&!chicken.gone)drawChicken(chicken.x,chicken.y);
+  drawFloats();
+  if(flash){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=`rgba(255,210,80,${flash})`;ctx.fillRect(0,0,W,H);}
 }
-mkObstacles();loadProgress();mkObstacles();loop();
+let lastT=0,acc=0;
+function frame(now){
+  acc+=Math.min(now-(lastT||now),100);lastT=now;
+  let n=0;
+  while(acc>=STEP&&n<5){step();acc-=STEP;n++;}
+  if(n===5)acc=0;
+  render();
+  requestAnimationFrame(frame);
+}
+const resumed=loadProgress();
+startLevel();
+if(resumed&&level>1)msg(`Welcome back! Level ${level} 🐔`);
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
