@@ -47,6 +47,33 @@ body{background-color:var(--paper);background-image:linear-gradient(90deg,transp
 kbd{font-family:var(--display);font-size:.85rem;border:2px solid var(--ink);border-bottom-width:4px;border-radius:6px;padding:0 6px;background:#fff}
 .reset{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:1rem}
 .reset .confirm{display:flex;gap:8px;align-items:center}
+.saves h2{font-family:var(--display);font-weight:400;font-size:clamp(1.4rem,4.5vw,2rem);margin:0 0 4px;transform:rotate(-1deg)}
+#saveStatus{margin:0 0 12px;font-size:1.05rem}
+#saveStatus.bad{background:var(--pink);color:#fff;padding:4px 10px;border:3px solid var(--ink);display:inline-block}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:14px}
+.slot{background:#fffdf3;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:12px;display:flex;flex-direction:column;gap:8px}
+.slot.cur{background:var(--yellow)}
+.slot input{font:inherit;font-family:var(--display);font-size:1.15rem;border:0;border-bottom:3px dashed var(--ink);background:transparent;color:var(--ink);width:100%;padding:2px 0;min-width:0}
+.slot input:focus-visible{outline:4px dashed var(--pink);outline-offset:3px}
+.slot p{margin:0;font-size:1rem;line-height:1.25}
+.slot .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.slot button{font-family:var(--display);font-size:.95rem;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);cursor:pointer;background:#fff;color:var(--ink);padding:8px 12px}
+.slot button.play{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.slot button:focus-visible{outline:4px dashed var(--pink);outline-offset:3px}
+#cloudBox{margin-top:18px;background:#fffdf3;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:14px;display:flex;flex-direction:column;gap:10px}
+#cloudBox h3{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0}
+#cloudBox p{margin:0;font-size:1.05rem;line-height:1.3;max-width:62ch}
+#cloudBox .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#cloudBox button{font-family:var(--display);font-size:.95rem;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);cursor:pointer;background:#fff;color:var(--ink);padding:8px 12px}
+#cloudBox button.go{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+#cloudBox button:disabled{opacity:.5;cursor:default}
+#cloudBox input{font:inherit;font-family:var(--display);font-size:1.15rem;letter-spacing:.08em;text-transform:uppercase;border:3px solid var(--ink);background:#fff;color:var(--ink);padding:6px 10px;width:9.5em;max-width:100%}
+#cloudBox input::placeholder{color:#6d6770;letter-spacing:.04em}
+#cloudBox button:focus-visible,#cloudBox input:focus-visible{outline:4px dashed var(--pink);outline-offset:3px}
+#cloudBox .code{font-family:var(--display);font-size:clamp(1.6rem,7vw,2.4rem);letter-spacing:.12em;background:var(--yellow);border:3px solid var(--ink);padding:2px 14px;display:inline-block}
+#cloudBox .link{font-size:.95rem;overflow-wrap:anywhere;background:#fff;border:2px dashed var(--ink);padding:6px 8px}
+#cloudBox .msg{color:#a3184f;font-weight:700}
+.slot .tag{font-family:var(--display);font-size:.9rem;background:var(--ink);color:var(--yellow);padding:2px 8px}
 footer{font-size:1.05rem;border-top:3px dashed var(--ink);padding-top:14px}
 footer a{color:var(--blue)}
 @media (max-width:760px){.cover{grid-template-columns:1fr}.badge{width:76px;height:76px;justify-self:end;margin-top:-8px}.badge b{font-size:1.3rem}}
@@ -125,11 +152,14 @@ footer a{color:var(--blue)}
       <li><strong>Captain Molerat</strong> is hiding on the spooky side (north-east of home) with Sapphire. Bonk him 5 times.</li>
       <li><strong>The Bark Lady</strong> waits in her fortress (south-east of home). Bonk her 8 times, dodge her barks, and win. Nothing is locked: you can try her first if you dare.</li>
     </ol>
-    <p class="starring">Bad guys freeze while anyone is talking, and they can't come near Batdorn, Charlie or Jewels at all. No game over, ever. Lose all your hearts and your hero just takes a nap, then wakes up at home. Progress saves automatically on this device.</p>
-    <div class="reset">
-      <button id="reset" type="button">Start over</button>
-      <div id="confirmReset" class="confirm" hidden><span>Erase the whole adventure?</span><button id="resetYes" type="button">Yes, erase</button><button id="resetNo" type="button">Keep playing</button></div>
-    </div>
+    <p class="starring">Bad guys freeze while anyone is talking, and they can't come near Batdorn, Charlie or Jewels at all. No game over, ever. Lose all your hearts and your hero just takes a nap, then wakes up at home. Progress saves by itself on this device. There are 3 save files below so everyone gets their own adventure, and a family code keeps them safe online so they follow you to any tablet or phone.</p>
+  </section>
+
+  <section class="saves" aria-labelledby="savesH">
+    <h2 id="savesH">Save files</h2>
+    <p id="saveStatus" role="status">The game saves by itself on this device.</p>
+    <div class="slots" id="slots"></div>
+    <div id="cloudBox"></div>
   </section>
 
   <footer>Read the comics first: <a href="/games/graydorn-issue-1.html">Issue #1</a>, <a href="/games/graydorn-issue-2.html">Issue #2</a> and <a href="/games/graydorn-issue-3.html">Issue #3: The Sky Tore Open</a>. Meet everyone on the <a href="/games/graydorn-cast.html">cast page</a>. Got an idea? Send it through <a href="/games/dragon-scribe.html">Dragon Scribe</a>. <a href="/">Back to Cranky Chickens</a>.</footer>
@@ -856,9 +886,31 @@ const S={
   q:{barks:0,batdorn:false,stuffies:{},charlie:false,loaves:0,jewels:false,molIntro:false,molHp:5,sapphire:false,ladyIntro:false,ladyHp:8,won:false,intro:false},
   gem:0,items:{},opened:{},found:{},treats:0,lost:0,discovered:{},explored:{},farthest:0,got:{},bats:0,candies:0,berries:0,yarn:0,villages:0,corn:0,juiceT:0,danced:false,kevin:0,kevinAwake:false,
 };
-function save(){try{localStorage.setItem('gbworld2',JSON.stringify(S))}catch(e){}}
-function load(){try{const d=JSON.parse(localStorage.getItem('gbworld2'));if(!d)return;const q={...S.q,...(d.q||{})};Object.assign(S,d);S.q=q;S.discovered=S.discovered||{};S.explored=S.explored||{};S.opened=S.opened||{};S.found=S.found||{}}catch(e){}}
-load();
+/* ---------- save files: 3 slots on this device, plus an optional family code that keeps them online ---------- */
+/* Slot 1 keeps the original key so old adventures carry over. The family code can ride in the page link
+   (#k=CODE&s=slot) so it still works in browsers that forget everything between visits. */
+const SLOT_KEYS=['gbworld2','gbworld2:b','gbworld2:c'],META_KEY='gbworld2:meta',FRESH_JSON=JSON.stringify(S);
+const mem={};
+const ls={get(k){try{const v=localStorage.getItem(k);if(v!=null)return v}catch(e){}return k in mem?mem[k]:null},
+  set(k,v){mem[k]=v;try{localStorage.setItem(k,v);return localStorage.getItem(k)===v}catch(e){return false}},
+  del(k){delete mem[k];try{localStorage.removeItem(k)}catch(e){}}};
+const CODE_RE=/^[A-HJKMNP-Z2-9]{6}$/;
+const normCode=c=>{c=String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');return CODE_RE.test(c)?c:''};
+const showCode=c=>c.slice(0,3)+'-'+c.slice(3);
+const HASH=new URLSearchParams(location.hash.slice(1));
+const META=(()=>{const m={cur:0,names:['Graydorn','Charliescope','Guest'],namesAt:0,code:''};try{const d=JSON.parse(ls.get(META_KEY));if(d){if(d.cur>=0&&d.cur<3)m.cur=d.cur|0;if(Array.isArray(d.names))d.names.slice(0,3).forEach((n,i)=>{if(typeof n==='string'&&n.trim())m.names[i]=n.slice(0,16)});m.namesAt=+d.namesAt||0;m.code=normCode(d.code)}}catch(e){}return m})();
+const linkCode=normCode(HASH.get('k')),joinFromLink=!!linkCode&&linkCode!==META.code;
+if(linkCode)META.code=linkCode;
+if(/^[0-2]$/.test(HASH.get('s')||''))META.cur=+HASH.get('s');
+const SAVE_KEY=SLOT_KEYS[META.cur];
+let saveOK=true,saveOff=false,lastSaved=0,hadSave=false,bootStarted=false,bootSavedAt=0,syncing=false;
+function saveMeta(){ls.set(META_KEY,JSON.stringify(META))}
+// savedAt only moves when something really changed, so a tab left open and idle never looks newer than real play on another device.
+function sigOf(){return JSON.stringify({...S,savedAt:0,juiceT:0})}
+let lastSig='';
+function save(){if(saveOff)return;const sig=sigOf();if(sig!==lastSig){lastSig=sig;S.savedAt=Date.now()}saveOK=ls.set(SAVE_KEY,JSON.stringify(S));lastSaved=Date.now()}
+function load(){try{const d=JSON.parse(ls.get(SAVE_KEY));if(!d)return;hadSave=true;bootStarted=!!(d.q&&d.q.intro);bootSavedAt=+d.savedAt||0;const q={...S.q,...(d.q||{})};Object.assign(S,d);S.q=q;S.discovered=S.discovered||{};S.explored=S.explored||{};S.opened=S.opened||{};S.found=S.found||{}}catch(e){}}
+load();lastSig=sigOf();
 const P={vx:0,vy:0,inv:0,cd:0,anim:0,moving:false,howl:0,dash:0,nap:0,punch:0,throw:0,roar:0};
 const follower={x:S.x-60,y:S.y};
 let showHeroes=false,enemies=[],projs=[],pops=[],hearts=[],cam={x:0,y:0},dialog=null,showMap=false,shake=0,toastT=0,toast='',winT=0,mapZoom=3,mapImg=null,mapDirty=true,lastMapKey='';
@@ -1514,7 +1566,7 @@ const DPR=Math.min(2,window.devicePixelRatio||1);cv.width=VW*DPR;cv.height=VH*DP
 let last=performance.now(),saveT=0;
 function frame(now){
   const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;time+=dt;boil=reduce?0:Math.floor(time*8);
-  if(!showMap&&!showHeroes)update(dt);draw();
+  if(!showMap&&!showHeroes&&!syncing)update(dt);draw();if(syncing)drawSyncing();
   saveT+=dt;if(saveT>6){saveT=0;save()}
   requestAnimationFrame(frame);
 }
@@ -1544,10 +1596,137 @@ document.getElementById('bQ').addEventListener('click',swapHero);
 document.getElementById('bM').addEventListener('click',()=>{showMap=!showMap;mapDirty=true});
 document.getElementById('bH').addEventListener('click',goHome);
 document.getElementById('bG').addEventListener('click',()=>{if(S.hero==='jewels'){S.gem=(S.gem+1)%3;note('Gem: '+GEMS2[S.gem].name);save()}});
-const confirmReset=document.getElementById('confirmReset');
-document.getElementById('reset').addEventListener('click',()=>{confirmReset.hidden=false});
-document.getElementById('resetYes').addEventListener('click',()=>{try{localStorage.removeItem('gbworld2')}catch(e){}location.reload()});
-document.getElementById('resetNo').addEventListener('click',()=>{confirmReset.hidden=true});
+/* ---------- save file cards ---------- */
+const slotsEl=document.getElementById('slots'),saveStatus=document.getElementById('saveStatus'),cloudBox=document.getElementById('cloudBox');
+function slotInfo(i){if(i===META.cur)return S;try{return JSON.parse(ls.get(SLOT_KEYS[i]))}catch(e){return null}}
+const started=d=>!!(d&&d.q&&d.q.intro);
+const score=d=>started(d)?(d.unlocked||[]).length*1000+(d.maxHearts||5)*100+(d.treats||0)*5+(d.lost||0)*5+Object.keys(d.explored||{}).length+(d.q.won?5000:0):-1;
+function ago(t){if(!t)return '';const m=Math.round((Date.now()-t)/60000);if(m<1)return 'just now';if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+(h===1?' hour ago':' hours ago');const d=Math.round(h/24);return d+(d===1?' day ago':' days ago')}
+function setLink(){try{history.replaceState(null,'',location.pathname+location.search+(cloud.code?`#k=${cloud.code}&s=${META.cur}`:''))}catch(e){}}
+async function switchSlot(i){save();await Promise.race([cloudFlush(),new Promise(r=>setTimeout(r,4000))]);saveOff=true;META.cur=i;saveMeta();setLink();location.reload()}
+async function eraseSlot(i){
+  const cur=i===META.cur;if(cur)saveOff=true;ls.del(SLOT_KEYS[i]);
+  if(cloud.code){try{await api({action:'put',code:cloud.code,slot:i,data:null})}catch(e){}}
+  if(cur)location.reload();else renderSlots();
+}
+function el(tag,props,kids){const n=document.createElement(tag);Object.assign(n,props||{});(kids||[]).forEach(k=>n.append(k));return n}
+function btn(text,fn,cls){const b=el('button',{type:'button',textContent:text,className:cls||''});b.addEventListener('click',fn);return b}
+function renderSlots(){
+  slotsEl.replaceChildren(...SLOT_KEYS.map((k,i)=>{
+    const d=slotInfo(i),cur=i===META.cur,st=started(d);
+    const name=el('input',{type:'text',value:META.names[i],maxLength:16});name.setAttribute('aria-label','Name for save file '+(i+1));
+    name.addEventListener('change',()=>{META.names[i]=name.value.trim().slice(0,16)||('Player '+(i+1));name.value=META.names[i];META.namesAt=Date.now();saveMeta();updateStatus();renderCloud();pushNames()});
+    name.addEventListener('keydown',e=>e.stopPropagation());
+    const info=el('p',{textContent:st?`${(d.unlocked||[]).length} of 10 heroes · ${d.maxHearts||5} hearts · ${d.treats||0} treats · ${d.lost||0} stuffies${d.q.won?' · beat the Bark Lady!':''}`:'New adventure. Nothing saved yet.'});
+    const when=el('p',{textContent:cur?'Playing now':st&&d.savedAt?'Last played '+ago(d.savedAt):''});
+    const row=el('div',{className:'row'});
+    if(cur)row.append(el('span',{className:'tag',textContent:'PLAYING'}));
+    else row.append(btn(st?'Keep playing':'Start',()=>switchSlot(i),'play'));
+    if(st)row.append(btn('Erase',()=>{
+      const n=btn('Keep it',renderSlots);
+      row.replaceChildren(el('span',{textContent:`Erase ${META.names[i]}'s whole adventure${cloud.code?' on every device':''}?`}),btn('Yes, erase',()=>eraseSlot(i)),n);n.focus()}));
+    return el('div',{className:'slot'+(cur?' cur':'')},[name,info,when,row]);
+  }));
+}
+/* ---------- family code: the same three save files, kept online ---------- */
+const API='/.netlify/functions/world-save';
+const cloud={code:META.code,ready:false,busy:false,sig:'',lastUp:0,err:'',msg:'',working:false};
+async function api(body,keepalive){
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),9000);
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive:!!keepalive,signal:ctl.signal});
+    let j={};try{j=await r.json()}catch(e){}
+    if(!r.ok){const er=new Error(j.error||"Online saving isn't answering right now.");er.status=r.status;er.gone=!!j.gone;throw er}
+    return j;
+  }catch(e){if(e.status)throw e;const er=new Error("Can't reach online saving right now. Check the internet.");er.status=0;throw er}
+  finally{clearTimeout(t)}
+}
+// Bring this device and the online copy together. On a normal start the newer save wins;
+// when a device first joins a code, the save with more progress wins so nobody's long adventure is replaced by a short one.
+async function cloudPull(join,fromBoot){
+  const r=await api({action:'get',code:cloud.code});
+  if(Array.isArray(r.names)&&(r.namesAt||0)>META.namesAt){r.names.slice(0,3).forEach((n,i)=>{if(typeof n==='string'&&n.trim())META.names[i]=n.slice(0,16)});META.namesAt=r.namesAt;saveMeta()}
+  else if(META.namesAt>(r.namesAt||0))pushNames();
+  const ups=[];let took=false;
+  for(let i=0;i<3;i++){
+    const c=r.slots&&r.slots[i],cur=i===META.cur,l=slotInfo(i);
+    const lSt=cur?(fromBoot?bootStarted:started(S)):started(l),lAt=cur?(fromBoot?bootSavedAt:(S.savedAt||0)):((l&&l.savedAt)||0);
+    if(c&&c.erased&&!join&&lSt&&lAt<(c.savedAt||0)){ // erased on another device after this copy was last played
+      if(cur){saveOff=true;ls.del(SAVE_KEY);location.reload();return false}
+      ls.del(SLOT_KEYS[i]);continue;
+    }
+    const useCloud=started(c)&&(!lSt||(join?score(c)>score(l):(c.savedAt||0)>lAt));
+    if(useCloud){if(cur){applySave(c);took=true}else ls.set(SLOT_KEYS[i],JSON.stringify(c))}
+    else if(lSt&&(!started(c)||join||lAt>(c.savedAt||0)))ups.push(api({action:'put',code:cloud.code,slot:i,data:l}));
+  }
+  await Promise.all(ups);
+  cloud.ready=true;cloud.err='';cloud.sig=sigOf();cloud.lastUp=Date.now();
+  bootStarted=started(S);
+  return took;
+}
+function cloudTick(leaving){
+  if(!cloud.code||saveOff||cloud.busy||cloud.working)return Promise.resolve();
+  if(!cloud.ready){if(leaving)return Promise.resolve();cloud.busy=true;return cloudPull(false,true).then(t=>{if(t)note(`Welcome back, ${META.names[META.cur]}! Your adventure was saved.`);renderSlots()}).catch(e=>{cloud.err=e.message;if(e.gone)forgetCode(e.message)}).finally(()=>{cloud.busy=false;updateStatus();renderCloud()})}
+  if(!started(S))return Promise.resolve();
+  const sig=sigOf();if(sig===cloud.sig)return Promise.resolve();
+  cloud.busy=true;
+  return api({action:'put',code:cloud.code,slot:META.cur,data:S},leaving&&sig.length<60000).then(()=>{cloud.sig=sig;cloud.lastUp=Date.now();cloud.err=''}).catch(e=>{cloud.err=e.message;if(e.gone)forgetCode(e.message)}).finally(()=>{cloud.busy=false;updateStatus()});
+}
+async function cloudFlush(){if(!cloud.code||!cloud.ready)return;for(let k=0;k<40&&cloud.busy;k++)await new Promise(r=>setTimeout(r,100));await cloudTick(false)}
+function pushNames(){if(cloud.code&&cloud.ready)api({action:'names',code:cloud.code,names:META.names,namesAt:META.namesAt}).catch(()=>{})}
+function forgetCode(msg){cloud.code='';cloud.ready=false;META.code='';saveMeta();setLink();cloud.msg=msg||'';renderCloud();updateStatus()}
+async function makeCode(){
+  cloud.working=true;cloud.msg='';renderCloud();
+  try{const r=await api({action:'create'});cloud.code=normCode(r.code);if(!cloud.code)throw new Error('Could not make a code. Try again.');META.code=cloud.code;saveMeta();setLink();save();await cloudPull(true,false);pushNames()}
+  catch(e){cloud.msg=e.message;if(!cloud.ready){cloud.code='';META.code='';saveMeta();setLink()}}
+  cloud.working=false;renderSlots();renderCloud();updateStatus();
+}
+async function joinCode(raw){
+  const c=normCode(raw);if(!c){cloud.msg='A family code is 6 letters and numbers, like ABC-DEF.';renderCloud();return}
+  cloud.working=true;cloud.msg='';cloud.code=c;cloud.ready=false;renderCloud();save();
+  try{const took=await cloudPull(true,false);META.code=c;saveMeta();setLink();pushNames();if(took)note(`Welcome back, ${META.names[META.cur]}! Your adventure was saved.`)}
+  catch(e){cloud.code='';cloud.msg=e.gone?"No adventure found with that code. Check the letters and try again.":e.message}
+  cloud.working=false;renderSlots();renderCloud();updateStatus();
+}
+function renderCloud(){
+  const kids=[el('h3',{textContent:cloud.code?'Your family code':'Play on any device'})];
+  if(cloud.working)kids.push(el('p',{textContent:'One moment…'}));
+  else if(cloud.code){
+    const link=location.origin+location.pathname+`#k=${cloud.code}&s=${META.cur}`;
+    const copied=el('span',{textContent:''});copied.setAttribute('role','status');
+    kids.push(el('div',{className:'row'},[el('span',{className:'code',textContent:showCode(cloud.code)})]),
+      el('p',{textContent:"All three save files are kept online with this code. On another tablet or phone, open the game, type this code in the same box, and the adventures appear."}),
+      el('p',{textContent:`Grown-ups: this link opens the game straight into ${META.names[META.cur]}'s adventure. Bookmark it, or add it as an approved website on a kids' tablet profile, and the save comes along even if the browser forgets everything.`}),
+      el('div',{className:'link',textContent:link}),
+      el('div',{className:'row'},[btn('Copy link',async()=>{try{await navigator.clipboard.writeText(link);copied.textContent='Copied!'}catch(e){copied.textContent='Press and hold the link to copy it.'}},'go'),btn('Stop using the code on this device',()=>forgetCode('')),copied]),
+      el('p',{textContent:'Anyone with the code can play and change these save files, so share it with family only.'}));
+  }else{
+    const inp=el('input',{type:'text',maxLength:9,placeholder:'ABC-DEF',autocomplete:'off',spellcheck:false});inp.setAttribute('aria-label','Family code');inp.setAttribute('autocapitalize','characters');
+    inp.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')joinCode(inp.value)});
+    kids.push(el('p',{textContent:'A family code keeps your save files online, so the adventure follows you to any tablet or phone and is still there if this browser forgets it.'}),
+      el('div',{className:'row'},[btn('Make a family code',makeCode,'go')]),
+      el('div',{className:'row'},[el('span',{textContent:'Already have one?'}),inp,btn('Use code',()=>joinCode(inp.value))]));
+  }
+  if(cloud.msg)kids.push(el('p',{className:'msg',textContent:cloud.msg}));
+  cloudBox.replaceChildren(...kids);
+}
+function updateStatus(){
+  const who=`Playing ${META.names[META.cur]}'s adventure. `,online=cloud.code&&cloud.ready;
+  const bad=!saveOK&&!online;saveStatus.classList.toggle('bad',bad);
+  saveStatus.textContent=bad?(cloud.code?"Saving isn't working yet: this browser won't keep saves and online saving hasn't answered. It will keep trying.":"Saving isn't working in this browser, so progress will be lost when you leave. Make a family code below to save online instead."):
+    who+(online?(saveOK?'It saves by itself on this device and online':"It saves by itself online")+(cloud.err?', but online saving is having trouble right now and will keep trying.':` (online save ${ago(cloud.lastUp)}).`)
+      :`It saves by itself on this device${lastSaved?' (saved '+ago(lastSaved)+')':''}.`+(cloud.code?' Online saving is still connecting.':''));
+}
+renderSlots();save();setLink();renderCloud();updateStatus();setInterval(updateStatus,5000);
+setInterval(()=>{if(document.visibilityState==='visible')cloudTick(false)},30000);
+addEventListener('pagehide',()=>{save();cloudTick(true)});let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){hiddenAt=Date.now();save();cloudTick(true);return}
+  if(cloud.code&&cloud.ready&&!cloud.busy&&!cloud.working&&hiddenAt&&Date.now()-hiddenAt>30000){
+    cloud.busy=true;cloudPull(false,false).then(t=>{if(t)note('Loaded your newest adventure from another device.');renderSlots()}).catch(e=>{cloud.err=e.message}).finally(()=>{cloud.busy=false;updateStatus()});
+  }
+});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
 cv.addEventListener('pointerdown',e=>{
   cv.focus({preventScroll:true});
   const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*VW,py=(e.clientY-r.top)/r.height*VH;
@@ -1573,13 +1752,36 @@ function stepWalk(dt){
   let moved=false;if(free(S.x+mx,S.y,S.hero)){S.x+=mx;moved=true}if(free(S.x,S.y+my,S.hero)){S.y+=my;moved=true}
   if(!moved)walkTo=null;else{P.moving=true;P.anim+=dt;if(Math.abs(dx)>4)S.face=dx>0?1:-1}
 }
-for(const it of items)if(S.items[it.id])it.taken=true;
-if(S.q.molHp<=0){const m=npcs.find(n=>n.id==='molerat');m.gone=true;const sp=items.find(i=>i.id==='sapphire');if(!sp.taken)sp.hidden=false}
+function afterLoad(){
+  for(const it of items)it.taken=!!S.items[it.id];
+  const m=npcs.find(n=>n.id==='molerat'),sp=items.find(i=>i.id==='sapphire'),beat=S.q.molHp<=0;
+  m.gone=beat;sp.hidden=!beat;
+}
+afterLoad();
+function applySave(d){
+  const fresh=JSON.parse(FRESH_JSON),q={...fresh.q,...(d.q||{})};
+  for(const k in S)delete S[k];Object.assign(S,fresh,d);S.q=q;
+  for(const k of ['items','opened','found','discovered','explored','got'])S[k]=S[k]||{};
+  if(!Array.isArray(S.unlocked)||!S.unlocked.includes('graydorn'))S.unlocked=['graydorn'];
+  if(!HEROES[S.hero])S.hero='graydorn';
+  afterLoad();for(const k in yarnFlee)delete yarnFlee[k];
+  enemies=[];projs=[];pops=[];hearts=[];dialog=null;showHeroes=false;showMap=false;walkTo=null;mapDirty=true;P.nap=0;P.inv=1;
+  follower.x=S.x-60;follower.y=S.y;cam.x=S.x-VW/2;cam.y=S.y-VH/2-40;
+  lastSig=sigOf();lastSaved=Date.now();ls.set(SAVE_KEY,JSON.stringify(S));
+}
+function drawSyncing(){g.setTransform(DPR,0,0,DPR,0,0);g.fillStyle='rgba(27,20,40,.8)';g.fillRect(0,0,VW,VH);txt('Finding your adventure…',VW/2,VH/2,34,'#ffe14d',INK)}
 if(!S.q.intro){S.q.intro=true;say(["Welcome to GRAYDORN'S WORLD. It's HUGE.","Click or tap anywhere to walk there. Tap a bad guy to attack it. Tap a person to talk.","Keyboard: arrows walk, X attacks, Space talks.","Every hero has a way to unlock them. Press Q or the yellow SWAP HERO button to see what each one needs!"],()=>{showHeroes=true})}
+if(hadSave&&S.q.intro&&!dialog)note(`Welcome back, ${META.names[META.cur]}! Your adventure was saved.`);
 cam.x=S.x-VW/2;cam.y=S.y-VH/2-40;
 let focused=false;cv.addEventListener('focus',()=>{focused=true});cv.addEventListener('blur',()=>{focused=false});
 const _drawHUD=drawHUD;drawHUD=function(){_drawHUD();if(!focused&&!dialog){g.save();g.globalAlpha=.6+Math.sin(time*4)*.2;setSeed(boil);poly([[VW/2-150,VH/2+150],[VW/2+150,VH/2+150],[VW/2+150,VH/2+186],[VW/2-150,VH/2+186]],'#ffe14d',1,3);txt('Click or tap the game to play!',VW/2,VH/2+168,20,INK,null,'center','Permanent Marker');g.restore()}};
 setTimeout(()=>{try{cv.focus({preventScroll:true})}catch(e){}},300);
+if(cloud.code){
+  syncing=true;cloud.busy=true;const stop=setTimeout(()=>{syncing=false},7000);
+  cloudPull(joinFromLink,true).then(t=>{if(joinFromLink){saveMeta()}if(t)note(`Welcome back, ${META.names[META.cur]}! Your adventure was saved.`)})
+    .catch(e=>{cloud.err=e.message;if(e.gone)forgetCode("That family code wasn't found, so this adventure is only saved on this device.")})
+    .finally(()=>{clearTimeout(stop);syncing=false;cloud.busy=false;renderSlots();renderCloud();updateStatus()});
+}
 requestAnimationFrame(frame);
 </script>
 </body>
