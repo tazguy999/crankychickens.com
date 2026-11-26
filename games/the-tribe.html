@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Hoard</title>
+<title>The Tribe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@400;900&family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -186,9 +186,9 @@ const EVENTS=[
  {id:'bark',i:'🐾',title:'The Bark Lady strikes',text:a=>'The Bark Lady nosed the door open and grabbed '+a+' by the tail!',ch:[['Sneak in for a rescue','sneak'],['Lure her away with a crumb treat','bake']],good:a=>a+' got away without a scratch.',bad:a=>a+' got away, but very soggy. They need mending.',pen:'mend'},
  {id:'shelf',i:'⛰️',title:'Stuck up high',text:a=>a+' climbed onto the dresser and now cannot get down.',ch:[['Climb up and guide them down','climb'],['Spot a safe path from below','scout']],good:a=>a+' made it down safe.',bad:a=>a+' was stuck up there half the night and will be sleepy.',pen:'sleepy'},
  {id:'squirrel',i:'🌀',title:'Hypno squirrels at the window',text:a=>'Two squirrels pressed their faces to the glass and swirled their eyes. '+a+' started to wobble.',ch:[['Close the curtain without a sound','sneak'],['Out-sing their hypno hum','sing']],good:a=>a+' snapped right out of it.',bad:a=>a+' stared at the window for hours and will be sleepy tonight.',pen:'sleepy'},
- {id:'homesick',i:'🏠',title:'Homesick',hatch:true,text:a=>'Wee '+a+' misses the toy store shelf tonight.',ch:[['Bake warm crumb cookies','bake'],['Tell the story of how the Hoard began','story']],good:a=>'Wee '+a+' decided this is home now.',bad:a=>'Wee '+a+' sniffled for a while and will be sleepy tonight.',pen:'sleepy'},
+ {id:'homesick',i:'🏠',title:'Homesick',hatch:true,text:a=>'Wee '+a+' misses the toy store shelf tonight.',ch:[['Bake warm crumb cookies','bake'],['Tell the story of how the Tribe began','story']],good:a=>'Wee '+a+' decided this is home now.',bad:a=>'Wee '+a+' sniffled for a while and will be sleepy tonight.',pen:'sleepy'},
  {id:'rip',i:'✂️',title:'A tiny rip',text:a=>a+' caught a wing on the bed frame.',ch:[['Stitch it up right away','stitch'],['Invent a wing sling','invent']],good:a=>a+' is flapping again already.',bad:a=>a+' needs proper mending.',pen:'mend'},
- {id:'visitor',i:'🐸',title:'A lost visitor',text:a=>'A wind-up frog from the Bath Toy Navy hopped in, completely lost. '+a+' found it first.',ch:[['Scout the way back to the bathtub','scout'],['Make it feel at home for the night','comfort']],good:a=>'The frog told the whole Navy how kind the Hoard was.',bad:a=>'The frog hopped off the wrong way. '+a+' chased it all night and will be sleepy.',pen:'sleepy',neigh:'navy'},
+ {id:'visitor',i:'🐸',title:'A lost visitor',text:a=>'A wind-up frog from the Bath Toy Navy hopped in, completely lost. '+a+' found it first.',ch:[['Scout the way back to the bathtub','scout'],['Make it feel at home for the night','comfort']],good:a=>'The frog told the whole Navy how kind the Tribe was.',bad:a=>'The frog hopped off the wrong way. '+a+' chased it all night and will be sleepy.',pen:'sleepy',neigh:'navy'},
  {id:'couch',i:'🔍',title:'Lost in the couch',text:a=>a+' slipped between the couch cushions and cannot find the way out.',ch:[['Sniff out the trail','sniff'],['Climb down into the cushions','climb']],good:a=>a+' came out holding a popcorn kernel like a trophy.',bad:a=>a+' got out in the end, but squashed flat. They need mending.',pen:'mend'},
  {id:'bread',i:'🍰',title:'Fresh bread downstairs',text:a=>'Jewels is baking sourdough and the whole house smells amazing. '+a+' wants a crumb more than anything.',ch:[['Sneak a crumb off the counter','sneak'],['Bake a copy from old crumbs','bake']],good:a=>a+' shared a warm crumb with everyone.',bad:a=>a+' sat by the door sniffing all night and will be sleepy.',pen:'sleepy'},
  {id:'lair',i:'🏰',title:'Graydorn needs backup',text:a=>'Down the hall, Graydorn and Batdorn are building a blanket lair and it keeps falling down. '+a+' heard the crash.',ch:[['Invent a better support beam','invent'],['Stitch the blankets together','stitch']],good:a=>'The lair stands. Graydorn never found out who helped.',bad:a=>'The lair fell again. '+a+' got tangled in it and will be sleepy.',pen:'sleepy'}
@@ -221,14 +221,14 @@ const BADGES=[
  ['bff','Best Friends','Get two dragons to Best friends',s=>Object.values(s.bonds).some(b=>b.p>=85)],
  ['wish','Wish Granter','Make 3 wishes come true',s=>s.hearts>=3],
  ['calling','True Calling','Help a dragon find their calling',s=>s.dragons.some(d=>d.calling)],
- ['mender','Hoard Stitcher','Find a dragon with Stitching',s=>s.dragons.some(d=>d.talents.some(t=>t.k==='stitch'&&t.found))],
+ ['mender','Tribe Stitcher','Find a dragon with Stitching',s=>s.dragons.some(d=>d.talents.some(t=>t.k==='stitch'&&t.found))],
  ['pile','Shiny Pile','Collect 8 treasures',s=>s.treasures.length>=8],
  ['neigh','Good Neighbors','Become Allies with a neighbor group',s=>Object.values(s.neigh).some(p=>p>=80)],
- ['big','Big Hoard','Grow to 10 dragons',s=>s.dragons.length>=10],
+ ['big','Big Tribe','Grow to 10 dragons',s=>s.dragons.length>=10],
  ['legend','Legend','Raise any talent to Legendary',s=>s.dragons.some(d=>d.talents.some(t=>t.found&&tl(t)>=5))],
  ['brave','Brave Heart','Help a dragon face a fear',s=>s.dragons.some(d=>d.brave)],
  ['teach','Good Teacher','Have one friend teach another a talent',s=>s.dragons.some(d=>d.talents.some(t=>t.learned))],
- ['build','Master Builders','Finish a Hoard project',s=>Object.keys(s.proj).some(k=>s.proj[k].done)]
+ ['build','Master Builders','Finish a Tribe project',s=>Object.keys(s.proj).some(k=>s.proj[k].done)]
 ];
 const CAP=14;
 
@@ -273,7 +273,7 @@ function newDragon(stage){
   S.dragons.push(d);return d;
 }
 function newGame(){
-  S={v:2,name:'The Pillow Hoard',night:1,acts:3,dragons:[],bonds:{},treasures:[],log:[],nextId:1,keeper:null,badges:[],hearts:0,accs:['bow'],neigh:{squad:0,court:0,navy:0},shelf:[],seen:false};
+  S={v:2,name:'The Pillow Tribe',night:1,acts:3,dragons:[],bonds:{},treasures:[],log:[],nextId:1,keeper:null,badges:[],hearts:0,accs:['bow'],neigh:{squad:0,court:0,navy:0},shelf:[],seen:false};
   ['loved','grown','grown','grown','grown','hatch'].forEach(st=>newDragon(st));
   const e=S.dragons[0];e.age=16;e.talents[0].found=true;e.talents[0].xp=4;e.title=T[e.talents[0].k].title;S.keeper=e.id;
   for(let i=0;i<S.dragons.length;i++)for(let j=i+1;j<S.dragons.length;j++)bondOf(S.dragons[i],S.dragons[j]).p=rnd(22);
@@ -290,6 +290,7 @@ function migrate(s){
   if(s.v===1){s.v=2;s.hearts=0;s.accs=['bow'];s.neigh={squad:0,court:0,navy:0};s.shelf=[];s.seen=true;
     s.dragons.forEach(d=>{d.spikes=false;d.calling=null;d.acc=null;d.mentor=null;d.wish=null;});
     Object.values(s.bonds).forEach(b=>{b.rival=null;b.mem=[];});}
+  if(s.name==='The Pillow Ho'+'ard')s.name='The Pillow Tribe';
   return ensure(s);
 }
 function ensure(s){
@@ -338,7 +339,7 @@ function sweep(ctx,out){
     else if(w.t==='build')ok=inTeam&&!!ctx.build;
     if(ok){const m=d.name+' '+wishText(d).replace('wants','wanted')+', and tonight it happened.';
       S.hearts++;out.push({c:'burst',h:'💖 WISH COME TRUE!<small>'+esc(m)+'</small>'});log('Wish come true: '+m,'bond');
-      if(S.hearts%2===0){const nx=ACCK.find(a=>S.accs.indexOf(a)<0);if(nx){S.accs.push(nx);const m2='New dress-up item for the Hoard: the '+ACC[nx]+'.';out.push({c:'loot',h:'🎁 '+esc(m2)});log(m2,'loot');}}
+      if(S.hearts%2===0){const nx=ACCK.find(a=>S.accs.indexOf(a)<0);if(nx){S.accs.push(nx);const m2='New dress-up item for the Tribe: the '+ACC[nx]+'.';out.push({c:'loot',h:'🎁 '+esc(m2)});log(m2,'loot');}}
       newWish(d);}
   });
   REV=[];
@@ -448,7 +449,7 @@ function doExp(team,placeKey,oi,ctx){
   if(win){
     const have=new Set(S.treasures.map(t=>t.name));const fresh=pl.loot.filter(l=>!have.has(l));
     out.push({c:'ln',h:esc('The plan worked: '+opt.n.toLowerCase()+'.')});
-    if(fresh.length){const item=pick(fresh);ctx.loot=true;S.treasures.push({name:item,place:pl.n,n:S.night});out.push({c:'loot',h:'✨ '+esc('They brought home '+item+' for the Hoard.')});log(names+' found '+item+' in '+pl.n+'.','loot');}
+    if(fresh.length){const item=pick(fresh);ctx.loot=true;S.treasures.push({name:item,place:pl.n,n:S.night});out.push({c:'loot',h:'✨ '+esc('They brought home '+item+' for the Tribe.')});log(names+' found '+item+' in '+pl.n+'.','loot');}
     else out.push({c:'ln',h:esc('Nothing new to find here, but it was a great trip.')});
     team.forEach(d=>{const t=tal(d,k);if(t&&!t.found)reveal(d,k,out);else if(t)gainXp(d,k,out);});
     pairs.forEach(p=>{mem(p[0],p[1],'explored '+pl.n+' together');addBond(p[0],p[1],6,out);});
@@ -463,8 +464,8 @@ function doExp(team,placeKey,oi,ctx){
 }
 function neighGain(g,amt,out){
   const was=nl(S.neigh[g]);S.neigh[g]=Math.min(100,S.neigh[g]+amt);const now=nl(S.neigh[g]);
-  if(now>was){const m=NEIGH[g].n+' now see the Hoard as '+NL[now]+'.';out.push({c:'bond',h:esc(m)});log(m,'bond');
-    if(now===2){S.treasures.push({name:NEIGH[g].gift,place:'a gift from '+NEIGH[g].n,n:S.night});const m2=NEIGH[g].n+' gave the Hoard a gift: '+NEIGH[g].gift+'.';out.push({c:'loot',h:'🎁 '+esc(m2)});log(m2,'loot');}}
+  if(now>was){const m=NEIGH[g].n+' now see the Tribe as '+NL[now]+'.';out.push({c:'bond',h:esc(m)});log(m,'bond');
+    if(now===2){S.treasures.push({name:NEIGH[g].gift,place:'a gift from '+NEIGH[g].n,n:S.night});const m2=NEIGH[g].n+' gave the Tribe a gift: '+NEIGH[g].gift+'.';out.push({c:'loot',h:'🎁 '+esc(m2)});log(m2,'loot');}}
 }
 function pickEvent(){
   const hat=S.dragons.filter(d=>d.stage==='hatch'&&!d.mend),pool=S.dragons.filter(d=>d.stage!=='hatch'&&!d.mend);
@@ -517,7 +518,7 @@ function doBuild(team,pk){
     else out.push({c:'oops',h:esc(d.name+' carried things and cheered. The project still needs a dragon with the right talent.')});
   });
   if(team.length===2){mem(team[0],team[1],'worked on '+P.n+' together');addBond(team[0],team[1],5,out);}
-  if(!st.done&&P.need.every(k=>st[k]>=2)){st.done=true;const m='The Hoard finished '+P.n+'! '+P.perk;out.push({c:'burst',h:P.i+' PROJECT FINISHED!<small>'+esc(m)+'</small>'});log(m,'loot');}
+  if(!st.done&&P.need.every(k=>st[k]>=2)){st.done=true;const m='The Tribe finished '+P.n+'! '+P.perk;out.push({c:'burst',h:P.i+' PROJECT FINISHED!<small>'+esc(m)+'</small>'});log(m,'loot');}
   spend(team);return out;
 }
 function checkBadges(out){
@@ -560,7 +561,7 @@ function lightsOut(){
     else{const mo=pick(MOMENTS),m=a.name+' and '+b.name+' '+mo+'.';out.push({c:'bond',h:esc(m)});log(m,'bond');mem(a,b,mo);addBond(a,b,4,out);maybeRival(a,b,out);}
   }
   const kp=byId(S.keeper);
-  if(kp&&S.dragons.length>1){const o=pick(S.dragons.filter(d=>d.id!==kp.id));addBond(kp,o,3,out);if(chance(.3)){const m=kp.name+', the Hoard Keeper, checked in on '+o.name+'.';out.push({c:'ln',h:esc(m)});mem(kp,o,'had a Keeper check-in');}}
+  if(kp&&S.dragons.length>1){const o=pick(S.dragons.filter(d=>d.id!==kp.id));addBond(kp,o,3,out);if(chance(.3)){const m=kp.name+', the Tribe Keeper, checked in on '+o.name+'.';out.push({c:'ln',h:esc(m)});mem(kp,o,'had a Keeper check-in');}}
   if(chance(season()==='Winter'?1:.4)){const c=S.dragons.filter(d=>d.talents.some(t=>!t.found&&d.hints.indexOf(t.k)<0));if(c.length){const d=pick(c),k=giveHint(d);const m='Dino leaned over from the next bed: "Keep an eye on '+d.name+'. That one '+T[k].clue+'."';out.push({c:'ln',h:'🔍 '+esc(m)});log('Clue from Dino: '+d.name+' '+T[k].clue+'.','spark');}}
   if(S.dragons.length<12&&S.night%(season()==='Spring'?2:3)===0){const d=arrive(out);if(S.dragons.length<12&&chance(.25))arrive(out,d);}
   const lone=S.dragons.find(d=>d.stage==='hatch'&&!byId(d.mentor));
@@ -576,7 +577,7 @@ function lightsOut(){
   return out;
 }
 function toShelf(d){
-  S.shelf.push({name:nm(d),n:S.night});log(nm(d)+' moved up to the High Shelf to watch over the Hoard.','bond');
+  S.shelf.push({name:nm(d),n:S.night});log(nm(d)+' moved up to the High Shelf to watch over the Tribe.','bond');
   S.dragons=S.dragons.filter(o=>o.id!==d.id);
   Object.keys(S.bonds).forEach(k=>{if(k.split('|').indexOf(String(d.id))>=0)delete S.bonds[k];});
   if(S.keeper===d.id)S.keeper=null;
@@ -643,7 +644,7 @@ function render(){
   const pips=Array.from({length:Math.max(3,S.acts)},(_,i)=>`<span class="pip${i<S.acts?'':' off'}"></span>`).join('');
   let main='';
   if(UI.tab==='dragons'){
-    main='<div class="grid">'+S.dragons.map(d=>`<button class="card" data-a="open" data-id="${d.id}">${dragonSVG(d,104)}<h3>${esc(nm(d))}</h3><p class="role">${esc(role(d))} · ${d.pers}</p>${talentRow(d)}${S.keeper===d.id?'<span class="tag keep">Hoard Keeper</span>':''}${d.mend?'<span class="tag mend">Needs mending</span>':d.energy<=0?'<span class="tag">Sleepy</span>':''}</button>`).join('')+'</div>';
+    main='<div class="grid">'+S.dragons.map(d=>`<button class="card" data-a="open" data-id="${d.id}">${dragonSVG(d,104)}<h3>${esc(nm(d))}</h3><p class="role">${esc(role(d))} · ${d.pers}</p>${talentRow(d)}${S.keeper===d.id?'<span class="tag keep">Tribe Keeper</span>':''}${d.mend?'<span class="tag mend">Needs mending</span>':d.energy<=0?'<span class="tag">Sleepy</span>':''}</button>`).join('')+'</div>';
   }else if(UI.tab==='bonds'){
     const ps=[];for(let i=0;i<S.dragons.length;i++)for(let j=i+1;j<S.dragons.length;j++)ps.push([S.dragons[i],S.dragons[j]]);
     const top=ps.slice().sort((x,y)=>bondOf(y[0],y[1]).p-bondOf(x[0],x[1]).p).slice(0,6),tiffs=ps.filter(p=>bondOf(p[0],p[1]).tiff);
@@ -662,19 +663,19 @@ function render(){
       <p class="role" style="margin-top:8px">Hidden talents found: ${found(S)} of ${total(S)}</p></section>
     <section class="panel"><p class="cap">Neighbors</p><div class="stack" style="gap:10px">${Object.keys(NEIGH).map(g=>`<div><div class="brow" style="border:0;padding:0"><span>${NEIGH[g].n}: <b>${NL[nl(S.neigh[g])]}</b></span><div class="meter"><i style="width:${S.neigh[g]}%;background:var(--spark)"></i></div><small>They live on ${NEIGH[g].home} and love ${NEIGH[g].likes.map(k=>T[k].n.toLowerCase()).join(', ')}.</small></div></div>`).join('')}</div>
       <p class="role" style="margin-top:8px">Next Midnight Gathering: ${next===5?'tonight at lights out':'in '+next+' bedtime'+(next>1?'s':'')}.</p></section>
-    <section class="panel"><p class="cap">Hoard projects</p><div class="stack" style="gap:10px">${Object.keys(PROJ).map(k=>{const P=PROJ[k],st=S.proj[k];return `<div><b>${P.i} ${P.n}</b> ${st.done?'<span class="tag keep">Finished</span>':''}<br><span class="role">${st.done?P.perk:P.desc+' Needs '+P.need.map(n=>T[n].i+' '+T[n].n+' '+st[n]+'/2').join(', ')+'.'}</span></div>`;}).join('')}</div><p class="role" style="margin-top:8px">${SNOTE[season()]?season()+': '+SNOTE[season()]:''}</p></section>
-    <section class="panel"><p class="cap">Make your own dragon</p><p>Design a dragon and bring it into the Hoard. Its talents stay a surprise.</p><p style="margin-top:8px"><button class="btn c" data-a="make"${S.dragons.length>=CAP?' disabled':''}>${S.dragons.length>=CAP?'The Hoard is full ('+CAP+')':'Open the dragon maker'}</button></p></section>
-    ${S.shelf.length?`<section class="panel"><p class="cap">The High Shelf</p><ul class="log">${S.shelf.map(x=>`<li>${esc(x.name)} <span class="role">watching over the Hoard since Bedtime ${x.n}</span></li>`).join('')}</ul></section>`:''}
-    <section class="panel"><p class="cap">How to play</p><ul class="log"><li>You get 3 moves each Bedtime. Then tap Lights out.</li><li class="bond">Hang out: two dragons spend time together. Their bond grows and hidden talents can pop out.</li><li class="spark">Train: try a new skill to find a talent, or practice one to level it up. Friends coach each other.</li><li class="loot">Explore: a team goes treasure hunting. Friends with the right talents do best.</li><li class="spark">Build: work on a big Hoard project. Each one needs three talents and gives the whole Hoard a perk.</li><li class="bond">Each dragon has a favorite thing, a fear, and a secret. You learn them by playing.</li><li class="spark">A Close friend who is Skilled can teach a talent a dragon was not born with.</li><li class="bond">Every dragon has a wish. Tap a dragon to see it.</li><li>Friends notice clues about each other's hidden talents.</li><li>Every 5th Bedtime the neighbors hold a talent show.</li></ul></section>
-    <section class="panel"><p class="cap">Your Hoard</p><div class="rn"><input id="hn" maxlength="28" value="${esc(S.name)}" aria-label="Hoard name"><button class="btn" data-a="hoardName">Rename</button></div>
-      <p style="margin-top:10px"><button class="btn" data-a="reset">${UI.reset?'Really start over? Tap again':'Start a brand new Hoard'}</button></p>
-      <p class="role" style="margin-top:8px">Your Hoard saves on this device.</p></section>
+    <section class="panel"><p class="cap">Tribe projects</p><div class="stack" style="gap:10px">${Object.keys(PROJ).map(k=>{const P=PROJ[k],st=S.proj[k];return `<div><b>${P.i} ${P.n}</b> ${st.done?'<span class="tag keep">Finished</span>':''}<br><span class="role">${st.done?P.perk:P.desc+' Needs '+P.need.map(n=>T[n].i+' '+T[n].n+' '+st[n]+'/2').join(', ')+'.'}</span></div>`;}).join('')}</div><p class="role" style="margin-top:8px">${SNOTE[season()]?season()+': '+SNOTE[season()]:''}</p></section>
+    <section class="panel"><p class="cap">Make your own dragon</p><p>Design a dragon and bring it into the Tribe. Its talents stay a surprise.</p><p style="margin-top:8px"><button class="btn c" data-a="make"${S.dragons.length>=CAP?' disabled':''}>${S.dragons.length>=CAP?'The Tribe is full ('+CAP+')':'Open the dragon maker'}</button></p></section>
+    ${S.shelf.length?`<section class="panel"><p class="cap">The High Shelf</p><ul class="log">${S.shelf.map(x=>`<li>${esc(x.name)} <span class="role">watching over the Tribe since Bedtime ${x.n}</span></li>`).join('')}</ul></section>`:''}
+    <section class="panel"><p class="cap">How to play</p><ul class="log"><li>You get 3 moves each Bedtime. Then tap Lights out.</li><li class="bond">Hang out: two dragons spend time together. Their bond grows and hidden talents can pop out.</li><li class="spark">Train: try a new skill to find a talent, or practice one to level it up. Friends coach each other.</li><li class="loot">Explore: a team goes treasure hunting. Friends with the right talents do best.</li><li class="spark">Build: work on a big Tribe project. Each one needs three talents and gives the whole Tribe a perk.</li><li class="bond">Each dragon has a favorite thing, a fear, and a secret. You learn them by playing.</li><li class="spark">A Close friend who is Skilled can teach a talent a dragon was not born with.</li><li class="bond">Every dragon has a wish. Tap a dragon to see it.</li><li>Friends notice clues about each other's hidden talents.</li><li>Every 5th Bedtime the neighbors hold a talent show.</li></ul></section>
+    <section class="panel"><p class="cap">Your Tribe</p><div class="rn"><input id="hn" maxlength="28" value="${esc(S.name)}" aria-label="Tribe name"><button class="btn" data-a="hoardName">Rename</button></div>
+      <p style="margin-top:10px"><button class="btn" data-a="reset">${UI.reset?'Really start over? Tap again':'Start a brand new Tribe'}</button></p>
+      <p class="role" style="margin-top:8px">Your Tribe saves on this device.</p></section>
     <section class="panel"><p class="cap">Sound</p><div class="row"><button class="btn sm${S.snd?' on':''}" data-a="snd">Sound effects: ${S.snd?'On':'Off'}</button><button class="btn sm${S.music?' on':''}" data-a="music">Lullaby music: ${S.music?'On':'Off'}</button></div></section>
-    <section class="panel"><p class="cap">Move your Hoard</p><p>To play on another tablet or phone, make a save code here and load it there.</p><div class="rn" style="margin-top:8px"><textarea id="sc" aria-label="Save code" placeholder="Save code">${esc(UI.code||'')}</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm" data-a="copySave">Make save code</button><button class="btn sm" data-a="loadSave">Load this code</button><span class="role">${esc(UI.msg||'')}</span></div></section></div>`;
+    <section class="panel"><p class="cap">Move your Tribe</p><p>To play on another tablet or phone, make a save code here and load it there.</p><div class="rn" style="margin-top:8px"><textarea id="sc" aria-label="Save code" placeholder="Save code">${esc(UI.code||'')}</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm" data-a="copySave">Make save code</button><button class="btn sm" data-a="loadSave">Load this code</button><span class="role">${esc(UI.msg||'')}</span></div></section></div>`;
   }
   const no=S.acts<=0;
   $app.innerHTML=`<header class="top"><div><p class="eyebrow">Bedtime ${S.night} · ${season()}</p><h1>${esc(S.name)}</h1></div><div class="moves">${no?'No moves left':'Moves left'}<div class="pips">${pips}</div></div></header>
-  <nav class="tabs" role="tablist">${[['dragons','Dragons'],['bonds','Bonds'],['story','Story'],['hoard','Hoard']].map(t=>`<button role="tab" aria-selected="${UI.tab===t[0]}" data-a="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</nav>
+  <nav class="tabs" role="tablist">${[['dragons','Dragons'],['bonds','Bonds'],['story','Story'],['hoard','Tribe']].map(t=>`<button role="tab" aria-selected="${UI.tab===t[0]}" data-a="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</nav>
   <main>${main}</main>
   <footer class="bar"><div>
     <button class="btn a" data-a="hang"${no?' disabled':''}>Hang out</button>
@@ -695,10 +696,10 @@ function sheet(){
   if(F.t==='result'){
     h=head(F.title)+F.html;const P=F.pend;
     if(P&&P.type==='event'){const ev=EVENTS.find(e=>e.id===P.ev),a=byId(P.a);
-      if(ev&&a)h+=`<div class="ln ev"><h3>${ev.i} ${ev.title}</h3><p>${esc(ev.text(a.name))}</p><p class="step" style="margin-top:6px">What should the Hoard do?</p></div><div class="opts">${ev.ch.map((c,i)=>`<button class="opt" data-a="ev" data-v="${i}"><b>${T[c[1]].i} ${c[0]}</b>Needs ${T[c[1]].n}. ${esc(knownFor(c[1],a.id))}</button>`).join('')}</div>`;
+      if(ev&&a)h+=`<div class="ln ev"><h3>${ev.i} ${ev.title}</h3><p>${esc(ev.text(a.name))}</p><p class="step" style="margin-top:6px">What should the Tribe do?</p></div><div class="opts">${ev.ch.map((c,i)=>`<button class="opt" data-a="ev" data-v="${i}"><b>${T[c[1]].i} ${c[0]}</b>Needs ${T[c[1]].n}. ${esc(knownFor(c[1],a.id))}</button>`).join('')}</div>`;
       else h+='<button class="btn go" data-a="close">OK!</button>';}
     else if(P&&P.type==='gather'){const G=NEIGH[P.g];
-      h+=`<div class="ln ev"><h3>🌙 Midnight Gathering</h3><p>${G.n} are hosting a talent show on ${G.home}. They love ${G.likes.map(k=>T[k].n.toLowerCase()).join(', ')}.</p><p class="step" style="margin-top:6px">Who performs for the Hoard?</p></div><div class="chips">${S.dragons.map(d=>`<button class="chip" data-a="perform" data-id="${d.id}"${d.stage==='hatch'||d.mend?' disabled':''}>${dragonSVG(d,60)}${esc(d.name)}<small>${d.talents.filter(t=>t.found).map(t=>T[t.k].i).join(' ')||'no talents found yet'}</small></button>`).join('')}</div>`;}
+      h+=`<div class="ln ev"><h3>🌙 Midnight Gathering</h3><p>${G.n} are hosting a talent show on ${G.home}. They love ${G.likes.map(k=>T[k].n.toLowerCase()).join(', ')}.</p><p class="step" style="margin-top:6px">Who performs for the Tribe?</p></div><div class="chips">${S.dragons.map(d=>`<button class="chip" data-a="perform" data-id="${d.id}"${d.stage==='hatch'||d.mend?' disabled':''}>${dragonSVG(d,60)}${esc(d.name)}<small>${d.talents.filter(t=>t.found).map(t=>T[t.k].i).join(' ')||'no talents found yet'}</small></button>`).join('')}</div>`;}
     else h+='<button class="btn go" data-a="close">'+(F.btn||'OK!')+'</button>';
   }else if(F.t==='hang'){
     const ps=F.picks.map(byId);
@@ -730,21 +731,21 @@ function sheet(){
   }else if(F.t==='detail'){
     const d=byId(F.id);if(!d){F=null;return sheet();}
     const others=S.dragons.filter(o=>o.id!==d.id).sort((x,y)=>bondOf(d,y).p-bondOf(d,x).p),mt=byId(d.mentor);
-    h=head(esc(nm(d)))+`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:none">${dragonSVG(d,140)}</div><div style="flex:1;min-width:150px"><p><b>${esc(role(d))}</b>${S.keeper===d.id?' · Hoard Keeper':''}</p><p>A ${d.fabric} ${COLORS[d.color][0]} ${TYPES[d.type].n}. ${TYPES[d.type].perk}</p><p>${d.pers}. ${esc(d.quirk[0].toUpperCase()+d.quirk.slice(1))}.</p><p class="role">${d.mend?'Needs mending. A Stitcher can fix them at lights out.':d.energy<=0?'Sleepy for tonight.':'Energy tonight: '+d.energy}</p></div></div>`;
+    h=head(esc(nm(d)))+`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:none">${dragonSVG(d,140)}</div><div style="flex:1;min-width:150px"><p><b>${esc(role(d))}</b>${S.keeper===d.id?' · Tribe Keeper':''}</p><p>A ${d.fabric} ${COLORS[d.color][0]} ${TYPES[d.type].n}. ${TYPES[d.type].perk}</p><p>${d.pers}. ${esc(d.quirk[0].toUpperCase()+d.quirk.slice(1))}.</p><p class="role">${d.mend?'Needs mending. A Stitcher can fix them at lights out.':d.energy<=0?'Sleepy for tonight.':'Energy tonight: '+d.energy}</p></div></div>`;
     h+=`<div class="ln bond">💭 <b>Wish:</b> ${esc(d.name+' '+wishText(d))}.</div>`;
     h+=`<p class="sec">What you know about ${esc(d.name)}</p><div class="know"><b>Favorite thing</b><span>${d.favK?HANG[d.fav].i+' '+HANG[d.fav].n:'<span class="role">??? Try different hangouts to find it.</span>'}</span><b>Afraid of</b><span>${d.fearK?PLACES[d.fear].n+(d.brave?' (faced it with a friend!)':''):'<span class="role">??? Every dragon is scared of one place.</span>'}</span><b>Secret</b><span>${d.secK?esc(d.name+' '+SECRETS[d.secret]+'.'):'<span class="role">??? Dragons tell secrets to Close friends.</span>'}</span></div>`;
     h+='<p class="sec">Talents</p>'+d.talents.map(t=>t.found?`<div class="trow"><span class="tk">${T[t.k].i}</span><b>${T[t.k].n}${t.learned?' (learned)':''}</b><span class="lv">${[1,2,3,4,5].map(i=>`<i class="${i<=tl(t)?'f':''}"></i>`).join('')}</span><span class="role">${LV[tl(t)]}</span></div>`:`<div class="trow"><span class="tk q">?</span><span class="role">A hidden talent, waiting to be found</span></div>`).join('');
     if(!d.calling&&d.stage!=='hatch')h+='<p class="role">Get two talents to "Getting good" and this dragon finds a calling.</p>';
     if(d.hints.length)h+='<p class="sec">Clues</p><ul class="log">'+d.hints.map(k=>`<li class="spark">${esc(d.name+' '+T[k].clue+'.')}</li>`).join('')+'</ul>';
     if(d.tried.length)h+='<p class="role">Tried, not their thing: '+d.tried.map(k=>T[k].i+' '+T[k].n).join(', ')+'</p>';
-    if(d.stage==='hatch')h+=`<p class="sec">Mentor</p><div class="row"><span>${mt?esc(mt.name)+' is teaching Wee '+esc(d.name)+' the ways of the Hoard.':'No mentor yet.'}</span><button class="btn sm" data-a="mentor" data-id="${d.id}">${mt?'Change mentor':'Pick a mentor'}</button></div>`;
+    if(d.stage==='hatch')h+=`<p class="sec">Mentor</p><div class="row"><span>${mt?esc(mt.name)+' is teaching Wee '+esc(d.name)+' the ways of the Tribe.':'No mentor yet.'}</span><button class="btn sm" data-a="mentor" data-id="${d.id}">${mt?'Change mentor':'Pick a mentor'}</button></div>`;
     h+='<p class="sec">Bonds</p><div class="stack" style="gap:6px">'+others.map(o=>pairRow(d,o,o.name)).join('')+'</div>';
     h+='<p class="sec">Dress up</p><div class="row">'+[['','None']].concat(S.accs.map(a=>[a,ACC[a]])).map(a=>`<button class="btn sm${(d.acc||'')===a[0]?' on':''}" data-a="acc" data-v="${a[0]}">${a[1]}</button>`).join('')+`</div>${S.accs.length<ACCK.length?'<p class="role">Make wishes come true to unlock more.</p>':''}`;
     const jr=S.log.filter(l=>l.t.indexOf(d.name)>=0).slice(-5).reverse();
     if(jr.length)h+='<p class="sec">Lately</p><ul class="log">'+jr.map(l=>`<li class="${l.k}">${esc(l.t)} <span class="role">Bedtime ${l.n}</span></li>`).join('')+'</ul>';
     h+=`<p class="sec">Name</p><div class="rn"><input id="rn" maxlength="16" value="${esc(d.name)}" aria-label="Dragon name"><button class="btn" data-a="rename" data-id="${d.id}">Rename</button></div><div class="row">`;
-    if(d.stage!=='hatch'&&S.keeper!==d.id)h+=`<button class="btn sm" data-a="keeper" data-id="${d.id}">Make Hoard Keeper</button>`;
-    if(S.dragons.length>3)h+=`<button class="btn sm" data-a="shelf" data-id="${d.id}">${UI.shelf===d.id?'Sure? They leave the Hoard. Tap again':'Move to the High Shelf'}</button>`;
+    if(d.stage!=='hatch'&&S.keeper!==d.id)h+=`<button class="btn sm" data-a="keeper" data-id="${d.id}">Make Tribe Keeper</button>`;
+    if(S.dragons.length>3)h+=`<button class="btn sm" data-a="shelf" data-id="${d.id}">${UI.shelf===d.id?'Sure? They leave the Tribe. Tap again':'Move to the High Shelf'}</button>`;
     h+='</div>';
   }else if(F.t==='pair'){
     const a=byId(F.x),b=byId(F.y);if(!a||!b){F=null;return sheet();}
@@ -815,7 +816,7 @@ const A={
     F={t:'result',title:'Lights out',html:linesHTML(out),btn:'Wake the dragons',pend};sheet();render();},
   ev(d){const P=F.pend,ev=EVENTS.find(e=>e.id===P.ev),a=byId(P.a);if(!ev||!a)return A.close();result(ev.title,resolveEvent(ev,a,+d.v));},
   perform(d){const x=byId(+d.id),g=F.pend.g;if(!x)return;result('Midnight Gathering',perform(x,g));},
-  keeper(d){S.keeper=+d.id;const x=byId(S.keeper);log(x.name+' was chosen as Hoard Keeper.','bond');sheet();render();},
+  keeper(d){S.keeper=+d.id;const x=byId(S.keeper);log(x.name+' was chosen as Tribe Keeper.','bond');sheet();render();},
   mentor(d){F={t:'mentor',id:+d.id};sheet();},
   setMentor(d){const h=byId(F.id),m=byId(+d.id);if(h&&m){h.mentor=m.id;log(m.name+' became mentor to Wee '+h.name+'.','bond');mem(h,m,m.name+' became '+h.name+"'s mentor");}F={t:'detail',id:F.id};sheet();render();},
   acc(d){const x=byId(F.id);if(x){x.acc=d.v||null;sheet();render();}},
@@ -829,7 +830,7 @@ const A={
     const x=newDragon('grown'),c=F.d;if(c.name)x.name=c.name;x.type=c.type;x.fabric=pick(TYPES[c.type].fab);x.color=c.color;x.wing=c.wing;x.horns=c.horns;x.eyes=c.eyes;x.pattern=c.pattern;x.spikes=!!c.spikes;x.pers=c.pers;x.energy=maxE(x);
     S.dragons.forEach(o=>{if(o.id!==x.id)bondOf(o,x).p=rnd(12);});newWish(x);
     const m='Charliescope set a brand new dragon on the bed: '+x.name+', a '+x.fabric+' '+COLORS[x.color][0]+' '+TYPES[x.type].n+'.';log(m,'spark');
-    UI.tab='dragons';const out=[{c:'cap',h:esc(x.name+' joined the Hoard!')},{c:'ln',h:esc(m)},{c:'bond',h:'💭 '+esc(x.name+' '+wishText(x)+'.')}];checkBadges(out);F={t:'result',title:'A new dragon',html:'<div class="two">'+dragonSVG(x,140)+'</div>'+linesHTML(out)};sheet();render();}
+    UI.tab='dragons';const out=[{c:'cap',h:esc(x.name+' joined the Tribe!')},{c:'ln',h:esc(m)},{c:'bond',h:'💭 '+esc(x.name+' '+wishText(x)+'.')}];checkBadges(out);F={t:'result',title:'A new dragon',html:'<div class="two">'+dragonSVG(x,140)+'</div>'+linesHTML(out)};sheet();render();}
 };
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-a]');
@@ -840,7 +841,7 @@ document.addEventListener('click',e=>{
 });
 function welcome(){
   S.seen=true;
-  F={t:'result',title:'Welcome to the Hoard',btn:'Wake the dragons',html:linesHTML([{c:'cap',h:'When the lights go out, the toy dragons wake up.'},{c:'bond',h:'Help them become friends. Friends share memories, notice clues, and invent duo moves.'},{c:'burst',h:'Every dragon has hidden talents.<small>Hang out, train, and explore to find them.</small>'},{c:'ln',h:'💭 Every dragon also has a wish. Tap a dragon to see it.'}])};
+  F={t:'result',title:'Welcome to the Tribe',btn:'Wake the dragons',html:linesHTML([{c:'cap',h:'When the lights go out, the toy dragons wake up.'},{c:'bond',h:'Help them become friends. Friends share memories, notice clues, and invent duo moves.'},{c:'burst',h:'Every dragon has hidden talents.<small>Hang out, train, and explore to find them.</small>'},{c:'ln',h:'💭 Every dragon also has a wish. Tap a dragon to see it.'}])};
   sheet();render();
 }
 function start(data){S=(data&&data.S&&migrate(data.S))||load()||newGame();S.dragons.forEach(d=>{if(!d.wish)newWish(d);});if(!S.seen)welcome();else render();}

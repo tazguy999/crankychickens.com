@@ -47,3 +47,9 @@
   for = "/merch/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
+
+# The Tribe was first published as The Hoard
+[[redirects]]
+  from = "/games/the-hoard.html"
+  to = "/games/the-tribe.html"
+  status = 301
