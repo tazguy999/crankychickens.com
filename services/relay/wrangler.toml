@@ -1,10 +1,11 @@
 # Cranky Chickens room relay. Deploy from this folder with:  npx wrangler deploy
-name = "cranky-rooms"
+# The name must match the Worker in the Cloudflare dashboard, which builds this folder on every push to main.
+name = "crankychickens-com"
 main = "worker.js"
 compatibility_date = "2025-06-01"
 workers_dev = true
 
-# Served at the account's free workers.dev address: https://cranky-rooms.<your-subdomain>.workers.dev
+# Served at the account's free workers.dev address: https://crankychickens-com.nweber6.workers.dev
 # (A custom address such as rooms.crankychickens.com only works if the domain's DNS is run by Cloudflare.
 #  It is not: the domain is at Namecheap. If that ever changes, add:
 #  routes = [{ pattern = "rooms.crankychickens.com", custom_domain = true }] )

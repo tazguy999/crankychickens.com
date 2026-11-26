@@ -1,6 +1,6 @@
 // Cranky Chickens — CCRoom: a two-device room joined by a 4-letter code.
 // One device makes a room, the other types the code, and their messages pass through our small relay
-// (services/relay, a WebSocket at rooms.crankychickens.com). If the relay cannot be reached, it falls back to a
+// (services/relay, a Cloudflare Worker at crankychickens-com.nweber6.workers.dev). If the relay cannot be reached, it falls back to a
 // direct device-to-device link (WebRTC data channel, via PeerJS), which works on some networks and not others.
 // No names, no chat, no accounts: games send their own small number-only messages and must validate what arrives.
 // No UI here. A game reads CCRoom.st / code / msg / diag each frame and draws its own screens.
@@ -18,7 +18,7 @@
   var R = { ABC: ABC, st: 'idle', host: false, code: '', msg: '', diag: '', pending: false, viaRelay: false, onup: null, onmsg: null, ondown: null };
   var peer = null, conn = null, rc = null, answered = false, timer = 0, gen = 0, wl = null, wlWant = false;
   // Where the relay lives. window.CC_RELAY = '' turns it off (direct link only); a ws:// URL points at a test relay.
-  R.relayUrl = function(){ return window.CC_RELAY !== undefined ? window.CC_RELAY : 'wss://rooms.crankychickens.com'; };
+  R.relayUrl = function(){ return window.CC_RELAY !== undefined ? window.CC_RELAY : 'wss://crankychickens-com.nweber6.workers.dev'; };
 
   // A relay connection that looks like a PeerJS one: on('open'|'data'|'close'|'error'), send(obj), close().
   //   'room'  the room is made (host only)      'open'  both devices are here

@@ -4,9 +4,12 @@ A tiny Cloudflare Worker that passes messages between two devices sharing a 4-le
 It is what makes "play a friend" work on any network, including between two different houses.
 It stores nothing. See the comment at the top of `worker.js` for the protocol.
 
-It runs on a free Cloudflare account at a `workers.dev` address. The games need to be told that address
-(the `relayUrl` default in `js/cc-room.js`). Until then they fall back to a direct device-to-device link
-(WebRTC), which works on some home networks and not others.
+It runs on a free Cloudflare account at https://crankychickens-com.nweber6.workers.dev, which is the
+`relayUrl` default in `js/cc-room.js`. If the relay cannot be reached, the games fall back to a direct
+device-to-device link (WebRTC), which works on some home networks and not others.
+
+Cloudflare is connected to this GitHub repo and redeploys the relay whenever this folder changes on main
+(Worker `crankychickens-com`, root directory `services/relay`). A redeploy drops any rooms in use.
 
 ## Deploy (once, and again after any change to worker.js)
 

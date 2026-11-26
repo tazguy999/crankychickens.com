@@ -854,7 +854,7 @@ function netErr(e){
 // between the two devices. It works on any network the site works on. The direct link (PeerJS) is the fallback.
 function loadRoom(cb){
   if(window.CCRoom)return cb();
-  const s=document.createElement('script');s.src='../js/cc-room.js?v=2';s.onload=cb;s.onerror=cb;document.head.appendChild(s);
+  const s=document.createElement('script');s.src='../js/cc-room.js?v=3';s.onload=cb;s.onerror=cb;document.head.appendChild(s);
 }
 function netRelay(role,code,direct){
   const N=NET,c=CCRoom.relay(NETPRE+code,role);N.rc=c;
