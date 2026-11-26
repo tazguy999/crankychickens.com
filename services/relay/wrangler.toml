@@ -4,8 +4,10 @@ main = "worker.js"
 compatibility_date = "2025-06-01"
 workers_dev = true
 
-# Served at rooms.crankychickens.com (the games look for it there). Cloudflare creates the DNS record.
-routes = [{ pattern = "rooms.crankychickens.com", custom_domain = true }]
+# Served at the account's free workers.dev address: https://cranky-rooms.<your-subdomain>.workers.dev
+# (A custom address such as rooms.crankychickens.com only works if the domain's DNS is run by Cloudflare.
+#  It is not: the domain is at Namecheap. If that ever changes, add:
+#  routes = [{ pattern = "rooms.crankychickens.com", custom_domain = true }] )
 
 # The daily budget, in Cloudflare "requests" (20 relayed messages = 1 request). The free plan stops at 100,000.
 #   DAILY_BUDGET: no new rooms open past this.   HARD_STOP: running rooms are closed past this.
