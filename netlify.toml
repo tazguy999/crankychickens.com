@@ -28,6 +28,17 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
+# Home page — never cache, so new links and callouts show up right away
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
 # Security headers (site-wide)
 [[headers]]
   for = "/*"
