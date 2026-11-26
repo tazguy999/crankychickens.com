@@ -63,6 +63,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--spark);outline-
 .bar .btn{font-size:17px;padding:8px 2px}
 .btn.e{background:#ffb37a}
 .rn textarea{flex:1;min-width:0;font:14px/1.2 monospace;border:3px solid var(--ink);border-radius:10px;padding:4px 8px;background:#fff;color:var(--ink);height:64px}
+.card.away svg{opacity:.3}
+.cv{display:block;width:min(100%,calc(56vh*.75));margin:0 auto;border:3.5px solid var(--ink);border-radius:12px;touch-action:none;background:#222}
+.holes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:340px;margin:0 auto}
+.hole{aspect-ratio:1;border:3px solid var(--ink);border-radius:50%;background:#e9e9ef;font-size:28px;padding:0;line-height:1}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:320px;margin:0 auto}
+.pad{aspect-ratio:1.4;border:3.5px solid var(--ink);border-radius:18px;font-size:38px;opacity:.55}
+.pad.p0{background:var(--bond)}.pad.p1{background:var(--spark)}.pad.p2{background:var(--caption)}.pad.p3{background:#b9a6ff}
+.pad.lit{opacity:1;transform:scale(1.06);box-shadow:0 0 0 4px #fff,0 0 0 7px var(--ink)}
+.tbar{position:relative;height:40px;border:3.5px solid var(--ink);border-radius:10px;background:#fff;margin-bottom:12px;overflow:hidden}
+.tbar i{position:absolute;top:0;bottom:0;background:var(--spark)}
+.tbar b{position:absolute;top:0;bottom:0;width:6px;margin-left:-3px;background:var(--ink)}
+.face{font-size:64px;text-align:center;line-height:1.2}
 .know{display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
 .know b{font-family:var(--display);font-weight:400;font-size:19px}
 .btn{border:3px solid var(--ink);border-radius:14px;background:var(--paper);box-shadow:3px 3px 0 var(--ink);padding:8px 6px;font-family:var(--display);font-size:19px;line-height:1.05}
@@ -210,7 +222,8 @@ const PATCH={
  brick:{n:"Builder's Brick",how:'help finish a Tribe project',c:'#ffa94d',g:'<path d="M-3.8 -2.6 H3.8 V2.6 H-3.8Z M-3.8 0 H3.8 M0 -2.6 V0 M-1.9 0 V2.6 M1.9 0 V2.6" fill="#fff" stroke="#151515" stroke-width="1.1"/>'},
  moon:{n:'Wish Moon',how:'have a wish come true',c:'#b48cff',g:'<circle r="3.8" fill="#fff"/><circle cx="1.9" cy="-1.1" r="3.1" fill="#b48cff"/>'},
  leaf:{n:'Mentor Leaf',how:'mentor a hatchling all the way to the naming ceremony',c:'#3fd0c0',g:'<path d="M-3.4 3.4 Q-3.6 -3.4 3.4 -3.4 Q3.6 3.6 -3.4 3.4Z" fill="#fff"/><path d="M-3 3 L2.4 -2.4" stroke="#151515" stroke-width="1" fill="none"/>'},
- note:{n:'Stage Note',how:'wow the crowd at a Midnight Gathering',c:'#ff6b6b',g:'<path d="M-.6 2.2 V-3.8 L3.2 -2.8" fill="none" stroke="#151515" stroke-width="1.5" stroke-linecap="round"/><circle cx="-2" cy="2.4" r="1.9"/>'}
+ note:{n:'Stage Note',how:'wow the crowd at a Midnight Gathering',c:'#ff6b6b',g:'<path d="M-.6 2.2 V-3.8 L3.2 -2.8" fill="none" stroke="#151515" stroke-width="1.5" stroke-linecap="round"/><circle cx="-2" cy="2.4" r="1.9"/>'},
+ ribbon:{n:'Rescue Ribbon',how:'take part in the great rescue',c:'#e0218a',g:'<path d="M-3.2 -3.6 H3.2 V3.8 L0 1.4 L-3.2 3.8Z" fill="#fff"/>'}
 };
 const PK=Object.keys(PATCH),PSLOT=[[42,73],[49,92],[63,39]];
 const patchG=(k,x,y)=>`<g transform="translate(${x} ${y}) rotate(-8)"><circle r="6.8" fill="${PATCH[k].c}" stroke="#151515" stroke-width="1.8"/><circle r="5" fill="none" stroke="#fff" stroke-width=".9" stroke-dasharray="1.6 1.6"/><g fill="#151515">${PATCH[k].g}</g></g>`;
@@ -241,9 +254,22 @@ const BADGES=[
  ['legend','Legend','Raise any talent to Legendary',s=>s.dragons.some(d=>d.talents.some(t=>t.found&&tl(t)>=5))],
  ['brave','Brave Heart','Help a dragon face a fear',s=>s.dragons.some(d=>d.brave)],
  ['teach','Good Teacher','Have one friend teach another a talent',s=>s.dragons.some(d=>d.talents.some(t=>t.learned))],
- ['build','Master Builders','Finish a Tribe project',s=>Object.keys(s.proj).some(k=>s.proj[k].done)]
+ ['build','Master Builders','Finish a Tribe project',s=>Object.keys(s.proj).some(k=>s.proj[k].done)],
+ ['rescue','The Great Rescue',"Bring your friend home from The Bark Lady's Den",s=>!!(s.story&&s.story.done)]
 ];
 const CAP=14;
+const DEN={n:"The Bark Lady's Den",i:'🐾',blurb:'A dog bed the size of a castle. Somewhere in there is your friend.',opts:[{k:'sneak',n:'Sneak around the back'},{k:'comfort',n:'Calm her with a cuddle'}],loot:[]};
+const plc=k=>k==='den'?DEN:PLACES[k];
+const CHAP=[
+ {n:'A quiet bedroom',goals:[['Find 3 hidden talents',s=>found(s)>=3],['Get two dragons to Friends',s=>Object.values(s.bonds).some(b=>b.p>=35)]]},
+ {n:'Find the trail',goals:[['Bring home a treasure from The Hallway',s=>s.treasures.some(t=>t.place===PLACES.hall.n)],['Find a dragon who can Scout or Sneak',s=>s.dragons.some(d=>!d.away&&d.talents.some(t=>t.found&&(t.k==='scout'||t.k==='sneak')))]]},
+ {n:'Get ready',goals:[['Get two dragons to Close friends',s=>Object.values(s.bonds).some(b=>b.p>=60)],['Raise a talent to Skilled',s=>s.dragons.some(d=>d.talents.some(t=>t.found&&tl(t)>=3))],['Finish a Tribe project',s=>Object.keys(s.proj).some(k=>s.proj[k].done)]]},
+ {n:'The rescue',goals:[["Explore The Bark Lady's Den and bring your friend home",s=>s.story.done]]}
+];
+const MINI={bake:'tap',sniff:'tap',scout:'tap',sing:'simon',story:'simon',stitch:'time',climb:'time',invent:'time',comfort:'time',sneak:'red'};
+const MTXT={bake:['Catch the crumbs before they roll away!','🍪'],sniff:['Tap the sparkles before they fade!','💎'],scout:['Spot the flashlight beam!','🔦'],sing:['Listen, then sing it back.',''],story:['Remember the story in order.',''],stitch:['Stitch when the needle is over the seam!','Stitch!'],climb:['Grab when the handhold lines up!','Grab!'],invent:['Tighten the bolt at just the right spot!','Tighten!'],comfort:['Give a hug at just the right moment!','Hug!'],sneak:['Hold to tiptoe. Let go when The Bark Lady stirs!','']};
+const LOOK={bed:['#2a2f52','#3b4170'],closet:['#4a3b2a','#6b5640'],laundry:['#35506b','#4a6c8f'],kitchen:['#5a4a3a','#7d6850'],yard:['#1f4a35','#2f6b4c'],hall:['#4d3a52','#6d5275'],den:['#52303a','#784552']};
+const CAN=(()=>{try{const c=document.createElement('canvas');return !!(c.getContext&&c.getContext('2d'));}catch(e){return false;}})();
 
 /* ---------- helpers ---------- */
 let S=null,F=null,UI={tab:'dragons',reset:false,shelf:0},REV=[];
@@ -255,7 +281,7 @@ const tl=t=>Math.min(5,1+Math.floor(t.xp/2));
 const found=s=>s.dragons.reduce((n,d)=>n+d.talents.filter(t=>t.found).length,0);
 const total=s=>s.dragons.reduce((n,d)=>n+d.talents.length,0);
 const maxE=d=>d.type==='windup'?3:2;
-const canAct=d=>d.energy>0&&!d.mend;
+const canAct=d=>d.energy>0&&!d.mend&&!d.away;
 const tal=(d,k)=>d.talents.find(t=>t.k===k);
 function bondOf(a,b){const k=a.id<b.id?a.id+'|'+b.id:b.id+'|'+a.id;return S.bonds[k]||(S.bonds[k]={p:0,tiff:false,duo:null,rival:null,mem:[]});}
 const lvl=p=>p>=85?4:p>=60?3:p>=35?2:p>=15?1:0;
@@ -309,7 +335,7 @@ function migrate(s){
 function ensure(s){
   if(!s.proj)s.proj={};
   Object.keys(PROJ).forEach(k=>{if(!s.proj[k]){s.proj[k]={done:false};PROJ[k].need.forEach(n=>{s.proj[k][n]=0;});}});
-  if(s.snd===undefined)s.snd=true;if(s.music===undefined)s.music=false;
+  if(s.snd===undefined)s.snd=true;if(!s.story)s.story={ch:0,taken:null,done:false};if(s.mini===undefined)s.mini=true;if(s.play===undefined)s.play=true;if(s.music===undefined)s.music=false;
   s.dragons.forEach(d=>{if(!d.fav){d.fav=pick(Object.keys(HANG));d.favK=false;}if(!d.fear){d.fear=pick(Object.keys(PLACES));d.fearK=false;d.brave=false;}
     if(d.secret===undefined){d.secret=rnd(SECRETS.length);d.secK=false;}if(!d.learn)d.learn={};
     if(!d.patches){d.patches=[];if(d.talents.some(t=>t.found&&tl(t)>=3))d.patches.push('star');if(d.brave)d.patches.push('bolt');if(d.talents.some(t=>t.learned))d.patches.push('book');
@@ -346,7 +372,7 @@ function wishText(d){const w=d.wish;if(!w)return 'is still thinking of a wish';
   if(w.t==='build')return 'wants to help build something big';
   return 'wants to find out what they are good at';}
 function sweep(ctx,out){
-  S.dragons.forEach(d=>{const w=d.wish;if(!w){newWish(d);return;}
+  S.dragons.forEach(d=>{if(d.away)return;const w=d.wish;if(!w){newWish(d);return;}
     const inTeam=!!(ctx.team&&ctx.team.indexOf(d)>=0);let ok=false;
     if(w.t==='friend'){const o=byId(w.id);if(!o){newWish(d);return;}ok=lvl(bondOf(d,o).p)>=2;}
     else if(w.t==='close')ok=S.dragons.some(o=>o.id!==d.id&&bondOf(d,o).p>=60);
@@ -418,11 +444,11 @@ function doHang(a,b,actKey){
   if(lvl(o.p)>=2)[[a,b],[b,a]].forEach(p=>{const w=p[0],d=p[1];if(chance(.5)){const k=giveHint(d);if(k){const m=w.name+' noticed something: '+d.name+' '+T[k].clue+'.';out.push({c:'ln',h:'🔍 '+esc(m)});log('Clue: '+d.name+' '+T[k].clue+'.','spark');}}});
   spend([a,b]);return out;
 }
-function doTrain(d,k){
+function doTrain(d,k,stars){
   const out=[],t=tal(d,k);
   const coach=S.dragons.filter(m=>m.id!==d.id&&m.stage!=='hatch'&&!m.mend&&m.talents.some(x=>x.k===k&&x.found&&(!t||!t.found||x.xp>t.xp))).sort((x,y)=>tal(y,k).xp-tal(x,k).xp)[0];
   if(t&&t.found){
-    let n=1;out.push({c:'cap',h:esc(d.name+' practiced '+T[k].n.toLowerCase()+'.')});
+    let n=stars?Math.max(1,stars):1;out.push({c:'cap',h:esc(d.name+' practiced '+T[k].n.toLowerCase()+'.')});
     if(coach){n++;out.push({c:'ln',h:esc(coach.name+' coached from the side.')});mem(d,coach,'practiced '+T[k].n.toLowerCase()+' together');addBond(d,coach,4,out);}
     const rv=S.dragons.find(o=>o.id!==d.id&&bondOf(d,o).rival===k);
     if(rv){n++;out.push({c:'ln',h:esc('Knowing '+rv.name+' is good at this too, '+d.name+' tried extra hard.')});}
@@ -455,24 +481,25 @@ function estimate(team,k,hidden,place){
   return Math.max(15,Math.min(95,Math.round(s)));
 }
 const word=e=>e<48?'Risky':e<62?'Fair':e<78?'Good':'Great';
-function doExp(team,placeKey,oi,ctx){
-  const pl=PLACES[placeKey],opt=pl.opts[oi],k=opt.k,out=[];
+function doExp(team,placeKey,oi,ctx,forced){
+  const pl=PLACES[placeKey],opt=pl.opts[oi]||null,k=opt?opt.k:null,out=[];
   const names=team.map(d=>d.name).join(team.length>2?', ':' and ');
   out.push({c:'cap',h:esc(names+' set out for '+pl.n+'.')});
   team.forEach(d=>{if(d.fear===placeKey&&!d.brave){const fr=team.find(o=>o!==d&&lvl(bondOf(d,o).p)>=2);d.fearK=true;
     if(fr){d.brave=true;const m=d.name+' has always been scared of '+pl.n+'. With '+fr.name+' close by, '+d.name+' went anyway.';out.push({c:'burst',h:'🦁 BRAVE MOMENT!<small>'+esc(m)+'</small>'});log(m,'bond');mem(d,fr,fr.name+' helped '+d.name+' face a fear of '+pl.n);addBond(d,fr,8,out);award(d,'bolt',out);earnName(d,out);}
     else{out.push({c:'oops',h:esc(d.name+' froze at the edge of '+pl.n+'. It turns out '+d.name+' is scared of this place. A friend on the team would help.')});log(d.name+' is afraid of '+pl.n+'.','oops');}}});
-  const win=Math.random()*100<estimate(team,k,true,placeKey);
+  const win=forced?forced.win:Math.random()*100<estimate(team,k,true,placeKey);
   const pairs=[];for(let i=0;i<team.length;i++)for(let j=i+1;j<team.length;j++)pairs.push([team[i],team[j]]);
   const duo=pairs.map(p=>bondOf(p[0],p[1]).duo).find(Boolean);
   if(duo)out.push({c:'bond',h:esc('They used '+duo+'!')});
   if(win){
     const have=new Set(S.treasures.map(t=>t.name));const fresh=pl.loot.filter(l=>!have.has(l));
-    out.push({c:'ln',h:esc('The plan worked: '+opt.n.toLowerCase()+'.')});
+    out.push({c:'ln',h:esc(opt?'The plan worked: '+opt.n.toLowerCase()+'.':'They took the long way around and made it.')});
+    if(forced&&forced.sp)out.push({c:'ln',h:esc('They picked up '+forced.sp+' sparkle'+(forced.sp>1?'s':'')+' on the way, and came home closer for it.')});
     if(fresh.length){const item=pick(fresh);ctx.loot=true;S.treasures.push({name:item,place:pl.n,n:S.night});out.push({c:'loot',h:'✨ '+esc('They brought home '+item+' for the Tribe.')});log(names+' found '+item+' in '+pl.n+'.','loot');}
     else out.push({c:'ln',h:esc('Nothing new to find here, but it was a great trip.')});
     team.forEach(d=>{const t=tal(d,k);if(t&&!t.found)reveal(d,k,out);else if(t)gainXp(d,k,out);});
-    pairs.forEach(p=>{mem(p[0],p[1],'explored '+pl.n+' together');addBond(p[0],p[1],6,out);});
+    pairs.forEach(p=>{mem(p[0],p[1],'explored '+pl.n+' together');addBond(p[0],p[1],6+(forced?forced.sp:0),out);});
   }else{
     out.push({c:'oops',h:esc('It did not go to plan. They ran home giggling and out of breath.')});
     team.forEach(d=>{const t=tal(d,k);if(t&&!t.found&&chance(.3))reveal(d,k,out);});
@@ -488,7 +515,7 @@ function neighGain(g,amt,out){
     if(now===2){S.treasures.push({name:NEIGH[g].gift,place:'a gift from '+NEIGH[g].n,n:S.night});const m2=NEIGH[g].n+' gave the Tribe a gift: '+NEIGH[g].gift+'.';out.push({c:'loot',h:'🎁 '+esc(m2)});log(m2,'loot');}}
 }
 function pickEvent(){
-  const hat=S.dragons.filter(d=>d.stage==='hatch'&&!d.mend),pool=S.dragons.filter(d=>d.stage!=='hatch'&&!d.mend);
+  const hat=S.dragons.filter(d=>d.stage==='hatch'&&!d.mend&&!d.away),pool=S.dragons.filter(d=>d.stage!=='hatch'&&!d.mend&&!d.away);
   const ev=pick(EVENTS.filter(e=>e.hatch?hat.length:pool.length>1));if(!ev)return null;
   return {type:'event',ev:ev.id,a:pick(ev.hatch?hat:pool).id};
 }
@@ -498,7 +525,7 @@ function knownFor(k,exceptId){
 }
 function resolveEvent(ev,a,ci){
   const k=ev.ch[ci][1],out=[];
-  const others=S.dragons.filter(d=>d.id!==a.id&&d.stage!=='hatch'&&!d.mend);
+  const others=S.dragons.filter(d=>d.id!==a.id&&d.stage!=='hatch'&&!d.mend&&!d.away);
   const fh=others.filter(d=>d.talents.some(t=>t.k===k&&t.found)).sort((x,y)=>tal(y,k).xp-tal(x,k).xp)[0];
   const hid=others.filter(d=>d.talents.some(t=>t.k===k&&!t.found));
   let hero,win;
@@ -576,13 +603,14 @@ function lightsOut(){
     else if(d.stage==='grown'&&d.age>=16){d.stage='loved';const m=d.name+' has been loved so long they are now a Well-Loved dragon, patch and all.';out.push({c:'ln',h:esc(m)});log(m,'bond');}
     d.energy=maxE(d);
   });
-  if(S.dragons.length>1){
-    const a=pick(S.dragons),b=pick(S.dragons.filter(d=>d.id!==a.id)),c=compat(a,b),o=bondOf(a,b);
+  const here=S.dragons.filter(d=>!d.away);
+  if(here.length>1){
+    const a=pick(here),b=pick(here.filter(d=>d.id!==a.id)),c=compat(a,b),o=bondOf(a,b);
     if(c<0&&!o.tiff&&chance(.3)){o.tiff=true;o.p=Math.max(0,o.p-4);const m='While you were away, '+a.name+' and '+b.name+' '+pick(TIFFS)+'.';out.push({c:'oops',h:esc(m)});log(m,'oops');mem(a,b,'got into a tiff');}
     else{const mo=pick(MOMENTS),m=a.name+' and '+b.name+' '+mo+'.';out.push({c:'bond',h:esc(m)});log(m,'bond');mem(a,b,mo);addBond(a,b,4,out);maybeRival(a,b,out);}
   }
   const kp=byId(S.keeper);
-  if(kp&&S.dragons.length>1){const o=pick(S.dragons.filter(d=>d.id!==kp.id));addBond(kp,o,3,out);if(chance(.3)){const m=kp.name+', the Tribe Keeper, checked in on '+o.name+'.';out.push({c:'ln',h:esc(m)});mem(kp,o,'had a Keeper check-in');}}
+  if(kp&&!kp.away&&here.length>1){const o=pick(here.filter(d=>d.id!==kp.id));addBond(kp,o,3,out);if(chance(.3)){const m=kp.name+', the Tribe Keeper, checked in on '+o.name+'.';out.push({c:'ln',h:esc(m)});mem(kp,o,'had a Keeper check-in');}}
   if(chance(season()==='Winter'?1:.4)){const c=S.dragons.filter(d=>d.talents.some(t=>!t.found&&d.hints.indexOf(t.k)<0));if(c.length){const d=pick(c),k=giveHint(d);const m='Dino leaned over from the next bed: "Keep an eye on '+d.name+'. That one '+T[k].clue+'."';out.push({c:'ln',h:'🔍 '+esc(m)});log('Clue from Dino: '+d.name+' '+T[k].clue+'.','spark');}}
   if(S.dragons.length<12&&S.night%(season()==='Spring'?2:3)===0){const d=arrive(out);if(S.dragons.length<12&&chance(.25))arrive(out,d);}
   const lone=S.dragons.find(d=>d.stage==='hatch'&&!byId(d.mentor));
@@ -595,7 +623,35 @@ function lightsOut(){
   if(chance(.05)){const m='A rumor went around that a molerat toy was moving in. False alarm. Everyone was very relieved.';out.push({c:'ln',h:esc(m)});log(m);}
   S.acts=season()==='Summer'?4:3;
   if(chance(.15)){S.acts++;const m='Charliescope left the nightlight on. You get an extra move tonight.';out.push({c:'loot',h:'💡 '+esc(m)});log(m,'loot');}
+  storyTick(out);
   return out;
+}
+function storyTick(out){
+  const st=S.story;if(st.done||st.ch>=3)return;
+  if(!CHAP[st.ch].goals.every(g=>g[1](S)))return;
+  if(st.ch===0){const c=S.dragons.filter(d=>d.stage!=='hatch'&&d.id!==S.keeper&&!d.mend);if(!c.length)return;
+    const v=pick(c);v.away=true;st.taken=v.id;const m='In the dark, The Bark Lady nosed the door open. When the nightlight flickered back on, '+v.name+' was gone. A trail of slobber leads into the Hallway.';
+    out.push({c:'ln ev',h:'<h3>🐾 '+esc(v.name)+' has been taken!</h3>'+esc(m)});log(m,'oops');}
+  st.ch++;const m2='Chapter '+(st.ch+1)+': '+CHAP[st.ch].n+'.';
+  out.push({c:'burst',h:'NEW CHAPTER<small>'+esc(m2+(st.ch===3?" The way to The Bark Lady's Den is open. Tap Explore.":''))+'</small>'});log(m2,'loot');
+}
+function doRescue(team,win){
+  const out=[],v=byId(S.story.taken),names=team.map(d=>d.name).join(team.length>2?', ':' and '),vn=v?v.name:'their friend';
+  out.push({c:'cap',h:esc(names+" crept into The Bark Lady's Den.")});
+  if(win){
+    S.story.done=true;if(v){v.away=false;v.energy=0;}
+    const m=names+' brought '+vn+' home!';out.push({c:'burst',h:'🎉 RESCUED!<small>'+esc(m)+'</small>'});log(m,'loot');
+    team.forEach(d=>{award(d,'ribbon',out);if(v){mem(d,v,d.name+' rescued '+v.name+" from The Bark Lady's Den");addBond(d,v,20,out);}});
+    if(v){award(v,'ribbon',out);earnName(v,out);}
+    S.treasures.push({name:"The Bark Lady's favorite squeaky toy",place:'a gift from The Bark Lady',n:S.night});
+    const e='The Bark Lady watched them go and did not chase. She only ever wanted a stuffy to cuddle. Charliescope left an old sock monkey by her bed, and The Bark Lady pushed her favorite squeaky toy under the bedroom door to say sorry.';
+    out.push({c:'ln ev',h:esc(e)});log(e,'bond');
+    out.push({c:'ln',h:esc('The story is complete. The Tribe goes on, and so can you.')});
+  }else{
+    out.push({c:'oops',h:esc('She woke up! Everyone scrambled home. '+vn+' is still in there. Try again when the team is rested.')});log(names+' could not get into the Den this time.','oops');
+  }
+  for(let i=0;i<team.length;i++)for(let j=i+1;j<team.length;j++)addBond(team[i],team[j],4,out);
+  spend(team);return out;
 }
 function toShelf(d){
   S.shelf.push({name:nm(d),n:S.night});log(nm(d)+' moved up to the High Shelf to watch over the Tribe.','bond');
@@ -666,7 +722,7 @@ function render(){
   const pips=Array.from({length:Math.max(3,S.acts)},(_,i)=>`<span class="pip${i<S.acts?'':' off'}"></span>`).join('');
   let main='';
   if(UI.tab==='dragons'){
-    main='<div class="grid">'+S.dragons.map(d=>`<button class="card" data-a="open" data-id="${d.id}">${dragonSVG(d,104)}<h3>${esc(nm(d))}</h3><p class="role">${esc(role(d))} · ${d.pers}</p>${talentRow(d)}${S.keeper===d.id?'<span class="tag keep">Tribe Keeper</span>':''}${d.mend?'<span class="tag mend">Needs mending</span>':d.energy<=0?'<span class="tag">Sleepy</span>':''}</button>`).join('')+'</div>';
+    main=storyPanel()+'<div class="grid">'+S.dragons.map(d=>`<button class="card${d.away?' away':''}" data-a="open" data-id="${d.id}">${dragonSVG(d,104)}<h3>${esc(nm(d))}</h3><p class="role">${esc(role(d))} · ${d.pers}</p>${talentRow(d)}${S.keeper===d.id?'<span class="tag keep">Tribe Keeper</span>':''}${d.away?'<span class="tag mend">Taken by The Bark Lady</span>':d.mend?'<span class="tag mend">Needs mending</span>':d.energy<=0?'<span class="tag">Sleepy</span>':''}</button>`).join('')+'</div>';
   }else if(UI.tab==='bonds'){
     const ps=[];for(let i=0;i<S.dragons.length;i++)for(let j=i+1;j<S.dragons.length;j++)ps.push([S.dragons[i],S.dragons[j]]);
     const top=ps.slice().sort((x,y)=>bondOf(y[0],y[1]).p-bondOf(x[0],x[1]).p).slice(0,6),tiffs=ps.filter(p=>bondOf(p[0],p[1]).tiff);
@@ -681,18 +737,19 @@ function render(){
     const next=5-(S.night%5);
     main=`<div class="stack">
     <section class="panel"><p class="cap">Badges</p><div class="badges">${BADGES.map(b=>`<div class="badge${S.badges.indexOf(b[0])>=0?' got':''}"><b>${b[1]}</b>${b[2]}</div>`).join('')}</div></section>
-    <section class="panel"><p class="cap">Treasure pile: ${S.treasures.length} of 27</p>${S.treasures.length?'<ul class="log">'+S.treasures.map(t=>`<li class="loot">${esc(t.name)} <span class="role">${t.place.indexOf('a gift')===0?'':'from '}${esc(t.place)}</span></li>`).join('')+'</ul>':'<p>Nothing yet. Send a team on an expedition to bring something shiny home.</p>'}
+    <section class="panel"><p class="cap">Treasure pile: ${S.treasures.length} of 28</p>${S.treasures.length?'<ul class="log">'+S.treasures.map(t=>`<li class="loot">${esc(t.name)} <span class="role">${t.place.indexOf('a gift')===0?'':'from '}${esc(t.place)}</span></li>`).join('')+'</ul>':'<p>Nothing yet. Send a team on an expedition to bring something shiny home.</p>'}
       <p class="role" style="margin-top:8px">Hidden talents found: ${found(S)} of ${total(S)}</p></section>
     <section class="panel"><p class="cap">Neighbors</p><div class="stack" style="gap:10px">${Object.keys(NEIGH).map(g=>`<div><div class="brow" style="border:0;padding:0"><span>${NEIGH[g].n}: <b>${NL[nl(S.neigh[g])]}</b></span><div class="meter"><i style="width:${S.neigh[g]}%;background:var(--spark)"></i></div><small>They live on ${NEIGH[g].home} and love ${NEIGH[g].likes.map(k=>T[k].n.toLowerCase()).join(', ')}.</small></div></div>`).join('')}</div>
       <p class="role" style="margin-top:8px">Next Midnight Gathering: ${next===5?'tonight at lights out':'in '+next+' bedtime'+(next>1?'s':'')}.</p></section>
     <section class="panel"><p class="cap">Tribe projects</p><div class="stack" style="gap:10px">${Object.keys(PROJ).map(k=>{const P=PROJ[k],st=S.proj[k];return `<div><b>${P.i} ${P.n}</b> ${st.done?'<span class="tag keep">Finished</span>':''}<br><span class="role">${st.done?P.perk:P.desc+' Needs '+P.need.map(n=>T[n].i+' '+T[n].n+' '+st[n]+'/2').join(', ')+'.'}</span></div>`;}).join('')}</div><p class="role" style="margin-top:8px">${SNOTE[season()]?season()+': '+SNOTE[season()]:''}</p></section>
     <section class="panel"><p class="cap">Make your own dragon</p><p>Design a dragon and bring it into the Tribe. Its talents stay a surprise.</p><p style="margin-top:8px"><button class="btn c" data-a="make"${S.dragons.length>=CAP?' disabled':''}>${S.dragons.length>=CAP?'The Tribe is full ('+CAP+')':'Open the dragon maker'}</button></p></section>
     ${S.shelf.length?`<section class="panel"><p class="cap">The High Shelf</p><ul class="log">${S.shelf.map(x=>`<li>${esc(x.name)} <span class="role">watching over the Tribe since Bedtime ${x.n}</span></li>`).join('')}</ul></section>`:''}
-    <section class="panel"><p class="cap">How to play</p><ul class="log"><li>You get 3 moves each Bedtime. Then tap Lights out.</li><li class="bond">Hang out: two dragons spend time together. Their bond grows and hidden talents can pop out.</li><li class="spark">Train: try a new skill to find a talent, or practice one to level it up. Friends coach each other.</li><li class="loot">Explore: a team goes treasure hunting. Friends with the right talents do best.</li><li class="spark">Build: work on a big Tribe project. Each one needs three talents and gives the whole Tribe a perk.</li><li class="bond">Each dragon has a favorite thing, a fear, and a secret. You learn them by playing.</li><li class="spark">A Close friend who is Skilled can teach a talent a dragon was not born with.</li><li class="bond">Every dragon has a wish. Tap a dragon to see it.</li><li>Friends notice clues about each other's hidden talents.</li><li class="loot">Dragons earn patches and name changes by doing big things. Sew patches on from a dragon's page.</li><li>Every 5th Bedtime the neighbors hold a talent show.</li></ul></section>
+    <section class="panel"><p class="cap">How to play</p><ul class="log"><li>You get 3 moves each Bedtime. Then tap Lights out.</li><li class="bond">Hang out: two dragons spend time together. Their bond grows and hidden talents can pop out.</li><li class="spark">Train: try a new skill to find a talent, or practice one to level it up. Friends coach each other.</li><li class="loot">Explore: walk your team through a place yourself. Dodge what guards it, grab sparkles, reach the gold circle. Talents open shortcuts.</li><li class="spark">Practicing a talent is a quick mini-game. More stars means faster growth.</li><li>Follow the story on the Dragons tab. It has an ending.</li><li class="spark">Build: work on a big Tribe project. Each one needs three talents and gives the whole Tribe a perk.</li><li class="bond">Each dragon has a favorite thing, a fear, and a secret. You learn them by playing.</li><li class="spark">A Close friend who is Skilled can teach a talent a dragon was not born with.</li><li class="bond">Every dragon has a wish. Tap a dragon to see it.</li><li>Friends notice clues about each other's hidden talents.</li><li class="loot">Dragons earn patches and name changes by doing big things. Sew patches on from a dragon's page.</li><li>Every 5th Bedtime the neighbors hold a talent show.</li></ul></section>
     <section class="panel"><p class="cap">Your Tribe</p><div class="rn"><input id="hn" maxlength="28" value="${esc(S.name)}" aria-label="Tribe name"><button class="btn" data-a="hoardName">Rename</button></div>
       <p style="margin-top:10px"><button class="btn" data-a="reset">${UI.reset?'Really start over? Tap again':'Start a brand new Tribe'}</button></p>
       <p class="role" style="margin-top:8px">Your Tribe saves on this device.</p></section>
     <section class="panel"><p class="cap">Sound</p><div class="row"><button class="btn sm${S.snd?' on':''}" data-a="snd">Sound effects: ${S.snd?'On':'Off'}</button><button class="btn sm${S.music?' on':''}" data-a="music">Lullaby music: ${S.music?'On':'Off'}</button></div></section>
+    <section class="panel"><p class="cap">How you play</p><div class="row"><button class="btn sm${S.play?' on':''}" data-a="tgl" data-v="play">Walk expeditions yourself: ${S.play?'On':'Off'}</button><button class="btn sm${S.mini?' on':''}" data-a="tgl" data-v="mini">Practice mini-games: ${S.mini?'On':'Off'}</button></div><p class="role" style="margin-top:6px">Turn these off for a quicker, story-only game.</p></section>
     <section class="panel"><p class="cap">Move your Tribe</p><p>To play on another tablet or phone, make a save code here and load it there.</p><div class="rn" style="margin-top:8px"><textarea id="sc" aria-label="Save code" placeholder="Save code">${esc(UI.code||'')}</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm" data-a="copySave">Make save code</button><button class="btn sm" data-a="loadSave">Load this code</button><span class="role">${esc(UI.msg||'')}</span></div></section></div>`;
   }
   const no=S.acts<=0;
@@ -709,7 +766,7 @@ function render(){
   document.documentElement.style.setProperty('--night',SCOL[season()]);
   save();
 }
-function chip(d,ok,why,act){const on=F.picks&&F.picks.indexOf(d.id)>=0;return `<button class="chip${on?' on':''}" data-a="${act||'pick'}" data-id="${d.id}"${ok||on?'':' disabled'}>${dragonSVG(d,60)}${esc(d.name)}<small>${ok||on?d.pers:why}</small></button>`;}
+function chip(d,ok,why,act){const on=F.picks&&F.picks.indexOf(d.id)>=0;return `<button class="chip${on?' on':''}" data-a="${act||'pick'}" data-id="${d.id}"${ok||on?'':' disabled'}>${dragonSVG(d,60)}${esc(d.name)}<small>${ok||on?d.pers:d.away?'taken':why}</small></button>`;}
 function head(title){return `<div class="shh"><h2>${title}</h2><button class="x" data-a="close" aria-label="Close">X</button></div>`;}
 function mkRow(label,key,vals,num){return `<div class="row"><span class="step" style="min-width:74px">${label}</span>${vals.map(v=>`<button class="btn sm${String(F.d[key])===String(v[0])?' on':''}" data-a="mk" data-k="${key}" data-v="${v[0]}"${num?' data-n="1"':''}>${v[1]}</button>`).join('')}</div>`;}
 function sheet(){
@@ -721,7 +778,7 @@ function sheet(){
       if(ev&&a)h+=`<div class="ln ev"><h3>${ev.i} ${ev.title}</h3><p>${esc(ev.text(a.name))}</p><p class="step" style="margin-top:6px">What should the Tribe do?</p></div><div class="opts">${ev.ch.map((c,i)=>`<button class="opt" data-a="ev" data-v="${i}"><b>${T[c[1]].i} ${c[0]}</b>Needs ${T[c[1]].n}. ${esc(knownFor(c[1],a.id))}</button>`).join('')}</div>`;
       else h+='<button class="btn go" data-a="close">OK!</button>';}
     else if(P&&P.type==='gather'){const G=NEIGH[P.g];
-      h+=`<div class="ln ev"><h3>🌙 Midnight Gathering</h3><p>${G.n} are hosting a talent show on ${G.home}. They love ${G.likes.map(k=>T[k].n.toLowerCase()).join(', ')}.</p><p class="step" style="margin-top:6px">Who performs for the Tribe?</p></div><div class="chips">${S.dragons.map(d=>`<button class="chip" data-a="perform" data-id="${d.id}"${d.stage==='hatch'||d.mend?' disabled':''}>${dragonSVG(d,60)}${esc(d.name)}<small>${d.talents.filter(t=>t.found).map(t=>T[t.k].i).join(' ')||'no talents found yet'}</small></button>`).join('')}</div>`;}
+      h+=`<div class="ln ev"><h3>🌙 Midnight Gathering</h3><p>${G.n} are hosting a talent show on ${G.home}. They love ${G.likes.map(k=>T[k].n.toLowerCase()).join(', ')}.</p><p class="step" style="margin-top:6px">Who performs for the Tribe?</p></div><div class="chips">${S.dragons.map(d=>`<button class="chip" data-a="perform" data-id="${d.id}"${d.stage==='hatch'||d.mend||d.away?' disabled':''}>${dragonSVG(d,60)}${esc(d.name)}<small>${d.talents.filter(t=>t.found).map(t=>T[t.k].i).join(' ')||'no talents found yet'}</small></button>`).join('')}</div>`;}
     else h+='<button class="btn go" data-a="close">'+(F.btn||'OK!')+'</button>';
   }else if(F.t==='hang'){
     const ps=F.picks.map(byId);
@@ -740,20 +797,26 @@ function sheet(){
   }else if(F.t==='exp'){
     const team=F.picks.map(byId);
     const want=k=>S.dragons.filter(d=>d.wish&&d.wish.t==='place'&&d.wish.p===k).map(d=>d.name);
-    h=head('Expedition')+'<p class="step">1. Where to?</p><div class="opts">'+Object.keys(PLACES).map(k=>`<button class="opt${F.place===k?' on':''}" data-a="place" data-v="${k}"><b>${PLACES[k].i} ${PLACES[k].n}</b>${PLACES[k].blurb}${want(k).length?' 💭 '+esc(want(k).join(', '))+' wished to go':''}</button>`).join('')+'</div>';
+    h=head('Expedition')+'<p class="step">1. Where to?</p><div class="opts">'+(S.story.ch===3&&!S.story.done?`<button class="opt${F.place==='den'?' on':''}" data-a="place" data-v="den"><b>🐾 ${DEN.n}</b>${DEN.blurb} The rescue!</button>`:'')+Object.keys(PLACES).map(k=>`<button class="opt${F.place===k?' on':''}" data-a="place" data-v="${k}"><b>${PLACES[k].i} ${PLACES[k].n}</b>${PLACES[k].blurb}${want(k).length?' 💭 '+esc(want(k).join(', '))+' wished to go':''}</button>`).join('')+'</div>';
     h+='<p class="step">2. Pick a team of 2 or 3</p><div class="chips">'+S.dragons.map(d=>chip(d,canAct(d)&&d.stage!=='hatch',d.stage==='hatch'?'too little':d.mend?'mending':'sleepy')).join('')+'</div>';
     const sc=F.place?team.filter(d=>d.fearK&&!d.brave&&d.fear===F.place):[];
     if(sc.length)h+='<div class="ln oops">'+esc(sc.map(d=>d.name).join(' and ')+(sc.length>1?' are':' is')+' scared of this place. Bring one of their friends along.')+'</div>';
-    if(F.place&&team.length>=2){h+='<p class="step">3. Pick the plan</p><div class="opts">'+PLACES[F.place].opts.map((o,i)=>`<button class="opt" data-a="goExp" data-v="${i}"><b>${T[o.k].i} ${o.n}</b>Uses ${T[o.k].n}. Chances look ${word(estimate(team,o.k,false,F.place)).toLowerCase()}.</button>`).join('')+'</div>';}
+    if(F.place&&team.length>=2&&((S.play&&CAN)||F.place==='den')){const P2=plc(F.place);
+      h+=`<div class="ln">${S.play&&CAN?'You walk the team there yourself. ':''}Shortcuts here need ${P2.opts.map(o=>T[o.k].i+' '+T[o.k].n).join(' or ')}. The long way is always open, but something guards it.</div><button class="btn go" data-a="goPlay">${S.play&&CAN?'Go exploring!':'Attempt the rescue'}</button>`;}
+    else if(F.place&&team.length>=2){h+='<p class="step">3. Pick the plan</p><div class="opts">'+PLACES[F.place].opts.map((o,i)=>`<button class="opt" data-a="goExp" data-v="${i}"><b>${T[o.k].i} ${o.n}</b>Uses ${T[o.k].n}. Chances look ${word(estimate(team,o.k,false,F.place)).toLowerCase()}.</button>`).join('')+'</div>';}
+  }else if(F.t==='mini'){
+    h=head(T[F.k].n+' practice')+`<p id="mi">${MTXT[F.k][0]}</p><div id="mg"></div><div class="row"><span id="ms" class="step"></span><button class="btn sm" data-a="miniSkip">Skip</button></div>`;
+  }else if(F.t==='play'){
+    h=head(esc(plc(F.place).n))+`<div class="row"><b id="ph" class="step"></b></div><canvas id="cv" class="cv" width="360" height="480"></canvas><p id="pm" class="ln" style="min-height:2.9em">Tap or drag where you want to go. Reach the gold circle at the top.</p><div class="row"><button class="btn sm" id="pd" data-a="duoMove" disabled>Duo move</button><button class="btn sm" data-a="runHome">Run home</button></div>`;
   }else if(F.t==='build'){
     const P=F.proj&&PROJ[F.proj],st=F.proj&&S.proj[F.proj];
     h=head('Build')+'<p class="step">1. Pick a project</p><div class="opts">'+Object.keys(PROJ).map(k=>{const q=S.proj[k];return `<button class="opt${F.proj===k?' on':''}" data-a="proj" data-v="${k}"${q.done?' disabled':''}><b>${PROJ[k].i} ${PROJ[k].n}</b>${q.done?'Finished':PROJ[k].need.map(n=>T[n].i+' '+q[n]+'/2').join('  ')}</button>`;}).join('')+'</div>';
-    if(P){h+=`<div class="ln">${esc(P.desc)} Still needs: ${P.need.filter(n=>st[n]<2).map(n=>T[n].i+' '+T[n].n).join(', ')||'nothing'}.</div><p class="step">2. Pick one or two builders</p><div class="chips">${S.dragons.map(d=>{const on=F.picks.indexOf(d.id)>=0,ok=canAct(d),has=P.need.filter(n=>st[n]<2&&d.talents.some(t=>t.k===n&&t.found));return `<button class="chip${on?' on':''}" data-a="pick" data-id="${d.id}"${ok||on?'':' disabled'}>${dragonSVG(d,60)}${esc(d.name)}<small>${!ok&&!on?(d.mend?'mending':'sleepy'):has.length?has.map(n=>T[n].i).join(' ')+' can help':'might surprise you'}</small></button>`;}).join('')}</div>`;}
+    if(P){h+=`<div class="ln">${esc(P.desc)} Still needs: ${P.need.filter(n=>st[n]<2).map(n=>T[n].i+' '+T[n].n).join(', ')||'nothing'}.</div><p class="step">2. Pick one or two builders</p><div class="chips">${S.dragons.map(d=>{const on=F.picks.indexOf(d.id)>=0,ok=canAct(d),has=P.need.filter(n=>st[n]<2&&d.talents.some(t=>t.k===n&&t.found));return `<button class="chip${on?' on':''}" data-a="pick" data-id="${d.id}"${ok||on?'':' disabled'}>${dragonSVG(d,60)}${esc(d.name)}<small>${!ok&&!on?(d.away?'taken':d.mend?'mending':'sleepy'):has.length?has.map(n=>T[n].i).join(' ')+' can help':'might surprise you'}</small></button>`;}).join('')}</div>`;}
     h+=`<button class="btn go" data-a="goBuild"${P&&F.picks.length?'':' disabled'}>Build!</button>`;
   }else if(F.t==='detail'){
     const d=byId(F.id);if(!d){F=null;return sheet();}
     const others=S.dragons.filter(o=>o.id!==d.id).sort((x,y)=>bondOf(d,y).p-bondOf(d,x).p),mt=byId(d.mentor);
-    h=head(esc(nm(d)))+`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:none">${dragonSVG(d,140)}</div><div style="flex:1;min-width:150px"><p><b>${esc(role(d))}</b>${S.keeper===d.id?' · Tribe Keeper':''}</p><p>A ${d.fabric} ${COLORS[d.color][0]} ${TYPES[d.type].n}. ${TYPES[d.type].perk}</p><p>${d.pers}. ${esc(d.quirk[0].toUpperCase()+d.quirk.slice(1))}.</p><p class="role">${d.mend?'Needs mending. A Stitcher can fix them at lights out.':d.energy<=0?'Sleepy for tonight.':'Energy tonight: '+d.energy}</p></div></div>`;
+    h=head(esc(nm(d)))+`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:none">${dragonSVG(d,140)}</div><div style="flex:1;min-width:150px"><p><b>${esc(role(d))}</b>${S.keeper===d.id?' · Tribe Keeper':''}</p><p>A ${d.fabric} ${COLORS[d.color][0]} ${TYPES[d.type].n}. ${TYPES[d.type].perk}</p><p>${d.pers}. ${esc(d.quirk[0].toUpperCase()+d.quirk.slice(1))}.</p><p class="role">${d.away?'Taken by The Bark Lady. The Tribe has to bring them home.':d.mend?'Needs mending. A Stitcher can fix them at lights out.':d.energy<=0?'Sleepy for tonight.':'Energy tonight: '+d.energy}</p></div></div>`;
     h+=`<div class="ln bond">💭 <b>Wish:</b> ${esc(d.name+' '+wishText(d))}.</div>`;
     h+=`<p class="sec">What you know about ${esc(d.name)}</p><div class="know"><b>Favorite thing</b><span>${d.favK?HANG[d.fav].i+' '+HANG[d.fav].n:'<span class="role">??? Try different hangouts to find it.</span>'}</span><b>Afraid of</b><span>${d.fearK?PLACES[d.fear].n+(d.brave?' (faced it with a friend!)':''):'<span class="role">??? Every dragon is scared of one place.</span>'}</span><b>Secret</b><span>${d.secK?esc(d.name+' '+SECRETS[d.secret]+'.'):'<span class="role">??? Dragons tell secrets to Close friends.</span>'}</span></div>`;
     h+='<p class="sec">Talents</p>'+d.talents.map(t=>t.found?`<div class="trow"><span class="tk">${T[t.k].i}</span><b>${T[t.k].n}${t.learned?' (learned)':''}</b><span class="lv">${[1,2,3,4,5].map(i=>`<i class="${i<=tl(t)?'f':''}"></i>`).join('')}</span><span class="role">${LV[tl(t)]}</span></div>`:`<div class="trow"><span class="tk q">?</span><span class="role">A hidden talent, waiting to be found</span></div>`).join('');
@@ -808,13 +871,135 @@ function sfx(n){if(!S||!S.snd||!ac())return;const t=AC.currentTime+.01;SFX[n].fo
 /* a slow music-box lullaby, written for this game: [frequency, beats] */
 const MEL=[[523,1],[659,1],[784,2],[659,1],[587,1],[523,2],[440,1],[523,1],[659,2],[587,1],[523,1],[392,2],[523,1],[659,1],[784,2],[880,1],[784,1],[659,2],[587,1],[659,1],[587,1],[440,1],[523,4]];
 function musicStart(){if(musOn||!ac())return;musOn=true;const step=()=>{if(!S.music){musOn=false;return;}const n=MEL[musI%MEL.length];musI++;if(ac()){const t=AC.currentTime+.02;tone(n[0],t,n[1]*.55+.5,.045,'sine');if(musI%4===1)tone(n[0]/4,t,1.8,.04,'sine');}setTimeout(step,n[1]*520);};step();}
+function storyPanel(){
+  const st=S.story;
+  if(st.done)return '<section class="panel" style="margin-bottom:14px"><p class="cap">The story</p><p>The great rescue is complete. The Tribe is whole again, and The Bark Lady has a sock monkey of her own.</p></section>';
+  const ch=CHAP[st.ch],v=byId(st.taken);
+  return `<section class="panel" style="margin-bottom:14px"><p class="cap">Chapter ${st.ch+1}: ${ch.n}</p>${v?`<p>${esc(v.name)} was taken by The Bark Lady. Get the Tribe ready to bring them home.</p>`:''}<ul class="log">${ch.goals.map(g=>{const ok=g[1](S);return `<li class="${ok?'spark':''}">${ok?'✔ ':''}${g[0]}</li>`;}).join('')}</ul></section>`;
+}
+/* ---------- mini-games ---------- */
+let M=null,X=null;
+const $id=i=>document.getElementById(i);
+function stopLive(){if(M){M.over=true;M.timers.forEach(t=>{clearTimeout(t);clearInterval(t);});if(M.raf)cancelAnimationFrame(M.raf);M=null;}if(X){X.dead=true;X=null;}}
+function mT(fn,ms){const t=setTimeout(()=>{if(M&&!M.over)fn();},ms);M.timers.push(t);return t;}
+function setMs(t){const e=$id('ms');if(e)e.textContent=t;}
+function miniStart(d,k){F={t:'mini',id:d.id,k};M={k,id:d.id,lv:tl(tal(d,k)),eng:MINI[k],score:0,n:0,timers:[],over:false};sheet();ENG[M.eng]();}
+function miniEnd(stars){
+  if(!M||M.over)return;const id=M.id,k=M.k;stopLive();const d=byId(id);if(!d){F=null;sheet();render();return;}
+  const out=doTrain(d,k,stars);out.splice(1,0,{c:'ln',h:'Mini-game: '+'★'.repeat(stars)+'☆'.repeat(3-stars)+(stars>=3?' Perfect!':stars?'':' A tough one, but practice still counts.')});
+  result(T[k].n,out,{team:[d]});
+}
+function holeSet(i){const hs=document.querySelectorAll('.hole');for(let j=0;j<hs.length;j++)hs[j].textContent=j===i?MTXT[M.k][1]:'';}
+function padFlash(p){const e=document.querySelector('.pad.p'+p);if(!e)return;e.classList.add('lit');setTimeout(()=>e.classList.remove('lit'),260);if(S.snd&&ac())tone([392,494,587,784][p],AC.currentTime+.01,.25,.1);}
+function simonRound(){M.round++;if(M.round>3)return miniEnd(3);M.seq=Array.from({length:M.round+2},()=>rnd(4));M.input=null;setMs('Watch...');const gap=520+M.lv*40;
+  M.seq.forEach((p,i)=>mT(()=>padFlash(p),500+i*gap));mT(()=>{M.input=[];setMs('Your turn!');},500+M.seq.length*gap);}
+function timePos(){const t=((performance.now()-M.t0)%M.per)/M.per;return (t<.5?t*2:2-t*2)*100;}
+function timeZone(){M.zx=5+rnd(90-M.zw);const z=$id('tz');if(z){z.style.left=M.zx+'%';z.style.width=M.zw+'%';}}
+const ENG={
+  tap(){$id('mg').innerHTML='<div class="holes">'+Array.from({length:12},(_,i)=>`<button class="hole" data-a="hole" data-v="${i}" aria-label="spot ${i+1}"></button>`).join('')+'</div>';
+    M.total=8;M.show=620+M.lv*90;M.cur=-1;setMs('Score 0 of 8');
+    const next=()=>{if(M.n>=M.total)return miniEnd(M.score>=7?3:M.score>=5?2:M.score>=3?1:0);M.n++;M.cur=rnd(12);holeSet(M.cur);mT(()=>{holeSet(-1);M.cur=-1;mT(next,220);},M.show);};mT(next,600);},
+  simon(){const ic=M.k==='sing'?['🎵','🎶','🔔','🎤']:['🏰','🐉','🌙','⭐'];
+    $id('mg').innerHTML='<div class="pads">'+ic.map((x,i)=>`<button class="pad p${i}" data-a="pad" data-v="${i}">${x}</button>`).join('')+'</div>';M.round=0;M.input=null;simonRound();},
+  time(){$id('mg').innerHTML='<div class="tbar"><i id="tz"></i><b id="tm"></b></div><button class="btn go" data-a="hit" style="width:100%">'+MTXT[M.k][1]+'</button>';
+    M.total=5;M.zw=16+M.lv*3;M.t0=performance.now();M.per=1500;timeZone();setMs('0 of 5');
+    const loop=()=>{if(!M||M.over)return;const e=$id('tm');if(e)e.style.left=timePos()+'%';M.raf=requestAnimationFrame(loop);};loop();},
+  red(){$id('mg').innerHTML='<div class="face" id="rb">💤</div><div class="meter" style="height:22px"><i id="rp" style="width:0%"></i></div><button class="btn go" id="rh" data-a="noop" style="width:100%;margin-top:10px;touch-action:none;user-select:none;-webkit-user-select:none">Hold to tiptoe</button>';
+    M.p=0;M.state='sleep';M.strikes=0;M.hold=false;setMs('She is asleep...');
+    const b=$id('rh'),face=t=>{const e=$id('rb');if(e)e.textContent=t;};
+    b.addEventListener('pointerdown',e=>{e.preventDefault();if(M)M.hold=true;});['pointerup','pointerleave','pointercancel'].forEach(n=>b.addEventListener(n,()=>{if(M)M.hold=false;}));
+    const flip=()=>{M.state='warn';face('👂');setMs('Her ear twitched!');mT(()=>{M.state='awake';face('👀');setMs('She is looking!');mT(()=>{M.state='sleep';face('💤');setMs('She is asleep...');mT(flip,900+rnd(1400));},800+rnd(700));},380+M.lv*70);};
+    mT(flip,1000+rnd(900));
+    M.timers.push(setInterval(()=>{if(!M||M.over)return;
+      if(M.hold){if(M.state==='awake'){M.strikes++;M.hold=false;M.p=Math.max(0,M.p-20);sfx('oops');setMs('Caught! '+M.strikes+' of 3');if(M.strikes>=3)return miniEnd(0);}else M.p+=2.2;}
+      const e=$id('rp');if(e)e.style.width=Math.min(100,M.p)+'%';if(M.p>=100)miniEnd(M.strikes===0?3:M.strikes===1?2:1);},60));}
+};
+/* ---------- playable expeditions ---------- */
+function hitRect(x,y,r,rs){for(let i=0;i<rs.length;i++){const q=rs[i];if(x>q[0]-r&&x<q[0]+q[2]+r&&y>q[1]-r&&y<q[1]+q[3]+r)return true;}return false;}
+function dragonImg(d){const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">'+parts(d)+'</svg>');return im;}
+function say(m){const e=$id('pm');if(e)e.textContent=m;}
+function hud(){const e=$id('ph');if(e&&X)e.textContent='♥'.repeat(Math.max(0,X.hearts))+'   ✦ '+X.got+' of 5';}
+function playStart(team,pk){
+  const P=plc(pk),has=k=>team.some(d=>{const t=tal(d,k);return t&&t.found;});
+  F={t:'play',place:pk};sheet();
+  const cv=$id('cv'),cx=cv&&cv.getContext&&cv.getContext('2d');if(!cx){F=null;sheet();render();return;}
+  const big=pk==='hall'||pk==='den',slow=has('sneak')?.7:1,hz=[{x:180,y:222,r:13,vx:0,vy:60*slow,lo:140,hi:300,ax:'y'}];
+  const nR=pk==='den'||pk==='kitchen'||pk==='yard'?3:2;
+  for(let i=0;i<nR;i++)hz.push({x:40+rnd(280),y:98+i*38,r:13,vx:(55+i*14)*slow*(i%2?-1:1),vy:0,lo:16,hi:344,ax:'x'});
+  if(big){hz[1].r=24;hz[1].vx=38*slow;hz[1].y=112;hz[1].boss=true;}
+  hz.push({x:60,y:372,r:13,vx:45*slow,vy:0,lo:16,hi:344,ax:'x'});
+  const obs=[[70,292,60,34],[236,318,56,40],[40,150,50,28]];
+  const walls=[[0,210,20,24],[90,210,60,24],[210,210,60,24],[340,210,20,24]];
+  const gates=P.opts.map((o,i)=>({k:o.k,x:i?270:20,y:210,w:70,h:24,open:false,msgT:0}));
+  const all=obs.concat(walls,gates.map(g=>[g.x,g.y,g.w,g.h])),sp=[];let guard=0;
+  while(sp.length<5&&guard++<400){const x=30+rnd(300),y=70+rnd(340);if(!hitRect(x,y,14,all)&&Math.hypot(x-180,y-440)>60)sp.push({x,y});}
+  let duo=null;for(let i=0;i<team.length;i++)for(let j=i+1;j<team.length;j++){const o=bondOf(team[i],team[j]);if(o.duo)duo=o.duo;}
+  X={team,pk,cx,cv,hz,obs,walls,gates,sp,got:0,hearts:Math.min(5,3+(has('comfort')?1:0)+(has('stitch')?1:0)),x:180,y:440,tx:180,ty:440,trail:[],inv:1,freeze:0,duo,duoUsed:false,gate:null,imgs:team.map(dragonImg),face:1,last:performance.now(),keys:{},down:false};
+  const pt=e=>{const r=cv.getBoundingClientRect();X.tx=(e.clientX-r.left)*360/r.width;X.ty=(e.clientY-r.top)*480/r.height;};
+  cv.addEventListener('pointerdown',e=>{if(!X)return;e.preventDefault();X.down=true;pt(e);});
+  cv.addEventListener('pointermove',e=>{if(X&&X.down)pt(e);});
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>cv.addEventListener(n,()=>{if(X)X.down=false;}));
+  const pd=$id('pd');if(pd&&duo)pd.disabled=false;
+  hud();requestAnimationFrame(playLoop);
+}
+function playLoop(now){
+  if(!X||X.dead||!F||F.t!=='play')return;
+  const dt=Math.max(0,Math.min(.05,(now-X.last)/1000));X.last=now;
+  const K=X.keys;if(K.l||K.r||K.u||K.d){X.tx=X.x+(K.r?40:0)-(K.l?40:0);X.ty=X.y+(K.d?40:0)-(K.u?40:0);}
+  const dx=X.tx-X.x,dy=X.ty-X.y,dist=Math.hypot(dx,dy);
+  if(dist>3){const st=Math.min(120*dt,dist),mx=dx/dist*st,my=dy/dist*st,solid=X.obs.concat(X.walls,X.gates.filter(g=>!g.open).map(g=>[g.x,g.y,g.w,g.h]));
+    const nx=Math.max(14,Math.min(346,X.x+mx));if(!hitRect(nx,X.y,13,solid))X.x=nx;
+    const ny=Math.max(14,Math.min(466,X.y+my));if(!hitRect(X.x,ny,13,solid))X.y=ny;
+    if(Math.abs(mx)>.2)X.face=mx>0?1:-1;X.trail.unshift([X.x,X.y]);if(X.trail.length>70)X.trail.pop();}
+  X.gates.forEach(g=>{if(g.open||!hitRect(X.x,X.y,22,[[g.x,g.y,g.w,g.h]]))return;const who=X.team.find(d=>tal(d,g.k));
+    if(who){g.open=true;X.gate=g.k;say((tal(who,g.k).found?who.name+' used '+T[g.k].n+'!':'Whoa! Nobody knew '+who.name+' could do that!')+' The shortcut is open.');sfx('spark');}
+    else if(now-g.msgT>2500){g.msgT=now;say('This shortcut needs '+T[g.k].n+'. Try another way.');}});
+  if(X.freeze>0)X.freeze-=dt;else X.hz.forEach(h=>{if(h.ax==='x'){h.x+=h.vx*dt;if(h.x<h.lo||h.x>h.hi){h.vx*=-1;h.x=Math.max(h.lo,Math.min(h.hi,h.x));}}else{h.y+=h.vy*dt;if(h.y<h.lo||h.y>h.hi){h.vy*=-1;h.y=Math.max(h.lo,Math.min(h.hi,h.y));}}});
+  if(X.inv>0)X.inv-=dt;
+  else if(X.hz.some(h=>Math.hypot(h.x-X.x,h.y-X.y)<h.r+12)){X.hearts--;X.inv=1.6;sfx('oops');hud();
+    if(X.hearts<=0)return playEnd(false);
+    X.x=180;X.y=440;X.tx=180;X.ty=440;X.trail=[];say('Bonk! Back to the start. Try a different path.');}
+  const n0=X.sp.length;X.sp=X.sp.filter(q=>Math.hypot(q.x-X.x,q.y-X.y)>=20);if(X.sp.length<n0){X.got+=n0-X.sp.length;sfx('bond');hud();}
+  if(Math.hypot(180-X.x,40-X.y)<26)return playEnd(true);
+  playDraw();requestAnimationFrame(playLoop);
+}
+function starPath(c,x,y,r){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;c.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}c.closePath();}
+function playDraw(){
+  const c=X.cx,L=LOOK[X.pk];c.fillStyle=L[0];c.fillRect(0,0,360,480);c.fillStyle=L[1];for(let i=0;i<12;i++)c.fillRect(0,i*40+18,360,3);
+  c.lineWidth=3;c.strokeStyle='#151515';c.lineJoin='round';
+  const box=(r,f)=>{c.fillStyle=f;c.fillRect(r[0],r[1],r[2],r[3]);c.strokeRect(r[0],r[1],r[2],r[3]);};
+  X.obs.forEach(r=>box(r,'#fffef6'));X.walls.forEach(r=>box(r,'#c9d0f5'));
+  c.font='bold 12px sans-serif';c.textAlign='center';
+  X.gates.forEach(g=>{if(g.open){c.setLineDash([6,5]);c.strokeStyle='#6fe0cf';c.strokeRect(g.x+2,g.y+2,g.w-4,g.h-4);c.setLineDash([]);c.strokeStyle='#151515';}
+    else{box([g.x,g.y,g.w,g.h],'#ffd93b');c.fillStyle='#151515';c.fillText(T[g.k].n.split(' ').pop(),g.x+g.w/2,g.y+16,g.w-6);}});
+  c.fillStyle='#ffd93b';c.beginPath();c.arc(180,40,20,0,7);c.fill();c.stroke();c.fillStyle='#fff';starPath(c,180,40,11);c.fill();c.stroke();
+  c.fillStyle='#fffef6';c.fillText(X.pk==='den'?'YOUR FRIEND':'TREASURE',180,76);
+  c.lineWidth=2;X.sp.forEach(q=>{c.fillStyle='#fff3b8';starPath(c,q.x,q.y,8);c.fill();c.stroke();});c.lineWidth=3;
+  X.hz.forEach(h=>{c.fillStyle=h.boss?'#e8c88a':'#9aa0b8';c.beginPath();c.arc(h.x,h.y,h.r,0,7);c.fill();c.stroke();
+    if(h.boss){c.beginPath();c.arc(h.x-h.r*.8,h.y-h.r*.6,h.r*.45,0,7);c.fill();c.stroke();c.beginPath();c.arc(h.x+h.r*.8,h.y-h.r*.6,h.r*.45,0,7);c.fill();c.stroke();}
+    const e=h.r*.35;c.fillStyle='#fff';c.beginPath();c.arc(h.x-e,h.y-2,h.r*.24,0,7);c.arc(h.x+e,h.y-2,h.r*.24,0,7);c.fill();c.fillStyle='#151515';c.beginPath();c.arc(h.x-e,h.y-2,h.r*.11,0,7);c.arc(h.x+e,h.y-2,h.r*.11,0,7);c.fill();});
+  for(let i=X.team.length-1;i>=0;i--){const p=i?(X.trail[Math.min(X.trail.length-1,i*18)]||[X.x,X.y]):[X.x,X.y],im=X.imgs[i];
+    c.save();c.translate(p[0],p[1]);if(X.inv>0&&Math.floor(X.inv*10)%2)c.globalAlpha=.4;c.scale(X.face,1);
+    if(im.complete&&im.naturalWidth)c.drawImage(im,-24,-30,48,48);else{c.fillStyle=COLORS[X.team[i].color][1];c.beginPath();c.arc(0,0,13,0,7);c.fill();c.stroke();}
+    c.restore();}
+  if(X.freeze>0){c.fillStyle='rgba(111,224,207,.25)';c.fillRect(0,0,360,480);}
+}
+function playEnd(win){
+  const r=X;X=null;if(!r)return;const team=r.team,pk=r.pk;
+  if(pk==='den'){result(DEN.n,doRescue(team,win),{team});return;}
+  const oi=PLACES[pk].opts.findIndex(o=>o.k===r.gate),ctx={team,place:pk};
+  result(PLACES[pk].n,doExp(team,pk,oi,ctx,{win,sp:r.got}),ctx);
+}
+window.__X=()=>X;
+document.addEventListener('keydown',e=>{if(!X)return;const m={ArrowLeft:'l',ArrowRight:'r',ArrowUp:'u',ArrowDown:'d',a:'l',d:'r',w:'u',s:'d'}[e.key];if(m){X.keys[m]=true;e.preventDefault();}});
+document.addEventListener('keyup',e=>{if(!X)return;const m={ArrowLeft:'l',ArrowRight:'r',ArrowUp:'u',ArrowDown:'d',a:'l',d:'r',w:'u',s:'d'}[e.key];if(m)X.keys[m]=false;});
 function result(title,out,ctx){sweep(ctx||{},out);checkBadges(out);sfx(out.some(l=>l.c==='burst')?'spark':out.some(l=>l.c==='oops')?'oops':'bond');F={t:'result',title,html:linesHTML(out)};sheet();render();}
 
 const A={
   tab(d){UI.tab=d.v;UI.reset=false;render();},
   open(d){UI.shelf=0;F={t:'detail',id:+d.id};sheet();},
   pair(d){F={t:'pair',x:+d.x,y:+d.y};sheet();},
-  close(){F=null;UI.shelf=0;sheet();render();},
+  close(){stopLive();F=null;UI.shelf=0;sheet();render();},
   hang(){F={t:'hang',picks:[],act:null};sheet();},
   hangPair(){if(S.acts<=0)return;F={t:'hang',picks:[F.x,F.y],act:null};sheet();},
   train(){F={t:'train',picks:[]};sheet();},
@@ -824,8 +1009,19 @@ const A={
   act(d){F.act=d.v;sheet();},
   place(d){F.place=d.v;sheet();},
   goHang(){if(S.acts<=0||F.picks.length!==2||!F.act)return;const a=byId(F.picks[0]),b=byId(F.picks[1]),k=F.act;result(HANG[k].n,doHang(a,b,k),{team:[a,b],act:k});},
-  goTrain(d){const x=byId(F.picks[0]);if(S.acts<=0||!x||!T[d.v])return;result(T[d.v].n,doTrain(x,d.v),{team:[x]});},
+  goTrain(d){const x=byId(F.picks[0]);if(S.acts<=0||!x||!T[d.v])return;const t0=tal(x,d.v);if(t0&&t0.found&&S.mini)return miniStart(x,d.v);result(T[d.v].n,doTrain(x,d.v),{team:[x]});},
   goExp(d){const team=F.picks.map(byId),p=F.place;if(S.acts<=0||team.length<2||!p)return;const ctx={team,place:p};result(PLACES[p].n,doExp(team,p,+d.v,ctx),ctx);},
+  goPlay(){const team=F.picks.map(byId),p=F.place;if(S.acts<=0||team.length<2||!p)return;
+    if(S.play&&CAN)return playStart(team,p);
+    if(p==='den')result(DEN.n,doRescue(team,Math.random()*100<estimate(team,'sneak',true,null)+10),{team});},
+  duoMove(){if(X&&X.duo&&!X.duoUsed){X.duoUsed=true;X.freeze=5;say('They used '+X.duo+'! Everything freezes.');const b=$id('pd');if(b)b.disabled=true;}},
+  runHome(){if(X)playEnd(false);},
+  miniSkip(){miniEnd(1);},
+  noop(){},
+  hole(d){if(M&&M.eng==='tap'&&+d.v===M.cur){M.score++;M.cur=-1;holeSet(-1);sfx('bond');setMs('Score '+M.score+' of 8');}},
+  pad(d){if(!M||M.eng!=='simon'||!M.input)return;const p=+d.v;padFlash(p);if(M.seq[M.input.length]!==p)return miniEnd(M.round-1);M.input.push(p);if(M.input.length===M.seq.length){M.input=null;setMs('Nice!');mT(simonRound,700);}},
+  hit(){if(!M||M.eng!=='time')return;const p=timePos();M.n++;if(p>=M.zx&&p<=M.zx+M.zw){M.score++;sfx('bond');}else sfx('oops');setMs(M.score+' of 5');if(M.n>=M.total)return miniEnd(M.score>=4?3:M.score>=3?2:M.score>=2?1:0);timeZone();},
+  tgl(d){if(d.v==='play'||d.v==='mini'){S[d.v]=!S[d.v];render();}},
   build(){const open=Object.keys(PROJ).filter(k=>!S.proj[k].done);F={t:'build',picks:[],proj:open.length?open[0]:null};sheet();},
   proj(d){F.proj=d.v;sheet();},
   goBuild(){const team=F.picks.map(byId),p=F.proj;if(S.acts<=0||!team.length||!p||S.proj[p].done)return;result(PROJ[p].n,doBuild(team,p),{team,build:true});},
@@ -845,7 +1041,7 @@ const A={
   mentor(d){F={t:'mentor',id:+d.id};sheet();},
   setMentor(d){const h=byId(F.id),m=byId(+d.id);if(h&&m){h.mentor=m.id;log(m.name+' became mentor to Wee '+h.name+'.','bond');mem(h,m,m.name+' became '+h.name+"'s mentor");}F={t:'detail',id:F.id};sheet();render();},
   acc(d){const x=byId(F.id);if(x){x.acc=d.v||null;sheet();render();}},
-  shelf(d){const id=+d.id,x=byId(id);if(!x)return;if(UI.shelf!==id){UI.shelf=id;sheet();return;}UI.shelf=0;toShelf(x);F=null;sheet();render();},
+  shelf(d){const id=+d.id,x=byId(id);if(!x||x.away)return;if(UI.shelf!==id){UI.shelf=id;sheet();return;}UI.shelf=0;toShelf(x);F=null;sheet();render();},
   rename(d){const x=byId(+d.id),el=document.getElementById('rn'),v=(el&&el.value||'').trim().slice(0,16);if(x&&v&&v!==x.name&&x.nameRights>0){const old=x.name;x.name=v;x.nameRights--;log(old+' chose a new name: '+v+'.','spark');sheet();render();}},
   patch(d){const x=byId(F.id);if(!x||x.patches.indexOf(d.v)<0)return;const i=x.worn.indexOf(d.v);if(i>=0)x.worn.splice(i,1);else if(x.worn.length<3)x.worn.push(d.v);sheet();render();},
   hoardName(){const v=(document.getElementById('hn').value||'').trim().slice(0,28);if(v){S.name=v;render();}},
@@ -860,7 +1056,7 @@ const A={
 };
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-a]');
-  if(!el){if(e.target===$sheet)A.close();return;}
+  if(!el){if(e.target===$sheet&&!(F&&(F.t==='play'||F.t==='mini')))A.close();return;}
   if(el.disabled)return;
   sfx('tap');if(S&&S.music&&!musOn)musicStart();
   const fn=A[el.dataset.a];if(fn)fn(el.dataset);
