@@ -202,6 +202,34 @@ async def run_viewport(b, name, w, h, touch):
                     await pg.wait_for_timeout(500)       # round card
                     await pg.evaluate("() => { Arcade.game.card = 0; }")
                     await pg.wait_for_timeout(900)
+            if gid == 'maker':
+                # Chip's workshop: every order banner and hint, the longest things Chip says, every overlay, the mini-game
+                said = await pg.evaluate("""() => { const out = new Set(); const specs = [Spec.fresh(), Object.assign(Spec.fresh(), {trouble:'mowers', 'hero.speed':5, 'trouble.speed':5, 'hero.size':3, 'trouble.size':3, 'trouble.count':60, roses:20, lives:9})];
+                    specs.forEach(sp => Words.all(sp).forEach(t => Scripted.interpret(t, sp).say.forEach(s => out.add(s)))); return [...out].sort((a, b) => b.length - a.length).slice(0, 8); }""")
+                n_orders = await pg.evaluate("ORDERS.length")
+                for i in range(n_orders + 1):
+                    await pg.evaluate("i => { const g = Arcade.game; g.n = i; g.briefed = 0; g.phase = 'shop'; g.brief(); g.pickWho = 2; g.pickHow = 3; g.whole = ''; g.sel = null; g.lit = {'trouble.size':1, 'hero.size':1}; paintHud(); }", i)
+                    await scene('playing: maker order ' + str(i + 1))
+                    await pg.wait_for_timeout(250)
+                    if i < n_orders:
+                        o = await pg.evaluate("i => [ORDERS[i].from, ORDERS[i].ask]", i)
+                        await say([(o[0], o[1].capitalize()), ('CHIP', said[i % len(said)])])
+                        await hush()
+                    await pg.evaluate("() => { const g = Arcade.game; g.sel = 4; g.note = ''; }"); await pg.wait_for_timeout(200)
+                    await pg.evaluate("() => { const g = Arcade.game; g.sel = 0; g.note = 'THAT LINE IS A WORD. ASK CHIP TO CHANGE IT.'; g.pickWho = null; g.pickHow = null; g.whole = 'make a catching game'; }"); await pg.wait_for_timeout(200)
+                await scene('playing: maker thinking')
+                await pg.evaluate("() => { const g = Arcade.game; g.n = 1; g.sel = null; g.note = ''; g.phase = 'think'; g.pf = 0; g.pending = null; g.asking = 'make the iguanas smaller'; }"); await pg.wait_for_timeout(300)
+                await scene('playing: maker testers')
+                for filled in (False, True):
+                    await pg.evaluate("f => { const g = Arcade.game; g.tests = Testers.all(g.spec, 3); g.phase = 'test'; g.pf = 151; g.filled = f; }", filled); await pg.wait_for_timeout(300)
+                await pg.evaluate("() => { const g = Arcade.game; g.filled = false; g.phase = 'shop'; }")
+                await say([('CHIP', s) for s in said[:3]]); await hush()
+                for kind in ('jumping', 'catching', 'throwing'):
+                    await scene('playing: maker ' + kind + ' game')
+                    await pg.evaluate("k => { const g = Arcade.game; g.spec = Object.assign(Spec.fresh(), {game: k, lives: 9, roses: 20, 'trouble.count': 30}); g.press('play'); }", kind)
+                    await pg.wait_for_timeout(1200)
+                    await pg.evaluate("() => { const g = Arcade.game; g.mine = {won: true, roses: 20, lives: 9}; g.filled = true; g.phase = 'done'; g.pf = 60; paintHud(); }"); await pg.wait_for_timeout(300)
+                    await pg.evaluate("() => { const g = Arcade.game; g.filled = false; g.phase = 'shop'; paintHud(); }")
             if gid == 'meta':
                 crit = await pg.evaluate("GUIDE.map(k => ({k, line: CRITTERS[k].line}))")
                 lens_line = [('THE GAME', 'Passthrough enabled. That is the garden. The creature is not really there. Neither is the garden.'),

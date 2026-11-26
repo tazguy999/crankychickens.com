@@ -5009,6 +5009,687 @@ GAMES.craft = {
 };
 
 /* ============================================================
+   LAYER 9: CHIP WRITES THE GAME — "I did exactly what you said."
+
+   The chickens have hired an intern. Chip is very new, very fast,
+   and takes every word literally. You do not write the game: you
+   tell Chip what you want, Chip writes it, and then you find out
+   what you actually asked for.
+
+   That loop is the whole lesson, and it is the real one:
+
+       ASK  ->  Chip changes THE CODE  ->  TEST IT  ->  ask better
+
+     the WORDS    tiles that make a sentence: "make the iguanas slower".
+                  Leave out WHO and Chip changes everything. The clouds too.
+     the CODE     eleven lines, always on screen. Every request lights up
+                  the lines it changed. Tap a number to change it yourself:
+                  some things are quicker to write than to ask for.
+     the TESTERS  Reginald (touches nothing), Aunt Barb (careful) and
+                  Scratchy (greedy) play the game before you do.
+     the ORDERS   the chickens ask for games. An order is filled when the
+                  testers, or you, show that the game does what was asked.
+
+   ---- THE SEAM: swapping Chip's brain -------------------------------
+   Today Chip is a page of rules (Scripted, below). Chip can be anything
+   with this one method:
+
+       interpret(text, spec)  ->  { patch, say }      (or a Promise of it)
+
+         text   the request in plain words        "make the iguanas slower"
+         spec   the game right now, a flat object  { 'trouble.speed': 3, ... }
+         patch  ONLY the fields to change          { 'trouble.speed': 2 }
+         say    what Chip says back, 1-3 short strings
+
+   Install one with   Maker.use(myModel)   and nothing else changes: the
+   tiles still make text, Spec.apply() still checks every field of every
+   patch (unknown fields dropped, numbers clamped, enums verified), so a
+   model that makes things up cannot break the game. A model that takes
+   too long, throws, or returns rubbish is covered by the rules.
+
+   Maker.examples(n) returns (text, spec, patch) triples written by the
+   rules: a labelled training set for a small model, for free.
+   Not one of the five ticket cabinets.
+   ============================================================ */
+CABINETS.push({ id:'maker', screen:'2,1', col:4, maker:'CHIP', color:'#3fd6c0', extra:true });
+Cast.PAL['CHIP'] = { body:'#3fd6c0', belly:'#c9fff4', comb:'#ffd76b', beak:'#ff9f1c', wing:'#2aa893', hen:true };
+if (typeof Voice !== 'undefined' && Voice.PROFILES) Voice.PROFILES['CHIP'] = { pitch: 1.75, rate: 1.2 };
+
+/* ---------- the game, as data ---------- */
+const Spec = {
+  FIELDS: [
+    ['game',          ['jumping', 'catching', 'throwing']],
+    ['hero.speed',    1, 5],
+    ['hero.size',     1, 3],
+    ['trouble',       ['iguanas', 'gnomes', 'planes', 'mowers']],
+    ['trouble.count', 0, 60],
+    ['trouble.speed', 1, 5],
+    ['trouble.size',  1, 3],
+    ['roses',         0, 20],
+    ['lives',         1, 9],
+    ['sky',           ['day', 'night']],
+    ['clouds.speed',  0, 9]
+  ],
+  fresh(){
+    return { game: 'jumping', 'hero.speed': 3, 'hero.size': 2, trouble: 'iguanas', 'trouble.count': 6,
+             'trouble.speed': 3, 'trouble.size': 2, roses: 5, lives: 3, sky: 'day', 'clouds.speed': 1 };
+  },
+  field(k){ return this.FIELDS.find(f => f[0] === k); },
+  isNum(k){ const f = this.field(k); return !!f && typeof f[1] === 'number'; },
+  /* Whatever wrote the patch, only real fields with legal values get through. */
+  clean(k, v){
+    const f = this.field(k);
+    if (!f) return undefined;
+    if (Array.isArray(f[1])) return f[1].indexOf(String(v).toLowerCase()) >= 0 ? String(v).toLowerCase() : undefined;
+    const n = Math.round(Number(v));
+    return isFinite(n) ? clamp(n, f[1], f[2]) : undefined;
+  },
+  apply(spec, patch){
+    const out = Object.assign({}, spec), changes = [];
+    if (patch && typeof patch === 'object') for (const k of Object.keys(patch)){
+      const v = this.clean(k, patch[k]);
+      if (v === undefined || v === out[k]) continue;
+      changes.push({ k, from: out[k], to: v }); out[k] = v;
+    }
+    return { spec: out, changes };
+  },
+  repair(s){                                        // a save from anywhere becomes a whole, legal spec
+    const out = this.fresh();
+    if (s && typeof s === 'object') for (const f of this.FIELDS){ const v = this.clean(f[0], s[f[0]]); if (v !== undefined) out[f[0]] = v; }
+    return out;
+  },
+  line(spec, k){ return k + ' = ' + spec[k]; }
+};
+
+/* ---------- Chip, today: a page of rules that takes you literally ---------- */
+const Scripted = {
+  name: 'RULES',
+  interpret(text, spec){
+    const s = ' ' + String(text || '').toLowerCase().replace(/[^a-z ]/g, ' ') + ' ';
+    const has = w => s.indexOf(' ' + w) >= 0;
+    const T = spec.trouble, TN = T.toUpperCase(), patch = {};
+    const bump = (k, d) => { const f = Spec.field(k), v = clamp(spec[k] + d, f[1], f[2]); if (v !== spec[k]) patch[k] = v; return v !== spec[k]; };
+
+    // whole-sentence requests first
+    for (const kind of ['jump', 'catch', 'throw']) if (has(kind)){
+      const g2 = kind + 'ing';
+      if (spec.game === g2) return { patch, say: ['It is already a ' + g2 + ' game. I checked twice.'] };
+      return { patch: { game: g2 }, say: ['A ' + g2 + ' game. Done.', 'I kept everything else exactly the same. EXACTLY.'] };
+    }
+    if (has('night') || has('day')){
+      const sky = has('night') ? 'night' : 'day';
+      return spec.sky === sky ? { patch, say: ['It is already ' + sky + '. Look up.'] }
+                              : { patch: { sky }, say: ['It is ' + sky + ' now.', 'Nothing else changed. You did not ask for anything else.'] };
+    }
+    const how = ['faster', 'slower', 'bigger', 'smaller', 'more', 'fewer'].find(has) || (has('less') ? 'fewer' : null);
+    const kinds = { iguana: 'iguanas', gnome: 'gnomes', plane: 'planes', mower: 'mowers' };
+    const named = Object.keys(kinds).find(has);
+    if (named && !how){
+      if (kinds[named] === T) return { patch, say: ['The trouble is already ' + TN + '.'] };
+      return { patch: { trouble: kinds[named] }, say: [kinds[named].toUpperCase() + ' it is.', 'Same number. Same speed. Different trouble.'] };
+    }
+    if (!how) return { patch, say: ['I did not understand that.', 'I am very new. Try the word tiles.'] };
+
+    const who = has('hero') ? 'hero' : (named || has('trouble')) ? 'trouble' : has('rose') ? 'roses' : (has('lives') || has('life')) ? 'lives' : null;
+    const up = how === 'faster' || how === 'bigger' || how === 'more', HOW = how.toUpperCase();
+
+    if (how === 'faster' || how === 'slower'){
+      const d = up ? 1 : -1;
+      if (who === 'hero')    return bump('hero.speed', d)    ? { patch, say: ['The hero is ' + how + '. Only the hero.'] } : { patch, say: ['The hero is already as ' + (up ? 'fast' : 'slow') + ' as I can make it.'] };
+      if (who === 'trouble') return bump('trouble.speed', d) ? { patch, say: ['The ' + T + ' are ' + how + '. Only the ' + T + '.'] } : { patch, say: ['The ' + T + ' are already as ' + (up ? 'fast' : 'slow') + ' as they go.'] };
+      if (who === 'roses')   return { patch, say: ['Roses do not have a speed. I asked one.'] };
+      if (who === 'lives')   return { patch, say: ['A life cannot go ' + how + '. I tried.'] };
+      bump('hero.speed', d); bump('trouble.speed', d); bump('clouds.speed', d * 3);
+      return { patch, say: ['You said ' + HOW + '. You did not say WHAT.', 'So: everything is ' + how + '. Yes, the clouds too.'] };
+    }
+    if (how === 'bigger' || how === 'smaller'){
+      const d = up ? 1 : -1;
+      if (who === 'hero')    return bump('hero.size', d)    ? { patch, say: ['The hero is ' + how + '. Only the hero.'] } : { patch, say: ['The hero is already as ' + (up ? 'big' : 'small') + ' as I can draw.'] };
+      if (who === 'trouble') return bump('trouble.size', d) ? { patch, say: ['The ' + T + ' are ' + how + '. Only the ' + T + '.'] } : { patch, say: ['The ' + T + ' are already as ' + (up ? 'big' : 'small') + ' as they come.'] };
+      if (who === 'roses' || who === 'lives') return { patch, say: ['A ' + (who === 'roses' ? 'rose' : 'life') + ' is the size it is.'] };
+      bump('hero.size', d); bump('trouble.size', d);
+      return { patch, say: ['You said ' + HOW + '. You did not say WHAT.', 'So the hero AND the ' + T + ' are ' + how + '.'] };
+    }
+    // more / fewer
+    const d = up ? 1 : -1;
+    if (who === 'hero')    return { patch, say: ['There is only one hero. I counted.'] };
+    if (who === 'trouble') return bump('trouble.count', d * 5) ? { patch, say: [(up ? 'Five more ' : 'Five fewer ') + T + '.', 'I only know MORE and FEWER. For an exact number, change the code yourself.'] } : { patch, say: ['That is as ' + (up ? 'many' : 'few') + ' ' + T + ' as I can fit.'] };
+    if (who === 'roses')   return bump('roses', d * 3) ? { patch, say: [(up ? 'Three more roses.' : 'Three fewer roses.')] } : { patch, say: ['That is as ' + (up ? 'many' : 'few') + ' roses as there can be.'] };
+    if (who === 'lives')   return bump('lives', d) ? { patch, say: [(up ? 'One more life.' : 'One life fewer.')] } : { patch, say: ['That is as ' + (up ? 'many' : 'few') + ' lives as anybody gets.'] };
+    bump('trouble.count', d * 5); bump('roses', d * 3); bump('lives', d);
+    return { patch, say: [HOW + ' what? You did not say.', 'So: ' + how + ' of everything. ' + (up ? 'More' : 'Fewer') + ' ' + T + ', roses AND lives.'] };
+  }
+};
+
+/* ---------- the words: tiles build a sentence, the sentence is plain text ---------- */
+const Words = {
+  WHO: [['IT', ''], ['THE HERO', 'the hero'], ['THE TROUBLE', null], ['THE ROSES', 'the roses'], ['LIVES', 'lives']],
+  HOW: ['faster', 'slower', 'bigger', 'smaller', 'more', 'fewer'],
+  KIND: ['jumping', 'catching', 'throwing'],
+  FOE: ['iguanas', 'gnomes', 'planes', 'mowers'],
+  who(i, spec){ return i === 2 ? 'the ' + spec.trouble : this.WHO[i][1]; },
+  whoLabel(i, spec){ return i === 2 ? 'THE ' + spec.trouble.toUpperCase() : this.WHO[i][0]; },
+  /* slots -> the sentence Chip is given. The same text a person could type. */
+  text(who, how, spec){
+    if (how == null) return '';
+    const h = this.HOW[how], w = who == null ? '' : this.who(who, spec);
+    if (h === 'more' || h === 'fewer') return (h + ' ' + w.replace(/^the /, '')).trim();
+    return 'make ' + (w || 'it') + ' ' + h;
+  },
+  all(spec){                                          // every sentence the tiles can say
+    const out = [];
+    for (let w = -1; w < this.WHO.length; w++) for (let h = 0; h < this.HOW.length; h++) out.push(this.text(w < 0 ? null : w, h, spec));
+    this.KIND.forEach(k => out.push('make a ' + k + ' game'));
+    this.FOE.forEach(f => out.push('use ' + f));
+    out.push('make it night', 'make it day');
+    return out.filter((s, i, a) => a.indexOf(s) === i);
+  }
+};
+
+/* ---------- the engine: one small game that is whatever the spec says ----------
+   Pure and seeded: the same spec and the same buttons always play out the same
+   way, which is what lets a tester play it a hundred times in a blink.        */
+const MiniGame = {
+  SP: [0, 1.3, 2.0, 2.9, 4.0, 5.3], SZ: [0, 0.72, 1, 1.38], GROUND: 292,
+  FOE: { iguanas: [40, 26], gnomes: [26, 38], planes: [42, 20], mowers: [48, 32] },
+  make(spec, seed){
+    let a = (seed || 7) >>> 0;
+    const rand = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; };
+    const hs = this.SZ[spec['hero.size']], fs = this.SZ[spec['trouble.size']], fd = this.FOE[spec.trouble];
+    const n = spec['trouble.count'], gap = clamp(Math.round(1500 / Math.max(1, n)), 14, 95);
+    const span = Math.max(420, n * gap), kind = spec.game;
+    const m = {
+      spec, kind, f: 0, status: 'play', lives: spec.lives, got: 0, safe: 0, home: 0,
+      hero: { x: kind === 'jumping' ? 120 : W / 2, y: this.GROUND, vy: 0, w: 30 * hs, h: 42 * hs, air: false, face: 1, walk: false },
+      foes: [], roses: [], shots: [], cool: 0, plan: [],
+      fw: fd[0] * fs, fh: fd[1] * fs, vf: this.SP[spec['trouble.speed']], vh: 0.9 + 0.75 * spec['hero.speed']
+    };
+    for (let i = 0; i < n; i++) m.plan.push({ at: 40 + i * gap, foe: true, r: rand(), r2: rand() });
+    for (let i = 0; i < spec.roses; i++) m.plan.push({ at: Math.round(60 + (i + 0.5) * span / spec.roses), foe: false, r: rand(), r2: rand() });
+    m.plan.sort((p, q) => p.at - q.at);
+    m.end = (m.plan.length ? m.plan[m.plan.length - 1].at : 0) + 60;
+    return m;
+  },
+  step(m, inp){
+    if (m.status !== 'play') return m.status;
+    const h = m.hero, G = this.GROUND, kind = m.kind;
+    m.f++; if (m.safe > 0) m.safe--; if (m.cool > 0) m.cool--;
+    // the hero
+    h.walk = false;
+    if (inp.left){ h.x -= m.vh; h.face = -1; h.walk = true; }
+    if (inp.right){ h.x += m.vh; h.face = 1; h.walk = true; }
+    h.x = clamp(h.x, 16, W - 16);
+    if (kind === 'jumping'){
+      if (inp.jump && !h.air){ h.vy = -10.5; h.air = true; }
+      if (h.air){ h.vy += 0.42; h.y += h.vy; if (h.y >= G){ h.y = G; h.vy = 0; h.air = false; } }
+    } else if (kind === 'throwing' && inp.jump && m.cool <= 0 && m.shots.length < 4){
+      m.shots.push({ x: h.x, y: h.y - h.h }); m.cool = 13;
+    }
+    // arrivals
+    while (m.plan.length && m.plan[0].at <= m.f){
+      const p = m.plan.shift();
+      if (kind === 'jumping'){
+        if (p.foe) m.foes.push({ x: W + 30, y: m.spec.trouble === 'planes' ? G - 124 + p.r * 14 : G, sway: 0 });
+        else m.roses.push({ x: W + 20, y: p.r < 0.5 ? G - 20 : G - 96 });
+      } else {
+        const x = (p.foe && p.r2 < 0.62) ? clamp(h.x + (p.r - 0.5) * 70, 20, W - 20) : 30 + p.r * (W - 60);
+        if (p.foe) m.foes.push({ x, y: -10, sway: p.r2 * 6.28 }); else m.roses.push({ x, y: -10 });
+      }
+    }
+    // trouble moves
+    const hit = (ox, oy, ow, oh) => Math.abs(ox - h.x) < (ow + h.w) / 2 - 3 && oy > h.y - h.h + 3 && oy - oh < h.y - 2;
+    for (let i = m.foes.length - 1; i >= 0; i--){
+      const o = m.foes[i]; let gone = false;
+      if (kind === 'jumping'){ o.x -= 2.2 + m.vf * 0.9; gone = o.x < -50; }
+      else if (kind === 'catching'){ o.y += m.vf * 0.9; gone = o.y - m.fh > G + 6; }
+      else { o.y += 0.35 + 0.18 * m.spec['trouble.speed']; o.sway += 0.04; o.x = clamp(o.x + Math.sin(o.sway) * 0.8, 20, W - 20);
+             if (o.y >= G){ gone = true; m.lives--; m.safe = 30; } }       // it landed: that always costs
+      if (!gone && m.safe <= 0 && hit(o.x, o.y, m.fw, m.fh)){ m.lives--; m.safe = 45; if (kind !== 'jumping') gone = true; }
+      if (gone) m.foes.splice(i, 1);
+    }
+    for (let i = m.shots.length - 1; i >= 0; i--){
+      const s = m.shots[i]; s.y -= 7; let used = s.y < -10;
+      for (let j = m.foes.length - 1; j >= 0 && !used; j--){
+        const o = m.foes[j];
+        if (Math.abs(o.x - s.x) < m.fw / 2 + 4 && s.y < o.y && s.y > o.y - m.fh - 6){ m.foes.splice(j, 1); m.home++; used = true; }
+      }
+      if (used) m.shots.splice(i, 1);
+    }
+    for (let i = m.roses.length - 1; i >= 0; i--){
+      const r = m.roses[i];
+      if (kind === 'jumping') r.x -= 2.2; else r.y += 1.6;
+      if (hit(r.x, r.y + 8, 16, 18)){ m.got++; m.roses.splice(i, 1); continue; }
+      if (r.x < -20 || r.y > G + 14) m.roses.splice(i, 1);
+    }
+    if (m.lives <= 0) m.status = 'lost';
+    else if (!m.plan.length && !m.foes.length && !m.roses.length && m.f >= m.end) m.status = 'won';
+    else if (m.f > 5400) m.status = 'won';
+    return m.status;
+  },
+  CLOUDS: [[60, 60, 1], [250, 38, 1.4], [430, 74, 0.9], [590, 50, 1.2]],
+  foe(kind, x, y, w, h, fr){                       // x centre, y feet
+    const l = x - w / 2, tp = y - h;
+    if (kind === 'iguanas'){ g.save(); g.translate(l, tp); g.scale(w / 28, h / 18); drawIguana(0, 0, fr); g.restore(); return; }
+    if (kind === 'gnomes'){
+      g.fillStyle = '#d33'; g.beginPath(); g.moveTo(x, tp); g.lineTo(l + w, tp + h * 0.45); g.lineTo(l, tp + h * 0.45); g.fill();
+      g.fillStyle = '#f1c9a5'; g.fillRect(l + w * 0.2, tp + h * 0.42, w * 0.6, h * 0.22);
+      g.fillStyle = '#fff'; g.fillRect(l + w * 0.2, tp + h * 0.6, w * 0.6, h * 0.16);
+      g.fillStyle = '#3566b8'; g.fillRect(l + w * 0.12, tp + h * 0.74, w * 0.76, h * 0.26); return;
+    }
+    if (kind === 'planes'){
+      g.fillStyle = '#f2e9f7'; g.beginPath(); g.moveTo(l, tp + h * 0.5); g.lineTo(l + w, tp); g.lineTo(l + w * 0.7, tp + h * 0.55); g.lineTo(l + w, tp + h); g.fill();
+      g.fillStyle = '#b9a8c9'; g.beginPath(); g.moveTo(l, tp + h * 0.5); g.lineTo(l + w * 0.7, tp + h * 0.55); g.lineTo(l + w * 0.55, tp + h); g.fill(); return;
+    }
+    g.fillStyle = '#c0392b'; g.fillRect(l, tp + h * 0.35, w * 0.8, h * 0.45);
+    g.fillStyle = '#777'; g.fillRect(l + w * 0.7, tp, w * 0.08, h * 0.5); g.fillRect(l + w * 0.62, tp, w * 0.36, h * 0.1);
+    g.fillStyle = '#222'; const sp = Math.floor(fr / 5) % 2;
+    g.fillRect(l + w * 0.08, tp + h * 0.72, h * 0.3, h * 0.28); g.fillRect(l + w * 0.55, tp + h * 0.72, h * 0.3, h * 0.28);
+    g.fillStyle = '#ddd'; g.fillRect(l + w * 0.08 + sp * 2, tp + h * 0.82, 2, 2); g.fillRect(l + w * 0.55 + sp * 2, tp + h * 0.82, 2, 2);
+  },
+  draw(m, fr){
+    const sp = m.spec, night = sp.sky === 'night', G = this.GROUND;
+    g.fillStyle = night ? '#0b0a2a' : '#8fd3ff'; g.fillRect(0, 0, W, H);
+    if (night){ g.fillStyle = '#fff'; for (let i = 0; i < 30; i++) g.fillRect((i * 97) % W, 34 + (i * 53) % 190, 1.5, 1.5); }
+    g.fillStyle = night ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.9)';
+    this.CLOUDS.forEach(c => {
+      const x = ((c[0] - m.f * sp['clouds.speed'] * 0.45 * c[2]) % (W + 120) + W + 120) % (W + 120) - 60;
+      g.beginPath(); g.ellipse(x, c[1], 30 * c[2], 10 * c[2], 0, 0, 6.3); g.ellipse(x + 18, c[1] - 7, 18 * c[2], 9 * c[2], 0, 0, 6.3); g.fill();
+    });
+    g.fillStyle = night ? '#1f4a35' : '#4a9a55'; g.fillRect(0, G, W, H - G);
+    g.fillStyle = night ? '#173a2a' : '#3c8448'; g.fillRect(0, G, W, 5);
+    m.roses.forEach(r => drawFlower(r.x, r.y - 6));
+    m.foes.forEach(o => this.foe(sp.trouble, o.x, o.y, m.fw, m.fh, fr));
+    g.fillStyle = '#ffd76b'; m.shots.forEach(s => g.fillRect(s.x - 2, s.y - 6, 4, 8));
+    if (!(m.safe > 0 && Math.floor(fr / 4) % 2))
+      Cast.draw('SCRATCHY', m.hero.x, m.hero.y, m.hero.face, false, 1.0 * this.SZ[sp['hero.size']], m.hero.walk);
+  }
+};
+
+/* ---------- the testers: three ways of playing, none of them yours ---------- */
+const Testers = {
+  LIST: ['REGINALD', 'AUNT BARB', 'SCRATCHY'],
+  NOTE: { 'REGINALD': 'TOUCHES NOTHING', 'AUNT BARB': 'CAREFUL', 'SCRATCHY': 'WANTS EVERY ROSE' },
+  think(who, m){
+    const inp = { left: false, right: false, jump: false }, h = m.hero;
+    if (who === 'REGINALD') return inp;
+    const careful = who === 'AUNT BARB';
+    const go = x => { if (x < h.x - 4) inp.left = true; else if (x > h.x + 4) inp.right = true; };
+    if (m.kind === 'jumping'){
+      const plane = m.spec.trouble === 'planes';
+      let near = null; m.foes.forEach(o => { if (o.x > h.x - m.fw && (!near || o.x < near.x)) near = o; });
+      const dx = near ? near.x - h.x - (m.fw + h.w) / 2 : 1e9, vx = 2.2 + m.vf * 0.9;
+      if (!plane && near && dx < vx * (careful ? 13 : 7) && dx > -m.fw) inp.jump = true;
+      if (!careful){
+        let r = null; m.roses.forEach(q => { if (q.x > h.x - 30 && (!r || q.x < r.x)) r = q; });
+        if (r){
+          if (r.y < MiniGame.GROUND - 50 && r.x - h.x < 60 && r.x - h.x > -6) inp.jump = true;      // a high rose: jump, plane or no plane
+          if (r.x - h.x > 60 && h.x < 300) inp.right = true;
+        } else if (h.x > 130) inp.left = true;
+      }
+      return inp;
+    }
+    if (m.kind === 'catching'){
+      let danger = null;
+      m.foes.forEach(o => {
+        const reach = (m.fw + h.w) / 2 + (careful ? 22 : 3), soon = h.y - o.y < (careful ? 150 : 70) + m.vf * 12;
+        if (soon && Math.abs(o.x - h.x) < reach && (!danger || o.y > danger.y)) danger = o;
+      });
+      if (danger){ if ((danger.x >= h.x && h.x > 40) || h.x > W - 40) inp.left = true; else inp.right = true; return inp; }
+      let r = null; m.roses.forEach(q => { if (!r || q.y > r.y) r = q; });
+      if (r && (!careful || !m.foes.some(o => Math.abs(o.x - r.x) < 70 && o.y > r.y - 120))) go(r.x);
+      return inp;
+    }
+    // throwing
+    inp.jump = true;
+    let low = null; m.foes.forEach(o => { if (!low || o.y > low.y) low = o; });
+    let r = null; m.roses.forEach(q => { if (!r || q.y > r.y) r = q; });
+    if (!careful && r) go(r.x); else if (low) go(low.x); else if (r) go(r.x);
+    return inp;
+  },
+  play(who, spec, seed){
+    const m = MiniGame.make(spec, seed);
+    while (m.status === 'play') MiniGame.step(m, this.think(who, m));
+    return { who, won: m.status === 'won', roses: m.got, lives: Math.max(0, m.lives), frames: m.f };
+  },
+  all(spec, seed){ return this.LIST.map(w => this.play(w, spec, seed)); }
+};
+
+/* ---------- the orders ---------- */
+const ORDERS = [
+  { from: 'SCRATCHY',  ask: 'MAKE ME A GAME. ANY GAME. THEN PLAY IT YOURSELF.', hint: 'ASK CHIP FOR ANYTHING, THEN PRESS PLAY IT',
+    done: (spec, tests, mine) => !!mine },
+  { from: 'AUNT BARB', ask: 'I BROUGHT MY OWN GAME. I CANNOT WIN IT. FIX IT, DEAR.', hint: 'TEST IT. BARB HAS TO WIN.',
+    start: { game: 'jumping', trouble: 'mowers', 'trouble.count': 56, 'trouble.speed': 4, 'trouble.size': 3, lives: 2, roses: 5 },
+    done: (spec, tests) => !!tests && tests[1].won },
+  { from: 'PEARL',     ask: 'I WANT TO PICK TEN ROSES. TEN!', hint: 'SOMEBODY HAS TO PICK 10 ROSES IN ONE GO',
+    done: (spec, tests, mine) => (!!tests && tests.some(r => r.roses >= 10)) || (!!mine && mine.roses >= 10) },
+  { from: 'REGINALD',  ask: 'A GAME I CAN WIN WITHOUT TOUCHING ANYTHING.', hint: 'TEST IT. REGINALD HAS TO WIN.',
+    start: { game: 'jumping', trouble: 'iguanas', 'trouble.count': 8, lives: 3 },
+    done: (spec, tests) => !!tests && tests[0].won },
+  { from: 'SCRATCHY',  ask: 'FORTY-SEVEN IGUANAS. NOT FORTY-SIX. I COUNT.', hint: 'trouble = iguanas   AND   trouble.count = 47',
+    done: (spec, tests) => !!tests && spec.trouble === 'iguanas' && spec['trouble.count'] === 47 },
+  { from: 'EL JAGUAR', ask: 'ONE THAT BARB WINS AND SCRATCHY LOSES. FOR SCIENCE.', hint: 'TEST IT. BARB WINS, SCRATCHY DOES NOT.',
+    done: (spec, tests) => !!tests && tests[1].won && !tests[2].won }
+];
+
+/* ---------- the workshop ---------- */
+const Maker = {
+  model: Scripted,
+  use(model){ this.model = (model && typeof model.interpret === 'function') ? model : Scripted; return this.model; },
+  TIMEOUT: 8000,
+  tidy(spec, r, by){
+    const say = r && Array.isArray(r.say) ? r.say.filter(x => typeof x === 'string' && x.trim()).slice(0, 3).map(x => x.trim().slice(0, 120)) : [];
+    const res = Spec.apply(spec, r && r.patch);
+    if (!say.length) say.push(res.changes.length ? 'Done.' : 'I did not change anything.');
+    return { spec: res.spec, changes: res.changes, say, by };
+  },
+  rules(text, spec){ return this.tidy(spec, Scripted.interpret(text, spec), Scripted.name); },
+  /* Ask whoever Chip is today. Always answers, always with a clean patch. */
+  ask(text, spec){
+    if (this.model === Scripted) return Promise.resolve(this.rules(text, spec));
+    return new Promise(resolve => {
+      let over = false;
+      const done = r => { if (!over){ over = true; resolve(r); } };
+      setTimeout(() => done(this.rules(text, spec)), this.TIMEOUT);          // too slow: the rules answer instead
+      try {
+        Promise.resolve(this.model.interpret(text, Object.assign({}, spec)))
+          .then(r => done(r && typeof r === 'object' ? this.tidy(spec, r, this.model.name || 'MODEL') : this.rules(text, spec)),
+                () => done(this.rules(text, spec)));
+      } catch (err){ done(this.rules(text, spec)); }
+    });
+  },
+  /* A labelled set written by the rules: what a small model would learn from. */
+  examples(n, seed){
+    let a = (seed || 1) >>> 0; const rand = () => (a = (a * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const out = [];
+    for (let i = 0; i < (n || 100); i++){
+      const spec = {};
+      Spec.FIELDS.forEach(f => { spec[f[0]] = Array.isArray(f[1]) ? f[1][Math.floor(rand() * f[1].length)] : f[1] + Math.floor(rand() * (f[2] - f[1] + 1)); });
+      const all = Words.all(spec), text = all[Math.floor(rand() * all.length)], r = Scripted.interpret(text, spec);
+      out.push({ text, spec, patch: Spec.apply(spec, r.patch).changes.reduce((p, c) => (p[c.k] = c.to, p), {}) });
+    }
+    return out;
+  }
+};
+
+const MakerPtr = { taps: [], down: false };
+(function(){
+  if (!cv || !cv.addEventListener) return;
+  const live = () => mode === 'arcade' && Arcade.state === 'play' && Arcade.game === GAMES.maker;
+  cv.addEventListener('pointerdown', e => {
+    if (!live()) return;
+    const r = cv.getBoundingClientRect();
+    MakerPtr.taps.push([(e.clientX - r.left) / (r.width || W) * W, (e.clientY - r.top) / (r.height || H) * H]);
+    MakerPtr.down = true;
+  });
+  const up = () => { MakerPtr.down = false; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+})();
+
+GAMES.maker = {
+  title: 'CHIP WRITES THE GAME', short: 'CHIP', maker: 'CHIP',
+  noLives: true, pointer: true, cardCast: [60, 104, 1.1],
+  how: ['PICK WORDS. ASK CHIP. CHIP BUILDS EXACTLY WHAT YOU SAID.',
+        'TEST IT: THE CHICKENS PLAY IT   ·   PLAY IT: YOU DO',
+        'ARROWS CHOOSE   ·   A  PICKS'],
+  howTouch: ['PICK WORDS. ASK CHIP. CHIP BUILDS EXACTLY WHAT YOU SAID.',
+        'TEST IT: THE CHICKENS PLAY IT   ·   PLAY IT: YOU DO',
+        'TAP A NUMBER IN THE CODE TO CHANGE IT YOURSELF'],
+  intro: [['SCRATCHY', 'This is Chip. Chip is the intern. Chip writes our games now.'],
+          ['CHIP', 'Tell me what you want! I will do exactly what you say.'],
+          ['SCRATCHY', 'That is the problem.']],
+  win: [['CHIP', 'Every order filled! You are very good at saying what you mean.'], ['SCRATCHY', 'Keep the workshop. Make anything.']],
+  lose: [['CHIP', 'Nobody can lose at asking.']],
+  winTitle: 'EVERY ORDER FILLED', winSub: 'YOU SAID WHAT YOU MEANT. THE WORKSHOP IS YOURS.',
+
+  init(o){
+    this.host = o.host;
+    const sv = Save.data.maker || {};
+    this.n = clamp(sv.n | 0, 0, ORDERS.length);
+    this.spec = Spec.repair(sv.spec); this.briefed = sv.b | 0;
+    this.hist = []; this.lit = {}; this.pickWho = null; this.pickHow = null; this.whole = '';
+    this.phase = 'shop'; this.pf = 0; this.focus = 'ask'; this.sel = null;
+    this.tests = null; this.mine = null; this.note = ''; this.asked = 0; this.pending = null; this.filled = false;
+    MakerPtr.taps.length = 0;
+    this.brief(); this.greet = true;
+  },
+  leave(){ this.save(); },
+  save(){ Save.data.maker = { n: this.n, spec: this.spec, b: this.briefed }; Save.flush(); },
+  order(){ return ORDERS[this.n] || null; },
+  hud(){ return this.phase === 'play' && this.m ? '♥'.repeat(Math.max(0, this.m.lives)) + '   ✿ ' + this.m.got
+                                               : this.order() ? 'ORDER ' + (this.n + 1) + ' OF ' + ORDERS.length : 'FREE BUILD'; },
+  chip(lines, who){ Talk.interrupt({ lines: lines.map(s => [who || 'CHIP', s]) }); },
+  brief(){
+    const o = this.order();
+    if (!o){ this.note = 'FREE BUILD: MAKE ANYTHING YOU LIKE'; return; }
+    if (o.start && this.briefed <= this.n){           // a chicken who brings their own game brings it once
+      this.spec = Spec.apply(this.spec, o.start).spec; this.hist = []; this.lit = {};
+      Object.keys(o.start).forEach(k => { this.lit[k] = 1; });
+    }
+    this.briefed = this.n + 1;
+    this.tests = null; this.mine = null; this.asked = 0; this.note = '';
+  },
+
+  /* ----- what is on the bench: every tappable thing, with its box ----- */
+  items(){
+    const it = [], sp = this.spec, add = (id, x, y, w, h, label, on) => it.push({ id, x, y, w, h, label, on });
+    Words.WHO.forEach((q, i) => add('who' + i, 226 + i * 81, 96, 76, 29, Words.whoLabel(i, sp), this.pickWho === i));
+    Words.HOW.forEach((q, i) => add('how' + i, 226 + i * 67.6, 130, 62, 29, q.toUpperCase(), this.pickHow === i));
+    Words.KIND.forEach((q, i) => add('kind' + i, 226 + i * 135, 164, 130, 29, 'A ' + q.toUpperCase() + ' GAME', this.whole === 'make a ' + q + ' game'));
+    Words.FOE.forEach((q, i) => add('foe' + i, 226 + i * 101.3, 198, 96, 29, 'USE ' + q.toUpperCase(), this.whole === 'use ' + q));
+    const sky = sp.sky === 'day' ? 'night' : 'day';
+    add('sky', 226, 232, 130, 29, 'MAKE IT ' + sky.toUpperCase(), this.whole === 'make it ' + sky);
+    add('undo', 361, 232, 130, 29, 'UNDO THAT', false);
+    add('ask', 138, 268, 130, 30, 'ASK CHIP', false);
+    add('test', 276, 268, 110, 30, 'TEST IT', false);
+    add('play', 394, 268, 110, 30, 'PLAY IT', false);
+    Spec.FIELDS.forEach((f, i) => add('line' + i, 14, 85 + i * 13, 200, 13, '', this.sel === i));
+    if (this.sel != null && Spec.isNum(Spec.FIELDS[this.sel][0])){ add('minus', 14, 234, 96, 28, '−  LESS', false); add('plus', 118, 234, 96, 28, 'MORE  +', false); }
+    return it;
+  },
+  sentence(){ return this.whole || Words.text(this.pickWho, this.pickHow, this.spec); },
+
+  press(id){
+    const sp = this.spec;
+    if (id.startsWith('who')){ const i = +id.slice(3); this.pickWho = this.pickWho === i ? null : i; this.whole = ''; Sfx.play('blip'); return; }
+    if (id.startsWith('how')){ const i = +id.slice(3); this.pickHow = this.pickHow === i ? null : i; this.whole = ''; Sfx.play('blip'); return; }
+    if (id.startsWith('kind')){ this.whole = 'make a ' + Words.KIND[+id.slice(4)] + ' game'; this.pickWho = this.pickHow = null; Sfx.play('blip'); return; }
+    if (id.startsWith('foe')){ this.whole = 'use ' + Words.FOE[+id.slice(3)]; this.pickWho = this.pickHow = null; Sfx.play('blip'); return; }
+    if (id === 'sky'){ this.whole = 'make it ' + (sp.sky === 'day' ? 'night' : 'day'); this.pickWho = this.pickHow = null; Sfx.play('blip'); return; }
+    if (id.startsWith('line')){ const i = +id.slice(4); this.sel = this.sel === i ? null : i; Sfx.play('blip');
+      if (this.sel != null && !Spec.isNum(Spec.FIELDS[i][0])) this.note = 'THAT LINE IS A WORD. ASK CHIP TO CHANGE IT.'; else this.note = ''; return; }
+    if (id === 'minus' || id === 'plus'){
+      const k = Spec.FIELDS[this.sel][0], r = Spec.apply(sp, { [k]: sp[k] + (id === 'plus' ? 1 : -1) });
+      if (r.changes.length){ this.hist.push(sp); this.spec = r.spec; this.lit = { [k]: 1 }; this.tests = null; Sfx.play('blip'); this.save(); }
+      return;
+    }
+    if (id === 'undo'){
+      if (!this.hist.length){ this.chip(['There is nothing to undo. I have done nothing wrong yet.']); return; }
+      this.spec = this.hist.pop(); this.lit = {}; this.tests = null; this.save();
+      this.chip(['Undone. It is how it was. I liked my version.']); return;
+    }
+    if (id === 'ask'){
+      const text = this.sentence();
+      if (!text){ this.chip(['You have not said anything yet. Pick some words.']); return; }
+      this.phase = 'think'; this.pf = 0; this.pending = null; this.asking = text;
+      if (Maker.model === Scripted) this.pending = Maker.rules(text, this.spec);      // the rules answer at once
+      else Maker.ask(text, this.spec).then(r => { this.pending = r; });
+      return;
+    }
+    if (id === 'test'){ this.tests = Testers.all(sp, 11 + this.n); this.phase = 'test'; this.pf = 0; Talk.hush(); Sfx.play('pick'); return; }
+    if (id === 'play'){ this.m = MiniGame.make(sp, 11 + this.n); this.phase = 'play'; this.pf = 0; this.armed = false; Talk.hush(); Sfx.play('pick'); paintHud(); return; }
+  },
+
+  judge(){
+    const o = this.order();
+    if (!o || !o.done(this.spec, this.tests, this.mine)) return false;
+    this.n++; this.filled = true; this.save(); Sfx.play('win');
+    return true;
+  },
+
+  update(inp, pr){
+    this.pf++;
+    const taps = MakerPtr.taps.splice(0);
+    if (this.greet){ this.greet = false; const o = this.order(); if (o) this.chip([o.ask.charAt(0) + o.ask.slice(1).toLowerCase()], o.from); else this.chip(['The workshop is yours. Make anything.']); }
+    if (this.phase === 'think'){
+      if (this.pending && this.pf > 34){
+        const r = this.pending; this.pending = null;
+        if (r.changes.length){ this.hist.push(this.spec); if (this.hist.length > 30) this.hist.shift(); this.spec = r.spec; this.tests = null; this.asked++; }
+        this.lit = {}; r.changes.forEach(c => { this.lit[c.k] = 1; });
+        this.pickWho = this.pickHow = null; this.whole = ''; this.sel = null; this.note = '';
+        this.phase = 'shop'; this.save(); this.chip(r.say); Sfx.play(r.changes.length ? 'pick' : 'blip');
+      }
+      return;
+    }
+    if (this.phase === 'test'){
+      if (this.pf === 150) this.judge();
+      if (this.pf > 150 && (pr.jump || taps.length)){ this.after(); }
+      return;
+    }
+    if (this.phase === 'play'){
+      const m = this.m, drag = typeof Touchy !== 'undefined' && Touchy.down && m.kind !== 'jumping';
+      if (!inp.jump && !MakerPtr.down) this.armed = true;        // the press that chose PLAY IT is not a jump
+      const ip = { left: inp.left, right: inp.right, jump: this.armed && (inp.jump || MakerPtr.down) };
+      if (drag && !inp.left && !inp.right){ if (Touchy.x < m.hero.x - 5) ip.left = true; else if (Touchy.x > m.hero.x + 5) ip.right = true; }
+      const lives = m.lives, got = m.got;
+      const st = MiniGame.step(m, ip);
+      if (m.lives < lives){ Sfx.play('hurt'); this.host.flash = 14; }
+      if (m.got > got) Sfx.play('pick');
+      if (m.lives !== lives || m.got !== got) paintHud();
+      if (st !== 'play'){
+        this.mine = { won: st === 'won', roses: m.got, lives: Math.max(0, m.lives) };
+        this.phase = 'done'; this.pf = 0; Sfx.play(st === 'won' ? 'win' : 'lose'); paintHud();
+        this.judge();
+      }
+      return;
+    }
+    if (this.phase === 'done'){
+      if (this.pf > 40 && (pr.jump || taps.length)) this.after();
+      return;
+    }
+    // ----- the bench -----
+    const it = this.items();
+    if (taps.length){
+      const [tx, ty] = taps[taps.length - 1]; let best = null, bd = 1e9;
+      it.forEach(q => {
+        const dx = Math.max(q.x - tx, 0, tx - q.x - q.w), dy = Math.max(q.y - ty, 0, ty - q.y - q.h), d = Math.hypot(dx, dy);
+        if (d < bd){ bd = d; best = q; }
+      });
+      if (best && bd < 10){ this.focus = best.id; this.press(best.id); }
+      return;
+    }
+    let cur = it.find(q => q.id === this.focus) || it.find(q => q.id === 'ask');
+    const dir = pr.left ? [-1, 0] : pr.right ? [1, 0] : pr.up ? [0, -1] : pr.down ? [0, 1] : null;
+    if (dir){
+      const cx = cur.x + cur.w / 2, cy = cur.y + cur.h / 2; let best = null, bs = 1e9;
+      it.forEach(q => {
+        if (q === cur) return;
+        const dx = q.x + q.w / 2 - cx, dy = q.y + q.h / 2 - cy, along = dx * dir[0] + dy * dir[1], side = Math.abs(dx * dir[1]) + Math.abs(dy * dir[0]);
+        if (along < 6 || side > 60 + along * 1.5) return;
+        const sc = along + side * 2.2;
+        if (sc < bs){ bs = sc; best = q; }
+      });
+      if (best){ this.focus = best.id; Sfx.play('blip'); }
+    }
+    if (pr.jump) this.press((it.find(q => q.id === this.focus) || cur).id);
+  },
+  after(){
+    this.phase = 'shop'; this.pf = 0; paintHud();
+    if (this.filled){
+      this.filled = false;
+      if (this.n >= ORDERS.length){ this.host.score = ORDERS.length; this.save(); this.host.win(); return; }
+      this.brief();
+      const o = this.order();
+      this.chip([o.ask.charAt(0) + o.ask.slice(1).toLowerCase()], o.from);
+    }
+  },
+
+  /* ----- drawing ----- */
+  box(q, fill, edge, ink, size){
+    g.fillStyle = fill; g.fillRect(q.x, q.y, q.w, q.h);
+    g.strokeStyle = edge; g.lineWidth = 1; g.strokeRect(q.x + 0.5, q.y + 0.5, q.w - 1, q.h - 1);
+    if (q.label) txt(q.label, q.x + q.w / 2, q.y + q.h / 2 + (size || 11) * 0.36, size || 11, ink);
+  },
+  draw(){
+    if (this.phase === 'play' || this.phase === 'done'){
+      MiniGame.draw(this.m, t);
+      if (this.phase === 'done'){
+        g.fillStyle = 'rgba(6,3,12,.72)'; g.fillRect(120, 96, 400, 150);
+        txt(this.mine.won ? 'YOU WON IT' : 'YOU LOST IT', W / 2, 136, 26, this.mine.won ? '#ffd76b' : '#ff3b6b');
+        txt('ROSES  ' + this.mine.roses + '      LIVES LEFT  ' + this.mine.lives, W / 2, 166, 13, '#f2e9f7');
+        if (this.filled) txt('ORDER FILLED', W / 2, 194, 15, '#3fd6c0');
+        if (this.pf > 40 && (REDUCED || Math.floor(t / 28) % 2)) txt(say('PRESS  A  FOR THE WORKSHOP', 'TAP FOR THE WORKSHOP'), W / 2, 226, 13, '#f2e9f7');
+      }
+      return;
+    }
+    const sp = this.spec, o = this.order();
+    g.fillStyle = '#0c1418'; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(63,214,192,.07)'; g.fillRect(0, 0, W, H);
+    // the order
+    if (o){ txt(o.from + ' WANTS:', W / 2, 52, 10, '#3fd6c0'); txt(o.ask, W / 2, 68, 12, '#ffd76b'); }
+    else txt(this.note, W / 2, 62, 12, '#ffd76b');
+    if (this.phase === 'think' || this.phase === 'test'){ this.panel(o); return; }    // the bench steps aside
+    // the code
+    g.fillStyle = '#081013'; g.fillRect(10, 76, 208, 190);
+    g.strokeStyle = '#1f5a52'; g.lineWidth = 1; g.strokeRect(10.5, 76.5, 207, 189);
+    Spec.FIELDS.forEach((f, i) => {
+      const k = f[0], y = 85 + i * 13, lit = this.lit[k], sel = this.sel === i, foc = this.focus === 'line' + i;
+      if (sel || foc){ g.fillStyle = sel ? 'rgba(255,215,107,.22)' : 'rgba(63,214,192,.16)'; g.fillRect(12, y, 204, 13); }
+      if (!Arcade.quiet){
+        g.font = 'bold 11px ui-monospace, Menlo, Consolas, monospace'; g.textAlign = 'left';
+        g.fillStyle = lit ? '#ffd76b' : '#7fb8ae'; g.fillText(k, 18, y + 10);
+        g.fillStyle = lit ? '#fff' : '#d7efe9'; g.fillText('= ' + sp[k], 124, y + 10);
+        if (lit){ g.fillStyle = '#ffd76b'; g.fillText('◀', 204, y + 10); }
+      }
+    });
+    const it = this.items();
+    it.forEach(q => {
+      if (q.id.startsWith('line')) return;
+      const foc = this.focus === q.id, big = q.id === 'ask' || q.id === 'test' || q.id === 'play';
+      const ready = q.id === 'ask' && !!this.sentence() && this.phase === 'shop';
+      if (big) this.box(q, ready ? '#3fd6c0' : '#12332f', foc ? '#fff' : '#3fd6c0', ready ? '#06211d' : '#c9fff4', 13);
+      else this.box(q, q.on ? '#ffd76b' : '#172428', foc ? '#fff' : (q.on ? '#ffd76b' : '#2f5750'), q.on ? '#2a1c00' : '#d7efe9', q.label.length > 13 ? 10 : 11);
+      if (foc){ g.strokeStyle = '#fff'; g.lineWidth = 2; g.strokeRect(q.x - 1, q.y - 1, q.w + 2, q.h + 2); }
+    });
+    // what you are about to say
+    const s = this.sentence();
+    txt(s ? 'CHIP,  ' + s.toUpperCase() : 'PICK WORDS TO MAKE A SENTENCE', 426, 88, 12, s ? '#fff' : '#5f8d85');
+    const small = (this.note && o) ? this.note : (o ? o.hint : '');
+    if (small){                                              // a short note, wrapped into the gap beside UNDO
+      const words = small.split(/\s+/), rows = ['']; words.forEach(w2 => { if ((rows[rows.length - 1] + ' ' + w2).trim().length > 24) rows.push(w2); else rows[rows.length - 1] = (rows[rows.length - 1] + ' ' + w2).trim(); });
+      rows.slice(0, 3).forEach((r, i) => txt(r, 561, 242 + i * 10 - (rows.length > 2 ? 3 : 0), 8, this.note && o ? '#ffd76b' : '#6fa39a'));
+    }
+  },
+  panel(o){
+    if (this.phase === 'think'){
+      g.fillStyle = 'rgba(6,3,12,.93)'; g.fillRect(150, 120, 340, 96);
+      g.strokeStyle = '#3fd6c0'; g.lineWidth = 1; g.strokeRect(150.5, 120.5, 339, 95);
+      Cast.draw('CHIP', 200, 196, 1, true, 1.1);
+      txt('"' + this.asking.toUpperCase() + '"', 350, 152, 12, '#ffd76b');
+      txt('CHIP IS WRITING' + '.'.repeat(1 + Math.floor(this.pf / 10) % 3), 350, 180, 14, '#f2e9f7');
+    }
+    if (this.phase === 'test'){
+      g.fillStyle = '#081013'; g.fillRect(110, 78, 420, 196);
+      g.strokeStyle = '#3fd6c0'; g.lineWidth = 1; g.strokeRect(110.5, 78.5, 419, 195);
+      txt('THE TESTERS PLAYED IT', W / 2, 102, 14, '#3fd6c0');
+      this.tests.forEach((r, i) => {
+        if (this.pf < 26 + i * 40) return;
+        const y = 134 + i * 34;
+        Cast.draw(r.who, 150, y + 10, 1, false, 0.6);
+        txt(r.who, 176, y - 2, 12, '#f2e9f7', 'left'); txt(Testers.NOTE[r.who], 176, y + 11, 8, '#7fb8ae', 'left');
+        txt(r.won ? 'WON' : 'LOST', 372, y + 4, 15, r.won ? '#ffd76b' : '#ff3b6b');
+        txt('✿ ' + r.roses + '    ♥ ' + r.lives, 462, y + 4, 12, '#d7efe9');
+      });
+      if (this.pf >= 150){
+        if (this.filled) txt('ORDER FILLED', W / 2, 240, 15, '#3fd6c0');
+        else if (o) txt('NOT WHAT ' + o.from + ' ASKED FOR YET', W / 2, 240, 12, '#ff9f1c');
+        if (REDUCED || Math.floor(t / 28) % 2) txt(say('PRESS  A', 'TAP'), W / 2, 262, 12, '#f2e9f7');
+      }
+    }
+  }
+};
+
+/* ============================================================
    LAYER 7 — FINGERS. Everything a tablet needs that a keyboard
    never did. No cabinet's rules change in here: this layer only
    turns a finger on the glass into the same inputs the buttons
