@@ -1,5 +1,7 @@
 // Cranky Chickens — CCRoom: a two-device room joined by a 4-letter code.
-// One device makes a room, the other types the code, and the two then talk directly (WebRTC data channel, via PeerJS).
+// One device makes a room, the other types the code, and their messages pass through our small relay
+// (services/relay, a WebSocket at rooms.crankychickens.com). If the relay cannot be reached, it falls back to a
+// direct device-to-device link (WebRTC data channel, via PeerJS), which works on some networks and not others.
 // No names, no chat, no accounts: games send their own small number-only messages and must validate what arrives.
 // No UI here. A game reads CCRoom.st / code / msg / diag each frame and draws its own screens.
 //   CCRoom.make('ccblk-')        make a room      -> st 'making' -> 'waiting' (code is ready) -> 'up'
@@ -13,8 +15,67 @@
   var HERE = (document.currentScript && document.currentScript.src) || '';
   var PEER_SRC = HERE ? HERE.replace(/cc-room\.js.*$/, 'vendor/peerjs.min.js') : '../js/vendor/peerjs.min.js';
   var ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ';        // no I, L or O: they look like 1 and 0
-  var R = { ABC: ABC, st: 'idle', host: false, code: '', msg: '', diag: '', pending: false, onup: null, onmsg: null, ondown: null };
-  var peer = null, conn = null, answered = false, timer = 0, gen = 0, wl = null, wlWant = false;
+  var R = { ABC: ABC, st: 'idle', host: false, code: '', msg: '', diag: '', pending: false, viaRelay: false, onup: null, onmsg: null, ondown: null };
+  var peer = null, conn = null, rc = null, answered = false, timer = 0, gen = 0, wl = null, wlWant = false;
+  // Where the relay lives. window.CC_RELAY = '' turns it off (direct link only); a ws:// URL points at a test relay.
+  R.relayUrl = function(){ return window.CC_RELAY !== undefined ? window.CC_RELAY : 'wss://rooms.crankychickens.com'; };
+
+  // A relay connection that looks like a PeerJS one: on('open'|'data'|'close'|'error'), send(obj), close().
+  //   'room'  the room is made (host only)      'open'  both devices are here
+  //   'close' (code) after it was reached: 4409 code taken, 4404 no such room, 4403 full, 4410 the other side left
+  //   'error' the relay was never reached, so the caller can try the direct link instead
+  // Sends are gathered for 30ms and go out as one frame, which keeps a fast game well inside the relay's free allowance.
+  R.relay = function(room, role){
+    var h = {}, q = [], flushT = 0, pingT = 0, openT = 0, opened = false, up = false, done = false, ws = null;
+    var emit = function(e, a){ if (h[e]) try { h[e](a); } catch (err){} };
+    var flush = function(){ flushT = 0; if (q.length && ws && ws.readyState === 1) try { ws.send(JSON.stringify(q)); } catch (err){} q = []; };
+    var stop = function(){ clearTimeout(flushT); clearInterval(pingT); clearTimeout(openT); };
+    var c = {
+      relay: true,
+      on: function(e, f){ h[e] = f; },
+      send: function(o){ if (!up || done) return; q.push(o); if (!flushT) flushT = setTimeout(flush, 30); },
+      close: function(){ if (done) return; if (flushT){ clearTimeout(flushT); flush(); } done = true; stop(); try { ws.close(1000); } catch (err){} }
+    };
+    setTimeout(function(){
+      if (done) return;
+      try { ws = new WebSocket(R.relayUrl() + '/room/' + room + '?role=' + role); } catch (err){ done = true; emit('error'); return; }
+      openT = setTimeout(function(){ if (!opened && !done){ done = true; stop(); try { ws.close(); } catch (err){} emit('error'); } }, 6000);
+      ws.onopen = function(){ opened = true; clearTimeout(openT); pingT = setInterval(function(){ if (ws.readyState === 1) try { ws.send('ping'); } catch (err){} }, 25000); };
+      ws.onmessage = function(ev){
+        if (done || typeof ev.data !== 'string' || ev.data === 'pong') return;
+        var d; try { d = JSON.parse(ev.data); } catch (err){ return; }
+        if (Array.isArray(d)){ for (var i = 0; i < d.length && i < 400; i++) emit('data', d[i]); }
+        else if (d && d._ === 'room') emit('room');
+        else if (d && d._ === 'up'){ up = true; emit('open'); }
+      };
+      ws.onclose = function(ev){ if (done) return; done = true; stop(); if (opened) emit('close', ev.code); else emit('error'); };
+      ws.onerror = function(){};
+    }, 0);
+    return c;
+  };
+  function wireRelay(c, prefix, code, role){
+    rc = c;
+    c.on('room', function(){ if (rc === c && R.st === 'making') R.st = 'waiting'; });
+    c.on('open', function(){
+      if (rc !== c) return;
+      conn = c; R.viaRelay = true; clearTimeout(timer); R.st = 'up'; R.pending = false; R.msg = ''; R.diag = '';
+      if (R.onup) try { R.onup(R.host); } catch (e){}
+    });
+    c.on('data', function(d){
+      if (rc !== c || !d || typeof d !== 'object') return;
+      if (d.t === 'bye'){ fail('Your friend left.'); return; }
+      if (R.st === 'up' && R.onmsg) try { R.onmsg(d); } catch (e){}
+    });
+    c.on('close', function(why){
+      if (rc !== c) return;
+      if (R.st === 'up'){ fail('Your friend left.'); return; }
+      rc = null;
+      if (role === 'host'){ if (why === 4409) R.make(prefix); else fail('The room closed. Make a new one.'); }
+      else if (why === 4404) peerJoin(prefix, code);          // not on the relay: the room may have been made the direct way
+      else fail(why === 4403 ? 'That room already has two players.' : 'Could not reach the room. Check your wifi.');
+    });
+    c.on('error', function(){ if (rc !== c) return; rc = null; if (role === 'host') peerMake(prefix, code); else peerJoin(prefix, code); });
+  }
 
   function wake(on){
     wlWant = on;
@@ -38,9 +99,10 @@
     return s;
   }
   function teardown(){
-    var c = conn, p = peer; conn = null; peer = null; answered = false; R.pending = false; gen++;
+    var c = conn, p = peer, r = rc; conn = null; peer = null; rc = null; answered = false; R.pending = false; R.viaRelay = false; gen++;
     clearTimeout(timer); wake(false);
     try { if (c) c.close(); } catch (e){}
+    try { if (r && r !== c) r.close(); } catch (e){}
     try { if (p) p.destroy(); } catch (e){}
   }
   function fail(msg, diag){ var wasUp = R.st === 'up'; teardown(); R.st = 'idle'; R.msg = msg || ''; R.diag = diag || ''; if (wasUp && R.ondown) try { R.ondown(R.msg); } catch (e){} }
@@ -111,7 +173,10 @@
 
   R.make = function(prefix){
     teardown(); R.host = true; R.msg = ''; R.diag = ''; R.st = 'making'; R.code = code4(); wake(true);
-    var g = gen, code = R.code;
+    if (R.relayUrl()) wireRelay(R.relay(prefix + R.code, 'host'), prefix, R.code, 'host'); else peerMake(prefix, R.code);
+  };
+  function peerMake(prefix, code){
+    var g = gen;
     loadPeer(function(){
       if (gen !== g) return;
       var p = peer = new Peer(prefix + code, opts());
@@ -124,18 +189,22 @@
       p.on('error', function(e){ if (peer !== p) return; if (e && e.type === 'unavailable-id' && R.st !== 'up') R.make(prefix); else peerErr(e); });
       p.on('disconnected', function(){ if (peer === p && R.st !== 'up') try { p.reconnect(); } catch (e){} });
     });
-  };
+  }
   R.join = function(prefix, code){
     teardown(); R.host = false; R.msg = ''; R.diag = ''; R.st = 'joining'; R.code = code; wake(true);
     var g = gen;
     timer = setTimeout(function(){ if (gen === g && R.st === 'joining' && !conn) fail('Could not reach the room server. Check your wifi.'); }, 20000);
+    if (R.relayUrl()) wireRelay(R.relay(prefix + code, 'join'), prefix, code, 'join'); else peerJoin(prefix, code);
+  };
+  function peerJoin(prefix, code){
+    var g = gen;
     loadPeer(function(){
       if (gen !== g) return;
       var p = peer = new Peer(opts());
       p.on('open', function(){ if (peer === p && !conn) wire(p.connect(prefix + code, { reliable: true, serialization: 'json' })); });
       p.on('error', function(e){ if (peer === p) peerErr(e); });
     });
-  };
+  }
   R.send = function(o){ if (conn && R.st === 'up') try { conn.send(o); } catch (e){} };
   R.close = function(){ if (R.st === 'up') R.send({ t: 'bye' }); teardown(); R.st = 'idle'; R.msg = ''; R.diag = ''; };
   // For tests: wire a stand-in connection ({on, send, close}) without a room server.

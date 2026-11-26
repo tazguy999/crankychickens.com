@@ -782,9 +782,9 @@ function endRound(){
 }
 // ── FRIEND MATCH (netplay) ── two devices, one room code. Lockstep: both run the same 60Hz sim and only trade button presses.
 // Host = left fighter (player 0), guest = right fighter (player 1). Only numbers cross the wire: no names, no chat.
-const NETV=1,NETABC='ABCDEFGHJKMNPQRSTUVWXYZ',NETPRE='ccmsb-';
+const NETV=2,NETABC='ABCDEFGHJKMNPQRSTUVWXYZ',NETPRE='ccmsb-';
 const NET={on:false,me:0,host:false,code:'',entry:'',msg:'',peer:null,conn:null,up:false,reg:false,D:3,gid:0,simF:0,sendF:0,loc:{},rem:{},e:0,wait:0,
-  picks:[0,1],mr:false,rr:false,rp:0,mp:0,ck:{},rck:{},snapAt:-1,snap:undefined,desyncs:0,res:-1,cT:0,diag:'',ans:false,failing:false};
+  picks:[0,1],mr:false,rr:false,rp:0,mp:0,ck:{},rck:{},snapAt:-1,snap:undefined,desyncs:0,res:-1,cT:0,diag:'',ans:false,failing:false,rc:null,relay:false,rtt:0};
 const NBUF=[{p:0,k:0,s:0},{p:0,k:0,s:0}];
 const NC=[0,1].map(i=>({mx:0,up:false,dn:false,blk:false,btn:null,ok:false,take(){const b=NBUF[i];b.p=b.k=b.s=0;this.btn=null;}}));
 const FST=['idle','walk','crouch','block','jump','attack','hit','blockstun','down','getup','lag','tell','ko'];
@@ -828,8 +828,8 @@ function netCode(){
   for(let i=0;i<4;i++)s+=NETABC[r[i]%NETABC.length];return s;
 }
 function netClose(){
-  const N=NET,c=N.conn,p=N.peer;N.on=false;N.up=false;N.reg=false;N.conn=null;N.peer=null;N.mr=N.rr=false;N.ans=false;N.failing=false;wake(false);
-  try{if(c)c.close();}catch(e){}try{if(p)p.destroy();}catch(e){}
+  const N=NET,c=N.conn,p=N.peer,r=N.rc;N.on=false;N.up=false;N.reg=false;N.conn=null;N.peer=null;N.rc=null;N.relay=false;N.rtt=0;N.mr=N.rr=false;N.ans=false;N.failing=false;wake(false);
+  try{if(c)c.close();}catch(e){}try{if(r&&r!==c)r.close();}catch(e){}try{if(p)p.destroy();}catch(e){}
 }
 function netBack(m){const h=NET.host;netClose();NET.msg=m||'';NET.diag='';NET.entry='';go(h?'nmenu':'njoin');}
 function netLost(m){
@@ -850,8 +850,40 @@ function netErr(e){
   const t=e&&e.type;
   netBack(t==='peer-unavailable'?'No room with that code. Check the letters!':t==='browser-incompatible'?'This browser cannot do friend play.':'Could not reach the room server. Check your wifi.');
 }
+// The shared room module (js/cc-room.js) carries the relay: a small WebSocket server of ours that passes messages
+// between the two devices. It works on any network the site works on. The direct link (PeerJS) is the fallback.
+function loadRoom(cb){
+  if(window.CCRoom)return cb();
+  const s=document.createElement('script');s.src='../js/cc-room.js?v=2';s.onload=cb;s.onerror=cb;document.head.appendChild(s);
+}
+function netRelay(role,code,direct){
+  const N=NET,c=CCRoom.relay(NETPRE+code,role);N.rc=c;
+  c.on('room',()=>{if(N.rc===c)N.reg=true;});
+  c.on('open',()=>{
+    if(N.rc!==c)return;
+    N.rc=null;N.relay=true;N.conn=c;N.up=true;N.msg='';N.diag='';N.me=N.host?0:1;
+    netSend({t:'hi',v:NETV});sfx('ok');ev('msb_friend_connect');netToSelect();
+  });
+  c.on('data',d=>{if(N.conn===c)netMsg(d);});
+  c.on('close',why=>{
+    if(N.conn===c){netLost();return;}
+    if(N.rc!==c)return;
+    N.rc=null;
+    if(role==='host'){if(why===4409)netHost();else netBack('The room closed. Make a new one.');}
+    else if(why===4404)direct();                   // not on the relay: the room may have been made the direct way
+    else netBack(why===4403?'That room already has two players.':'Could not reach the room. Check your wifi.');
+  });
+  c.on('error',()=>{if(N.rc!==c)return;N.rc=null;direct();});   // relay not reachable: try the direct link
+}
 function netHost(){
   const N=NET;netClose();N.host=true;N.msg='';N.diag='';N.cT=0;const code=N.code=netCode();go('nhost');wake(true);
+  loadRoom(()=>{
+    if(gst!=='nhost'||N.code!==code||N.peer||N.rc)return;
+    if(window.CCRoom&&CCRoom.relayUrl())netRelay('host',code,()=>netHostPeer(code));else netHostPeer(code);
+  });
+}
+function netHostPeer(code){
+  const N=NET;
   loadPeer(()=>{
     if(gst!=='nhost'||N.code!==code||N.peer)return;
     const p=N.peer=new Peer(NETPRE+code,netOpts());
@@ -867,6 +899,13 @@ function netHost(){
 }
 function netJoin(code){
   const N=NET;netClose();N.host=false;N.msg='';N.diag='';N.code=code;N.cT=0;go('nconn');wake(true);
+  loadRoom(()=>{
+    if(gst!=='nconn'||N.code!==code||N.peer||N.rc)return;
+    if(window.CCRoom&&CCRoom.relayUrl())netRelay('join',code,()=>netJoinPeer(code));else netJoinPeer(code);
+  });
+}
+function netJoinPeer(code){
+  const N=NET;
   loadPeer(()=>{
     if(gst!=='nconn'||N.code!==code||N.peer)return;
     const p=N.peer=new Peer(netOpts());
@@ -891,7 +930,9 @@ function netToSelect(){
 }
 function netMaybeStart(){
   const N=NET;if(N.me!==0||!N.mr||!N.rr||gst!=='nsel')return;
-  N.picks=[N.mp,N.rp];N.gid++;netSend({t:'start',p:N.picks,g:N.gid});netStart();
+  // Buttons are queued D frames ahead so both devices have them in time. Size D to the measured round trip.
+  N.D=N.rtt?clamp(Math.ceil((N.rtt/2+20)/16.67)+1,3,10):(N.relay?6:3);
+  N.picks=[N.mp,N.rp];N.gid++;netSend({t:'start',p:N.picks,g:N.gid,d:N.D});netStart();
 }
 function netStart(){
   const N=NET;N.on=true;N.simF=0;N.sendF=0;N.loc={};N.rem={};N.e=0;N.wait=0;N.ck={};N.rck={};N.snapAt=-1;N.snap=undefined;N.res=-1;
@@ -979,11 +1020,13 @@ function netMsg(d){
     case'hi':if(d.v!==NETV){netSend({t:'bye'});netLost('Your games are different versions. Refresh both and try again.');}break;
     case'i':if(N.on&&d.g===N.gid&&int(d.f)&&d.f>=N.simF&&d.f<N.simF+600&&int(d.m)&&d.m>=0&&d.m<512)N.rem[d.f]=d.m;break;
     case'pick':if(gst==='nsel'&&int(d.i)&&d.i>=0&&d.i<SEL.length){N.rp=d.i;N.rr=true;sfx('tick');netMaybeStart();}break;
-    case'start':if(N.me===1&&gst==='nsel'&&N.mr&&Array.isArray(d.p)&&int(d.p[0])&&d.p[0]>=0&&d.p[0]<SEL.length&&d.p[1]===N.mp&&int(d.g)){N.picks=[d.p[0],d.p[1]];N.gid=d.g;netStart();}break;
+    case'start':if(N.me===1&&gst==='nsel'&&N.mr&&Array.isArray(d.p)&&int(d.p[0])&&d.p[0]>=0&&d.p[0]<SEL.length&&d.p[1]===N.mp&&int(d.g)&&int(d.d)&&d.d>=3&&d.d<=10){N.picks=[d.p[0],d.p[1]];N.gid=d.g;N.D=d.d;netStart();}break;
     case'again':if(gst==='netover')netToSelect();break;
     case'ck':if(N.on&&int(d.f)&&int(d.h)&&Math.abs(d.f-N.simF)<600){N.rck[d.f]=d.h;netCmp(d.f);}break;
     case'sreq':if(N.on&&N.me===1&&int(d.f)&&d.f>=N.simF&&d.f<N.simF+600)N.snapAt=d.f;break;
     case'snap':if(N.on&&N.me===1&&d.f===N.snapAt)N.snap=d.s||null;break;
+    case'pg':if(typeof d.n==='number'&&isFinite(d.n))netSend({t:'po',n:d.n});break;
+    case'po':if(N.me===0&&typeof d.n==='number'){const r=performance.now()-d.n;if(r>=0&&r<5000)N.rtt=N.rtt?N.rtt*0.7+r*0.3:r;}break;
     case'bye':netLost();break;
   }
 }
@@ -1108,6 +1151,7 @@ function step(){
       break;
     case'nsel':
       if(hit('back')){toTitle();break;}
+      if(NET.me===0&&gT%20===1)netSend({t:'pg',n:performance.now()});
       if(!NET.mr){
         if(EDGE.left&&selIdx>0){selIdx--;sfx('tick');}
         if(EDGE.right&&selIdx<SEL.length-1){selIdx++;sfx('tick');}

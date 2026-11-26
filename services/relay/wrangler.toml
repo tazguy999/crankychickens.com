@@ -1,0 +1,16 @@
+# Cranky Chickens room relay. Deploy from this folder with:  npx wrangler deploy
+name = "cranky-rooms"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+
+# Served at rooms.crankychickens.com (the games look for it there). Cloudflare creates the DNS record.
+routes = [{ pattern = "rooms.crankychickens.com", custom_domain = true }]
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
