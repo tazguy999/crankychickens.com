@@ -52,6 +52,7 @@ button:active{transform:scale(0.96);}
   <button id="voiceBtn">🗣 VOICES: ON</button>
 </div>
 <div id="chapters"></div>
+<div id="gameRow" style="text-align:center;padding-bottom:10px;"><a id="gameLink" href="/games/minis.html" style="display:inline-block;font-family:'Fredoka One',cursive;background:#ffcc02;color:#1a1024;border-radius:10px;padding:12px 18px;font-size:15px;text-decoration:none;">🎮 Play the mini game</a></div>
 <div id="notifyRow"><button id="notifyBtn">🔔 Tell me when new episodes are ready!</button></div>
 <a id="homeLink" href="/">← back to crankychickens.com</a>
 </div>
@@ -722,7 +723,8 @@ function render(){
   });
   if(!playing&&T<TOTAL){ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(255,204,2,0.95)';ctx.beginPath();ctx.arc(W/2,H/2,44,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#1a1024';ctx.beginPath();ctx.moveTo(W/2-13,H/2-22);ctx.lineTo(W/2+24,H/2);ctx.lineTo(W/2-13,H/2+22);ctx.closePath();ctx.fill();}
-  if(sc.mini!==curMini){curMini=sc.mini;document.querySelectorAll('#chapters button').forEach((b,i)=>b.classList.toggle('on',i===curMini));}
+  if(sc.mini!==curMini){curMini=sc.mini;document.querySelectorAll('#chapters button').forEach((b,i)=>b.classList.toggle('on',i===curMini));
+    const gl=document.getElementById('gameLink');if(gl&&MINIS[curMini]){gl.href='/games/minis.html#'+(curMini+1);gl.textContent='🎮 Play the mini game for "'+MINIS[curMini].title+'"';}}
   updateUI();
 }
 function fmtTime(s){const m=Math.floor(s/60),ss=Math.floor(s%60);return m+':'+String(ss).padStart(2,'0');}
