@@ -202,6 +202,19 @@ const PROJ={
 const SECRETS=['once spent a whole week lost inside a couch','still remembers the toy factory and the smell of new paint','is a little afraid of the dark, which is awkward for a night dragon','practices roaring into a sock so nobody can hear','wants to see snow up close someday','was a prize at a school carnival','kept a ladybug as a pet for one whole day','thinks the moon is a very large nightlight','has never told anyone they cannot actually fly','writes poems about the ceiling fan','once rode The Bark Lady like a horse and lived to tell it','is sure Charliescope can understand dragon language'];
 const SEASONS=['Spring','Summer','Fall','Winter'];
 const SNOTE={Spring:'Hatchling season. New arrivals come more often.',Summer:'Long evenings. You get 4 moves every Bedtime.',Fall:'Cozy season. Hangouts build bonds faster.',Winter:'Story season. Dino shares a clue every night.'};
+const PATCH={
+ star:{n:'Talent Star',how:'get a talent to Skilled',c:'#ffd93b',g:'<path d="M0 -4 L1.2 -1.3 L4 -1.2 L1.8 .6 L2.5 3.5 L0 1.9 L-2.5 3.5 L-1.8 .6 L-4 -1.2 L-1.2 -1.3Z"/>'},
+ heart:{n:'Best Friend Heart',how:'become Best friends with someone',c:'#ff8fc0',g:'<path d="M0 3.6 C-5.2 0 -3.4 -4.2 0 -1.4 C3.4 -4.2 5.2 0 0 3.6Z"/>'},
+ bolt:{n:'Brave Bolt',how:'face a fear',c:'#6ec6ff',g:'<path d="M1.2 -4.2 L-3 .6 L-.2 .6 L-1.2 4.2 L3 -.6 L.2 -.6Z"/>'},
+ book:{n:'Lesson Book',how:'teach or learn a talent with a Close friend',c:'#9be15d',g:'<path d="M-3.8 -2.8 H3.8 V3 H-3.8Z M0 -2.8 V3" fill="#fff" stroke="#151515" stroke-width="1.2"/>'},
+ brick:{n:"Builder's Brick",how:'help finish a Tribe project',c:'#ffa94d',g:'<path d="M-3.8 -2.6 H3.8 V2.6 H-3.8Z M-3.8 0 H3.8 M0 -2.6 V0 M-1.9 0 V2.6 M1.9 0 V2.6" fill="#fff" stroke="#151515" stroke-width="1.1"/>'},
+ moon:{n:'Wish Moon',how:'have a wish come true',c:'#b48cff',g:'<circle r="3.8" fill="#fff"/><circle cx="1.9" cy="-1.1" r="3.1" fill="#b48cff"/>'},
+ leaf:{n:'Mentor Leaf',how:'mentor a hatchling all the way to the naming ceremony',c:'#3fd0c0',g:'<path d="M-3.4 3.4 Q-3.6 -3.4 3.4 -3.4 Q3.6 3.6 -3.4 3.4Z" fill="#fff"/><path d="M-3 3 L2.4 -2.4" stroke="#151515" stroke-width="1" fill="none"/>'},
+ note:{n:'Stage Note',how:'wow the crowd at a Midnight Gathering',c:'#ff6b6b',g:'<path d="M-.6 2.2 V-3.8 L3.2 -2.8" fill="none" stroke="#151515" stroke-width="1.5" stroke-linecap="round"/><circle cx="-2" cy="2.4" r="1.9"/>'}
+};
+const PK=Object.keys(PATCH),PSLOT=[[42,73],[49,92],[63,39]];
+const patchG=(k,x,y)=>`<g transform="translate(${x} ${y}) rotate(-8)"><circle r="6.8" fill="${PATCH[k].c}" stroke="#151515" stroke-width="1.8"/><circle r="5" fill="none" stroke="#fff" stroke-width=".9" stroke-dasharray="1.6 1.6"/><g fill="#151515">${PATCH[k].g}</g></g>`;
+const patchIcon=k=>`<svg viewBox="-8 -8 16 16" width="26" height="26" aria-hidden="true" style="vertical-align:middle">${patchG(k,0,0)}</svg>`;
 const SCOL={Spring:'#1f3d5c',Summer:'#1b2659',Fall:'#3a2552',Winter:'#16304f'};
 const ACC={bow:'Bow',scarf:'Scarf',glasses:'Glasses',flower:'Flower',cape:'Cape',hat:'Party hat',crown:'Crown'},ACCK=Object.keys(ACC);
 const NAMES=['Pickle','Moss','Button','Noodle','Ember','Biscuit','Thimble','Pebble','Waffle','Zigzag','Marble','Clover','Sprocket','Fizz','Snickerdoodle','Velvet','Tater','Juniper','Comet','Bramble','Toast','Pudding','Glimmer','Doodle','Patch','Crumb','Twig','Nugget','Smudge','Flannel','Rhubarb','Peanut','Scorch','Wobble','Tinsel','Acorn','Pompom','Bubbles','Fig','Sprout','Cinder','Dumpling','Mochi','Quill','Rocket','Yarn','Zipper','Sock'];
@@ -268,14 +281,14 @@ function newDragon(stage){
     color:rnd(COLORS.length),fabric:pick(TYPES[type].fab),eyes:type==='stuffy'?pick(['button','button','dot','sleepy']):pick(['dot','sleepy']),
     horns:rnd(3),wing:pick(['bat','round','tiny']),pattern:pick(['plain','spots','stripes','star']),spikes:chance(.4),
     talents:ks.map(k=>({k,found:false,xp:0})),tried:[],hints:[],energy:0,mend:0,title:null,calling:null,acc:null,mentor:null,wish:null,
-    fav:pick(Object.keys(HANG)),favK:false,fear:pick(Object.keys(PLACES)),fearK:false,brave:false,secret:rnd(SECRETS.length),secK:false,learn:{}};
+    fav:pick(Object.keys(HANG)),favK:false,fear:pick(Object.keys(PLACES)),fearK:false,brave:false,secret:rnd(SECRETS.length),secK:false,learn:{},patches:[],worn:[],nameRights:0};
   d.energy=maxE(d);
   S.dragons.push(d);return d;
 }
 function newGame(){
   S={v:2,name:'The Pillow Tribe',night:1,acts:3,dragons:[],bonds:{},treasures:[],log:[],nextId:1,keeper:null,badges:[],hearts:0,accs:['bow'],neigh:{squad:0,court:0,navy:0},shelf:[],seen:false};
   ['loved','grown','grown','grown','grown','hatch'].forEach(st=>newDragon(st));
-  const e=S.dragons[0];e.age=16;e.talents[0].found=true;e.talents[0].xp=4;e.title=T[e.talents[0].k].title;S.keeper=e.id;
+  const e=S.dragons[0];e.age=16;e.talents[0].found=true;e.talents[0].xp=4;e.title=T[e.talents[0].k].title;S.keeper=e.id;e.patches=['star'];e.worn=['star'];e.nameRights=1;
   for(let i=0;i<S.dragons.length;i++)for(let j=i+1;j<S.dragons.length;j++)bondOf(S.dragons[i],S.dragons[j]).p=rnd(22);
   const o=bondOf(S.dragons[1],S.dragons[2]);o.p=42;o.mem.push('Before Bedtime 1: met in the toy box and stuck together ever since');
   S.dragons[5].mentor=e.id;
@@ -298,10 +311,15 @@ function ensure(s){
   Object.keys(PROJ).forEach(k=>{if(!s.proj[k]){s.proj[k]={done:false};PROJ[k].need.forEach(n=>{s.proj[k][n]=0;});}});
   if(s.snd===undefined)s.snd=true;if(s.music===undefined)s.music=false;
   s.dragons.forEach(d=>{if(!d.fav){d.fav=pick(Object.keys(HANG));d.favK=false;}if(!d.fear){d.fear=pick(Object.keys(PLACES));d.fearK=false;d.brave=false;}
-    if(d.secret===undefined){d.secret=rnd(SECRETS.length);d.secK=false;}if(!d.learn)d.learn={};});
+    if(d.secret===undefined){d.secret=rnd(SECRETS.length);d.secK=false;}if(!d.learn)d.learn={};
+    if(!d.patches){d.patches=[];if(d.talents.some(t=>t.found&&tl(t)>=3))d.patches.push('star');if(d.brave)d.patches.push('bolt');if(d.talents.some(t=>t.learned))d.patches.push('book');
+      if(Object.keys(s.bonds).some(k=>s.bonds[k].p>=85&&k.split('|').indexOf(String(d.id))>=0))d.patches.push('heart');
+      d.worn=d.patches.slice(0,3);d.nameRights=(d.title?1:0)+(d.calling?1:0)+(d.brave?1:0);}});
   return s;
 }
 const season=()=>SEASONS[Math.floor((S.night-1)/8)%4];
+function award(d,key,out){if(d.patches.indexOf(key)>=0)return;d.patches.push(key);if(d.worn.length<3)d.worn.push(key);const m=d.name+' earned a patch: the '+PATCH[key].n+'.';out.push({c:'loot',h:patchIcon(key)+' '+esc(m)});log(m,'loot');}
+function earnName(d,out){d.nameRights=(d.nameRights||0)+1;out.push({c:'ln',h:'✏️ '+esc(d.name+' earned the right to choose a new name. Open their page to use it.')});log(d.name+' earned the right to choose a new name.','spark');}
 const mendN=()=>S.proj.map.done?1:2;
 const teacher=(d,k)=>S.dragons.find(m=>m.id!==d.id&&!m.mend&&m.talents.some(x=>x.k===k&&x.found&&tl(x)>=3)&&lvl(bondOf(d,m).p)>=3);
 function save(){try{localStorage.setItem('hoard-v1',JSON.stringify(S));}catch(e){}}
@@ -340,7 +358,7 @@ function sweep(ctx,out){
     if(ok){const m=d.name+' '+wishText(d).replace('wants','wanted')+', and tonight it happened.';
       S.hearts++;out.push({c:'burst',h:'💖 WISH COME TRUE!<small>'+esc(m)+'</small>'});log('Wish come true: '+m,'bond');
       if(S.hearts%2===0){const nx=ACCK.find(a=>S.accs.indexOf(a)<0);if(nx){S.accs.push(nx);const m2='New dress-up item for the Tribe: the '+ACC[nx]+'.';out.push({c:'loot',h:'🎁 '+esc(m2)});log(m2,'loot');}}
-      newWish(d);}
+      award(d,'moon',out);newWish(d);}
   });
   REV=[];
 }
@@ -353,11 +371,12 @@ function addBond(a,b,amt,out){
     if(now>=3)[[a,b],[b,a]].forEach(p=>{const d=p[0],o2=p[1];if(!d.secK){d.secK=true;const m2=d.name+' told '+o2.name+' a secret: '+d.name+' '+SECRETS[d.secret]+'.';out.push({c:'ln',h:'💬 '+esc(m2)});log(m2,'bond');mem(d,o2,d.name+' shared a secret');}});
     if(now===4&&!o.duo){o.duo=pick(DUOS);const m2=a.name+' and '+b.name+' invented a duo move: '+o.duo+'.';
       out.push({c:'burst',h:'DUO MOVE!<small>'+esc(m2)+'</small>'});log(m2,'spark');}
+    if(now===4){award(a,'heart',out);award(b,'heart',out);}
   }
 }
 function calling(d,out){
   if(d.calling)return;const f=d.talents.filter(t=>t.found&&tl(t)>=2).sort((x,y)=>y.xp-x.xp);
-  if(f.length>=2){d.calling=T[f[0].k].adj+' '+T[f[1].k].noun;const m=d.name+' found a calling: '+d.calling+'.';out.push({c:'burst',h:'A CALLING!<small>'+esc(m)+'</small>'});log(m,'spark');}
+  if(f.length>=2){d.calling=T[f[0].k].adj+' '+T[f[1].k].noun;const m=d.name+' found a calling: '+d.calling+'.';out.push({c:'burst',h:'A CALLING!<small>'+esc(m)+'</small>'});log(m,'spark');earnName(d,out);}
 }
 function reveal(d,k,out){
   const t=tal(d,k);t.found=true;d.hints=d.hints.filter(h=>h!==k);REV.push(d.id);
@@ -368,7 +387,8 @@ function gainXp(d,k,out,n){
   const t=tal(d,k);if(!t||!t.found)return;
   const was=tl(t);t.xp+=n||1;const now=tl(t);
   if(now>was){const m=d.name+"'s "+T[k].n+' grew to '+LV[now]+'.';out.push({c:'ln',h:esc(m)});log(m,'spark');}
-  if(now>=3&&!d.title){d.title=T[k].title;const m=d.name+' earned a new name: '+nm(d)+'!';out.push({c:'burst',h:'A NEW NAME!<small>'+esc(m)+'</small>'});log(m,'spark');}
+  if(now>=3&&!d.title){d.title=T[k].title;const m=d.name+' earned a new name: '+nm(d)+'!';out.push({c:'burst',h:'A NEW NAME!<small>'+esc(m)+'</small>'});log(m,'spark');earnName(d,out);}
+  if(now>=3)award(d,'star',out);
   calling(d,out);
 }
 function giveHint(d){
@@ -414,7 +434,7 @@ function doTrain(d,k){
       d.learn[k]=(d.learn[k]||0)+1;out.push({c:'cap',h:esc(tc.name+' gave '+d.name+' a patient lesson in '+T[k].n.toLowerCase()+'.')});
       mem(d,tc,tc.name+' gave '+d.name+' a lesson in '+T[k].n.toLowerCase());addBond(d,tc,6,out);gainXp(tc,k,out);
       if(d.learn[k]>=3){d.tried=d.tried.filter(x=>x!==k);d.talents.push({k,found:true,xp:0,learned:true});
-        const m=d.name+' learned '+T[k].n+' from '+tc.name+'. Not born with it. Earned it.';out.push({c:'burst',h:T[k].i+' LEARNED TALENT!<small>'+esc(m)+'</small>'});log(m,'spark');}
+        const m=d.name+' learned '+T[k].n+' from '+tc.name+'. Not born with it. Earned it.';out.push({c:'burst',h:T[k].i+' LEARNED TALENT!<small>'+esc(m)+'</small>'});log(m,'spark');award(d,'book',out);award(tc,'book',out);}
       else out.push({c:'ln',h:esc('Lesson '+d.learn[k]+' of 3. It is slow going, but '+d.name+' is not giving up.')});
     }
   }else{
@@ -440,7 +460,7 @@ function doExp(team,placeKey,oi,ctx){
   const names=team.map(d=>d.name).join(team.length>2?', ':' and ');
   out.push({c:'cap',h:esc(names+' set out for '+pl.n+'.')});
   team.forEach(d=>{if(d.fear===placeKey&&!d.brave){const fr=team.find(o=>o!==d&&lvl(bondOf(d,o).p)>=2);d.fearK=true;
-    if(fr){d.brave=true;const m=d.name+' has always been scared of '+pl.n+'. With '+fr.name+' close by, '+d.name+' went anyway.';out.push({c:'burst',h:'🦁 BRAVE MOMENT!<small>'+esc(m)+'</small>'});log(m,'bond');mem(d,fr,fr.name+' helped '+d.name+' face a fear of '+pl.n);addBond(d,fr,8,out);}
+    if(fr){d.brave=true;const m=d.name+' has always been scared of '+pl.n+'. With '+fr.name+' close by, '+d.name+' went anyway.';out.push({c:'burst',h:'🦁 BRAVE MOMENT!<small>'+esc(m)+'</small>'});log(m,'bond');mem(d,fr,fr.name+' helped '+d.name+' face a fear of '+pl.n);addBond(d,fr,8,out);award(d,'bolt',out);earnName(d,out);}
     else{out.push({c:'oops',h:esc(d.name+' froze at the edge of '+pl.n+'. It turns out '+d.name+' is scared of this place. A friend on the team would help.')});log(d.name+' is afraid of '+pl.n+'.','oops');}}});
   const win=Math.random()*100<estimate(team,k,true,placeKey);
   const pairs=[];for(let i=0;i<team.length;i++)for(let j=i+1;j<team.length;j++)pairs.push([team[i],team[j]]);
@@ -500,7 +520,7 @@ function resolveEvent(ev,a,ci){
 function perform(d,g){
   const G=NEIGH[g],out=[],fs=d.talents.filter(t=>t.found).sort((x,y)=>y.xp-x.xp),liked=fs.find(t=>G.likes.indexOf(t.k)>=0);
   out.push({c:'cap',h:esc(d.name+' stepped onto the shoebox stage in front of '+G.n+'.')});let gain;
-  if(liked){gain=25+5*tl(liked);out.push({c:'ln',h:esc(d.name+' showed off some '+T[liked.k].n.toLowerCase()+'. The crowd went wild.')});gainXp(d,liked.k,out);}
+  if(liked){gain=25+5*tl(liked);out.push({c:'ln',h:esc(d.name+' showed off some '+T[liked.k].n.toLowerCase()+'. The crowd went wild.')});gainXp(d,liked.k,out);award(d,'note',out);}
   else if(fs.length){gain=10;out.push({c:'ln',h:esc(d.name+' showed off some '+T[fs[0].k].n.toLowerCase()+'. Polite clapping. Not really their kind of thing.')});gainXp(d,fs[0].k,out);}
   else{const h=d.talents.filter(t=>!t.found);
     if(h.length&&chance(.5)){out.push({c:'ln',h:esc(d.name+' froze in the spotlight. Then something amazing happened.')});reveal(d,pick(h).k,out);gain=18;}
@@ -514,11 +534,11 @@ function doBuild(team,pk){
     const open=P.need.filter(k=>st[k]<2);
     let k=open.find(x=>{const t=tal(d,x);return t&&t.found;});
     if(!k){k=open.find(x=>{const t=tal(d,x);return t&&!t.found;});if(k)reveal(d,k,out);}
-    if(k){st[k]++;out.push({c:'ln',h:esc(d.name+' added some '+T[k].n.toLowerCase()+' to the project.')});gainXp(d,k,out);}
+    if(k){st[k]++;st.by=st.by||[];if(st.by.indexOf(d.id)<0)st.by.push(d.id);out.push({c:'ln',h:esc(d.name+' added some '+T[k].n.toLowerCase()+' to the project.')});gainXp(d,k,out);}
     else out.push({c:'oops',h:esc(d.name+' carried things and cheered. The project still needs a dragon with the right talent.')});
   });
   if(team.length===2){mem(team[0],team[1],'worked on '+P.n+' together');addBond(team[0],team[1],5,out);}
-  if(!st.done&&P.need.every(k=>st[k]>=2)){st.done=true;const m='The Tribe finished '+P.n+'! '+P.perk;out.push({c:'burst',h:P.i+' PROJECT FINISHED!<small>'+esc(m)+'</small>'});log(m,'loot');}
+  if(!st.done&&P.need.every(k=>st[k]>=2)){st.done=true;const m='The Tribe finished '+P.n+'! '+P.perk;out.push({c:'burst',h:P.i+' PROJECT FINISHED!<small>'+esc(m)+'</small>'});log(m,'loot');(st.by||[]).forEach(id=>{const x=byId(id);if(x)award(x,'brick',out);});}
   spend(team);return out;
 }
 function checkBadges(out){
@@ -546,11 +566,12 @@ function lightsOut(){
     if(d.stage==='hatch'&&mt)addBond(d,mt,3,out);
     if(d.stage==='hatch'&&d.age>=3){
       d.stage='grown';const m='Naming ceremony! Wee '+d.name+' is all grown up and is now just '+d.name+'.';out.push({c:'burst',h:'🎉 GROWN UP!<small>'+esc(m)+'</small>'});log(m,'spark');
+      earnName(d,out);
       if(mt){mem(d,mt,mt.name+' stood beside '+d.name+' at the naming ceremony');
         const hid=d.talents.filter(t=>!t.found);
         if(hid.length&&lvl(bondOf(d,mt).p)>=2){out.push({c:'ln',h:esc('At the ceremony, '+mt.name+' told everyone what a good mentor notices.')});reveal(d,pick(hid).k,out);}
         else{const k=giveHint(d);if(k)out.push({c:'ln',h:'🔍 '+esc(mt.name+', the proud mentor, shared a clue: '+d.name+' '+T[k].clue+'.')});}
-        addBond(d,mt,6,out);}
+        addBond(d,mt,6,out);award(mt,'leaf',out);}
     }
     else if(d.stage==='grown'&&d.age>=16){d.stage='loved';const m=d.name+' has been loved so long they are now a Well-Loved dragon, patch and all.';out.push({c:'ln',h:esc(m)});log(m,'bond');}
     d.energy=maxE(d);
@@ -613,6 +634,7 @@ function parts(d){
   else p+=`<circle cx="80" cy="42" r="4.5" fill="#151515"/><circle cx="81.5" cy="40.5" r="1.5" fill="#fff"/>`;
   if(d.type==='plastic')p+=`<path d="M64 34 Q68 28 75 27" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M36 66 Q38 61 43 59" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`;
   if(hatch)p+=`<path d="M58 34 L63 22 L70 30 L77 18 L84 29 L91 21 L97 36 Q78 20 58 34 Z" fill="#fff" ${k}/>`;
+  (d.worn||[]).slice(0,3).forEach((k,i)=>{if(PATCH[k])p+=patchG(k,PSLOT[i][0],PSLOT[i][1]);});
   if(ac==='scarf')p+=`<path d="M64 69 L59 86 L68 86 L71 72 Z" fill="#ff5a4f" ${k}/><path d="M59 61 Q74 73 93 65 L93 72 Q74 81 57 69 Z" fill="#ff5a4f" ${k}/>`;
   if(ac==='bow')p+=`<path d="M68 27 L57 19 L57 35 Z M68 27 L79 19 L79 35 Z" fill="#e0218a" ${k}/><circle cx="68" cy="27" r="3.5" fill="#e0218a" ${k}/>`;
   if(ac==='crown')p+=`<path d="M66 30 L64 13 L72 21 L78 8 L84 21 L92 13 L90 30 Z" fill="#ffd93b" ${k}/>`;
@@ -666,7 +688,7 @@ function render(){
     <section class="panel"><p class="cap">Tribe projects</p><div class="stack" style="gap:10px">${Object.keys(PROJ).map(k=>{const P=PROJ[k],st=S.proj[k];return `<div><b>${P.i} ${P.n}</b> ${st.done?'<span class="tag keep">Finished</span>':''}<br><span class="role">${st.done?P.perk:P.desc+' Needs '+P.need.map(n=>T[n].i+' '+T[n].n+' '+st[n]+'/2').join(', ')+'.'}</span></div>`;}).join('')}</div><p class="role" style="margin-top:8px">${SNOTE[season()]?season()+': '+SNOTE[season()]:''}</p></section>
     <section class="panel"><p class="cap">Make your own dragon</p><p>Design a dragon and bring it into the Tribe. Its talents stay a surprise.</p><p style="margin-top:8px"><button class="btn c" data-a="make"${S.dragons.length>=CAP?' disabled':''}>${S.dragons.length>=CAP?'The Tribe is full ('+CAP+')':'Open the dragon maker'}</button></p></section>
     ${S.shelf.length?`<section class="panel"><p class="cap">The High Shelf</p><ul class="log">${S.shelf.map(x=>`<li>${esc(x.name)} <span class="role">watching over the Tribe since Bedtime ${x.n}</span></li>`).join('')}</ul></section>`:''}
-    <section class="panel"><p class="cap">How to play</p><ul class="log"><li>You get 3 moves each Bedtime. Then tap Lights out.</li><li class="bond">Hang out: two dragons spend time together. Their bond grows and hidden talents can pop out.</li><li class="spark">Train: try a new skill to find a talent, or practice one to level it up. Friends coach each other.</li><li class="loot">Explore: a team goes treasure hunting. Friends with the right talents do best.</li><li class="spark">Build: work on a big Tribe project. Each one needs three talents and gives the whole Tribe a perk.</li><li class="bond">Each dragon has a favorite thing, a fear, and a secret. You learn them by playing.</li><li class="spark">A Close friend who is Skilled can teach a talent a dragon was not born with.</li><li class="bond">Every dragon has a wish. Tap a dragon to see it.</li><li>Friends notice clues about each other's hidden talents.</li><li>Every 5th Bedtime the neighbors hold a talent show.</li></ul></section>
+    <section class="panel"><p class="cap">How to play</p><ul class="log"><li>You get 3 moves each Bedtime. Then tap Lights out.</li><li class="bond">Hang out: two dragons spend time together. Their bond grows and hidden talents can pop out.</li><li class="spark">Train: try a new skill to find a talent, or practice one to level it up. Friends coach each other.</li><li class="loot">Explore: a team goes treasure hunting. Friends with the right talents do best.</li><li class="spark">Build: work on a big Tribe project. Each one needs three talents and gives the whole Tribe a perk.</li><li class="bond">Each dragon has a favorite thing, a fear, and a secret. You learn them by playing.</li><li class="spark">A Close friend who is Skilled can teach a talent a dragon was not born with.</li><li class="bond">Every dragon has a wish. Tap a dragon to see it.</li><li>Friends notice clues about each other's hidden talents.</li><li class="loot">Dragons earn patches and name changes by doing big things. Sew patches on from a dragon's page.</li><li>Every 5th Bedtime the neighbors hold a talent show.</li></ul></section>
     <section class="panel"><p class="cap">Your Tribe</p><div class="rn"><input id="hn" maxlength="28" value="${esc(S.name)}" aria-label="Tribe name"><button class="btn" data-a="hoardName">Rename</button></div>
       <p style="margin-top:10px"><button class="btn" data-a="reset">${UI.reset?'Really start over? Tap again':'Start a brand new Tribe'}</button></p>
       <p class="role" style="margin-top:8px">Your Tribe saves on this device.</p></section>
@@ -743,7 +765,10 @@ function sheet(){
     h+='<p class="sec">Dress up</p><div class="row">'+[['','None']].concat(S.accs.map(a=>[a,ACC[a]])).map(a=>`<button class="btn sm${(d.acc||'')===a[0]?' on':''}" data-a="acc" data-v="${a[0]}">${a[1]}</button>`).join('')+`</div>${S.accs.length<ACCK.length?'<p class="role">Make wishes come true to unlock more.</p>':''}`;
     const jr=S.log.filter(l=>l.t.indexOf(d.name)>=0).slice(-5).reverse();
     if(jr.length)h+='<p class="sec">Lately</p><ul class="log">'+jr.map(l=>`<li class="${l.k}">${esc(l.t)} <span class="role">Bedtime ${l.n}</span></li>`).join('')+'</ul>';
-    h+=`<p class="sec">Name</p><div class="rn"><input id="rn" maxlength="16" value="${esc(d.name)}" aria-label="Dragon name"><button class="btn" data-a="rename" data-id="${d.id}">Rename</button></div><div class="row">`;
+    h+='<p class="sec">Patches</p>'+(d.patches.length?'<div class="row">'+d.patches.map(k=>`<button class="btn sm${d.worn.indexOf(k)>=0?' on':''}" data-a="patch" data-v="${k}">${patchIcon(k)} ${PATCH[k].n}</button>`).join('')+'</div><p class="role">Tap a patch to sew it on or take it off. Three fit at a time.</p>':`<p class="role">${esc(d.name)} has not earned a patch yet.</p>`);
+    const pl=PK.filter(k=>d.patches.indexOf(k)<0);
+    if(pl.length)h+='<p class="role">Still to earn: '+pl.map(k=>PATCH[k].n+' ('+PATCH[k].how+')').join(', ')+'.</p>';
+    h+='<p class="sec">Name</p>'+(d.nameRights>0?`<div class="rn"><input id="rn" maxlength="16" value="${esc(d.name)}" aria-label="Dragon name"><button class="btn" data-a="rename" data-id="${d.id}">Use a name change</button></div><p class="role">Name changes earned: ${d.nameRights}</p>`:`<p class="role">${esc(d.name)} has not earned a name change yet. Dragons earn one by growing up, getting a talent to Skilled, finding a calling, or facing a fear.</p>`)+'<div class="row">';
     if(d.stage!=='hatch'&&S.keeper!==d.id)h+=`<button class="btn sm" data-a="keeper" data-id="${d.id}">Make Tribe Keeper</button>`;
     if(S.dragons.length>3)h+=`<button class="btn sm" data-a="shelf" data-id="${d.id}">${UI.shelf===d.id?'Sure? They leave the Tribe. Tap again':'Move to the High Shelf'}</button>`;
     h+='</div>';
@@ -821,7 +846,8 @@ const A={
   setMentor(d){const h=byId(F.id),m=byId(+d.id);if(h&&m){h.mentor=m.id;log(m.name+' became mentor to Wee '+h.name+'.','bond');mem(h,m,m.name+' became '+h.name+"'s mentor");}F={t:'detail',id:F.id};sheet();render();},
   acc(d){const x=byId(F.id);if(x){x.acc=d.v||null;sheet();render();}},
   shelf(d){const id=+d.id,x=byId(id);if(!x)return;if(UI.shelf!==id){UI.shelf=id;sheet();return;}UI.shelf=0;toShelf(x);F=null;sheet();render();},
-  rename(d){const x=byId(+d.id),v=(document.getElementById('rn').value||'').trim().slice(0,16);if(x&&v){x.name=v;sheet();render();}},
+  rename(d){const x=byId(+d.id),el=document.getElementById('rn'),v=(el&&el.value||'').trim().slice(0,16);if(x&&v&&v!==x.name&&x.nameRights>0){const old=x.name;x.name=v;x.nameRights--;log(old+' chose a new name: '+v+'.','spark');sheet();render();}},
+  patch(d){const x=byId(F.id);if(!x||x.patches.indexOf(d.v)<0)return;const i=x.worn.indexOf(d.v);if(i>=0)x.worn.splice(i,1);else if(x.worn.length<3)x.worn.push(d.v);sheet();render();},
   hoardName(){const v=(document.getElementById('hn').value||'').trim().slice(0,28);if(v){S.name=v;render();}},
   reset(){if(!UI.reset){UI.reset=true;render();return;}UI.reset=false;UI.tab='dragons';newGame();welcome();},
   make(){if(S.dragons.length>=CAP)return;F={t:'make',d:{name:'',type:'stuffy',color:rnd(COLORS.length),wing:'bat',horns:1,eyes:'button',pattern:'plain',spikes:0,pers:'Brave'}};sheet();},
