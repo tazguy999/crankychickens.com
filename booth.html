@@ -283,7 +283,7 @@ async function play(t,rate,fx){
 }
 
 // ---------- recording ----------
-var stream=null, recd=null, chunks=[], t0=0, tick=null, raf=null, cdTimer=null, wake=null, from='missions';
+var chain=null, stream=null, recd=null, chunks=[], t0=0, tick=null, raf=null, cdTimer=null, wake=null, from='missions';
 function pickMime(){ var c=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
   for(var i=0;i<c.length;i++){ try{ if(window.MediaRecorder&&MediaRecorder.isTypeSupported(c[i])) return c[i]; }catch(e){} } return ''; }
 function openRec(c,back){
@@ -301,12 +301,13 @@ function drawRecTakes(){
   $('recGo').textContent=arr.length?'● RECORD ANOTHER TAKE':'● RECORD';
   listTakes($('recTakes'),arr,false);
 }
-function stopStream(){ if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } cancelAnimationFrame(raf); clearInterval(tick);
+function stopStream(){ if(chain){ chain.forEach(function(n){ try{ n.disconnect(); }catch(e){} }); chain=null; } if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } cancelAnimationFrame(raf); clearInterval(tick);
   try{ if(wake){ wake.release(); wake=null; } }catch(e){} }
 async function startFlow(){
   err(''); stopPlay();
+  try{ ctx(); }catch(e){}   // wake the sound engine while we still have the tap
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){ err('This browser cannot record sound. Ask a grown-up to try a different browser.'); return; }
-  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}}); }
   catch(e){ err('The microphone is blocked. Ask a grown-up to allow the microphone for this page.'); return; }
   try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; },function(){}); }catch(e){}
   var n=countSecs; recState('count'); $('countNum').textContent=n;
@@ -314,12 +315,21 @@ async function startFlow(){
 }
 function begin(){
   var mime=pickMime(); chunks=[];
-  try{ recd=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream); }catch(e){ err('Recording did not start on this device.'); stopStream(); recState('idle'); return; }
+  // Clean-up chain: cut low rumble (fans, furnace, footsteps) and even out loud and quiet.
+  // If the sound engine is not running, record the plain microphone instead.
+  var recStream=stream, tap=null;
+  try{ var ac=ctx(); if(ac.state==='running'){
+    var srcN=ac.createMediaStreamSource(stream), hp=ac.createBiquadFilter(), hp2=ac.createBiquadFilter(), comp=ac.createDynamicsCompressor(), dest=ac.createMediaStreamDestination();
+    hp.type='highpass'; hp.frequency.value=110; hp2.type='highpass'; hp2.frequency.value=110;
+    comp.threshold.value=-24; comp.ratio.value=3; comp.attack.value=0.005; comp.release.value=0.2;
+    srcN.connect(hp); hp.connect(hp2); hp2.connect(comp); comp.connect(dest); recStream=dest.stream; tap=comp; chain=[srcN,hp,hp2,comp,dest];
+  } }catch(e){ recStream=stream; tap=null; }
+  try{ recd=mime?new MediaRecorder(recStream,{mimeType:mime}):new MediaRecorder(recStream); }catch(e){ err('Recording did not start on this device.'); stopStream(); recState('idle'); return; }
   recd.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
   recd.onstop=save; recd.start(); t0=Date.now(); recState('live');
   $('recMax').textContent='stops by itself at '+fmt(cur.max*1000);
   tick=setInterval(function(){ var ms=Date.now()-t0; $('recTimer').textContent=fmt(ms); if(ms>=cur.max*1000) stopRec(); },200);
-  try{ var a=ctx(), an=a.createAnalyser(); an.fftSize=256; a.createMediaStreamSource(stream).connect(an); var d=new Uint8Array(an.frequencyBinCount);
+  try{ var a=ctx(), an=a.createAnalyser(); an.fftSize=256; if(tap) tap.connect(an); else a.createMediaStreamSource(stream).connect(an); var d=new Uint8Array(an.frequencyBinCount);
     (function loop(){ an.getByteTimeDomainData(d); var m=0; for(var i=0;i<d.length;i++){ var v=Math.abs(d[i]-128); if(v>m) m=v; } $('level').style.width=Math.min(100,m*1.6)+'%'; raf=requestAnimationFrame(loop); })(); }catch(e){}
 }
 function stopRec(){ clearInterval(tick); if(recd&&recd.state!=='inactive'){ try{ recd.stop(); }catch(e){} } }
