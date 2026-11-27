@@ -19,8 +19,8 @@
   .chip{min-height:48px;padding:8px 16px;border-radius:999px;border:2px solid rgba(255,183,3,.6);background:transparent}
   .chip.solid{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
   .rule{margin:12px 0;padding:10px 14px;border-radius:14px;background:rgba(127,209,160,.14);border:2px solid rgba(127,209,160,.5);font-size:16px}
-  nav{display:flex;gap:8px;margin:12px 0}
-  nav button{flex:1;min-height:56px;border-radius:14px;border:2px solid #000;background:var(--card);font-size:18px}
+  nav{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+  nav button{flex:1 1 120px;min-height:56px;border-radius:14px;border:2px solid #000;background:var(--card);font-size:18px}
   nav button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .mission{min-height:120px;padding:10px;border-radius:16px;border:2px solid #000;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;font-size:16px;position:relative}
@@ -62,6 +62,19 @@
   .admin input[type=checkbox]{width:26px;height:26px}
   .small{font-size:15px;color:var(--dim)}
   a{color:#8ecae6}
+  .cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
+  .cast button{min-height:84px;border-radius:16px;border:2px solid #000;background:var(--card2);padding:10px;font-size:18px;text-align:left}
+  .cast button small{display:block;color:var(--dim);font-size:14px}
+  .cast button.full{border-color:var(--green)}
+  .bar{height:14px;border-radius:7px;background:rgba(255,255,255,.15);overflow:hidden;margin:8px 0}
+  .bar i{display:block;height:100%;width:0;background:var(--gold)}
+  .lines{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .lines button{width:100%;min-height:60px;border-radius:14px;border:2px solid #000;background:var(--card2);padding:10px 12px;text-align:left;font-size:17px;display:flex;gap:10px;align-items:center}
+  .lines button.got{border-color:var(--green)}
+  .lines .k{flex:none;width:34px;font-size:22px;text-align:center}
+  .lwho{font-size:20px;color:var(--gold);margin:14px 0 4px;letter-spacing:.04em}
+  .ltext{font-size:28px;line-height:1.25;min-height:140px}
+  .lsrc{font-size:15px;color:var(--dim);margin:6px 0}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -78,6 +91,7 @@
   <nav id="tabs">
     <button data-v="missions" aria-pressed="true">⭐ Missions</button>
     <button data-v="studio" aria-pressed="false">🎬 Studio</button>
+    <button data-v="show" aria-pressed="false">📻 Shows</button>
     <button data-v="mine" aria-pressed="false">🎧 My takes</button>
   </nav>
 
@@ -91,6 +105,43 @@
       <h2 style="margin-top:0">The Studio</h2>
       <p class="hint">Record anything. Do as many takes as you want. Pick a long countdown so you can run to your spot.</p>
       <div class="labels" id="labels"></div>
+    </div>
+  </section>
+
+  <section id="v-show" hidden>
+    <div class="panel">
+      <h2 style="margin-top:0">Be the voices of The Supa Recap</h2>
+      <p class="hint">Pick an episode. Pick a character. Record their lines. Then hear the whole show with YOUR voices in it.</p>
+      <div class="labels" id="epChips"></div>
+      <div class="bar" aria-hidden="true"><i id="showBar"></i></div>
+      <p class="hint" id="showInfo"></p>
+      <button class="big rec" id="listenGo" style="background:var(--gold);color:var(--gold-ink)">▶ PLAY THE SHOW</button>
+      <div class="cast" id="cast"></div>
+    </div>
+  </section>
+
+  <section id="v-lines" hidden>
+    <button class="back" id="linesBack">← Back</button>
+    <div class="panel" style="margin-top:10px">
+      <h2 style="margin-top:0" id="linesTitle"></h2>
+      <p class="hint" id="linesInfo"></p>
+      <ol class="lines" id="lineList"></ol>
+    </div>
+  </section>
+
+  <section id="v-listen" hidden>
+    <button class="back" id="listenBack">← Back</button>
+    <div class="panel" style="margin-top:10px">
+      <p class="hint" id="listenTitle" style="margin:0"></p>
+      <div class="bar" aria-hidden="true"><i id="listenBar"></i></div>
+      <div class="lwho" id="listenWho"></div>
+      <div class="ltext" id="listenText" aria-live="polite"></div>
+      <p class="lsrc" id="listenSrc"></p>
+      <div class="row">
+        <button class="big stop" id="listenPause" style="min-width:140px">❚❚</button>
+        <button class="back" id="listenPrev" aria-label="Line before">⏮</button>
+        <button class="back" id="listenNext" aria-label="Next line">⏭</button>
+      </div>
     </div>
   </section>
 
@@ -109,7 +160,7 @@
           <span class="small">Countdown:</span>
           <span id="counts" class="row"></span>
         </div>
-        <button class="big rec" id="recGo">● RECORD</button>
+        <div class="row"><button class="big rec" id="recGo">● RECORD</button><button class="big" id="recNext" style="background:var(--green);color:#0f2a1a;font-size:24px" hidden>NEXT LINE →</button></div>
       </div>
       <div id="recCount" hidden><p class="hint" style="text-align:center">Get to your spot!</p><div class="count" id="countNum">3</div><div style="text-align:center"><button class="back" id="countCancel">Cancel</button></div></div>
       <div id="recLive" hidden>
@@ -184,6 +235,7 @@ var MISSIONS=[
   {id:'next',e:'💡',t:'Author interview',p:'What should happen in the next book?',h:'You are the author. Tell us the plan.',max:75},
   {id:'song',e:'🎵',t:'Theme song',p:'Make up a Cranky Chickens theme song. Right now.',h:'No practice. Just go.',max:60}
 ];
+var SCRIPTS=/*SCRIPTS:START*/[{"id":"ep1","n":1,"t":"Before Scratchy","lines":[["NARRATOR","This is The Supa Recap. The show where two chickens re-read their own books. One of them wants to be here."],["PEARL","HI! I'm Pearl!"],["SCRATCHY","I am Scratchy. I was told this would take four minutes."],["PEARL","Today we are recapping the very first comic! Cranky Chickens: Before Scratchy, Pearl, Kevin and Ernesto!"],["SCRATCHY","A book about a time before us. We are not in it. And yet, here we are, talking."],["PEARL","Fast fact number one! This book was written by a real kid. On Thanksgiving!"],["SCRATCHY","That explains the pacing. Seven chapters. Zero bathroom breaks."],["PEARL","Chapter one! Normal Chickens! Long ago, chickens were normal. They said bawk. They had zero opinions."],["SCRATCHY","Grievance number one. A chicken looks at a rock and says, good rock. That is an opinion. The book says zero opinions. I counted one."],["PEARL","Chapter two! The farmer wakes everybody up at four in the morning. And he counts their corn wrong!"],["SCRATCHY","One. Two. Five. Nine. I have never been so upset by a number."],["PEARL","And that is when the first chicken got cranky! The first cranky eyebrow EVER!"],["SCRATCHY","A historic eyebrow. It should be in a museum. There is no museum. I checked."],["PEARL","Chapter three is The Egg Scape! They escape the farm dressed as EGGS!"],["SCRATCHY","Fast fact. An egg with feet fooled a grown farmer. I would like that noted. Forever."],["PEARL","Chapter four! The farmers hunt for them with pitchforks. But the book says the pitchforks are for pointing!"],["SCRATCHY","Good. I had notes."],["PEARL","Then they build a slingshot! Out of a stick and a stretchy farmer sock!"],["SCRATCHY","Grievance number two. Nobody washed the sock."],["PEARL","And then the big battle! Splat! Splat! Splat! Nobody got hurt. Everybody got stinky."],["SCRATCHY","Those eggs come back in a later book. A farmer never washes his hair. The hair gets hands. I do not want to talk about it."],["PEARL","We have a caller! Hello, you are on The Supa Recap!"],["EL JAGUAR","It is I. El Jaguar. I am calling because I am not in this book."],["SCRATCHY","Correct. It was a peaceful book."],["EL JAGUAR","I have read all seven chapters. There is no jaguar. I would like a new chapter. Chapter eight. A jaguar arrives. He is tall."],["PEARL","Thank you for calling!"],["EL JAGUAR","I was not finished."],["PEARL","Final scores! I give this book ten out of ten eggs!"],["SCRATCHY","I give it forty-six out of forty-seven. One point off for the rock."],["PEARL","That is our show! And soon there will be a bonus feed for grown-ups, with extra episodes!"],["SCRATCHY","It is not ready yet. When it is ready, it will be at the shop. Ask a grown-up. Do not ask me."],["PEARL","Next time: The Childhood of Scratchy and Pearl! We are in that one!"],["SCRATCHY","I was a baby. I was already right about everything."],["NARRATOR","The Supa Recap. Named by a real kid. Goodbye."]]},{"id":"ep2","n":2,"t":"The Childhood","lines":[["NARRATOR","This is The Supa Recap. Episode two. Scratchy has asked us to say he did not agree to an episode two."],["PEARL","HI! I'm Pearl! And today's book has US in it!"],["SCRATCHY","I am Scratchy. Today's book is about my childhood. I would like it on the record that nobody asked me first."],["PEARL","It is called The Childhood of Scratchy, Pearl, Kevin and Ernesto! Chapter one is Hatching!"],["SCRATCHY","Fast fact. I complained from inside the egg. It was cramped in there. I stand by it."],["PEARL","Then Scratchy hatched, looked at the whole world, and said: Hmph. Needs work."],["SCRATCHY","It did need work. It still does."],["PEARL","And I hatched ONE second later, and I have not stopped moving since! That part is TRUE!"],["SCRATCHY","Grievance number one. She has not stopped talking since, either. The book left that out."],["PEARL","Chapter two! The School Bully! That is where we meet Kevin the puppy, and Ernesto the jaguar!"],["SCRATCHY","Ernesto said, your corn is my corn. So I started a list. The list is called Grievances. This show is basically the list."],["PEARL","Fourth grade! Scratchy learned to count! And I ran for class president, and I WON! Twice!"],["SCRATCHY","Forty-seven crayons. One was missing. It is still missing. I think about it."],["PEARL","Fifth grade was the science fair! Kevin brought a stick. Kevin WON."],["SCRATCHY","Grievance number two. I made a chart of everything wrong with the science fair. Nobody gave the chart a ribbon."],["PEARL","We have a caller! Hello, you are on The Supa Recap!"],["KEVIN","Bark."],["PEARL","It's Kevin! Kevin, how did it feel to win the science fair?"],["KEVIN","Bark. Bark."],["SCRATCHY","He says it was a very good stick. He is not wrong."],["PEARL","High school! I joined track, band, chess, drama, and a club about clubs!"],["SCRATCHY","And Ernesto got a cool jacket. And a doorbell. For his locker."],["PEARL","Another caller! Hello?"],["EL JAGUAR","It is I. El Jaguar. The book says school bully. I prefer school leader."],["SCRATCHY","You took my lunch corn."],["EL JAGUAR","I was leading it. Away from you. Also, the doorbell was very useful. Thank you. Goodbye."],["PEARL","Then college! Cluck University! And then graduation, where I yelled across the whole field that we saved Ernesto a seat!"],["SCRATCHY","He said it was a dumb seat. He sat in it anyway. I counted the chairs twice. Forty-seven."],["PEARL","Final scores! Ten out of ten eggs! I was in it!"],["SCRATCHY","Forty-five out of forty-seven. One point off for the missing crayon. One point off because I was hugged at graduation. The book did not show it. It happened."],["PEARL","That is our show! The bonus feed for grown-ups is still coming soon!"],["SCRATCHY","It is still not ready. I checked. Twice."],["PEARL","Next time: The Attack of the Monster Diapers!"],["SCRATCHY","No. Not that one."],["NARRATOR","The Supa Recap. Scratchy has been told there is an episode three. Goodbye."]]}]/*SCRIPTS:END*/;
 var LABELS=['Character voice','Sound effect','Song','Story','Anything'];
 var MAX_DEFAULT=30;
 
@@ -209,16 +261,19 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 function fmt(ms){ var s=Math.round(ms/1000); return Math.floor(s/60)+':'+('0'+s%60).slice(-2); }
 function missionOf(id){ for(var i=0;i<MISSIONS.length;i++) if(MISSIONS[i].id===id) return MISSIONS[i]; return null; }
 function labelOf(t){ var m=missionOf(t.mission); return m?m.t:(t.label||'Studio'); }
+function isLine(t){ return String(t.mission).indexOf('line:')===0; }
 async function refresh(){ takes=await allTakes(); }
 
 // ---------- views ----------
 var view='missions', cur=null;   // cur = {mission, label, prompt, hint, max}
 function showView(v){
   view=v;
-  ['missions','studio','mine','rec','admin'].forEach(function(n){ $('v-'+n).hidden=(n!==v); });
-  $('tabs').hidden=(v==='admin'||v==='rec');
+  ['missions','studio','show','lines','listen','mine','rec','admin'].forEach(function(n){ $('v-'+n).hidden=(n!==v); });
+  $('tabs').hidden=(v==='admin'||v==='rec'||v==='lines'||v==='listen');
   Array.prototype.forEach.call($('tabs').children,function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-v')===v)); });
+  if(v!=='listen') stopListen();
   stopPlay();
+  if(v==='show') drawShow(); if(v==='lines') drawLines();
   if(v==='missions') drawMissions(); if(v==='mine') drawMine(); if(v==='admin') drawAdmin(); if(v==='studio') drawStudio();
   try{ window.scrollTo(0,0); }catch(e){}
 }
@@ -265,7 +320,7 @@ function listTakes(ul,arr,showLabel){
     li.appendChild(d); ul.appendChild(li);
   });
 }
-function redraw(){ if(view==='rec') drawRecTakes(); else if(view==='mine') drawMine(); else if(view==='admin') drawAdmin(); else if(view==='missions') drawMissions(); }
+function redraw(){ if(view==='rec') drawRecTakes(); else if(view==='mine') drawMine(); else if(view==='admin') drawAdmin(); else if(view==='missions') drawMissions(); else if(view==='show') drawShow(); }
 
 // ---------- playback with silly voices ----------
 var actx=null, playing=null;
@@ -294,11 +349,13 @@ function openRec(c,back){
     b.addEventListener('click',function(){ countSecs=n; ls('booth_count',String(n)); openRec(cur,from); }); box.appendChild(b); });
   recState('idle'); showView('rec'); drawRecTakes();
 }
+$('recNext').addEventListener('click',function(){ if(cur&&cur.next) cur.next(); });
 function recState(s){ $('recIdle').hidden=(s!=='idle'); $('recCount').hidden=(s!=='count'); $('recLive').hidden=(s!=='live'); }
 function drawRecTakes(){
   var arr=mineTakes().filter(function(t){return t.mission===cur.mission;}).sort(function(a,b){return b.at-a.at;});
   $('takesHead').hidden=!arr.length; $('takesHead').textContent='Your takes ('+arr.length+')';
   $('recGo').textContent=arr.length?'● RECORD ANOTHER TAKE':'● RECORD';
+  $('recNext').hidden=!(cur.next&&arr.length);
   listTakes($('recTakes'),arr,false);
 }
 function stopStream(){ if(chain){ chain.forEach(function(n){ try{ n.disconnect(); }catch(e){} }); chain=null; } if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } cancelAnimationFrame(raf); clearInterval(tick);
@@ -337,7 +394,7 @@ async function save(){
   var ms=Date.now()-t0, type=(recd&&recd.mimeType)||'audio/webm', blob=new Blob(chunks,{type:type});
   stopStream(); recState('idle');
   if(!blob.size||ms<300){ err('That one was too short. Try again!'); return; }
-  try{ await addTake({who:who,mission:cur.mission,label:cur.label,blob:blob,mime:type,ms:ms,at:Date.now(),star:false,ok:false}); }
+  try{ await addTake({who:who,mission:cur.mission,label:cur.label,text:cur.text||'',blob:blob,mime:type,ms:ms,at:Date.now(),star:false,ok:false}); }
   catch(e){ err('This tablet is out of room for recordings. Ask a grown-up to export and clear some.'); return; }
   await refresh(); drawRecTakes();
 }
@@ -346,12 +403,111 @@ $('recStop').addEventListener('click',stopRec);
 $('countCancel').addEventListener('click',function(){ clearInterval(cdTimer); stopStream(); recState('idle'); });
 $('recBack').addEventListener('click',function(){ clearInterval(cdTimer); if(recd&&recd.state==='recording'){ recd.onstop=null; try{recd.stop();}catch(e){} } stopStream(); showView(from); });
 
+// ---------- shows: record a whole episode, then hear it ----------
+var PROFILES={'SCRATCHY':{pitch:0.7,rate:0.95},'PEARL':{pitch:1.5,rate:1.15},'EL JAGUAR':{pitch:0.5,rate:0.85},'AUNT BARB':{pitch:1.2,rate:0.9},'NARRATOR':{pitch:1.0,rate:0.92},'KEVIN':{pitch:1.3,rate:1.0}};
+var CC_ACCENTS=['en-au','en-gb','en-in','en-ng','en-us'];
+var CC_FALLBACK={'en-au':['en-gb','en-us'],'en-gb':['en-au','en-us'],'en-in':['en-gb','en-us'],'en-ng':['en-gb','en-in','en-us'],'en-us':['en-gb','en-au']};
+function ccPickVoice(w,pool){
+  if(!pool||!pool.length) return null;
+  var h=0,i,j; for(i=0;i<w.length;i++) h+=w.charCodeAt(i);
+  var want=CC_ACCENTS[h%CC_ACCENTS.length], tries=[want].concat(CC_FALLBACK[want]||[]);
+  for(i=0;i<tries.length;i++){ var m=[]; for(j=0;j<pool.length;j++){ if((pool[j].lang||'').replace('_','-').toLowerCase()===tries[i]) m.push(pool[j]); }
+    if(m.length){ for(j=0;j<m.length;j++){ if(/google/i.test(m[j].name)) return m[j]; } return m[0]; } }
+  return pool[h%pool.length];
+}
+var synth=null; try{ synth=('speechSynthesis' in window&&'SpeechSynthesisUtterance' in window)?window.speechSynthesis:null; }catch(e){}
+function enVoices(){ var all=[],out=[],i; try{ all=synth.getVoices()||[]; }catch(e){} for(i=0;i<all.length;i++){ if(all[i].lang&&all[i].lang.toLowerCase().indexOf('en')===0) out.push(all[i]); } return out; }
+try{ if(synth) synth.getVoices(); }catch(e){}
+
+var epSel=ls('booth_ep')||'', castSel='';
+function epNow(){ for(var i=0;i<SCRIPTS.length;i++) if(SCRIPTS[i].id===epSel) return SCRIPTS[i]; return SCRIPTS[SCRIPTS.length-1]||null; }
+function lineKey(ep,i){ return 'line:'+ep.id+':'+i; }
+// the take to use for a line: the words must still match the script; keepers first, then the newest
+function bestTake(ep,i){
+  var k=lineKey(ep,i), txt=ep.lines[i][1], best=null;
+  takes.forEach(function(t){ if(t.mission!==k||t.text!==txt) return;
+    if(!best||(!!t.star>!!best.star)||(!!t.star===!!best.star&&t.at>best.at)) best=t; });
+  return best;
+}
+function title(w){ return w.charAt(0)+w.slice(1).toLowerCase().replace(/ (\w)/g,function(m,c){return ' '+c.toUpperCase();}); }
+function drawShow(){
+  var ep=epNow(), chips=$('epChips'); chips.innerHTML='';
+  if(!ep){ $('showInfo').textContent='No scripts yet.'; $('listenGo').hidden=true; return; }
+  SCRIPTS.forEach(function(e){ var b=document.createElement('button'); b.className='chip'+(e.id===ep.id?' solid':''); b.textContent='Ep '+e.n+': '+e.t; b.setAttribute('aria-pressed',String(e.id===ep.id));
+    b.addEventListener('click',function(){ epSel=e.id; ls('booth_ep',e.id); drawShow(); }); chips.appendChild(b); });
+  var cast=[], by={}, got=0;
+  ep.lines.forEach(function(L,i){ if(!by[L[0]]){ by[L[0]]={who:L[0],n:0,got:0}; cast.push(by[L[0]]); } by[L[0]].n++; if(bestTake(ep,i)){ by[L[0]].got++; got++; } });
+  $('showBar').style.width=Math.round(got/ep.lines.length*100)+'%';
+  $('showInfo').textContent=got+' of '+ep.lines.length+' lines are in your voices.'+(got<ep.lines.length?' The tablet voice does the rest.':' The whole show is YOURS!');
+  var box=$('cast'); box.innerHTML='';
+  cast.sort(function(a,b){return b.n-a.n;}).forEach(function(c){ var b=document.createElement('button'); if(c.got===c.n) b.className='full';
+    b.innerHTML='🎭 Be '+esc(title(c.who))+'<small>'+c.got+' of '+c.n+' lines recorded'+(c.got===c.n?' ✓':'')+'</small>';
+    b.addEventListener('click',function(){ castSel=c.who; showView('lines'); }); box.appendChild(b); });
+}
+function castIdx(ep){ var a=[]; ep.lines.forEach(function(L,i){ if(L[0]===castSel) a.push(i); }); return a; }
+function drawLines(){
+  var ep=epNow(), idx=castIdx(ep), ol=$('lineList'), got=0; ol.innerHTML='';
+  $('linesTitle').textContent=title(castSel)+' · Episode '+ep.n;
+  idx.forEach(function(i,pos){ var has=!!bestTake(ep,i); if(has) got++;
+    var li=document.createElement('li'), b=document.createElement('button'); if(has) b.className='got';
+    b.innerHTML='<span class="k">'+(has?'✅':'🎙️')+'</span><span>'+esc(ep.lines[i][1])+'</span>';
+    b.addEventListener('click',function(){ openLine(ep,idx,pos); }); li.appendChild(b); ol.appendChild(li); });
+  $('linesInfo').textContent=got+' of '+idx.length+' recorded. Tap a line to record it. Tap it again to redo it.';
+}
+function openLine(ep,idx,pos){
+  var i=idx[pos], who2=ep.lines[i][0];
+  openRec({mission:lineKey(ep,i),label:'Ep '+ep.n+' · '+title(who2)+' · line '+(i+1),text:ep.lines[i][1],
+    prompt:'“'+ep.lines[i][1]+'”',hint:'You are '+title(who2)+'. Line '+(pos+1)+' of '+idx.length+'. Say it your way.',max:30,
+    next:pos+1<idx.length?function(){ openLine(ep,idx,pos+1); }:null},'lines');
+}
+$('linesBack').addEventListener('click',function(){ showView('show'); });
+
+var LS={on:false,ep:null,i:0,tok:0};
+function stopListen(){ LS.tok++; LS.on=false; try{ if(synth) synth.cancel(); }catch(e){} stopPlay(); try{ if(wake){ wake.release(); wake=null; } }catch(e){} }
+function listenPaint(src){
+  var ep=LS.ep; if(!ep) return;
+  $('listenTitle').textContent='The Supa Recap · Episode '+ep.n+': '+ep.t;
+  $('listenBar').style.width=Math.round(Math.min(LS.i,ep.lines.length)/ep.lines.length*100)+'%';
+  $('listenPause').textContent=LS.on?'❚❚':'▶'; $('listenPause').setAttribute('aria-label',LS.on?'Pause':'Play');
+  if(LS.i>=ep.lines.length){ $('listenWho').textContent='THE END'; $('listenText').textContent='Tap play to hear it again.'; $('listenSrc').textContent=''; return; }
+  $('listenWho').textContent=ep.lines[LS.i][0]; $('listenText').textContent=ep.lines[LS.i][1];
+  if(src!==undefined) $('listenSrc').textContent=src;
+}
+function speakLine(L,next,my){
+  if(!synth){ setTimeout(next,Math.max(1400,L[1].length*55)); return; }
+  try{ var u=new SpeechSynthesisUtterance(L[1]), pr=PROFILES[L[0]]||{pitch:1,rate:1}, v=ccPickVoice(L[0],enVoices());
+    if(v) u.voice=v; u.pitch=pr.pitch; u.rate=pr.rate; u.volume=0.95;
+    u.onend=next; u.onerror=function(ev){ if(ev&&(ev.error==='canceled'||ev.error==='interrupted')) return; next(); };
+    synth.speak(u); setTimeout(function(){ if(my===LS.tok) next(); },4000+L[1].length*130);
+  }catch(e){ setTimeout(next,1500); }
+}
+async function listenStep(){
+  var ep=LS.ep; if(!LS.on) return;
+  if(LS.i>=ep.lines.length){ LS.on=false; try{ if(wake){ wake.release(); wake=null; } }catch(e){} listenPaint(); return; }
+  var my=++LS.tok, L=ep.lines[LS.i], t=bestTake(ep,LS.i), moved=false;
+  function next(){ if(moved||my!==LS.tok||!LS.on) return; moved=true; LS.i++; setTimeout(listenStep,250); }
+  listenPaint(t?'🎙️ '+t.who:'🤖 tablet voice');
+  if(t){ try{ var a=ctx(), buf=await a.decodeAudioData(await t.blob.arrayBuffer()); if(my!==LS.tok||!LS.on) return;
+      var src=a.createBufferSource(); src.buffer=buf; src.connect(a.destination); src.onended=next; src.start(); playing=src; }
+    catch(e){ if(my===LS.tok) speakLine(L,next,my); } }
+  else speakLine(L,next,my);
+}
+function listenPlay(){ try{ ctx(); }catch(e){} if(LS.i>=LS.ep.lines.length) LS.i=0; LS.on=true;
+  try{ if(navigator.wakeLock&&!wake) navigator.wakeLock.request('screen').then(function(w){ wake=w; },function(){}); }catch(e){}
+  listenStep(); }
+function listenJump(n){ var was=LS.on; stopListen(); LS.i=Math.max(0,Math.min(LS.ep.lines.length-1,n)); if(was) listenPlay(); else listenPaint(''); }
+$('listenGo').addEventListener('click',function(){ LS.ep=epNow(); LS.i=0; showView('listen'); listenPlay(); });
+$('listenPause').addEventListener('click',function(){ if(LS.on){ stopListen(); listenPaint(); } else listenPlay(); });
+$('listenPrev').addEventListener('click',function(){ listenJump(LS.i-1); });
+$('listenNext').addEventListener('click',function(){ listenJump(LS.i+1); });
+$('listenBack').addEventListener('click',function(){ showView('show'); });
+
 // ---------- who ----------
 function drawWho(){ $('whoBtn').textContent='👤 '+who; }
 function askWho(){
   var box=$('whoList'); box.innerHTML='';
   WHOS.forEach(function(w){ var b=document.createElement('button'); b.className='chip'+(w===who?' solid':''); b.textContent=w;
-    b.addEventListener('click',function(){ who=w; ls('booth_who',w); $('whoOv').hidden=true; drawWho(); showView(view==='rec'||view==='admin'?'missions':view); }); box.appendChild(b); });
+    b.addEventListener('click',function(){ who=w; ls('booth_who',w); $('whoOv').hidden=true; drawWho(); showView(view==='rec'||view==='admin'||view==='lines'||view==='listen'?'missions':view); }); box.appendChild(b); });
   $('whoOv').hidden=false;
 }
 $('whoBtn').addEventListener('click',askWho);
@@ -438,7 +594,7 @@ $('wipe').addEventListener('click',async function(){ var b=$('wipe');
   await clearTakes(); await refresh(); b.removeAttribute('data-arm'); b.textContent='Delete everything'; $('adminMsg').textContent='Everything was deleted.'; drawAdmin(); });
 
 Array.prototype.forEach.call($('tabs').children,function(b){ b.addEventListener('click',function(){ showView(b.getAttribute('data-v')); }); });
-window.addEventListener('pagehide',function(){ stopStream(); stopPlay(); });
+window.addEventListener('pagehide',function(){ stopListen(); stopStream(); stopPlay(); });
 
 (async function init(){
   try{ await openDB(); await refresh(); }
