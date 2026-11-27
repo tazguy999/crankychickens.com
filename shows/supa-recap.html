@@ -39,6 +39,10 @@
   .ctl button#play{background:var(--gold);color:var(--gold-ink);min-width:84px;font-size:24px}
   .ctl button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   .ctl .now{flex:1;min-width:0;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .eps{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+  .eps button{font:inherit;font-size:14px;min-height:44px;padding:8px 14px;border-radius:999px;border:2px solid rgba(255,183,3,.6);background:transparent;color:var(--ink);cursor:pointer}
+  .eps button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+  .eps button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   #msg{color:#ffd166;font-size:14px;margin:12px 0 0}
 </style>
 </head>
@@ -52,6 +56,7 @@
     </div>
   </header>
   <p id="msg" hidden></p>
+  <div class="eps" id="eps" aria-label="Episodes"></div>
   <h2 id="eptitle"></h2>
   <p class="about" id="epabout"></p>
   <ol class="lines" id="lines"></ol>
@@ -73,18 +78,19 @@
 (function(){
   'use strict';
   // CC watch beacon: same breadcrumb the episodes leave (shared localStorage key cc_watched)
-  var ccMark=(function(){
-    var SLUG='supa-recap-ep1', EP='P1', KEY='cc_watched';
+  var ccMark=function(){};
+  function beacon(slug,ep){
+    var KEY='cc_watched';
     function rd(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return {};}}
     function wr(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
-    var all=rd(), rec=all[SLUG]||{ep:EP,firstSeen:Date.now(),plays:0,maxProgress:0,finished:false};
-    rec.ep=EP;rec.plays++;rec.lastSeen=Date.now();all[SLUG]=rec;wr(all);
+    var all=rd(), rec=all[slug]||{ep:ep,firstSeen:Date.now(),plays:0,maxProgress:0,finished:false};
+    rec.ep=ep;rec.plays++;rec.lastSeen=Date.now();all[slug]=rec;wr(all);
     return function(t,total){ if(!total)return; var p=Math.max(0,Math.min(1,t/total)); if(p<=rec.maxProgress+0.005)return;
-      rec.maxProgress=p; if(p>=0.97)rec.finished=true; var a=rd(); a[SLUG]=rec; wr(a); };
-  })();
+      rec.maxProgress=p; if(p>=0.97)rec.finished=true; var a=rd(); a[slug]=rec; wr(a); };
+  }
 
   // Same character voices as the episodes: pitch and speed per character, accent pinned per character.
-  var PROFILES={'SCRATCHY':{pitch:0.7,rate:0.95},'PEARL':{pitch:1.5,rate:1.15},'EL JAGUAR':{pitch:0.5,rate:0.85},'AUNT BARB':{pitch:1.2,rate:0.9},'NARRATOR':{pitch:1.0,rate:0.92}};
+  var PROFILES={'SCRATCHY':{pitch:0.7,rate:0.95},'PEARL':{pitch:1.5,rate:1.15},'EL JAGUAR':{pitch:0.5,rate:0.85},'AUNT BARB':{pitch:1.2,rate:0.9},'NARRATOR':{pitch:1.0,rate:0.92},'KEVIN':{pitch:1.3,rate:1.0}};
   var CC_ACCENTS=['en-au','en-gb','en-in','en-ng','en-us'];
   var CC_FALLBACK={'en-au':['en-gb','en-us'],'en-gb':['en-au','en-us'],'en-in':['en-gb','en-us'],'en-ng':['en-gb','en-in','en-us'],'en-us':['en-gb','en-au']};
   function ccPickVoice(who,pool){
@@ -165,9 +171,11 @@
   window.addEventListener('pagehide',function(){ stopSound(); });
   document.addEventListener('visibilitychange',function(){ if(document.hidden&&playing&&!audioEl) pause(); });
 
-  function show(data){
-    var ep=data.episodes[0];
-    $('show').textContent=data.show; $('tag').textContent=data.tagline;
+  var DATA=null, epId=null;
+  function epFromHash(){ var h=(location.hash||'').replace('#',''); return DATA.episodes.filter(function(e){return e.id===h;})[0]||null; }
+  function load(ep,autoplay){
+    stopSound(); playing=false; lock(false); cur=0; epId=ep.id;
+    ccMark=beacon('supa-recap-'+ep.id,'P'+ep.number);
     $('eptitle').textContent='Episode '+ep.number+': '+ep.title;
     $('epabout').innerHTML=esc(ep.about)+(ep.recaps?' <a href="'+esc(ep.recaps)+'">Read the book first</a>.':'');
     lines=ep.lines; var ol=$('lines'); ol.innerHTML='';
@@ -178,12 +186,28 @@
       li.addEventListener('keydown',function(e){ if(e.key==='Enter'){ li.click(); } });
       ol.appendChild(li); return li;
     });
+    Array.prototype.forEach.call($('eps').children,function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-id')===ep.id)); });
+    if(!synth && !lines.some(function(L){return L.audio;})) say('This device has no speech voices, so this plays as a read-along.'); else say('');
+    paint();
+    try{ window.scrollTo(0,0); }catch(e){}
+    if(autoplay) play();
+  }
+  function show(data){
+    DATA=data;
+    $('show').textContent=data.show; $('tag').textContent=data.tagline;
+    var eps=$('eps'); eps.innerHTML='';
+    data.episodes.slice().reverse().forEach(function(ep,i){        // newest first
+      var b=document.createElement('button'); b.type='button'; b.setAttribute('data-id',ep.id); b.setAttribute('aria-pressed','false');
+      b.textContent='Ep '+ep.number+': '+ep.title+(i===0&&data.episodes.length>1?' (new)':'');
+      b.addEventListener('click',function(){ if(ep.id===epId) return; try{ location.hash=ep.id; }catch(e){} load(ep,false); });
+      eps.appendChild(b);
+    });
     var b=data.bonus;
     if(b){ var box=$('bonus'); box.hidden=false;
       box.innerHTML = b.ready ? '<b>'+esc(b.label)+'</b><br>Extra episodes live at the shop. <a href="'+esc(b.url)+'">Grown-ups, this way</a>.'
                               : '<b>'+esc(b.label)+': coming soon.</b><br>Scratchy says it is not ready yet. Scratchy is right.'; }
-    if(!synth && !lines.some(function(L){return L.audio;})) say('This device has no speech voices, so this plays as a read-along.');
-    paint();
+    load(epFromHash()||data.episodes[data.episodes.length-1],false);
+    window.addEventListener('hashchange',function(){ var ep=epFromHash(); if(ep&&ep.id!==epId) load(ep,false); });
   }
   fetch('/shows/supa-recap/episodes.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(show).catch(function(){ say('The episode could not be loaded. Check your connection and reload.'); });

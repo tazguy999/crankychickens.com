@@ -25,7 +25,7 @@ const API = 'https://texttospeech.googleapis.com/v1';
 // Same pitch and speed the pages use for device voices.
 const PROFILES = {
   'SCRATCHY': { pitch: 0.7, rate: 0.95 }, 'PEARL': { pitch: 1.5, rate: 1.15 }, 'EL JAGUAR': { pitch: 0.5, rate: 0.85 },
-  'AUNT BARB': { pitch: 1.2, rate: 0.9 }, 'NARRATOR': { pitch: 1.0, rate: 0.92 },
+  'AUNT BARB': { pitch: 1.2, rate: 0.9 }, 'NARRATOR': { pitch: 1.0, rate: 0.92 }, 'KEVIN': { pitch: 1.3, rate: 1.0 },
 };
 // Same accent rule the pages use, so a character gets the accent it has on the reference phone.
 const ACCENTS = ['en-AU', 'en-GB', 'en-IN', 'en-NG', 'en-US'];

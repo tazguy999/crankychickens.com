@@ -1,7 +1,11 @@
 {
   "show": "The Supa Recap",
   "tagline": "Two chickens re-read their own books. One of them wants to be here.",
-  "bonus": { "ready": false, "url": "https://shop.crankychickens.com/supporters", "label": "Bonus episodes for grown-ups" },
+  "bonus": {
+    "ready": false,
+    "url": "https://shop.crankychickens.com/supporters",
+    "label": "Bonus episodes for grown-ups"
+  },
   "episodes": [
     {
       "id": "ep1",
@@ -44,6 +48,50 @@
         {"who": "PEARL", "text": "Next time: The Childhood of Scratchy and Pearl! We are in that one!"},
         {"who": "SCRATCHY", "text": "I was a baby. I was already right about everything."},
         {"who": "NARRATOR", "text": "The Supa Recap. Named by a real kid. Goodbye."}
+      ]
+    },
+    {
+      "id": "ep2",
+      "number": 2,
+      "title": "The Childhood",
+      "about": "The book has them in it this time. Scratchy defends his list. Kevin and El Jaguar call in.",
+      "recaps": "/shows/comic-childhood.html",
+      "lines": [
+        {"who": "NARRATOR", "text": "This is The Supa Recap. Episode two. Scratchy has asked us to say he did not agree to an episode two."},
+        {"who": "PEARL", "text": "HI! I'm Pearl! And today's book has US in it!"},
+        {"who": "SCRATCHY", "text": "I am Scratchy. Today's book is about my childhood. I would like it on the record that nobody asked me first."},
+        {"who": "PEARL", "text": "It is called The Childhood of Scratchy, Pearl, Kevin and Ernesto! Chapter one is Hatching!"},
+        {"who": "SCRATCHY", "text": "Fast fact. I complained from inside the egg. It was cramped in there. I stand by it."},
+        {"who": "PEARL", "text": "Then Scratchy hatched, looked at the whole world, and said: Hmph. Needs work."},
+        {"who": "SCRATCHY", "text": "It did need work. It still does."},
+        {"who": "PEARL", "text": "And I hatched ONE second later, and I have not stopped moving since! That part is TRUE!"},
+        {"who": "SCRATCHY", "text": "Grievance number one. She has not stopped talking since, either. The book left that out."},
+        {"who": "PEARL", "text": "Chapter two! The School Bully! That is where we meet Kevin the puppy, and Ernesto the jaguar!"},
+        {"who": "SCRATCHY", "text": "Ernesto said, your corn is my corn. So I started a list. The list is called Grievances. This show is basically the list."},
+        {"who": "PEARL", "text": "Fourth grade! Scratchy learned to count! And I ran for class president, and I WON! Twice!"},
+        {"who": "SCRATCHY", "text": "Forty-seven crayons. One was missing. It is still missing. I think about it."},
+        {"who": "PEARL", "text": "Fifth grade was the science fair! Kevin brought a stick. Kevin WON."},
+        {"who": "SCRATCHY", "text": "Grievance number two. I made a chart of everything wrong with the science fair. Nobody gave the chart a ribbon."},
+        {"who": "PEARL", "text": "We have a caller! Hello, you are on The Supa Recap!"},
+        {"who": "KEVIN", "text": "Bark."},
+        {"who": "PEARL", "text": "It's Kevin! Kevin, how did it feel to win the science fair?"},
+        {"who": "KEVIN", "text": "Bark. Bark."},
+        {"who": "SCRATCHY", "text": "He says it was a very good stick. He is not wrong."},
+        {"who": "PEARL", "text": "High school! I joined track, band, chess, drama, and a club about clubs!"},
+        {"who": "SCRATCHY", "text": "And Ernesto got a cool jacket. And a doorbell. For his locker."},
+        {"who": "PEARL", "text": "Another caller! Hello?"},
+        {"who": "EL JAGUAR", "text": "It is I. El Jaguar. The book says school bully. I prefer school leader."},
+        {"who": "SCRATCHY", "text": "You took my lunch corn."},
+        {"who": "EL JAGUAR", "text": "I was leading it. Away from you. Also, the doorbell was very useful. Thank you. Goodbye."},
+        {"who": "PEARL", "text": "Then college! Cluck University! And then graduation, where I yelled across the whole field that we saved Ernesto a seat!"},
+        {"who": "SCRATCHY", "text": "He said it was a dumb seat. He sat in it anyway. I counted the chairs twice. Forty-seven."},
+        {"who": "PEARL", "text": "Final scores! Ten out of ten eggs! I was in it!"},
+        {"who": "SCRATCHY", "text": "Forty-five out of forty-seven. One point off for the missing crayon. One point off because I was hugged at graduation. The book did not show it. It happened."},
+        {"who": "PEARL", "text": "That is our show! The bonus feed for grown-ups is still coming soon!"},
+        {"who": "SCRATCHY", "text": "It is still not ready. I checked. Twice."},
+        {"who": "PEARL", "text": "Next time: The Attack of the Monster Diapers!"},
+        {"who": "SCRATCHY", "text": "No. Not that one."},
+        {"who": "NARRATOR", "text": "The Supa Recap. Scratchy has been told there is an episode three. Goodbye."}
       ]
     }
   ]
