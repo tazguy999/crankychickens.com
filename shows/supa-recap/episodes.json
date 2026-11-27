@@ -1,0 +1,50 @@
+{
+  "show": "The Supa Recap",
+  "tagline": "Two chickens re-read their own books. One of them wants to be here.",
+  "bonus": { "ready": false, "url": "https://shop.crankychickens.com/supporters", "label": "Bonus episodes for grown-ups" },
+  "episodes": [
+    {
+      "id": "ep1",
+      "number": 1,
+      "title": "Before Scratchy",
+      "about": "Pearl and Scratchy recap the very first comic. El Jaguar calls in to complain.",
+      "recaps": "/shows/comic-before-scratchy.html",
+      "lines": [
+        {"who": "NARRATOR", "text": "This is The Supa Recap. The show where two chickens re-read their own books. One of them wants to be here."},
+        {"who": "PEARL", "text": "HI! I'm Pearl!"},
+        {"who": "SCRATCHY", "text": "I am Scratchy. I was told this would take four minutes."},
+        {"who": "PEARL", "text": "Today we are recapping the very first comic! Cranky Chickens: Before Scratchy, Pearl, Kevin and Ernesto!"},
+        {"who": "SCRATCHY", "text": "A book about a time before us. We are not in it. And yet, here we are, talking."},
+        {"who": "PEARL", "text": "Fast fact number one! This book was written by a real kid. On Thanksgiving!"},
+        {"who": "SCRATCHY", "text": "That explains the pacing. Seven chapters. Zero bathroom breaks."},
+        {"who": "PEARL", "text": "Chapter one! Normal Chickens! Long ago, chickens were normal. They said bawk. They had zero opinions."},
+        {"who": "SCRATCHY", "text": "Grievance number one. A chicken looks at a rock and says, good rock. That is an opinion. The book says zero opinions. I counted one."},
+        {"who": "PEARL", "text": "Chapter two! The farmer wakes everybody up at four in the morning. And he counts their corn wrong!"},
+        {"who": "SCRATCHY", "text": "One. Two. Five. Nine. I have never been so upset by a number."},
+        {"who": "PEARL", "text": "And that is when the first chicken got cranky! The first cranky eyebrow EVER!"},
+        {"who": "SCRATCHY", "text": "A historic eyebrow. It should be in a museum. There is no museum. I checked."},
+        {"who": "PEARL", "text": "Chapter three is The Egg Scape! They escape the farm dressed as EGGS!"},
+        {"who": "SCRATCHY", "text": "Fast fact. An egg with feet fooled a grown farmer. I would like that noted. Forever."},
+        {"who": "PEARL", "text": "Chapter four! The farmers hunt for them with pitchforks. But the book says the pitchforks are for pointing!"},
+        {"who": "SCRATCHY", "text": "Good. I had notes."},
+        {"who": "PEARL", "text": "Then they build a slingshot! Out of a stick and a stretchy farmer sock!"},
+        {"who": "SCRATCHY", "text": "Grievance number two. Nobody washed the sock."},
+        {"who": "PEARL", "text": "And then the big battle! Splat! Splat! Splat! Nobody got hurt. Everybody got stinky."},
+        {"who": "SCRATCHY", "text": "Those eggs come back in a later book. A farmer never washes his hair. The hair gets hands. I do not want to talk about it."},
+        {"who": "PEARL", "text": "We have a caller! Hello, you are on The Supa Recap!"},
+        {"who": "EL JAGUAR", "text": "It is I. El Jaguar. I am calling because I am not in this book."},
+        {"who": "SCRATCHY", "text": "Correct. It was a peaceful book."},
+        {"who": "EL JAGUAR", "text": "I have read all seven chapters. There is no jaguar. I would like a new chapter. Chapter eight. A jaguar arrives. He is tall."},
+        {"who": "PEARL", "text": "Thank you for calling!"},
+        {"who": "EL JAGUAR", "text": "I was not finished."},
+        {"who": "PEARL", "text": "Final scores! I give this book ten out of ten eggs!"},
+        {"who": "SCRATCHY", "text": "I give it forty-six out of forty-seven. One point off for the rock."},
+        {"who": "PEARL", "text": "That is our show! And soon there will be a bonus feed for grown-ups, with extra episodes!"},
+        {"who": "SCRATCHY", "text": "It is not ready yet. When it is ready, it will be at the shop. Ask a grown-up. Do not ask me."},
+        {"who": "PEARL", "text": "Next time: The Childhood of Scratchy and Pearl! We are in that one!"},
+        {"who": "SCRATCHY", "text": "I was a baby. I was already right about everything."},
+        {"who": "NARRATOR", "text": "The Supa Recap. Named by a real kid. Goodbye."}
+      ]
+    }
+  ]
+}

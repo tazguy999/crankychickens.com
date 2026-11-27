@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Supa Recap: a Cranky Chickens podcast</title>
+<meta name="description" content="Pearl and Scratchy re-read the Cranky Chickens books. One of them wants to be here.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#1a1024;--card:#2a1d3a;--ink:#f6ead6;--gold:#ffb703;--gold-ink:#2a1800;--dim:rgba(255,255,255,.6);--hand:"Patrick Hand","Comic Sans MS","Chalkboard SE",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.4}
+  .wrap{max-width:680px;margin:0 auto;padding:14px 14px 150px}
+  header{display:flex;gap:14px;align-items:center}
+  header img{width:104px;height:104px;border-radius:14px;flex:none;background:#fbf6e4}
+  h1{font-family:var(--hand);font-size:32px;line-height:1;margin:0 0 6px;color:var(--gold);font-weight:400}
+  header p{margin:0;color:var(--dim);font-size:14px}
+  h2{font-family:var(--hand);font-weight:400;font-size:24px;margin:20px 0 2px}
+  .about{color:var(--dim);margin:0 0 4px;font-size:14px}
+  .about a{color:#8ecae6}
+  ol.lines{list-style:none;margin:12px 0 0;padding:0}
+  ol.lines li{display:flex;gap:10px;padding:10px 10px;border-radius:12px;cursor:pointer;border:2px solid transparent}
+  ol.lines li .who{flex:0 0 78px;font-size:12px;letter-spacing:.5px;color:var(--gold);padding-top:3px;overflow-wrap:anywhere}
+  ol.lines li .t{flex:1;min-width:0;font-family:var(--hand);font-size:20px;line-height:1.25}
+  ol.lines li.done{opacity:.55}
+  ol.lines li.on{background:var(--card);border-color:var(--gold);opacity:1}
+  ol.lines li:focus-visible{outline:3px solid #fff}
+  .bonus{margin:22px 0 0;padding:14px;border-radius:14px;border:2px dashed rgba(255,183,3,.6);background:rgba(255,183,3,.08);font-size:14px}
+  .bonus b{color:var(--gold)}
+  .bonus a{color:#8ecae6}
+  .home{display:inline-block;margin:18px 0 0;color:rgba(255,255,255,.5);font-size:13px;text-decoration:none}
+  .player{position:fixed;left:0;right:0;bottom:0;background:#0d0714;border-top:2px solid rgba(255,183,3,.5);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
+  .player .in{max-width:680px;margin:0 auto}
+  .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.15);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--gold);transition:width .25s}
+  .ctl{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .ctl button{font:inherit;font-size:20px;min-width:56px;min-height:52px;border-radius:14px;border:2px solid #000;background:#5a4330;color:var(--ink);cursor:pointer}
+  .ctl button#play{background:var(--gold);color:var(--gold-ink);min-width:84px;font-size:24px}
+  .ctl button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .ctl .now{flex:1;min-width:0;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #msg{color:#ffd166;font-size:14px;margin:12px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="/shows/supa-recap/cover.png" alt="The Supa Recap cover: Scratchy and Pearl at a microphone" width="104" height="104">
+    <div>
+      <h1 id="show">The Supa Recap</h1>
+      <p id="tag">A Cranky Chickens podcast.</p>
+    </div>
+  </header>
+  <p id="msg" hidden></p>
+  <h2 id="eptitle"></h2>
+  <p class="about" id="epabout"></p>
+  <ol class="lines" id="lines"></ol>
+  <div class="bonus" id="bonus" hidden></div>
+  <a class="home" href="/">&larr; back to crankychickens.com</a>
+</div>
+<div class="player">
+  <div class="in">
+    <div class="bar" aria-hidden="true"><i id="prog"></i></div>
+    <div class="ctl">
+      <button id="back" aria-label="Previous line">&#9198;</button>
+      <button id="play" aria-label="Play">&#9654;</button>
+      <button id="fwd" aria-label="Next line">&#9197;</button>
+      <div class="now" id="now">Tap play</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  // CC watch beacon: same breadcrumb the episodes leave (shared localStorage key cc_watched)
+  var ccMark=(function(){
+    var SLUG='supa-recap-ep1', EP='P1', KEY='cc_watched';
+    function rd(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return {};}}
+    function wr(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+    var all=rd(), rec=all[SLUG]||{ep:EP,firstSeen:Date.now(),plays:0,maxProgress:0,finished:false};
+    rec.ep=EP;rec.plays++;rec.lastSeen=Date.now();all[SLUG]=rec;wr(all);
+    return function(t,total){ if(!total)return; var p=Math.max(0,Math.min(1,t/total)); if(p<=rec.maxProgress+0.005)return;
+      rec.maxProgress=p; if(p>=0.97)rec.finished=true; var a=rd(); a[SLUG]=rec; wr(a); };
+  })();
+
+  // Same character voices as the episodes: pitch and speed per character, accent pinned per character.
+  var PROFILES={'SCRATCHY':{pitch:0.7,rate:0.95},'PEARL':{pitch:1.5,rate:1.15},'EL JAGUAR':{pitch:0.5,rate:0.85},'AUNT BARB':{pitch:1.2,rate:0.9},'NARRATOR':{pitch:1.0,rate:0.92}};
+  var CC_ACCENTS=['en-au','en-gb','en-in','en-ng','en-us'];
+  var CC_FALLBACK={'en-au':['en-gb','en-us'],'en-gb':['en-au','en-us'],'en-in':['en-gb','en-us'],'en-ng':['en-gb','en-in','en-us'],'en-us':['en-gb','en-au']};
+  function ccPickVoice(who,pool){
+    if(!pool||!pool.length) return null;
+    var h=0,i,j; for(i=0;i<who.length;i++) h+=who.charCodeAt(i);
+    var want=CC_ACCENTS[h%CC_ACCENTS.length], tries=[want].concat(CC_FALLBACK[want]||[]);
+    for(i=0;i<tries.length;i++){
+      var m=[]; for(j=0;j<pool.length;j++){ if((pool[j].lang||'').replace('_','-').toLowerCase()===tries[i]) m.push(pool[j]); }
+      if(m.length){ for(j=0;j<m.length;j++){ if(/google/i.test(m[j].name)) return m[j]; } return m[0]; }
+    }
+    return pool[h%pool.length];
+  }
+  var synth=null; try{ synth=('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window)?window.speechSynthesis:null; }catch(e){}
+  function enVoices(){ var all=[],out=[],i; try{ all=synth.getVoices()||[]; }catch(e){} for(i=0;i<all.length;i++){ if(all[i].lang&&all[i].lang.toLowerCase().indexOf('en')===0) out.push(all[i]); } return out; }
+
+  var $=function(id){return document.getElementById(id);};
+  var lines=[], els=[], cur=0, playing=false, token=0, audioEl=null, wake=null;
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function say(msg){ var m=$('msg'); m.textContent=msg; m.hidden=!msg; }
+
+  function paint(){
+    els.forEach(function(el,i){ el.classList.toggle('on',i===cur&&playing); el.classList.toggle('done',i<cur); });
+    $('prog').style.width=(lines.length?Math.round(cur/lines.length*100):0)+'%';
+    $('play').innerHTML=playing?'&#10074;&#10074;':'&#9654;';
+    $('play').setAttribute('aria-label',playing?'Pause':'Play');
+    $('now').textContent = !lines.length ? '' : (cur>=lines.length ? 'The end. Tap play to hear it again.' : (playing ? lines[cur].who : (cur?'Paused':'Tap play')));
+    if(playing && els[cur]){ try{ els[cur].scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){} }
+  }
+  function stopSound(){
+    token++;
+    try{ if(synth) synth.cancel(); }catch(e){}
+    if(audioEl){ try{ audioEl.pause(); }catch(e){} audioEl=null; }
+  }
+  function lock(on){
+    try{
+      if(on && navigator.wakeLock && !wake){ navigator.wakeLock.request('screen').then(function(w){ wake=w; },function(){}); }
+      if(!on && wake){ wake.release(); wake=null; }
+    }catch(e){}
+  }
+  function finish(){ playing=false; cur=lines.length; ccMark(1,1); lock(false); paint(); }
+  function step(){
+    if(!playing) return;
+    if(cur>=lines.length){ finish(); return; }
+    var my=++token, L=lines[cur], moved=false;
+    function next(){ if(moved||my!==token||!playing) return; moved=true; cur++; ccMark(cur,lines.length); paint(); setTimeout(step,220); }
+    paint();
+    if(L.audio){
+      // recorded voice, once it exists; falls back to the device voice if the file will not play
+      var fell=false, fallback=function(){ if(fell||my!==token) return; fell=true; audioEl=null; speak(L,next,my); };
+      audioEl=new Audio(L.audio);
+      audioEl.onended=next;
+      audioEl.onerror=fallback;
+      var p=audioEl.play(); if(p&&p.catch) p.catch(fallback);
+    } else speak(L,next,my);
+  }
+  function speak(L,next,my){
+    if(!synth){ setTimeout(next, Math.max(1400, L.text.length*55)); return; }   // no voices: step through as a read-along
+    try{
+      var u=new SpeechSynthesisUtterance(L.text), p=PROFILES[L.who]||{pitch:1,rate:1}, v=ccPickVoice(L.who,enVoices());
+      if(v) u.voice=v; u.pitch=p.pitch; u.rate=p.rate; u.volume=0.95;
+      u.onend=next; u.onerror=function(ev){ if(ev&&(ev.error==='canceled'||ev.error==='interrupted')) return; next(); };
+      synth.speak(u);
+      // some devices never fire onend; move on after a generous wait
+      setTimeout(function(){ if(my===token) next(); }, 4000+L.text.length*130);
+    }catch(e){ setTimeout(next,1500); }
+  }
+  function play(){ if(!lines.length) return; if(cur>=lines.length) cur=0; playing=true; lock(true); step(); }
+  function pause(){ playing=false; stopSound(); lock(false); paint(); }
+  function jump(n){ var was=playing; stopSound(); cur=Math.max(0,Math.min(lines.length-1,n)); if(was){ playing=true; step(); } else paint(); }
+
+  $('play').addEventListener('click',function(){ playing?pause():play(); });
+  $('back').addEventListener('click',function(){ jump(cur-1); });
+  $('fwd').addEventListener('click',function(){ jump(cur+1); });
+  document.addEventListener('keydown',function(e){
+    if(e.key===' '&&e.target===document.body){ e.preventDefault(); playing?pause():play(); }
+    else if(e.key==='ArrowRight'){ jump(cur+1); } else if(e.key==='ArrowLeft'){ jump(cur-1); }
+  });
+  window.addEventListener('pagehide',function(){ stopSound(); });
+  document.addEventListener('visibilitychange',function(){ if(document.hidden&&playing&&!audioEl) pause(); });
+
+  function show(data){
+    var ep=data.episodes[0];
+    $('show').textContent=data.show; $('tag').textContent=data.tagline;
+    $('eptitle').textContent='Episode '+ep.number+': '+ep.title;
+    $('epabout').innerHTML=esc(ep.about)+(ep.recaps?' <a href="'+esc(ep.recaps)+'">Read the book first</a>.':'');
+    lines=ep.lines; var ol=$('lines'); ol.innerHTML='';
+    els=lines.map(function(L,i){
+      var li=document.createElement('li'); li.tabIndex=0; li.setAttribute('role','button');
+      li.innerHTML='<span class="who">'+esc(L.who)+'</span><span class="t">'+esc(L.text)+'</span>';
+      li.addEventListener('click',function(){ stopSound(); cur=i; playing=true; lock(true); step(); });
+      li.addEventListener('keydown',function(e){ if(e.key==='Enter'){ li.click(); } });
+      ol.appendChild(li); return li;
+    });
+    var b=data.bonus;
+    if(b){ var box=$('bonus'); box.hidden=false;
+      box.innerHTML = b.ready ? '<b>'+esc(b.label)+'</b><br>Extra episodes live at the shop. <a href="'+esc(b.url)+'">Grown-ups, this way</a>.'
+                              : '<b>'+esc(b.label)+': coming soon.</b><br>Scratchy says it is not ready yet. Scratchy is right.'; }
+    if(!synth && !lines.some(function(L){return L.audio;})) say('This device has no speech voices, so this plays as a read-along.');
+    paint();
+  }
+  fetch('/shows/supa-recap/episodes.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(show).catch(function(){ say('The episode could not be loaded. Check your connection and reload.'); });
+})();
+</script>
+</body>
+</html>
