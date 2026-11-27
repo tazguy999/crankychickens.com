@@ -124,6 +124,11 @@ function tEndCard(ctx,gameNum,title,sub,t){
   ctx.globalAlpha=1;ctx.textAlign='left';
 }
 
+// Declared before first use: these sat below the scripts that assign into them,
+// which threw at load and left the WATCH TRAILER button dead.
+const SCENE_DUR = 300;
+const TRAILER_SCRIPTS = {};
+
 // ── TRAILER 4: IN SPACE ──
 TRAILER_SCRIPTS[4] = (()=>{
   const stars=Array.from({length:60},(_,i)=>({x:(i*137+50)%640,y:(i*53+20)%360,r:Math.random()*1.5+0.3,s:Math.random()*0.05+0.01}));
@@ -638,8 +643,6 @@ TRAILER_SCRIPTS[7] = (()=>{
 
 // ── PLAYER STATE ──
 // 300 frames = 5 seconds per scene at 60fps — comfortable reading pace for 8-year-olds
-const SCENE_DUR = 300;
-const TRAILER_SCRIPTS = {};
 TRAILER_SCRIPTS['barb'] = (()=>{
   const GW=640,GH=400;
   const STARS=Array.from({length:80},(_,i)=>({x:(i*137+50)%GW,y:(i*53+20)%GH,r:Math.random()*1.2+0.3,s:Math.random()*0.05+0.01,off:Math.random()*Math.PI*2}));
@@ -945,7 +948,7 @@ function trailerTogglePause(){
 
 function trailerLoop(){
   // Guard — if anything killed us, stop
-  if(!trailerActive || trailerPaused){ trailerRAF=null; return; }
+  if(!trailerActive || trailerPaused){ trailerRAF=null; trailerLoop._last=0; return; }
 
   const canvas=document.getElementById('tCanvas');
   const ctx=canvas.getContext('2d');
@@ -975,8 +978,12 @@ function trailerLoop(){
     ctx.globalAlpha=1;ctx.textAlign='left';
   }
 
-  trailerFr++;
-  trailerSceneFr++;
+  // advance by elapsed time (60 frames a second), so 120Hz screens don't play double speed
+  const _now=performance.now();
+  const _n=Math.max(1,Math.min(4,Math.round((_now-(trailerLoop._last||_now))/(1000/60))))||1;
+  trailerLoop._last=_now;
+  trailerFr+=_n;
+  trailerSceneFr+=_n;
 
   // Advance scene
   if(trailerSceneFr>=scene.dur){

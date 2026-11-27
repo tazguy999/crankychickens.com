@@ -247,9 +247,12 @@ function startTrailer(){
     ctx.restore();
   }
 
-  function loop(){
+  let t0=0;
+  function loop(ts){
     if(!trailerStarted) { requestAnimationFrame(loop); return; }
-    fr++;
+    // time-based, so the scene plays at the same speed on 60Hz and 120Hz screens
+    if(!t0) t0=ts||performance.now();
+    fr=((ts||performance.now())-t0)*0.06;
     const sky=ctx.createLinearGradient(0,0,0,H);
     sky.addColorStop(0,'#1a0a2e'); sky.addColorStop(0.4,'#2d1044'); sky.addColorStop(1,'#3d1a0a');
     ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
@@ -319,7 +322,16 @@ function share(){
     });
   }
 }
-function launchTrailer(){ playTrailer("barb"); }
+function launchTrailer(){
+  // reveal the little scene behind the button, and leave a way to watch again
+  const overlay=document.getElementById('countdown-overlay');
+  if(overlay){
+    overlay.style.cssText='position:absolute;right:10px;bottom:8px;';
+    overlay.onclick=null;
+    overlay.innerHTML='<button onclick="playTrailer(\'barb\')" style="font-family:\'Fredoka One\',cursive;font-size:13px;padding:8px 14px;border-radius:10px;background:#ffcc02;border:none;color:#1a0a2e;cursor:pointer;">▶ WATCH TRAILER</button>';
+  }
+  playTrailer("barb");
+}
 </script>
 </body>
 </html>

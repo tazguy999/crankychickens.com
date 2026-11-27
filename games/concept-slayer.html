@@ -56,6 +56,8 @@ button.big:disabled{opacity:0.45;}
 <script>
 const C=document.getElementById('c'),ctx=C.getContext('2d');
 const W=640,H=300,GY=262;
+// crisp on phone and tablet screens: back the canvas with real device pixels
+const DPR=Math.min(window.devicePixelRatio||1,2);C.width=W*DPR;C.height=H*DPR;
 const FF="'Fredoka One',cursive";
 let muted=false,fr_g=0;
 // ══ AUDIO ══
@@ -304,13 +306,17 @@ function bg(){
   ctx.fillStyle='#6b4a2c';ctx.fillRect(0,GY,W,H-GY);
 }
 function bitAt(i,x,s,talk){const k=BIT_ORDER[i];bitArt(x,GY,s,BITS[k][0],BITS[k][1],{fr:fr_g,ph:i*1.3,tie:k==='bluffer',talk:talk});}
-function draw(){
-  fr_g++;ctx.clearRect(0,0,W,H);bg();
+let _t0=0,_lastFr=0;
+function draw(ts){
+  // time-based frame counter: same speed on 60Hz and 120Hz screens
+  ts=ts||performance.now();if(!_t0)_t0=ts;
+  fr_g=(ts-_t0)*0.06;const df=Math.min(6,fr_g-_lastFr);_lastFr=fr_g;
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);bg();
   const st=G.stage;
   let sw=25;if(G.slash&&fr_g-G.slash.t<16)sw=25-Math.sin((fr_g-G.slash.t)/16*Math.PI)*110;
   slayerArt(120,GY,0.36,{fr:fr_g,sw:sw,expr:st===5?'aha':st===4?'side':'cranky'});
   if(st===0){
-    if(!G.burst){const sh=G.shake>0?Math.sin(fr_g*1.6)*G.shake*0.5:0;if(G.shake>0)G.shake--;
+    if(!G.burst){const sh=G.shake>0?Math.sin(fr_g*1.6)*G.shake*0.5:0;if(G.shake>0)G.shake=Math.max(0,G.shake-df);
       monsterArt(450+sh,GY,0.5-G.slices*0.04,{fr:fr_g,talk:fr_g%160<60});
       if(fr_g%160<60){ctx.font='bold 13px '+FF;ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(['TOKENS!','PARAMETERS!','GRADIENT DESCENT!'][Math.floor(fr_g/160)%3],450,36);ctx.textAlign='left';}
     }else{const q=Math.min(1,(fr_g-G.burst)/40),e=1-(1-q)*(1-q);
