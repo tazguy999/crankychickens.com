@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- This page is not allowed to send anything anywhere: connect-src 'none' blocks every upload, fetch and socket. Recordings stay in this browser. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Cranky Chickens Recording Booth</title>
+<style>
+  :root{--bg:#1a1024;--card:#2a1d3a;--card2:#3a2a52;--ink:#f6ead6;--gold:#ffb703;--gold-ink:#2a1800;--red:#e63946;--green:#7fd1a0;--dim:rgba(255,255,255,.65)}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Comic Sans MS","Chalkboard SE",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:18px;line-height:1.35}
+  button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .wrap{max-width:900px;margin:0 auto;padding:12px 14px 40px}
+  header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  h1{font-size:26px;margin:0;color:var(--gold);flex:1;min-width:200px;font-weight:700}
+  .chip{min-height:48px;padding:8px 16px;border-radius:999px;border:2px solid rgba(255,183,3,.6);background:transparent}
+  .chip.solid{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+  .rule{margin:12px 0;padding:10px 14px;border-radius:14px;background:rgba(127,209,160,.14);border:2px solid rgba(127,209,160,.5);font-size:16px}
+  nav{display:flex;gap:8px;margin:12px 0}
+  nav button{flex:1;min-height:56px;border-radius:14px;border:2px solid #000;background:var(--card);font-size:18px}
+  nav button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .mission{min-height:120px;padding:10px;border-radius:16px;border:2px solid #000;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;font-size:16px;position:relative}
+  .mission .e{font-size:36px;line-height:1}
+  .mission.done{background:var(--card2);border-color:var(--green)}
+  .mission .n{position:absolute;top:6px;right:8px;font-size:13px;background:var(--green);color:#0f2a1a;border-radius:999px;padding:1px 8px}
+  .wall{margin:0 0 10px;color:var(--dim);font-size:16px}
+  .panel{background:var(--card);border:2px solid #000;border-radius:18px;padding:16px}
+  .prompt{font-size:30px;line-height:1.2;margin:6px 0 4px}
+  .hint{color:var(--dim);font-size:17px;margin:0 0 12px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .big{min-height:92px;min-width:200px;border-radius:24px;border:3px solid #000;font-size:30px;font-weight:700;padding:10px 26px}
+  .rec{background:var(--red);color:#fff}
+  .stop{background:#fff;color:#000}
+  .back{min-height:52px;padding:8px 16px;border-radius:14px;border:2px solid #000;background:#5a4330}
+  .count{font-size:120px;line-height:1;text-align:center;color:var(--gold);margin:10px 0}
+  .timer{font-size:54px;font-variant-numeric:tabular-nums}
+  .meter{height:22px;border-radius:11px;background:rgba(255,255,255,.15);overflow:hidden;margin:12px 0}
+  .meter i{display:block;height:100%;width:0;background:var(--green)}
+  .takes{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .take{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;border-radius:14px;background:var(--card2);border:2px solid transparent}
+  .take.star{border-color:var(--gold)}
+  .take .t{flex:1;min-width:140px;font-size:16px}
+  .take .t small{display:block;color:var(--dim);font-size:13px}
+  .take button{min-width:52px;min-height:52px;border-radius:12px;border:2px solid #000;background:#5a4330;font-size:22px}
+  .take button.on{background:var(--gold);color:var(--gold-ink)}
+  .take button.warn{background:var(--red);color:#fff;font-size:15px;padding:0 10px}
+  .msg{margin:12px 0;padding:12px 14px;border-radius:14px;background:rgba(230,57,70,.18);border:2px solid var(--red);font-size:17px}
+  .ok{background:rgba(127,209,160,.14);border-color:rgba(127,209,160,.5)}
+  h2{font-size:22px;margin:16px 0 8px;color:var(--gold)}
+  .labels{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+  .overlay{position:fixed;inset:0;background:rgba(10,5,16,.94);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+  .pinbox{background:var(--card);border:2px solid #000;border-radius:20px;padding:18px;width:min(360px,100%);text-align:center}
+  .dots{font-size:34px;letter-spacing:10px;min-height:44px}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .pad button{min-height:64px;border-radius:14px;border:2px solid #000;background:var(--card2);font-size:26px}
+  .admin .take .t{min-width:180px}
+  .admin label{display:flex;align-items:center;gap:6px;font-size:15px;min-height:48px}
+  .admin input[type=checkbox]{width:26px;height:26px}
+  .small{font-size:15px;color:var(--dim)}
+  a{color:#8ecae6}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎙️ Recording Booth</h1>
+    <button class="chip" id="whoBtn" aria-label="Change who is recording"></button>
+    <button class="chip" id="lockBtn" aria-label="Grown-ups">🔒 Grown-ups</button>
+  </header>
+  <div class="rule">🕵️ <b>Secret agent rule:</b> code names only. No real names, no school, no town. Everything you record stays on this tablet.</div>
+  <div id="err" class="msg" hidden></div>
+
+  <nav id="tabs">
+    <button data-v="missions" aria-pressed="true">⭐ Missions</button>
+    <button data-v="studio" aria-pressed="false">🎬 Studio</button>
+    <button data-v="mine" aria-pressed="false">🎧 My takes</button>
+  </nav>
+
+  <section id="v-missions">
+    <p class="wall" id="wall"></p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="v-studio" hidden>
+    <div class="panel">
+      <h2 style="margin-top:0">The Studio</h2>
+      <p class="hint">Record anything. Do as many takes as you want. Pick a long countdown so you can run to your spot.</p>
+      <div class="labels" id="labels"></div>
+    </div>
+  </section>
+
+  <section id="v-mine" hidden>
+    <p class="wall" id="mineInfo"></p>
+    <ul class="takes" id="mineList"></ul>
+  </section>
+
+  <section id="v-rec" hidden>
+    <button class="back" id="recBack">← Back</button>
+    <div class="panel" style="margin-top:10px">
+      <div id="recIdle">
+        <div class="prompt" id="recPrompt"></div>
+        <p class="hint" id="recHint"></p>
+        <div class="row" style="margin-bottom:12px">
+          <span class="small">Countdown:</span>
+          <span id="counts" class="row"></span>
+        </div>
+        <button class="big rec" id="recGo">● RECORD</button>
+      </div>
+      <div id="recCount" hidden><p class="hint" style="text-align:center">Get to your spot!</p><div class="count" id="countNum">3</div><div style="text-align:center"><button class="back" id="countCancel">Cancel</button></div></div>
+      <div id="recLive" hidden>
+        <div class="row"><span style="font-size:34px;color:var(--red)">●</span><span class="timer" id="recTimer">0:00</span><span class="small" id="recMax"></span></div>
+        <div class="meter" aria-hidden="true"><i id="level"></i></div>
+        <button class="big stop" id="recStop">■ STOP</button>
+      </div>
+      <h2 id="takesHead" hidden>Takes</h2>
+      <ul class="takes" id="recTakes"></ul>
+    </div>
+  </section>
+
+  <section id="v-admin" class="admin" hidden>
+    <button class="back" id="adminBack">← Back to the booth</button>
+    <h2>Grown-ups</h2>
+    <p class="small" id="store"></p>
+    <p class="small">Recordings live only in this browser on this device. This page is blocked from sending data anywhere. Clearing the browser's data erases them, so export the ones you want to keep. The PIN keeps kids out of this screen; it is not real security.</p>
+    <div class="row" style="margin:10px 0">
+      <button class="chip solid" id="exOk">Export approved (.zip)</button>
+      <button class="chip" id="exAll">Export all (.zip)</button>
+      <button class="chip" id="wipe">Delete everything</button>
+      <button class="chip" id="newPin">Change PIN</button>
+    </div>
+    <p class="small" id="adminMsg"></p>
+    <ul class="takes" id="adminList"></ul>
+  </section>
+</div>
+
+<div class="overlay" id="whoOv" hidden>
+  <div class="pinbox">
+    <h2 style="margin-top:0">Who is recording?</h2>
+    <p class="small">Pick your code name.</p>
+    <div id="whoList" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+<div class="overlay" id="pinOv" hidden>
+  <div class="pinbox">
+    <h2 style="margin-top:0" id="pinTitle">Grown-up PIN</h2>
+    <div class="dots" id="pinDots" aria-live="polite"></div>
+    <p class="small" id="pinMsg"></p>
+    <div class="pad" id="pad"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var WHOS=['Cannon Master','Dragon Scribe','Mystery Guest','A Grown-up'];
+var COUNTS=[3,5,10];
+var MISSIONS=[
+  {id:'intro',e:'🕵️',t:'Code name intro',p:'Say: “This is ___, reporting for chicken duty!”',h:'Use your CODE NAME in the blank.'},
+  {id:'recap',e:'🎙️',t:'Show opener',p:'Say: “This is The Supa Recap!”',h:'Like a radio announcer.'},
+  {id:'bark',e:'🐶',t:'Kevin',p:'Bark like Kevin. Twice.',h:'Bark. Bark.'},
+  {id:'behold',e:'🐆',t:'El Jaguar',p:'Say: “BEHOLD!”',h:'As dramatic as you can. He is tall.'},
+  {id:'hmph',e:'🐔',t:'Scratchy',p:'Say: “Hmph. Needs work.”',h:'Low and grumpy.'},
+  {id:'pearl',e:'💨',t:'Pearl',p:'Say: “HI! HI! WHAT IS THAT?”',h:'As fast as you can.'},
+  {id:'47',e:'🌽',t:'The corn count',p:'Say: “Forty-seven.”',h:'As cranky as possible.'},
+  {id:'evil',e:'😠',t:'Evil Pearl',p:'Whisper: “going somewhere?”',h:'Very quiet. Very spooky.'},
+  {id:'blorp',e:'🤧',t:'Booger Monster',p:'Say: “Blorp.”',h:'From deep in your belly.'},
+  {id:'gerald',e:'🕯️',t:'Gerald',p:'Say: “Is this a bad time?”',h:'Very, very polite.'},
+  {id:'puddle',e:'🌈',t:'Opposite Scratchy',p:'Say: “I LOVE THIS PUDDLE!”',h:'The happiest you have ever been.'},
+  {id:'rawr',e:'👶',t:'Monster Diaper',p:'Do your best monster RAWR.',h:'Scary. But also a diaper.'},
+  {id:'stop',e:'✋',t:'Stoooooop',p:'Say: “STOOOOOOP!”',h:'Hold it for as long as you can.'},
+  {id:'okok',e:'🐿️',t:'Boss Squirrel',p:'Say: “OK! OK! You win!”',h:'You just lost a staring contest.'},
+  {id:'achoo',e:'💥',t:'The big sneeze',p:'Do the biggest “ACHOO!” ever.',h:'Egg-chanted.'},
+  {id:'stomp',e:'👟',t:'Supajogger',p:'Make the sound of a giant shoe stomping.',h:'Stomp. Stomp. Stomp.'},
+  {id:'badplot',e:'📋',t:'The review',p:'Say: “It was a bad plot.”',h:'You are not impressed.'},
+  {id:'tbc',e:'⏭️',t:'Cliffhanger',p:'Say: “To be continued!”',h:'Make us want the next book.'},
+  {id:'title',e:'📖',t:'Your chapter',p:'Read one chapter title you wrote.',h:'Any chapter. Read it like it is the most important chapter ever.',max:45},
+  {id:'story',e:'📚',t:'Tell the story',p:'Tell what happens in your favorite chapter.',h:'In your own words. You get a whole minute.',max:75},
+  {id:'next',e:'💡',t:'Author interview',p:'What should happen in the next book?',h:'You are the author. Tell us the plan.',max:75},
+  {id:'song',e:'🎵',t:'Theme song',p:'Make up a Cranky Chickens theme song. Right now.',h:'No practice. Just go.',max:60}
+];
+var LABELS=['Character voice','Sound effect','Song','Story','Anything'];
+var MAX_DEFAULT=30;
+
+// ---------- storage: IndexedDB in this browser only ----------
+var db=null;
+function openDB(){ return new Promise(function(res,rej){
+  var r; try{ r=indexedDB.open('cc-booth',1); }catch(e){ rej(e); return; }
+  r.onupgradeneeded=function(){ r.result.createObjectStore('takes',{keyPath:'id',autoIncrement:true}); };
+  r.onsuccess=function(){ db=r.result; res(db); }; r.onerror=function(){ rej(r.error); };
+}); }
+function tx(mode){ return db.transaction('takes',mode).objectStore('takes'); }
+function p(req){ return new Promise(function(res,rej){ req.onsuccess=function(){res(req.result);}; req.onerror=function(){rej(req.error);}; }); }
+function allTakes(){ return p(tx('readonly').getAll()); }
+function addTake(t){ return p(tx('readwrite').add(t)); }
+function putTake(t){ return p(tx('readwrite').put(t)); }
+function delTake(id){ return p(tx('readwrite').delete(id)); }
+function clearTakes(){ return p(tx('readwrite').clear()); }
+function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+
+var who=ls('booth_who')||'', countSecs=+(ls('booth_count')||3)||3, takes=[];
+function err(m){ var e=$('err'); e.textContent=m||''; e.hidden=!m; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function fmt(ms){ var s=Math.round(ms/1000); return Math.floor(s/60)+':'+('0'+s%60).slice(-2); }
+function missionOf(id){ for(var i=0;i<MISSIONS.length;i++) if(MISSIONS[i].id===id) return MISSIONS[i]; return null; }
+function labelOf(t){ var m=missionOf(t.mission); return m?m.t:(t.label||'Studio'); }
+async function refresh(){ takes=await allTakes(); }
+
+// ---------- views ----------
+var view='missions', cur=null;   // cur = {mission, label, prompt, hint, max}
+function showView(v){
+  view=v;
+  ['missions','studio','mine','rec','admin'].forEach(function(n){ $('v-'+n).hidden=(n!==v); });
+  $('tabs').hidden=(v==='admin'||v==='rec');
+  Array.prototype.forEach.call($('tabs').children,function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-v')===v)); });
+  stopPlay();
+  if(v==='missions') drawMissions(); if(v==='mine') drawMine(); if(v==='admin') drawAdmin(); if(v==='studio') drawStudio();
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+function mineTakes(){ return takes.filter(function(t){ return t.who===who; }); }
+function drawMissions(){
+  var mine=mineTakes(), done=0, g=$('grid'); g.innerHTML='';
+  MISSIONS.forEach(function(m){
+    var n=mine.filter(function(t){return t.mission===m.id;}).length; if(n) done++;
+    var b=document.createElement('button'); b.className='mission'+(n?' done':'');
+    b.innerHTML='<span class="e">'+m.e+'</span><span>'+esc(m.t)+'</span>'+(n?'<span class="n">'+n+(n===1?' take':' takes')+'</span>':'');
+    b.addEventListener('click',function(){ openRec({mission:m.id,label:m.t,prompt:m.p,hint:m.h,max:m.max||MAX_DEFAULT},'missions'); });
+    g.appendChild(b);
+  });
+  $('wall').textContent='Stickers: '+done+' of '+MISSIONS.length+(done===MISSIONS.length?' — ALL DONE!':'')+'. Tap a mission. Do it as many times as you like.';
+}
+function drawStudio(){
+  var box=$('labels'); box.innerHTML='';
+  LABELS.forEach(function(l){ var b=document.createElement('button'); b.className='chip'; b.textContent=l;
+    b.addEventListener('click',function(){ openRec({mission:'studio:'+l,label:l,prompt:l,hint:'Studio take. Record it, listen, and do it again until you love it.',max:90},'studio'); });
+    box.appendChild(b); });
+}
+function drawMine(){
+  var mine=mineTakes().sort(function(a,b){return b.at-a.at;});
+  $('mineInfo').textContent=who+': '+mine.length+(mine.length===1?' take':' takes')+'. ⭐ marks the ones you want to keep.';
+  listTakes($('mineList'),mine,true);
+}
+
+// ---------- take rows ----------
+function listTakes(ul,arr,showLabel){
+  ul.innerHTML='';
+  arr.forEach(function(t,i){
+    var li=document.createElement('li'); li.className='take'+(t.star?' star':'');
+    var n=arr.length-i;
+    li.innerHTML='<span class="t">'+(showLabel?esc(labelOf(t)):'Take '+n)+'<small>'+fmt(t.ms)+' · '+new Date(t.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</small></span>';
+    [['▶','Play',1,null],['🐿️','Play as a chipmunk',1.6,null],['🦖','Play as a giant',0.65,null],['🤖','Play as a robot',1,'robot']].forEach(function(f){
+      var b=document.createElement('button'); b.textContent=f[0]; b.setAttribute('aria-label',f[1]);
+      b.addEventListener('click',function(){ play(t,f[2],f[3]); }); li.appendChild(b); });
+    var s=document.createElement('button'); s.textContent='⭐'; s.setAttribute('aria-label','Keeper'); s.setAttribute('aria-pressed',String(!!t.star)); if(t.star) s.className='on';
+    s.addEventListener('click',async function(){ t.star=!t.star; await putTake(t); redraw(); }); li.appendChild(s);
+    var d=document.createElement('button'); d.textContent='🗑'; d.setAttribute('aria-label','Delete this take');
+    d.addEventListener('click',async function(){
+      if(d.className!=='warn'){ d.className='warn'; d.textContent='Sure?'; setTimeout(function(){ d.className=''; d.textContent='🗑'; },2500); return; }
+      await delTake(t.id); await refresh(); redraw(); });
+    li.appendChild(d); ul.appendChild(li);
+  });
+}
+function redraw(){ if(view==='rec') drawRecTakes(); else if(view==='mine') drawMine(); else if(view==='admin') drawAdmin(); else if(view==='missions') drawMissions(); }
+
+// ---------- playback with silly voices ----------
+var actx=null, playing=null;
+function ctx(){ if(!actx){ var C=window.AudioContext||window.webkitAudioContext; actx=new C(); } if(actx.state==='suspended') actx.resume(); return actx; }
+function stopPlay(){ if(playing){ try{ playing.stop(); }catch(e){} playing=null; } }
+async function play(t,rate,fx){
+  stopPlay();
+  try{
+    var a=ctx(), buf=await a.decodeAudioData(await t.blob.arrayBuffer());
+    var src=a.createBufferSource(); src.buffer=buf; src.playbackRate.value=rate;
+    if(fx==='robot'){ var g=a.createGain(); g.gain.value=0; var o=a.createOscillator(); o.frequency.value=55; o.connect(g.gain); o.start(); src.connect(g); g.connect(a.destination); src.onended=function(){ try{o.stop();}catch(e){} }; }
+    else src.connect(a.destination);
+    src.start(); playing=src;
+  }catch(e){ err('That take would not play on this device.'); }
+}
+
+// ---------- recording ----------
+var stream=null, recd=null, chunks=[], t0=0, tick=null, raf=null, cdTimer=null, wake=null, from='missions';
+function pickMime(){ var c=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+  for(var i=0;i<c.length;i++){ try{ if(window.MediaRecorder&&MediaRecorder.isTypeSupported(c[i])) return c[i]; }catch(e){} } return ''; }
+function openRec(c,back){
+  cur=c; from=back; err('');
+  $('recPrompt').textContent=c.prompt; $('recHint').textContent=c.hint;
+  var box=$('counts'); box.innerHTML='';
+  COUNTS.forEach(function(n){ var b=document.createElement('button'); b.className='chip'+(n===countSecs?' solid':''); b.textContent=n+' sec'; b.setAttribute('aria-pressed',String(n===countSecs));
+    b.addEventListener('click',function(){ countSecs=n; ls('booth_count',String(n)); openRec(cur,from); }); box.appendChild(b); });
+  recState('idle'); showView('rec'); drawRecTakes();
+}
+function recState(s){ $('recIdle').hidden=(s!=='idle'); $('recCount').hidden=(s!=='count'); $('recLive').hidden=(s!=='live'); }
+function drawRecTakes(){
+  var arr=mineTakes().filter(function(t){return t.mission===cur.mission;}).sort(function(a,b){return b.at-a.at;});
+  $('takesHead').hidden=!arr.length; $('takesHead').textContent='Your takes ('+arr.length+')';
+  $('recGo').textContent=arr.length?'● RECORD ANOTHER TAKE':'● RECORD';
+  listTakes($('recTakes'),arr,false);
+}
+function stopStream(){ if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } cancelAnimationFrame(raf); clearInterval(tick);
+  try{ if(wake){ wake.release(); wake=null; } }catch(e){} }
+async function startFlow(){
+  err(''); stopPlay();
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){ err('This browser cannot record sound. Ask a grown-up to try a different browser.'); return; }
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
+  catch(e){ err('The microphone is blocked. Ask a grown-up to allow the microphone for this page.'); return; }
+  try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; },function(){}); }catch(e){}
+  var n=countSecs; recState('count'); $('countNum').textContent=n;
+  cdTimer=setInterval(function(){ n--; if(n<=0){ clearInterval(cdTimer); begin(); } else $('countNum').textContent=n; },1000);
+}
+function begin(){
+  var mime=pickMime(); chunks=[];
+  try{ recd=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream); }catch(e){ err('Recording did not start on this device.'); stopStream(); recState('idle'); return; }
+  recd.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+  recd.onstop=save; recd.start(); t0=Date.now(); recState('live');
+  $('recMax').textContent='stops by itself at '+fmt(cur.max*1000);
+  tick=setInterval(function(){ var ms=Date.now()-t0; $('recTimer').textContent=fmt(ms); if(ms>=cur.max*1000) stopRec(); },200);
+  try{ var a=ctx(), an=a.createAnalyser(); an.fftSize=256; a.createMediaStreamSource(stream).connect(an); var d=new Uint8Array(an.frequencyBinCount);
+    (function loop(){ an.getByteTimeDomainData(d); var m=0; for(var i=0;i<d.length;i++){ var v=Math.abs(d[i]-128); if(v>m) m=v; } $('level').style.width=Math.min(100,m*1.6)+'%'; raf=requestAnimationFrame(loop); })(); }catch(e){}
+}
+function stopRec(){ clearInterval(tick); if(recd&&recd.state!=='inactive'){ try{ recd.stop(); }catch(e){} } }
+async function save(){
+  var ms=Date.now()-t0, type=(recd&&recd.mimeType)||'audio/webm', blob=new Blob(chunks,{type:type});
+  stopStream(); recState('idle');
+  if(!blob.size||ms<300){ err('That one was too short. Try again!'); return; }
+  try{ await addTake({who:who,mission:cur.mission,label:cur.label,blob:blob,mime:type,ms:ms,at:Date.now(),star:false,ok:false}); }
+  catch(e){ err('This tablet is out of room for recordings. Ask a grown-up to export and clear some.'); return; }
+  await refresh(); drawRecTakes();
+}
+$('recGo').addEventListener('click',startFlow);
+$('recStop').addEventListener('click',stopRec);
+$('countCancel').addEventListener('click',function(){ clearInterval(cdTimer); stopStream(); recState('idle'); });
+$('recBack').addEventListener('click',function(){ clearInterval(cdTimer); if(recd&&recd.state==='recording'){ recd.onstop=null; try{recd.stop();}catch(e){} } stopStream(); showView(from); });
+
+// ---------- who ----------
+function drawWho(){ $('whoBtn').textContent='👤 '+who; }
+function askWho(){
+  var box=$('whoList'); box.innerHTML='';
+  WHOS.forEach(function(w){ var b=document.createElement('button'); b.className='chip'+(w===who?' solid':''); b.textContent=w;
+    b.addEventListener('click',function(){ who=w; ls('booth_who',w); $('whoOv').hidden=true; drawWho(); showView(view==='rec'||view==='admin'?'missions':view); }); box.appendChild(b); });
+  $('whoOv').hidden=false;
+}
+$('whoBtn').addEventListener('click',askWho);
+
+// ---------- grown-up door ----------
+var pinBuf='', pinStage='', pinFirst='';
+function pinOpen(stage){ pinStage=stage; pinBuf=''; pinFirst='';
+  $('pinTitle').textContent = stage==='set'?'Choose a grown-up PIN':'Grown-up PIN';
+  $('pinMsg').textContent = stage==='set'?'Pick 4 numbers. You will type them twice.':'';
+  pinDraw(); $('pinOv').hidden=false; }
+function pinDraw(){ $('pinDots').textContent='●'.repeat(pinBuf.length)+'○'.repeat(4-pinBuf.length); }
+function pinKey(k){
+  if(k==='x'){ $('pinOv').hidden=true; return; }
+  if(k==='<'){ pinBuf=pinBuf.slice(0,-1); pinDraw(); return; }
+  if(pinBuf.length>=4) return; pinBuf+=k; pinDraw(); if(pinBuf.length<4) return;
+  var v=pinBuf; pinBuf='';
+  if(pinStage==='set'){ if(!pinFirst){ pinFirst=v; $('pinMsg').textContent='Type it one more time.'; pinDraw(); return; }
+    if(v!==pinFirst){ pinFirst=''; $('pinMsg').textContent='Those did not match. Start again.'; pinDraw(); return; }
+    ls('booth_pin',v); $('pinOv').hidden=true; showView('admin'); return; }
+  if(v===ls('booth_pin')){ $('pinOv').hidden=true; showView('admin'); } else { $('pinMsg').textContent='Not the PIN.'; pinDraw(); }
+}
+(function(){ var pad=$('pad'); ['1','2','3','4','5','6','7','8','9','x','0','<'].forEach(function(k){ var b=document.createElement('button');
+  b.textContent=k==='x'?'✕':k==='<'?'⌫':k; b.setAttribute('aria-label',k==='x'?'Close':k==='<'?'Delete':k); b.addEventListener('click',function(){ pinKey(k); }); pad.appendChild(b); }); })();
+$('lockBtn').addEventListener('click',function(){ pinOpen(ls('booth_pin')?'ask':'set'); });
+$('adminBack').addEventListener('click',function(){ showView('missions'); });
+$('newPin').addEventListener('click',function(){ pinOpen('set'); });
+
+async function drawAdmin(){
+  var ul=$('adminList'); ul.innerHTML=''; var bytes=0;
+  takes.slice().sort(function(a,b){return b.at-a.at;}).forEach(function(t){
+    bytes+=t.blob.size;
+    var li=document.createElement('li'); li.className='take'+(t.star?' star':'');
+    li.innerHTML='<span class="t">'+esc(t.who)+' · '+esc(labelOf(t))+(t.star?' ⭐':'')+'<small>'+fmt(t.ms)+' · '+new Date(t.at).toLocaleString()+' · '+Math.round(t.blob.size/1024)+' KB</small></span>';
+    var pb=document.createElement('button'); pb.textContent='▶'; pb.setAttribute('aria-label','Play'); pb.addEventListener('click',function(){ play(t,1,null); }); li.appendChild(pb);
+    var lab=document.createElement('label'); var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!t.ok;
+    cb.addEventListener('change',async function(){ t.ok=cb.checked; await putTake(t); }); lab.appendChild(cb); lab.appendChild(document.createTextNode('Approve')); li.appendChild(lab);
+    var d=document.createElement('button'); d.textContent='🗑'; d.setAttribute('aria-label','Delete this take');
+    d.addEventListener('click',async function(){ if(d.className!=='warn'){ d.className='warn'; d.textContent='Sure?'; setTimeout(function(){ d.className=''; d.textContent='🗑'; },2500); return; } await delTake(t.id); await refresh(); drawAdmin(); });
+    li.appendChild(d); ul.appendChild(li);
+  });
+  var line=takes.length+' recordings, about '+(bytes/1048576).toFixed(1)+' MB on this device.';
+  try{ if(navigator.storage&&navigator.storage.persisted){ line+=(await navigator.storage.persisted())?' Storage is marked “keep”.':' The browser may clear this storage if the device runs low on space.'; } }catch(e){}
+  $('store').textContent=line;
+}
+// plain (uncompressed) zip, built in the page so nothing is sent anywhere
+var CRC=(function(){ var t=[],c,n,k; for(n=0;n<256;n++){ c=n; for(k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(u){ var c=0xFFFFFFFF; for(var i=0;i<u.length;i++) c=CRC[(c^u[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function zip(files){
+  var enc=new TextEncoder(), parts=[], central=[], off=0, d=new Date();
+  var dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(), tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
+  files.forEach(function(f){
+    var name=enc.encode(f.name), crc=crc32(f.data), h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,0,true); h.setUint16(10,tm,true); h.setUint16(12,dt,true);
+    h.setUint32(14,crc,true); h.setUint32(18,f.data.length,true); h.setUint32(22,f.data.length,true); h.setUint16(26,name.length,true); h.setUint16(28,0,true);
+    parts.push(new Uint8Array(h.buffer),name,f.data);
+    var c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,0,true); c.setUint16(12,tm,true); c.setUint16(14,dt,true);
+    c.setUint32(16,crc,true); c.setUint32(20,f.data.length,true); c.setUint32(24,f.data.length,true); c.setUint16(28,name.length,true); c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer),name); off+=30+name.length+f.data.length;
+  });
+  var csize=central.reduce(function(a,b){return a+b.length;},0), e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,csize,true); e.setUint32(16,off,true);
+  return new Blob(parts.concat(central,[new Uint8Array(e.buffer)]),{type:'application/zip'});
+}
+function extOf(m){ return /mp4/.test(m)?'m4a':/ogg/.test(m)?'ogg':'webm'; }
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+async function exportZip(onlyOk){
+  var list=takes.filter(function(t){ return !onlyOk||t.ok; }).sort(function(a,b){return a.at-b.at;});
+  if(!list.length){ $('adminMsg').textContent=onlyOk?'Nothing is approved yet. Tick “Approve” on the takes you want.':'There are no recordings yet.'; return; }
+  var files=[], rows=['file,who,what,seconds,recorded,keeper,approved'], n={};
+  for(var i=0;i<list.length;i++){ var t=list[i], key=slug(t.who)+'_'+slug(labelOf(t)); n[key]=(n[key]||0)+1;
+    var name=key+'_take'+n[key]+'.'+extOf(t.mime);
+    files.push({name:name,data:new Uint8Array(await t.blob.arrayBuffer())});
+    rows.push([name,t.who,labelOf(t),(t.ms/1000).toFixed(1),new Date(t.at).toISOString(),t.star?'yes':'no',t.ok?'yes':'no'].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(',')); }
+  files.push({name:'list.csv',data:new TextEncoder().encode(rows.join('\n')+'\n')});
+  var url=URL.createObjectURL(zip(files)), a=document.createElement('a'); a.href=url; a.download='booth-'+new Date().toISOString().slice(0,10)+(onlyOk?'-approved':'-all')+'.zip';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); },60000);
+  $('adminMsg').textContent='Saved '+list.length+' recordings to this device’s downloads.';
+}
+$('exOk').addEventListener('click',function(){ exportZip(true); });
+$('exAll').addEventListener('click',function(){ exportZip(false); });
+$('wipe').addEventListener('click',async function(){ var b=$('wipe');
+  if(b.getAttribute('data-arm')!=='1'){ b.setAttribute('data-arm','1'); b.textContent='Tap again to delete ALL recordings'; setTimeout(function(){ b.removeAttribute('data-arm'); b.textContent='Delete everything'; },4000); return; }
+  await clearTakes(); await refresh(); b.removeAttribute('data-arm'); b.textContent='Delete everything'; $('adminMsg').textContent='Everything was deleted.'; drawAdmin(); });
+
+Array.prototype.forEach.call($('tabs').children,function(b){ b.addEventListener('click',function(){ showView(b.getAttribute('data-v')); }); });
+window.addEventListener('pagehide',function(){ stopStream(); stopPlay(); });
+
+(async function init(){
+  try{ await openDB(); await refresh(); }
+  catch(e){ err('This browser will not let the booth save recordings. Private or incognito windows cannot save. Ask a grown-up.'); return; }
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  if(WHOS.indexOf(who)<0){ who=''; }
+  drawWho(); showView('missions'); if(!who) askWho();
+})();
+})();
+</script>
+</body>
+</html>

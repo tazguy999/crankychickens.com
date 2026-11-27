@@ -64,3 +64,14 @@
   from = "/games/the-hoard.html"
   to = "/games/the-tribe.html"
   status = 301
+
+# Recording Booth — the kids' voice booth. The server repeats the page's own lock:
+# nothing on this page may connect to anything, so recordings cannot leave the device.
+[[headers]]
+  for = "/booth.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Content-Security-Policy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'"
+    Permissions-Policy = "microphone=(self), camera=(), geolocation=()"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"
