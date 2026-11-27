@@ -84,7 +84,7 @@ function say(who, text){
     const u = new SpeechSynthesisUtterance(String(text).replace(/\([^)]*\)/g,' ').trim());
     const p = VOICE[who] || VOICE['NARRATOR'];
     u.pitch = p.pitch; u.rate = p.rate;
-    if (pool.length) u.voice = pool[0];
+    if (pool.length) u.voice = ((p,ws)=>{for(const w of ws){const m=p.find(v=>(v.lang||'').replace('_','-').toLowerCase()===w);if(m)return m;}return p[0];})(pool,['en-au','en-gb','en-us']);
     speechSynthesis.speak(u);
   }catch(e){}
 }

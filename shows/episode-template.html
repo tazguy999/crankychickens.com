@@ -69,6 +69,21 @@ const VOICE_PROFILES={
   'NUT':{pitch:1.65,rate:1.28},
   'NARRATOR':{pitch:1.0,rate:0.92},
 };
+// Pin each character to an accent, so every device casts the same voices.
+// The five accents and their order come from the reference phone (see /voice-check.html).
+const CC_ACCENTS=['en-au','en-gb','en-in','en-ng','en-us'];
+const CC_FALLBACK={'en-au':['en-gb','en-us'],'en-gb':['en-au','en-us'],'en-in':['en-gb','en-us'],'en-ng':['en-gb','en-in','en-us'],'en-us':['en-gb','en-au']};
+function ccPickVoice(who,pool){
+  if(!pool||!pool.length)return null;
+  const h=Math.abs(who.split('').reduce((a,ch)=>a+ch.charCodeAt(0),0));
+  const want=CC_ACCENTS[h%CC_ACCENTS.length];
+  const tries=[want].concat(CC_FALLBACK[want]||[]);
+  for(const loc of tries){
+    const m=pool.filter(v=>(v.lang||'').replace('_','-').toLowerCase()===loc);
+    if(m.length)return m.find(v=>/google/i.test(v.name))||m[0];
+  }
+  return pool[h%pool.length];
+}
 let voicePool=[];
 function loadVoices(){voicePool=(speechSynthesis.getVoices()||[]).filter(v=>v.lang&&v.lang.startsWith('en'));}
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
@@ -82,8 +97,7 @@ function speakLine(who,text){
   const prof=VOICE_PROFILES[who]||{pitch:1,rate:1};
   u.pitch=prof.pitch;u.rate=prof.rate;u.volume=0.9;
   if(voicePool.length>0){
-    const idx=Math.abs(who.split('').reduce((a,ch)=>a+ch.charCodeAt(0),0))%voicePool.length;
-    u.voice=voicePool[idx];
+    const pv=ccPickVoice(who,voicePool);if(pv)u.voice=pv;
   }
   speechSynthesis.speak(u);
 }

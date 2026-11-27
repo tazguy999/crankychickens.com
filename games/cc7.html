@@ -1095,7 +1095,7 @@ const Voice = {
       const u = new SpeechSynthesisUtterance(clean(text));
       const p = this.PROFILES[who] || this.PROFILES['NARRATOR'];
       u.pitch = p.pitch; u.rate = p.rate;
-      if (this.pool.length) u.voice = this.pool[0];
+      if (this.pool.length) u.voice = ((p,ws)=>{for(const w of ws){const m=p.find(v=>(v.lang||'').replace('_','-').toLowerCase()===w);if(m)return m;}return p[0];})(this.pool,['en-au','en-gb','en-us']);
       speechSynthesis.speak(u);
     } catch(e){}
   },

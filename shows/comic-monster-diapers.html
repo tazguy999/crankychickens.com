@@ -457,8 +457,29 @@
   var readB=document.getElementById('read'), reading=false, synth=null;
   try{ synth = ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) ? window.speechSynthesis : null; }catch(e){ synth=null; }
   var VOICE={Me:{pitch:1.0,rate:0.95}, Scratchy:{pitch:0.6,rate:0.85}, Pearl:{pitch:1.9,rate:1.2}, Kevin:{pitch:1.4,rate:1.1}, Ernesto:{pitch:0.3,rate:0.9}, Diaper:{pitch:0.1,rate:0.7}, Expert:{pitch:0.9,rate:1.1}};
+  // Pin each character to an accent, so every device casts the same voices as the episodes do.
+  var CC_ACCENTS=['en-au','en-gb','en-in','en-ng','en-us'];
+  var CC_FALLBACK={'en-au':['en-gb','en-us'],'en-gb':['en-au','en-us'],'en-in':['en-gb','en-us'],'en-ng':['en-gb','en-in','en-us'],'en-us':['en-gb','en-au']};
+  var CC_NAME={Me:'NARRATOR',Scratchy:'SCRATCHY',Pearl:'PEARL',Ernesto:'EL JAGUAR'};
+  function ccPickVoice(who,pool){
+    if(!pool||!pool.length) return null;
+    var h=0, i, j; for(i=0;i<who.length;i++) h+=who.charCodeAt(i);
+    var want=CC_ACCENTS[h%CC_ACCENTS.length], tries=[want].concat(CC_FALLBACK[want]||[]);
+    for(i=0;i<tries.length;i++){
+      var m=[]; for(j=0;j<pool.length;j++){ if((pool[j].lang||'').replace('_','-').toLowerCase()===tries[i]) m.push(pool[j]); }
+      if(m.length){ for(j=0;j<m.length;j++){ if(/google/i.test(m[j].name)) return m[j]; } return m[0]; }
+    }
+    return pool[h%pool.length];
+  }
+  function enVoices(){
+    var all=[], out=[], i; try{ all=synth.getVoices()||[]; }catch(e){}
+    for(i=0;i<all.length;i++){ if(all[i].lang && all[i].lang.toLowerCase().indexOf('en')===0) out.push(all[i]); }
+    return out;
+  }
   function say(text,who){
     var u=new SpeechSynthesisUtterance(text), v=VOICE[who]||VOICE.Me;
+    var pv=ccPickVoice(CC_NAME[who]||String(who||'Me').toUpperCase(), enVoices());
+    if(pv) u.voice=pv;
     u.pitch=v.pitch; u.rate=v.rate; synth.speak(u);
   }
   function speakPage(){
