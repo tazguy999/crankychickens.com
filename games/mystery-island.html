@@ -23,7 +23,9 @@
   canvas {
     display: block;
     cursor: crosshair;
-    image-rendering: pixelated;
+    touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   #ui {
     position: absolute;
@@ -40,12 +42,15 @@ const C = document.getElementById('c');
 const ctx = C.getContext('2d');
 
 // ─── RESPONSIVE SIZING ────────────────────────────────────────────────────────
+let DPR = 1;
 const GAME_SCALE = 0.72; // zoom out — draw world at 72% then scale up to fill screen
 
 function resize() {
   const W = window.innerWidth;
   const H = window.innerHeight;
-  C.width = W; C.height = H;
+  // back the canvas with real device pixels so it's sharp on phones and tablets
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  C.width = Math.round(W * DPR); C.height = Math.round(H * DPR);
   C.style.width = W + 'px';
   C.style.height = H + 'px';
   // Virtual canvas size (game logic runs at this resolution)
@@ -642,8 +647,8 @@ class Bird {
       this.maskAngle = Math.max(-1.2, Math.min(1.2, this.maskAngle));
     }
 
-    // Hit ground
-    if (this.y + this.r >= G.ground) {
+    // Hit ground (only while falling — a deep pull-back starts below the grass line)
+    if (this.y + this.r >= G.ground && this.vy > 0) {
       this.y = G.ground - this.r;
       if (this.type === 'tyler' && !this.tylerSitting) {
         this.activate();
@@ -2166,7 +2171,7 @@ function drawTrajectoryDots(px, py) {
   for (let i = 0; i < 35; i++) {
     vy += GRAVITY;
     tx += vx; ty += vy;
-    if (ty > G.ground) break;
+    if (ty > G.ground && vy > 0) break;
     ctx.fillStyle = G.activeBird.color;
     ctx.beginPath();
     ctx.arc(tx, ty, 3 - i*0.06, 0, Math.PI*2);
@@ -2728,7 +2733,7 @@ function drawWorldMap() {
   for (let i = 0; i < WORLD_NODES.length - 1; i++) {
     const a = WORLD_NODES[i], b = WORLD_NODES[i+1];
     ctx.setLineDash([5,5]);
-    ctx.strokeStyle = i < G.level ? worldColors[a.world] : '#2a5a2a';
+    ctx.strokeStyle = i < Math.max(G.level, G.unlocked || 0) ? worldColors[a.world] : '#2a5a2a';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(a.x*W, a.y*H); ctx.lineTo(b.x*W, b.y*H); ctx.stroke();
     ctx.setLineDash([]);
@@ -2738,7 +2743,7 @@ function drawWorldMap() {
   for (let i = 0; i < WORLD_NODES.length; i++) {
     const n = WORLD_NODES[i];
     const nx = n.x * W, ny = n.y * H;
-    const unlocked = i <= G.level;
+    const unlocked = i <= Math.max(G.level, G.unlocked || 0);
     const isBoss = i === BOSS_LEVEL;
     const col = worldColors[n.world] || '#4cff6a';
     const bg  = worldBg[n.world] || '#1a3a1a';
@@ -2865,32 +2870,43 @@ function toVirtual(cx, cy, rect) {
   return [(cx - rect.left) / GAME_SCALE, (cy - rect.top) / GAME_SCALE];
 }
 
-C.addEventListener('mousedown', e => {
+// Pointer events cover mouse, touch and pen with one path and no synthetic
+// duplicates. One pointer at a time owns the sling.
+let activePointer = null;
+function trackPointer(e) {
   const r = C.getBoundingClientRect();
   [mouseX, mouseY] = toVirtual(e.clientX, e.clientY, r);
+}
+C.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (activePointer !== null) return;
+  activePointer = e.pointerId;
+  try { C.setPointerCapture(e.pointerId); } catch (_) {}
+  trackPointer(e);
   handleDown();
 });
-C.addEventListener('touchstart', e => {
-  e.preventDefault();
-  const r = C.getBoundingClientRect();
-  [mouseX, mouseY] = toVirtual(e.touches[0].clientX, e.touches[0].clientY, r);
-  handleDown();
-}, { passive: false });
-
-C.addEventListener('mousemove', e => {
-  const r = C.getBoundingClientRect();
-  [mouseX, mouseY] = toVirtual(e.clientX, e.clientY, r);
+C.addEventListener('pointermove', e => {
+  if (activePointer !== null && e.pointerId !== activePointer) return;
+  trackPointer(e);
   handleMove();
 });
-C.addEventListener('touchmove', e => {
-  e.preventDefault();
-  const r = C.getBoundingClientRect();
-  [mouseX, mouseY] = toVirtual(e.touches[0].clientX, e.touches[0].clientY, r);
-  handleMove();
-}, { passive: false });
-
-C.addEventListener('mouseup', handleUp);
-C.addEventListener('touchend', handleUp);
+C.addEventListener('pointerup', e => {
+  if (e.pointerId !== activePointer) return;
+  activePointer = null;
+  trackPointer(e);
+  handleUp();
+});
+C.addEventListener('pointercancel', e => {
+  if (e.pointerId !== activePointer) return;
+  activePointer = null;
+  // the system took the touch away: put the chicken back instead of firing it
+  if (G.sling.dragging && G.activeBird && !G.activeBird.launched) {
+    G.sling.dragging = false;
+    G.sling.pullX = G.sling.x; G.sling.pullY = G.sling.y;
+    G.activeBird.x = G.sling.x; G.activeBird.y = G.sling.y;
+  }
+});
+C.addEventListener('contextmenu', e => e.preventDefault());
 
 function handleDown() {
   if (G.state === 'TITLE') { G.state = 'WORLDMAP'; return; }
@@ -2907,7 +2923,12 @@ function handleDown() {
   }
   if (G.state === 'RESULT') { handleResultClick(); return; }
   if (G.state === 'LEVEL') {
-    // Only handle sling drag on down — ability fires on UP
+    // In flight: the tap IS the ability, the moment the finger lands.
+    if (G.activeBird && G.activeBird.launched) {
+      if (G.activeBird.swinging) G.activeBird.swinging = false;
+      else G.activeBird.activate();
+      return;
+    }
     if (G.activeBird && !G.activeBird.launched) {
       G.sling.dragging = true;
       const dx = mouseX - G.sling.x, dy = mouseY - G.sling.y;
@@ -2955,7 +2976,6 @@ function handleUp() {
       G.activeBird.x = G.sling.pullX;
       G.activeBird.y = G.sling.pullY;
       G.sling.launched = true;
-      G.justLaunched = true; // block ability on any follow-up synthetic event
     } else {
       G.sling.pullX = G.sling.x;
       G.sling.pullY = G.sling.y;
@@ -2964,18 +2984,6 @@ function handleUp() {
     return; // never fall through to ability
   }
 
-  // Ability tap — only if bird is in flight AND this wasn't a launch gesture
-  if (G.activeBird && G.activeBird.launched) {
-    if (G.justLaunched) {
-      G.justLaunched = false; // eat the synthetic event
-      return;
-    }
-    if (G.activeBird.swinging) {
-      G.activeBird.swinging = false;
-    } else {
-      G.activeBird.activate();
-    }
-  }
 }
 
 function handleResultClick() {
@@ -3137,7 +3145,7 @@ function updateLevel() {
     if (!G.nextDropTick) G.nextDropTick = G.ticks + dropInterval;
 
     // Warning shadow 100 frames before drop — more time to react
-    if (G.ticks === G.nextDropTick - 100) {
+    if (!G.dropWarningX && G.ticks >= G.nextDropTick - 100) {
       G.dropWarningX = lx(0.45 + Math.random() * 0.42);
       const jagChance = 0.05 + (G.level / BOSS_LEVEL) * 0.12; // more jaguars on later levels
       G.dropWarningMat = Math.random() < jagChance ? 'jaguar' : (['log','plank','rock'][Math.floor(Math.random()*3)]);
@@ -3186,6 +3194,7 @@ function updateLevel() {
       // Unlock the next node WITHOUT moving the player off the level they
       // just finished — the RESULT buttons own navigation from here.
       G.unlocked = Math.max(G.unlocked || 0, Math.min(G.level + 1, TOTAL_LEVELS - 1));
+      saveProgress();
       G.endTimer = 0;
       G.state = 'RESULT';
     }
@@ -3255,6 +3264,20 @@ function drawLevel() {
   }
 }
 
+// ─── SAVE ────────────────────────────────────────────────────────────────
+const SAVE_KEY = 'cc_mystery_island_progress';
+function saveProgress() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stars: G.stars, unlocked: G.unlocked || 0 })); } catch (e) {}
+}
+function loadProgress() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (!d) return;
+    if (Array.isArray(d.stars)) d.stars.forEach((v, i) => { if (i < TOTAL_LEVELS) G.stars[i] = Math.max(0, Math.min(3, v | 0)); });
+    G.unlocked = Math.max(0, Math.min(TOTAL_LEVELS - 1, d.unlocked | 0));
+  } catch (e) {}
+}
+
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 function dist(ax, ay, bx, by) { return Math.sqrt((ax-bx)**2+(ay-by)**2); }
 function shadeColor(hex, pct) {
@@ -3266,13 +3289,31 @@ function shadeColor(hex, pct) {
 }
 
 // ─── MAIN LOOP ────────────────────────────────────────────────────────────────
-function loop() {
+// The game was tuned at 60 frames a second and counts frames, so hold it there:
+// skip frames on faster screens (no double speed at 120Hz) and run catch-up
+// updates on slow ones (no slow motion on an old tablet).
+const STEP_MS = 1000 / 60;
+let _lastNow = 0, _acc = 0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  now = now || performance.now();
+  if (!_lastNow) _lastNow = now;
+  _acc += Math.min(now - _lastNow, 100); _lastNow = now;
+  if (_acc < STEP_MS - 1) return;
+  const steps = Math.min(3, Math.max(1, Math.floor((_acc + 1) / STEP_MS)));
+  _acc = Math.max(0, _acc - steps * STEP_MS);
+  if (_acc > STEP_MS) _acc = 0;
+  for (let i = 1; i < steps; i++) {
+    if (G.state === 'LEVEL') { G.ticks++; updateLevel(); }
+  }
+
   G.ticks++;
   // Clear actual pixel canvas
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, C.width, C.height);
   // Scale everything down so the virtual world fits on screen
   ctx.save();
-  ctx.scale(GAME_SCALE, GAME_SCALE);
+  ctx.scale(GAME_SCALE * DPR, GAME_SCALE * DPR);
 
   if (G.state === 'TITLE') drawTitle();
   else if (G.state === 'WORLDMAP') { drawWorldMap(); }
@@ -3280,7 +3321,6 @@ function loop() {
   else if (G.state === 'RESULT') { drawLevel(); drawResult(); }
 
   ctx.restore();
-  requestAnimationFrame(loop);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -3290,7 +3330,8 @@ G.sling.y = G.ground - 40;
 G.sling.pullX = G.sling.x;
 G.sling.pullY = G.sling.y;
 G.level = 0;
-loop();
+loadProgress();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
