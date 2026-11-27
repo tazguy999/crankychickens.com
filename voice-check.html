@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cranky Chickens Voice Check</title>
+<style>
+  body{margin:0;padding:16px;background:#1a1024;color:#f6ead6;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.4}
+  h1{font-size:22px;margin:0 0 4px;color:#ffb703}
+  h2{font-size:17px;margin:22px 0 8px;color:#ffb703}
+  p{margin:6px 0;color:rgba(255,255,255,.8)}
+  button{font:inherit;min-height:48px;padding:8px 14px;border-radius:12px;border:2px solid #0d0714;background:#ffb703;color:#2a1800;cursor:pointer}
+  button.small{min-height:44px;background:#5a4330;color:#f6ead6}
+  .row{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+  .row .who{flex:0 0 38%;font-weight:600}
+  .row .v{flex:1;min-width:0;font-size:14px;color:rgba(255,255,255,.85);word-break:break-word}
+  pre{background:#0d0714;color:#d7f5dd;padding:12px;border-radius:10px;font-size:12.5px;line-height:1.35;white-space:pre-wrap;word-break:break-word;user-select:text;-webkit-user-select:text}
+  .warn{color:#ffd166}
+  a{color:#8ecae6}
+</style>
+</head>
+<body>
+<h1>Voice Check</h1>
+<p>This shows which voices this device uses for the Cranky Chickens characters. Tap a character to hear the same voice the episodes use.</p>
+<p id="status" class="warn">Loading voices…</p>
+
+<h2>Characters on this device</h2>
+<div id="chars"></div>
+
+<h2>Report</h2>
+<p>Tap Copy, then paste it to Claude. A screenshot of this box works too.</p>
+<p><button id="copy">Copy report</button> <span id="copied"></span></p>
+<pre id="report">(waiting for voices)</pre>
+
+<p><a href="/">← back to crankychickens.com</a></p>
+
+<script>
+(function(){
+  'use strict';
+  // Same profiles and the same voice-picking rule the episodes use.
+  var PROFILES={
+    'SCRATCHY':{pitch:0.7,rate:0.95},'PEARL':{pitch:1.5,rate:1.15},'EL JAGUAR':{pitch:0.5,rate:0.85},
+    'AUNT BARB':{pitch:1.2,rate:0.9},'NARRATOR':{pitch:1.0,rate:0.92},'KING SQUIRRELINGTON':{pitch:0.8,rate:0.85},
+    'NUT':{pitch:1.65,rate:1.28},'REGINALD':{pitch:0.6,rate:0.8},'CONCEPT SLAYER':{pitch:1.05,rate:1.0},
+    'DR. SURGEON':{pitch:1.35,rate:0.85},'LOU':{pitch:0.8,rate:0.85},'DINO':{pitch:0.45,rate:0.75}
+  };
+  var LINES={
+    'SCRATCHY':'Forty-seven. I counted twice.','PEARL':'Hi! Hi! What is that?','EL JAGUAR':'Behold! My greatest plot.',
+    'AUNT BARB':'The plants are fine, dear.','NARRATOR':'Previously, on Cranky Chickens.','KING SQUIRRELINGTON':'Bow before the acorn throne.',
+    'NUT':'It was the squirrels! It is always the squirrels!','REGINALD':'Nice corn pile.','CONCEPT SLAYER':'Guess. Check. Nudge. Again.',
+    'DR. SURGEON':'This will not hurt a bit.','LOU':'Back in my day.','DINO':'Roar. Politely.'
+  };
+  var synth=('speechSynthesis' in window)?window.speechSynthesis:null, pool=[], all=[];
+  function idxFor(who){ return Math.abs(who.split('').reduce(function(a,ch){return a+ch.charCodeAt(0);},0))%pool.length; }
+  function speak(who){
+    if(!synth) return;
+    try{
+      synth.cancel();
+      var u=new SpeechSynthesisUtterance(LINES[who]), p=PROFILES[who];
+      u.pitch=p.pitch; u.rate=p.rate; u.volume=0.9;
+      if(pool.length) u.voice=pool[idxFor(who)];
+      synth.speak(u);
+    }catch(e){}
+  }
+  function render(){
+    var status=document.getElementById('status'), box=document.getElementById('chars'), rep=document.getElementById('report');
+    if(!synth){ status.textContent='This browser has no speech voices at all.'; rep.textContent='speechSynthesis: not supported\nUA: '+navigator.userAgent; return; }
+    all=synth.getVoices()||[];
+    pool=all.filter(function(v){return v.lang&&v.lang.indexOf('en')===0;});
+    status.textContent = pool.length ? ('Found '+pool.length+' English voices ('+all.length+' total).') : 'No voices listed yet. Tap any character once, then wait a second.';
+    status.className = pool.length ? '' : 'warn';
+    box.innerHTML='';
+    var lines=['Cranky Chickens voice report','UA: '+navigator.userAgent,'Language: '+navigator.language,'Total voices: '+all.length+', English: '+pool.length,'','English voices, in the order the episodes see them:'];
+    pool.forEach(function(v,i){ lines.push('['+i+'] '+v.name+' | '+v.lang+(v.default?' | DEFAULT':'')+(v.localService?' | on-device':' | network')+(v.voiceURI&&v.voiceURI!==v.name?' | uri: '+v.voiceURI:'')); });
+    var dflt=all.filter(function(v){return v.default;})[0];
+    lines.push('','Device default voice: '+(dflt?dflt.name+' | '+dflt.lang:'(none marked)'),'','Characters (voice index, voice, pitch, rate):');
+    Object.keys(PROFILES).forEach(function(who){
+      var p=PROFILES[who], v=pool.length?pool[idxFor(who)]:null;
+      var row=document.createElement('div'); row.className='row';
+      var b=document.createElement('button'); b.className='small'; b.textContent='▶'; b.setAttribute('aria-label','Hear '+who);
+      b.addEventListener('click',function(){ speak(who); setTimeout(render,600); });
+      var w=document.createElement('div'); w.className='who'; w.textContent=who;
+      var d=document.createElement('div'); d.className='v'; d.textContent=(v?('['+idxFor(who)+'] '+v.name):'(device default)')+' · pitch '+p.pitch+' · rate '+p.rate;
+      row.appendChild(b); row.appendChild(w); row.appendChild(d); box.appendChild(row);
+      lines.push(who+': '+(v?('['+idxFor(who)+'] '+v.name+' ('+v.lang+')'):'device default')+', pitch '+p.pitch+', rate '+p.rate);
+    });
+    rep.textContent=lines.join('\n');
+  }
+  document.getElementById('copy').addEventListener('click',function(){
+    var t=document.getElementById('report').textContent, out=document.getElementById('copied');
+    try{
+      navigator.clipboard.writeText(t).then(function(){ out.textContent='Copied.'; },function(){ out.textContent='Could not copy. Take a screenshot instead.'; });
+    }catch(e){ out.textContent='Could not copy. Take a screenshot instead.'; }
+  });
+  if(synth){ try{ synth.onvoiceschanged=render; }catch(e){} }
+  render(); setTimeout(render,500); setTimeout(render,1500);
+})();
+</script>
+</body>
+</html>
