@@ -62,6 +62,11 @@
   .admin input[type=checkbox]{width:26px;height:26px}
   .small{font-size:15px;color:var(--dim)}
   a{color:#8ecae6}
+  .tray{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px;margin-top:4px}
+  .take .tray button{min-height:64px;font-size:13px;line-height:1.15;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#33254a}
+  .take .tray button span{font-size:24px;line-height:1}
+  .take .tray button.mad{background:var(--gold);color:var(--gold-ink);font-weight:700}
+  .take .tray .now{grid-column:1/-1;font-size:15px;color:var(--gold);min-height:22px}
   .cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
   .cast button{min-height:84px;border-radius:16px;border:2px solid #000;background:var(--card2);padding:10px;font-size:18px;text-align:left}
   .cast button small{display:block;color:var(--dim);font-size:14px}
@@ -115,6 +120,7 @@
       <div class="labels" id="epChips"></div>
       <div class="bar" aria-hidden="true"><i id="showBar"></i></div>
       <p class="hint" id="showInfo"></p>
+      <div class="row" style="margin-bottom:12px"><span class="small">Our voices sound:</span><span id="showFx" class="row"></span></div>
       <button class="big rec" id="listenGo" style="background:var(--gold);color:var(--gold-ink)">▶ PLAY THE SHOW</button>
       <div class="cast" id="cast"></div>
     </div>
@@ -308,33 +314,106 @@ function listTakes(ul,arr,showLabel){
     var li=document.createElement('li'); li.className='take'+(t.star?' star':'');
     var n=arr.length-i;
     li.innerHTML='<span class="t">'+(showLabel?esc(labelOf(t)):'Take '+n)+'<small>'+fmt(t.ms)+' · '+new Date(t.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</small></span>';
-    [['▶','Play',1,null],['🐿️','Play as a chipmunk',1.6,null],['🦖','Play as a giant',0.65,null],['🤖','Play as a robot',1,'robot']].forEach(function(f){
-      var b=document.createElement('button'); b.textContent=f[0]; b.setAttribute('aria-label',f[1]);
-      b.addEventListener('click',function(){ play(t,f[2],f[3]); }); li.appendChild(b); });
+    var pb=document.createElement('button'); pb.textContent='▶'; pb.setAttribute('aria-label','Play'); pb.addEventListener('click',function(){ play(t,FX[0]); }); li.appendChild(pb);
+    var vb=document.createElement('button'); vb.textContent='🎛️'; vb.setAttribute('aria-label','Voice machine'); vb.setAttribute('aria-expanded','false'); li.appendChild(vb);
+    var tray=document.createElement('div'); tray.className='tray'; tray.hidden=true;
+    var now=document.createElement('div'); now.className='now'; now.textContent='The Voice Machine: tap one!';
+    vb.addEventListener('click',function(){ tray.hidden=!tray.hidden; vb.setAttribute('aria-expanded',String(!tray.hidden)); vb.className=tray.hidden?'':'on';
+      if(!tray.hidden&&!tray.firstChild){ tray.appendChild(now);
+        var mb=document.createElement('button'); mb.className='mad'; mb.innerHTML='<span>🧪</span>Mad scientist'; mb.addEventListener('click',function(){ var f=mad(); now.textContent='🧪 '+f.n; play(t,f); }); tray.appendChild(mb);
+        FX.slice(1).forEach(function(f){ var b=document.createElement('button'); b.innerHTML='<span>'+f.e+'</span>'+esc(f.n); b.addEventListener('click',function(){ now.textContent=f.e+' '+f.n; play(t,f); }); tray.appendChild(b); }); } });
     var s=document.createElement('button'); s.textContent='⭐'; s.setAttribute('aria-label','Keeper'); s.setAttribute('aria-pressed',String(!!t.star)); if(t.star) s.className='on';
     s.addEventListener('click',async function(){ t.star=!t.star; await putTake(t); redraw(); }); li.appendChild(s);
     var d=document.createElement('button'); d.textContent='🗑'; d.setAttribute('aria-label','Delete this take');
     d.addEventListener('click',async function(){
       if(d.className!=='warn'){ d.className='warn'; d.textContent='Sure?'; setTimeout(function(){ d.className=''; d.textContent='🗑'; },2500); return; }
       await delTake(t.id); await refresh(); redraw(); });
-    li.appendChild(d); ul.appendChild(li);
+    li.appendChild(d); li.appendChild(tray); ul.appendChild(li);
   });
 }
 function redraw(){ if(view==='rec') drawRecTakes(); else if(view==='mine') drawMine(); else if(view==='admin') drawAdmin(); else if(view==='missions') drawMissions(); else if(view==='show') drawShow(); }
 
-// ---------- playback with silly voices ----------
+// ---------- playback: the Voice Machine ----------
+// Every voice is made on the tablet from the saved take. The saved take itself is never changed.
+var FX=[
+  {id:'normal',e:'▶',n:'Normal'},
+  {id:'chip',e:'🐿️',n:'Chipmunk',rate:1.6},
+  {id:'helium',e:'🎈',n:'Helium',rate:2.2},
+  {id:'giant',e:'🦖',n:'Giant',rate:0.65},
+  {id:'sloth',e:'🦥',n:'Sloth',rate:0.42},
+  {id:'robot',e:'🤖',n:'Robot',ring:55},
+  {id:'alien',e:'👽',n:'Alien',ring:320,vib:[6,0.004]},
+  {id:'bee',e:'🐝',n:'Bee',ring:180,rate:1.3},
+  {id:'goat',e:'🐐',n:'Goat',trem:[11,0.9]},
+  {id:'ghost',e:'👻',n:'Ghost',rate:0.8,vib:[5,0.003],trem:[4,0.5],verb:[3.5,1.8]},
+  {id:'monster',e:'👹',n:'Monster',rate:0.55,dist:30,verb:[1.2,3]},
+  {id:'echo',e:'⛰️',n:'Canyon',echo:[0.32,0.55]},
+  {id:'cave',e:'🦇',n:'Cave',verb:[2.8,2.2]},
+  {id:'phone',e:'☎️',n:'Telephone',band:[1800,1.2],dist:8},
+  {id:'mega',e:'📣',n:'Megaphone',band:[1300,0.8],dist:60,echo:[0.12,0.25]},
+  {id:'water',e:'🐟',n:'Underwater',low:[500,3,300],vib:[2.5,0.006]},
+  {id:'back',e:'⏪',n:'Backwards',rev:1},
+  {id:'jelly',e:'🍮',n:'Wobbly jelly',wob:[4,0.35]},
+  {id:'coaster',e:'🎢',n:'Rollercoaster',ramp:[0.55,2.1]},
+  {id:'drain',e:'🔋',n:'Battery dying',ramp:[1.25,0.3]},
+  {id:'flock',e:'🐔',n:'Chicken army',flock:1},
+  {id:'dj',e:'🎧',n:'DJ stutter',stut:1},
+  {id:'space',e:'🚀',n:'Outer space',rate:0.9,ring:90,echo:[0.4,0.6],verb:[3.5,2]}
+];
+// Mad scientist: smash two voices together
+function mad(){ var a=FX[1+Math.floor(Math.random()*(FX.length-1))], b=a; while(b===a) b=FX[1+Math.floor(Math.random()*(FX.length-1))];
+  var f={},k; for(k in a) f[k]=a[k]; for(k in b) f[k]=b[k];
+  f.rate=Math.max(0.4,Math.min(2.4,(a.rate||1)*(b.rate||1))); f.n=a.n+' + '+b.n; f.e='🧪'; return f; }
 var actx=null, playing=null;
 function ctx(){ if(!actx){ var C=window.AudioContext||window.webkitAudioContext; actx=new C(); } if(actx.state==='suspended') actx.resume(); return actx; }
 function stopPlay(){ if(playing){ try{ playing.stop(); }catch(e){} playing=null; } }
-async function play(t,rate,fx){
+function fxReverse(a,buf){ var o=a.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+  for(var c=0;c<buf.numberOfChannels;c++){ var d=o.getChannelData(c); d.set(buf.getChannelData(c)); Array.prototype.reverse.call(d); } return o; }
+function fxStutter(a,buf){ var sr=buf.sampleRate, seg=Math.floor(sr*0.3), bit=Math.floor(sr*0.075), n=Math.ceil(buf.length/seg), len=buf.length+n*bit*3;
+  var o=a.createBuffer(buf.numberOfChannels,len,sr);
+  for(var c=0;c<buf.numberOfChannels;c++){ var src=buf.getChannelData(c), d=o.getChannelData(c), w=0;
+    for(var i=0;i<n;i++){ var st=i*seg, b=src.subarray(st,Math.min(st+bit,buf.length)); for(var r=0;r<3;r++){ d.set(b,w); w+=bit; }
+      var whole=src.subarray(st,Math.min(st+seg,buf.length)); d.set(whole,w); w+=whole.length; } }
+  return o; }
+var impulses={};
+function fxImpulse(a,secs,decay){ var key=secs+':'+decay; if(impulses[key]) return impulses[key];
+  var len=Math.floor(a.sampleRate*secs), o=a.createBuffer(1,len,a.sampleRate), d=o.getChannelData(0);
+  for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);
+  return (impulses[key]=o); }
+function fxCurve(k){ var n=1024, c=new Float32Array(n); for(var i=0;i<n;i++){ var x=i*2/n-1; c[i]=(1+k)*x/(1+k*Math.abs(x)); } return c; }
+function fxStart(buf,f,onend){
+  var a=ctx(), t0=a.currentTime+0.03, master=a.createGain(), oscs=[], srcs=[], mix=a.createGain(), cur=mix, done=false, dead=false;
+  // safety limiter so no voice can come out painfully loud
+  var lim=a.createDynamicsCompressor(); lim.threshold.value=-10; lim.knee.value=6; lim.ratio.value=20; lim.attack.value=0.002; lim.release.value=0.15;
+  master.gain.value=0.8; master.connect(lim); lim.connect(a.destination);
+  function osc(hz){ var o=a.createOscillator(); o.frequency.value=hz; o.start(); oscs.push(o); return o; }
+  function into(n){ cur.connect(n); cur=n; }
+  if(f.rev) buf=fxReverse(a,buf);
+  if(f.stut) buf=fxStutter(a,buf);
+  var rate=f.rate||1, voices=f.flock?[[1,0.03],[0.9,0],[1.12,0.08],[1.28,0.14],[1.5,0.2]]:[[1,0]], longest=null, longT=-1;
+  voices.forEach(function(v){ var s=a.createBufferSource(), r=rate*v[0], dur=buf.duration/r; s.buffer=buf; s.playbackRate.value=r;
+    if(f.wob){ var lg=a.createGain(); lg.gain.value=f.wob[1]*r; osc(f.wob[0]).connect(lg); lg.connect(s.playbackRate); }
+    if(f.ramp){ dur=buf.duration/(r*(f.ramp[0]+f.ramp[1])/2); s.playbackRate.setValueAtTime(r*f.ramp[0],t0+v[1]); s.playbackRate.linearRampToValueAtTime(r*f.ramp[1],t0+v[1]+dur); }
+    s.connect(mix); s.start(t0+v[1]); srcs.push(s); if(dur+v[1]>longT){ longT=dur+v[1]; longest=s; } });
+  if(f.flock) mix.gain.value=0.5;
+  if(f.ring){ var rg=a.createGain(); rg.gain.value=0; osc(f.ring).connect(rg.gain); into(rg); }
+  if(f.vib){ var dl0=a.createDelay(0.05), vg=a.createGain(); dl0.delayTime.value=0.012; vg.gain.value=f.vib[1]; osc(f.vib[0]).connect(vg); vg.connect(dl0.delayTime); into(dl0); }
+  if(f.trem){ var tg=a.createGain(), tl=a.createGain(); tg.gain.value=1-f.trem[1]/2; tl.gain.value=f.trem[1]/2; osc(f.trem[0]).connect(tl); tl.connect(tg.gain); into(tg); }
+  if(f.band){ var bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f.band[0]; bp.Q.value=f.band[1]; into(bp); }
+  if(f.low){ var lp=a.createBiquadFilter(), lf=a.createGain(); lp.type='lowpass'; lp.frequency.value=f.low[0]; lf.gain.value=f.low[2]; osc(f.low[1]).connect(lf); lf.connect(lp.frequency); into(lp); }
+  if(f.dist){ var ws=a.createWaveShaper(), dn=a.createGain(); ws.curve=fxCurve(f.dist); dn.gain.value=0.6; into(ws); into(dn); }
+  if(f.echo){ var eo=a.createGain(), dl=a.createDelay(1), fb=a.createGain(); dl.delayTime.value=f.echo[0]; fb.gain.value=f.echo[1]; cur.connect(eo); cur.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(eo); cur=eo; }
+  if(f.verb){ var vo=a.createGain(), cv=a.createConvolver(), wet=a.createGain(); cv.buffer=fxImpulse(a,f.verb[0],f.verb[1]); wet.gain.value=0.7; cur.connect(vo); cur.connect(cv); cv.connect(wet); wet.connect(vo); cur=vo; }
+  cur.connect(master);
+  var tail=(f.echo?1.4:0)+(f.verb?Math.min(1.6,f.verb[0]/2):0);
+  function kill(){ if(dead) return; dead=true; oscs.forEach(function(o){ try{ o.stop(); }catch(e){} }); try{ master.disconnect(); lim.disconnect(); }catch(e){} }
+  longest.onended=function(){ if(done) return; done=true; setTimeout(kill,tail*1000+60); if(onend) onend(); };
+  return {stop:function(){ done=true; srcs.forEach(function(s){ try{ s.stop(); }catch(e){} }); kill(); }};
+}
+async function play(t,f,onend){
   stopPlay();
-  try{
-    var a=ctx(), buf=await a.decodeAudioData(await t.blob.arrayBuffer());
-    var src=a.createBufferSource(); src.buffer=buf; src.playbackRate.value=rate;
-    if(fx==='robot'){ var g=a.createGain(); g.gain.value=0; var o=a.createOscillator(); o.frequency.value=55; o.connect(g.gain); o.start(); src.connect(g); g.connect(a.destination); src.onended=function(){ try{o.stop();}catch(e){} }; }
-    else src.connect(a.destination);
-    src.start(); playing=src;
-  }catch(e){ err('That take would not play on this device.'); }
+  try{ var a=ctx(), buf=await a.decodeAudioData(await t.blob.arrayBuffer()); stopPlay(); playing=fxStart(buf,f||FX[0],onend); }
+  catch(e){ err('That take would not play on this device.'); }
 }
 
 // ---------- recording ----------
@@ -431,7 +510,7 @@ function bestTake(ep,i){
 }
 function title(w){ return w.charAt(0)+w.slice(1).toLowerCase().replace(/ (\w)/g,function(m,c){return ' '+c.toUpperCase();}); }
 function drawShow(){
-  var ep=epNow(), chips=$('epChips'); chips.innerHTML='';
+  var ep=epNow(), chips=$('epChips'); chips.innerHTML=''; drawShowFx();
   if(!ep){ $('showInfo').textContent='No scripts yet.'; $('listenGo').hidden=true; return; }
   SCRIPTS.forEach(function(e){ var b=document.createElement('button'); b.className='chip'+(e.id===ep.id?' solid':''); b.textContent='Ep '+e.n+': '+e.t; b.setAttribute('aria-pressed',String(e.id===ep.id));
     b.addEventListener('click',function(){ epSel=e.id; ls('booth_ep',e.id); drawShow(); }); chips.appendChild(b); });
@@ -463,6 +542,12 @@ function openLine(ep,idx,pos){
 $('linesBack').addEventListener('click',function(){ showView('show'); });
 
 var LS={on:false,ep:null,i:0,tok:0};
+var showMode=ls('booth_showfx')||'normal';
+function drawShowFx(){ var box=$('showFx'); box.innerHTML='';
+  [['normal','Normal'],['chaos','🧪 Chaos!']].concat(FX.slice(1,5).map(function(f){ return [f.id,f.e+' '+f.n]; })).forEach(function(m){
+    var b=document.createElement('button'); b.className='chip'+(m[0]===showMode?' solid':''); b.textContent=m[1]; b.setAttribute('aria-pressed',String(m[0]===showMode));
+    b.addEventListener('click',function(){ showMode=m[0]; ls('booth_showfx',m[0]); drawShowFx(); }); box.appendChild(b); }); }
+function showFxPick(){ if(showMode==='chaos') return mad(); for(var i=0;i<FX.length;i++) if(FX[i].id===showMode) return FX[i]; return FX[0]; }
 function stopListen(){ LS.tok++; LS.on=false; try{ if(synth) synth.cancel(); }catch(e){} stopPlay(); try{ if(wake){ wake.release(); wake=null; } }catch(e){} }
 function listenPaint(src){
   var ep=LS.ep; if(!ep) return;
@@ -486,9 +571,10 @@ async function listenStep(){
   if(LS.i>=ep.lines.length){ LS.on=false; try{ if(wake){ wake.release(); wake=null; } }catch(e){} listenPaint(); return; }
   var my=++LS.tok, L=ep.lines[LS.i], t=bestTake(ep,LS.i), moved=false;
   function next(){ if(moved||my!==LS.tok||!LS.on) return; moved=true; LS.i++; setTimeout(listenStep,250); }
-  listenPaint(t?'🎙️ '+t.who:'🤖 tablet voice');
+  var f=t?showFxPick():null;
+  listenPaint(t?'🎙️ '+t.who+(f.id==='normal'?'':' · '+f.e+' '+f.n):'🤖 tablet voice');
   if(t){ try{ var a=ctx(), buf=await a.decodeAudioData(await t.blob.arrayBuffer()); if(my!==LS.tok||!LS.on) return;
-      var src=a.createBufferSource(); src.buffer=buf; src.connect(a.destination); src.onended=next; src.start(); playing=src; }
+      stopPlay(); playing=fxStart(buf,f,next); }
     catch(e){ if(my===LS.tok) speakLine(L,next,my); } }
   else speakLine(L,next,my);
 }
@@ -541,7 +627,7 @@ async function drawAdmin(){
     bytes+=t.blob.size;
     var li=document.createElement('li'); li.className='take'+(t.star?' star':'');
     li.innerHTML='<span class="t">'+esc(t.who)+' · '+esc(labelOf(t))+(t.star?' ⭐':'')+'<small>'+fmt(t.ms)+' · '+new Date(t.at).toLocaleString()+' · '+Math.round(t.blob.size/1024)+' KB</small></span>';
-    var pb=document.createElement('button'); pb.textContent='▶'; pb.setAttribute('aria-label','Play'); pb.addEventListener('click',function(){ play(t,1,null); }); li.appendChild(pb);
+    var pb=document.createElement('button'); pb.textContent='▶'; pb.setAttribute('aria-label','Play'); pb.addEventListener('click',function(){ play(t,FX[0]); }); li.appendChild(pb);
     var lab=document.createElement('label'); var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!t.ok;
     cb.addEventListener('change',async function(){ t.ok=cb.checked; await putTake(t); }); lab.appendChild(cb); lab.appendChild(document.createTextNode('Approve')); li.appendChild(lab);
     var d=document.createElement('button'); d.textContent='🗑'; d.setAttribute('aria-label','Delete this take');
