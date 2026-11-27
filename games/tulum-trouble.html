@@ -144,6 +144,17 @@ document.addEventListener('touchend',e=>{
     }
   }
 });
+// A cancelled touch (notification shade, palm, system gesture) never sends
+// touchend, which left the chicken running on its own. Let go of everything.
+function _releaseInput(){
+  joyActive=false;joyId=null;joyDx=0;joyDy=0;
+  jThumb.style.transform='translate(-50%,-50%)';
+  atkBtn.classList.remove('pressed');
+  if(typeof keys!=='undefined'){for(const k in keys)keys[k]=false;}
+}
+document.addEventListener('touchcancel',_releaseInput);
+window.addEventListener('blur',_releaseInput);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)_releaseInput();});
 function moveJoy(touch){const r=jZone.getBoundingClientRect();let dx=touch.clientX-(r.left+r.width/2),dy=touch.clientY-(r.top+r.height/2);const d=Math.hypot(dx,dy);if(d>JR){dx=dx/d*JR;dy=dy/d*JR;}joyDx=dx/JR;joyDy=dy/JR;jThumb.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;}
 let touchAtk=false;
 atkBtn.addEventListener('touchstart',e=>{e.preventDefault();if(!cutscene.active)touchAtk=true;atkBtn.classList.add('pressed');},{passive:false});
@@ -5633,12 +5644,18 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Escape'||e.key==='q'){shopOpen=false;e.preventDefault();return;}
   }
   if(noticeBoardOpen){if(e.key==='Escape'||e.key==='q'){noticeBoardOpen=false;e.preventDefault();return;}}
+  // leave browser shortcuts alone (Ctrl+R used to restart the game instead of reloading)
+  if(e.ctrlKey||e.metaKey||e.altKey||/^F\d+$/.test(e.key))return;
   keys[e.key]=true;if(gameState==='title'&&(e.key===' '||e.key==='Enter'))startGame();if((gameState==='win'||gameState==='lose')&&e.key==='r'){
     if(saveData.activeSavePoint>=0&&gameState==='lose'){gameState='play';showMsg('');respawnAtSave();}
     else restartGame();
   }
   if(gameState==='lose'&&(e.key==='q'||e.key==='Q'))restartGame();e.preventDefault();},{passive:false});
-document.addEventListener('keyup',e=>{keys[e.key]=false;});
+document.addEventListener('keyup',e=>{
+  keys[e.key]=false;
+  // Shift or Caps Lock can change the letter between press and release; clear both
+  if(e.key.length===1){keys[e.key.toLowerCase()]=false;keys[e.key.toUpperCase()]=false;}
+});
 
 function updatePlayer(){
   if(isScrolling||battleMode)return;
@@ -8687,7 +8704,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='p'||e.key==='P'){_perf.show=!_perf.show;_perf.worst=0;}
 });
 
-function loop(){
+function _frame(){
   frame++;
   // Screen shake
   if(screenShake>0){screenShake--;}
@@ -8697,7 +8714,7 @@ function loop(){
   if(screenShake>0)ctx.translate(shakeX,shakeY);
   ctx.clearRect(-shakeX,-shakeY,GW,GH);
 
-  if(gameState==='title'){drawTitle();ctx.restore();requestAnimationFrame(loop);return;}
+  if(gameState==='title'){drawTitle();ctx.restore();return;}
 
   updateFlightAnim();
   updateFlightAnim();
@@ -8916,9 +8933,22 @@ function loop(){
   drawFlightAnim();
   // Cutscene runs over everything (preview or post-battle)
   if(cutscene.active&&!battleMode){ updateCutscene(); drawCutscene(); }
-  requestAnimationFrame(loop);
 }
-loop();
+// The game counts frames and was tuned at 60 a second. Hold it there, so a
+// 120Hz phone or tablet doesn't run everything at double speed.
+const _STEP_MS=1000/60;
+let _lastNow=0,_acc=0;
+function loop(now){
+  requestAnimationFrame(loop);
+  now=now||performance.now();
+  if(!_lastNow)_lastNow=now;
+  _acc+=Math.min(now-_lastNow,100);_lastNow=now;
+  if(_acc<_STEP_MS-1)return;
+  _acc=Math.max(0,_acc-_STEP_MS);
+  if(_acc>_STEP_MS)_acc=0;
+  _frame();
+}
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
