@@ -80,6 +80,11 @@
   #homeLink:hover{color:rgba(255,255,255,.8)}
   @media (prefers-reduced-motion:reduce){ .leaf{transition:none} }
 </style>
+<style id="cc-colors">
+  /* cc-colors: cover. The kid's pencil lines sit on brand-colored paper; nothing is drawn over them. */
+  .leaf.cover{background:linear-gradient(180deg,#ffcc02 0%,#ffe14d 20%,#fff4c8 48%,#ffe0a8 76%,#ff9f1c 100%)}
+  .leaf.cover::before{content:""; position:absolute; inset:0; border:calc(var(--u)*1.6) solid #cc2200; border-radius:3px 6px 6px 3px; pointer-events:none; z-index:2}
+</style>
 </head>
 <body>
   <div class="book" id="book" aria-live="polite"></div>

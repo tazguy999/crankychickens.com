@@ -89,6 +89,57 @@
   .page.comic.end{justify-content:center; font-size:calc(var(--u)*4.8); line-height:calc(var(--u)*7)}
   .page.comic.end .doodle{flex:0 0 34%}
 </style>
+<style id="cc-colors">
+  /* cc-colors: cover. The kid's pencil lines sit on brand-colored paper; nothing is drawn over them. */
+  .leaf.cover{background:linear-gradient(180deg,#ffcc02 0%,#ffe14d 20%,#fff4c8 48%,#ffe0a8 76%,#ff9f1c 100%)}
+  .leaf.cover::before{content:""; position:absolute; inset:0; border:calc(var(--u)*1.6) solid #cc2200; border-radius:3px 6px 6px 3px; pointer-events:none; z-index:2}
+
+  /* cc-colors: comic pages */
+  .page.comic h2{color:#1a1024}
+  .page.comic h2 span{background:#cc2200; color:#fff}
+  .panel{background:#fff6d9; border-color:#1a1024}
+  .panel .cap{background:#ffcc02; color:#1a1024; border-bottom-color:#1a1024}
+  .doodle .k .w{fill:#fff6d9}
+  .doodle .k .c-scr ellipse.w,.doodle .k .c-scr circle.w{fill:#ff9f1c}
+  .doodle .k .c-scr rect.w,.doodle .k .c-scr path[d^="M-2.5,6"]{fill:#ff6b00}
+  .doodle .k .c-scr path[d^="M-7,-9 L-8,-22"]{fill:#ff3333}
+  .doodle .k .c-scr path[d^="M-12,22"],.doodle .k .c-scr path[d^="M12,22"]{fill:#e08010}
+  .doodle .k .c-scr path[d^="M-10,-6"]{stroke:#cc2200; stroke-width:2.2}
+  .doodle .k .c-prl ellipse.w,.doodle .k .c-prl circle.w{fill:#fffaf0}
+  .doodle .k .c-prl path[d^="M-5,-8 q-1,-7"]{fill:#ff6688}
+  .doodle .k .c-prl path[d^="M7,3 L15,5"]{fill:#ffaa33}
+  .doodle .k .c-chick ellipse.w,.doodle .k .c-chick circle.w{fill:#fffaf0}
+  .doodle .k .c-chick.cranky ellipse.w,.doodle .k .c-chick.cranky circle.w{fill:#ff9f1c}
+  .doodle .k .c-chick path[d^="M3,-33"]{fill:#ff3333}
+  .doodle .k .c-chick path[d^="M13,-30"]{fill:#ff6b00}
+  .doodle .k .c-eggc ellipse.w{fill:#fff8ee}
+  .doodle .k .c-kev ellipse.w,.doodle .k .c-kev circle.w{fill:#d9a066}
+  .doodle .k .c-kev path.w{fill:#8b4513}
+  .doodle .k .c-ern ellipse.w,.doodle .k .c-ern circle.w,.doodle .k .c-ern path.w{fill:#f4a261}
+  .doodle .k .c-ern circle[r="1.6"],.doodle .k .c-ern circle[r="1.4"],.doodle .k .c-ern circle[r="1.2"]{fill:#8b4513; stroke:none}
+  .doodle .k .c-arch ellipse.w,.doodle .k .c-arch circle.w,.doodle .k .c-arch path.w{fill:#cfcfdc}
+  .doodle .k .c-arch circle[r="3.4"]{fill:#8d8da3; stroke:none}
+  .doodle .k .c-farmer ellipse.w,.doodle .k .c-farmer circle.w{fill:#ffd9b3}
+  .doodle .k .c-farmer path[d^="M-7,-24 L-9,-8"]{fill:#5b8fd9}
+  .doodle .k .c-farmer path[d^="M-15,-44"],.doodle .k .c-farmer path[d^="M-7,-46"]{fill:#e0b050}
+  .doodle .k .c-sq path.w,.doodle .k .c-sq ellipse.w,.doodle .k .c-sq circle.w{fill:#c98b5a}
+  .doodle .k .c-regi .w{fill:#6f8fb0}
+  .doodle .k .c-mecha .w,.doodle .k .c-machine .w,.doodle .k .c-suit .w{fill:#cfd8dc}
+  .doodle .k .c-diaper .w{fill:#ffffff}
+  .doodle .k .c-dino .w{fill:#8fd18f}
+  .doodle .k .c-boog .w{fill:#b6e36b}
+  .doodle .k .c-catM .w{fill:#b39ddb}
+  .doodle .k .c-potato .w{fill:#d2a679}
+  .doodle .k .c-oldie .w{fill:#ffd9b3}
+  .doodle .k .c-coop .w{fill:#e8573f}
+  .doodle .k .c-sun .w,.doodle .k .c-corn .w,.doodle .k .c-splat .w{fill:#ffcc02}
+  .doodle .k .c-moon .w{fill:#ffe14d}
+  .doodle .k .c-eggs .w{fill:#fff8ee}
+  .doodle .k .c-volcano .w{fill:#b08968}
+  .doodle .k .c-cloud .w,.doodle .k .c-bub .w{fill:#ffffff}
+  .doodle .k [class^="c-"] circle:not([class])[r="3.6"],.doodle .k [class^="c-"] circle:not([class])[r="3"],.doodle .k [class^="c-"] circle:not([class])[r="2.4"],.doodle .k [class^="c-"] circle:not([class])[r="2.3"]{fill:#ffffff}
+  .doodle .k circle.w[r="2.2"],.doodle .k circle.w[r="2.3"],.doodle .k circle.w[r="2.4"],.doodle .k circle.w[r="2.9"],.doodle .k circle.w[r="3.3"],.doodle .k circle.w[r="3.8"],.doodle .k circle.w[r="3.9"]{fill:#ffffff !important}
+</style>
 </head>
 <body>
   <div class="book" id="book" aria-live="polite"></div>
@@ -417,6 +468,36 @@
   var STICKER='<rect class="w" x="104" y="16" width="88" height="32" rx="2"/>'+T(148,29,'DO NOT USE','middle',8)+T(148,41,'2 DAYS IN A ROW','middle',8);
 
   // ---------- the comic: chapter titles and plot are the kid's ----------
+  /*cc-colors:wrap*/ (function(){ function C(c,s){ return '<g class="'+c+'">'+s+'</g>'; }
+    if(typeof scr==='function'){ var _scr=scr; scr=function(){ return C('c-scr',_scr.apply(null,arguments)); }; }
+    if(typeof prl==='function'){ var _prl=prl; prl=function(){ return C('c-prl',_prl.apply(null,arguments)); }; }
+    if(typeof kev==='function'){ var _kev=kev; kev=function(){ return C('c-kev',_kev.apply(null,arguments)); }; }
+    if(typeof ern==='function'){ var _ern=ern; ern=function(){ return C('c-ern',_ern.apply(null,arguments)); }; }
+    if(typeof arch==='function'){ var _arch=arch; arch=function(){ return C('c-arch',_arch.apply(null,arguments)); }; }
+    if(typeof eggc==='function'){ var _eggc=eggc; eggc=function(){ return C('c-eggc',_eggc.apply(null,arguments)); }; }
+    if(typeof farmer==='function'){ var _farmer=farmer; farmer=function(){ return C('c-farmer',_farmer.apply(null,arguments)); }; }
+    if(typeof sq==='function'){ var _sq=sq; sq=function(){ return C('c-sq',_sq.apply(null,arguments)); }; }
+    if(typeof regi==='function'){ var _regi=regi; regi=function(){ return C('c-regi',_regi.apply(null,arguments)); }; }
+    if(typeof mecha==='function'){ var _mecha=mecha; mecha=function(){ return C('c-mecha',_mecha.apply(null,arguments)); }; }
+    if(typeof machine==='function'){ var _machine=machine; machine=function(){ return C('c-machine',_machine.apply(null,arguments)); }; }
+    if(typeof suit==='function'){ var _suit=suit; suit=function(){ return C('c-suit',_suit.apply(null,arguments)); }; }
+    if(typeof diaper==='function'){ var _diaper=diaper; diaper=function(){ return C('c-diaper',_diaper.apply(null,arguments)); }; }
+    if(typeof dino==='function'){ var _dino=dino; dino=function(){ return C('c-dino',_dino.apply(null,arguments)); }; }
+    if(typeof boog==='function'){ var _boog=boog; boog=function(){ return C('c-boog',_boog.apply(null,arguments)); }; }
+    if(typeof catM==='function'){ var _catM=catM; catM=function(){ return C('c-catM',_catM.apply(null,arguments)); }; }
+    if(typeof potato==='function'){ var _potato=potato; potato=function(){ return C('c-potato',_potato.apply(null,arguments)); }; }
+    if(typeof oldie==='function'){ var _oldie=oldie; oldie=function(){ return C('c-oldie',_oldie.apply(null,arguments)); }; }
+    if(typeof coop==='function'){ var _coop=coop; coop=function(){ return C('c-coop',_coop.apply(null,arguments)); }; }
+    if(typeof sun==='function'){ var _sun=sun; sun=function(){ return C('c-sun',_sun.apply(null,arguments)); }; }
+    if(typeof corn==='function'){ var _corn=corn; corn=function(){ return C('c-corn',_corn.apply(null,arguments)); }; }
+    if(typeof splat==='function'){ var _splat=splat; splat=function(){ return C('c-splat',_splat.apply(null,arguments)); }; }
+    if(typeof moon==='function'){ var _moon=moon; moon=function(){ return C('c-moon',_moon.apply(null,arguments)); }; }
+    if(typeof eggs==='function'){ var _eggs=eggs; eggs=function(){ return C('c-eggs',_eggs.apply(null,arguments)); }; }
+    if(typeof volcano==='function'){ var _volcano=volcano; volcano=function(){ return C('c-volcano',_volcano.apply(null,arguments)); }; }
+    if(typeof cloud==='function'){ var _cloud=cloud; cloud=function(){ return C('c-cloud',_cloud.apply(null,arguments)); }; }
+    if(typeof bub==='function'){ var _bub=bub; bub=function(){ return C('c-bub',_bub.apply(null,arguments)); }; }
+    if(typeof chick==='function'){ var _chick=chick; chick=function(x,y,s,o){ return C('c-chick'+(o&&o.cranky?' cranky':''),_chick.apply(null,arguments)); }; }
+  })(); /*cc-colors:end*/
   var CHAPTERS = [
     {tag:'Before', t:'Supa Recap', panels:[
       {cap:'Previously: the Booger Monster got very big. A time machine fixed it.', say:[],
