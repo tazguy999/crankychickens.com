@@ -11,6 +11,7 @@ import re, sys
 COVER_CSS = """
   /* cc-colors: cover. The kid's pencil lines sit on brand-colored paper; nothing is drawn over them. */
   .leaf.cover{background:linear-gradient(180deg,#ffcc02 0%,#ffe14d 20%,#fff4c8 48%,#ffe0a8 76%,#ff9f1c 100%)}
+  .leaf.cover img{mix-blend-mode:normal}  /* covers are painted images with see-through paper */
   .leaf.cover::before{content:""; position:absolute; inset:0; border:calc(var(--u)*1.6) solid #cc2200; border-radius:3px 6px 6px 3px; pointer-events:none; z-index:2}
 """
 K = '.doodle .k '
